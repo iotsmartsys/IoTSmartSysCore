@@ -13,7 +13,7 @@ public:
     String wifi_ssid;
     String wifi_signal;
     String ip_address;
-    String version = VERSION;
+    String version = IOTSMARTSYSCORE_VERSION;
     std::vector<CapabilityState> capabilities;
 
     DeviceAnnouncement() {}

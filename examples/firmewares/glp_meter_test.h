@@ -24,7 +24,7 @@ void setup()
     
     iotCore->setup();
     displayInfo(getDeviceId());
-    displayMessage("Version: " + String(IOT_PRIVATE_HOME_VERSION));
+    displayMessage("Version: " + String(IOTSMARTSYSCORE_VERSION));
 
 }
 // 16Kg de 30Kg é 

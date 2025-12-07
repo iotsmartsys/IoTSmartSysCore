@@ -1,8 +1,10 @@
 #pragma once
 #include <Arduino.h>
+#include "IoTSmartSysCoreVersion.h"
 
-#define VERSION "1.25.12.0744"  // Major.Minor.Patch.Build (HHMM)
-#define IOT_PRIVATE_HOME_VERSION VERSION
+#pragma once
+
+
 
 
 // Helper: convert __DATE__ and __TIME__ to aa.MM.ddHHmm

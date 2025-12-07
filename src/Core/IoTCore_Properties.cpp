@@ -11,7 +11,7 @@ Property &IoTCore::addProperty(const String &name, const String &value)
 void IoTCore::addDefaultProperties()
 {
     addProperty("build_id", getBuildIdentifier());
-    addProperty("version", IOT_PRIVATE_HOME_VERSION);
+    addProperty("version", IOTSMARTSYSCORE_VERSION);
     addProperty("wifi_ssid", WiFi.SSID());
     addProperty("wifi_signal", String(WiFi.RSSI()));
 }

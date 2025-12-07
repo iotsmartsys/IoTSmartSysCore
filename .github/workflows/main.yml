@@ -14,22 +14,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          fetch-depth: 0
 
       - name: Install PlatformIO CLI
         run: |
           pip install -U platformio
-
-      - name: Publish package to PlatformIO Registry
-        env:
-          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
-        run: |
-          echo "Publishing IoTSmartSysCore version from library.json..."
-          pio pkg publish --no-interactive
 
       - name: Read IoTSmartSysCore version
         id: read_version
@@ -42,6 +32,37 @@ jobs:
           )
           echo "core_version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Detected IoTSmartSysCore version: $VERSION"
+
+      - name: Generate IoTSmartSysCoreVersion header
+        env:
+          CORE_VERSION: ${{ steps.read_version.outputs.core_version }}
+        run: |
+          VERSION="$CORE_VERSION"
+
+          # Assume semantic versioning: MAJOR.MINOR.PATCH
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+          mkdir -p src
+          cat > src/IoTSmartSysCoreVersion.h <<EOF
+          #pragma once
+
+          #define IOTSMARTSYSCORE_VERSION           "${VERSION}"
+          #define IOTSMARTSYSCORE_VERSION_MAJOR     ${MAJOR}
+          #define IOTSMARTSYSCORE_VERSION_MINOR     ${MINOR}
+          #define IOTSMARTSYSCORE_VERSION_PATCH     ${PATCH}
+          EOF
+
+          echo "Generated src/IoTSmartSysCoreVersion.h:"
+          cat src/IoTSmartSysCoreVersion.h
+
+      - name: Publish package to PlatformIO Registry
+        env:
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+        run: |
+          echo "Publishing IoTSmartSysCore version from library.json..."
+          pio pkg publish --no-interactive
 
       - name: Trigger firmware workflows (repository_dispatch)
         env:
