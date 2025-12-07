@@ -29,4 +29,4 @@ jobs:
           PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
         run: |
           echo "Publishing IoTSmartSysCore version from library.json..."
-          pio pkg publish
+          pio pkg publish --no-interactive
