@@ -54,7 +54,7 @@ jobs:
           fi
 
           repos=(
-            "iotsmartsys/SmartHome-CentralEspnow"
+            "iotsmartsys/SmartHome-Firmwares"
             # Adicione aqui outros repositórios de firmware quando quiser que sejam notificados
           )
 
