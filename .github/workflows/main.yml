@@ -1,0 +1,32 @@
+name: Publish IoTSmartSysCore to PlatformIO
+
+on:
+  push:
+    tags:
+      - 'v*'   # dispara quando você der push em tags tipo v0.1.0, v1.0.0 etc.
+
+  workflow_dispatch:  # opcional: permite rodar manualmente
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO CLI
+        run: |
+          pip install -U platformio
+
+      - name: Publish package to PlatformIO Registry
+        env:
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+        run: |
+          echo "Publishing IoTSmartSysCore version from library.json..."
+          pio pkg publish
