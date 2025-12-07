@@ -30,3 +30,39 @@ jobs:
         run: |
           echo "Publishing IoTSmartSysCore version from library.json..."
           pio pkg publish --no-interactive
+
+      - name: Read IoTSmartSysCore version
+        id: read_version
+        run: |
+          VERSION=$(python - << 'EOF'
+          import json
+          with open("library.json") as f:
+              print(json.load(f)["version"])
+          EOF
+          )
+          echo "core_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected IoTSmartSysCore version: $VERSION"
+
+      - name: Trigger firmware workflows (repository_dispatch)
+        env:
+          GH_TOKEN: ${{ secrets.ORG_REPO_DISPATCH_TOKEN }}
+          CORE_VERSION: ${{ steps.read_version.outputs.core_version }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "ORG_REPO_DISPATCH_TOKEN not set; skipping firmware notifications."
+            exit 0
+          fi
+
+          repos=(
+            "iotsmartsys/SmartHome-CentralEspnow"
+            # Adicione aqui outros repositórios de firmware quando quiser que sejam notificados
+          )
+
+          for repo in "${repos[@]}"; do
+            echo "Dispatching event to $repo (IoTSmartSysCore v$CORE_VERSION)..."
+            curl -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              https://api.github.com/repos/$repo/dispatches \
+              -d "{\"event_type\":\"iotsmartsyscore-updated\",\"client_payload\":{\"core_version\":\"$CORE_VERSION\"}}"
+          done
