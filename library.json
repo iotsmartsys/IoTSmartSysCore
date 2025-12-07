@@ -20,7 +20,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/marceloc312/IoTSmartSysCore.git"
+        "url": "https://github.com/iotsmartsys/IoTSmartSysCore.git"
     },
     "frameworks": [
         "arduino"
