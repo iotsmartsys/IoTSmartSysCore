@@ -114,6 +114,11 @@ enum class CapabilityType
 #define PUSH_BUTTON_PRESSED_4_X BUTTON_PRESSED_"x4"
 
 #define GLP_METER_TYPE "GLP Meter"
+#define GLP_SENSOR_TYPE "GLP Sensor Level"
+#define GLP_SENSOR_LEVEL_LOW "low"
+#define GLP_SENSOR_LEVEL_MEDIUM "medium"
+#define GLP_SENSOR_LEVEL_HIGH "high"
+#define GLP_SENSOR_LEVEL_NONE "none"
 
 
 #define DEFAULT_TIME_BETWEEN_UPDATES 600000 

@@ -14,6 +14,7 @@
 #include "Builders/CapabilityBuilder.h"
 #include "Models/DeviceAnnouncement.h"
 #include "Models/PropertyState.h"
+#include "Capabilities/GlpSensorCapability.h"
 
 #ifdef ESP_NOW_ENABLED
 #include "esp_now_utils/esp_now_utils.h"
