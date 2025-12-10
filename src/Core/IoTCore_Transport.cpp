@@ -150,10 +150,10 @@ void IoTCore::notifyDeviceState()
             LOG_PRINTLN("[IoTCore] RSSI alterado: " + String(rssi));
             lastRSSI = rssi;
 
-            transport->sendMessage(DISCOVERY_TOPIC_DEFAULT, PropertyState(deviceId, "wifi_signal", String(rssi)).toJson());
-        }
+        transport->sendMessage(discoveryTopic.c_str(), PropertyState(deviceId, "wifi_signal", String(rssi)).toJson());
+    }
 #endif
-        transport->sendMessage(DISCOVERY_TOPIC_DEFAULT, PropertyState(deviceId, "device_state", "online").toJson());
+        transport->sendMessage(discoveryTopic.c_str(), PropertyState(deviceId, "device_state", "online").toJson());
     }
     #endif
 }

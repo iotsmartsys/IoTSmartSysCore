@@ -33,3 +33,7 @@ tag:
 	echo "Creating tag v$$VERSION..."; \
 	git tag -a "v$$VERSION" -m "Release IoTSmartSysCore v$$VERSION"; \
 	git push origin "v$$VERSION"
+
+
+test:
+	pio test -vvv -e esp32_glp_meter

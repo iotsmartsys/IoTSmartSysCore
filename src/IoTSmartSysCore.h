@@ -22,6 +22,10 @@
 
 #include "OTA/FirmwareUpdater.h"
 
+#ifndef DISCOVERY_TOPIC_DEFAULT
+#define DISCOVERY_TOPIC_DEFAULT "smarthome/discovery"
+#endif
+
 class IoTCore
 {
 public:
@@ -50,7 +54,7 @@ private:
     std::vector<Capability *> capabilities;
     std::vector<Property *> properties;
     String discoveryTopic;
-    const char *device_name;
+    String device_name;
     int lastSendDeviceState = 0;
     int lastRSSI = 0;
 
@@ -58,6 +62,8 @@ private:
     void capabilitiesHandle();
     void notifyDeviceState();
     void addDefaultProperties();
+    void resolveDeviceIdentity();
+    void resolveDiscoveryTopic();
 
 #ifdef ESP_NOW_ENABLED
 

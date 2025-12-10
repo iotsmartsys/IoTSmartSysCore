@@ -17,15 +17,47 @@ bool inRecoveryMode = false;
 unsigned long lastRecoveryAttempt = 0;
 
 IoTCore::IoTCore()
-    : transport(nullptr)
+    : transport(nullptr), discoveryTopic(DISCOVERY_TOPIC_DEFAULT)
 {
 }
+
+IoTCore::IoTCore(const char *device_name, std::vector<Capability *> capabilities)
+    : transport(nullptr),
+      capabilities(capabilities),
+      device_name(device_name ? device_name : ""),
+      discoveryTopic(DISCOVERY_TOPIC_DEFAULT)
+{
+}
+
 IoTCore::~IoTCore()
 {
     if (transport)
     {
         delete transport;
         transport = nullptr;
+    }
+    for (auto *cap : capabilities)
+    {
+        delete cap;
+    }
+    capabilities.clear();
+
+    for (auto *prop : properties)
+    {
+        delete prop;
+    }
+    properties.clear();
+
+    if (ledCapability)
+    {
+        delete ledCapability;
+        ledCapability = nullptr;
+    }
+
+    if (capabilityBuilder)
+    {
+        delete capabilityBuilder;
+        capabilityBuilder = nullptr;
     }
 }
 
@@ -48,6 +80,7 @@ void IoTCore::setup()
     settings = &ConfigManager::instance().get();
 
     BootstrapDevice::initialize(*(Settings *)settings);
+    resolveDiscoveryTopic();
 
 #if !defined(TRANSPORT_ESP_NOW)
 
@@ -58,6 +91,7 @@ void IoTCore::setup()
         LOG_ERROR("[IoTCore] Erro: Não foi possível conectar ao Wi‑Fi.");
     }
 #endif
+    resolveDeviceIdentity();
     ConfigManager::instance().loadConfig();
     if (capabilities.size() == 0)
     {
@@ -89,11 +123,11 @@ void IoTCore::setup()
 #endif
 
 #if defined(TRANSPORT_ESP_NOW)
-    transport = new EspNowClientHandler(device_name, capabilities);
+    transport = new EspNowClientHandler(device_name.c_str(), capabilities);
 #else
     addDefaultProperties();
     addProperty("broker", settings->mqtt.primary.host);
-    transport = new MqttTransportAdapter(device_name, settings->mqtt, capabilities, properties);
+    transport = new MqttTransportAdapter(device_name.c_str(), settings->mqtt, capabilities, properties);
 #endif
 
     transport->setup();
@@ -195,4 +229,26 @@ void IoTCore::handle()
 void IoTCore::setBuild(const String &build)
 {
     addProperty("build", build);
+}
+
+void IoTCore::resolveDeviceIdentity()
+{
+    if (device_name.length() == 0)
+    {
+        String deviceId = getDeviceId();
+        if (deviceId.length() == 0)
+        {
+            deviceId = getMacAddress();
+        }
+        device_name = deviceId;
+    }
+}
+
+void IoTCore::resolveDiscoveryTopic()
+{
+    discoveryTopic = DISCOVERY_TOPIC_DEFAULT;
+    if (settings && settings->mqtt.announce_topic.length() > 0)
+    {
+        discoveryTopic = settings->mqtt.announce_topic;
+    }
 }
