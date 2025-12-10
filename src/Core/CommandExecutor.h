@@ -4,7 +4,7 @@
 #include <vector>
 #include "Capabilities/Capability.h"
 #include "Capabilities/CapabilityCommand.h"
-#include "Mqtt/MqttClientHandler.h"
+#include "Infra/Mqtt/MqttClientHandler.h"
 
 void applyCommandToCapabilities(
         const CapabilityCommand &command,

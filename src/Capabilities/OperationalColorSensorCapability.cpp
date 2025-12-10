@@ -1,6 +1,4 @@
 #include "OperationalColorSensorCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 #ifdef OPERATIONAL_COLOR_SENSOR_ENABLED
 #include <Wire.h>

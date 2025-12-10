@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include "IoTSmartSysCore.h"
-#include "Utils/Logger.h"
-
-#include "OTA/OTA.h"
-#include "OTA/OTAManager.h"
-#include "Settings/ConfigManager.h"
-#include "Settings/PortalConfiguration.h"
+#include "Infra/Utils/Logger.h"
+#include "Infra/Transports/MqttTransportAdapter.h"
+#include "Infra/OTA/OTA.h"
+#include "Infra/OTA/OTAManager.h"
+#include "Infra/Settings/ConfigManager.h"
+#include "Infra/Settings/PortalConfiguration.h"
 #include "Capabilities/Capability.h"
 #include <vector>
 

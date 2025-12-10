@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Capability.h"
-#include "Models/DigitalLogic.h"
 
 class AlarmCapability : public Capability
 {

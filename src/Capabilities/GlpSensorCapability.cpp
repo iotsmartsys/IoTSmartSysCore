@@ -1,5 +1,4 @@
 #include "GlpSensorCapability.h"
-#include "Utils/Logger.h"
 
 const int NUM_SAMPLES = 20; // Amostras para média
 int cleanAirBase = 0;       // Valor médio em "ar limpo" (referência)

@@ -1,7 +1,6 @@
-#include <Arduino.h>
-#include "Capability.h"
+
 #include "PushButtonCapability.h"
-#include "Utils/Logger.h"
+
 
 PushButtonCapability::PushButtonCapability(String capability_name, int buttonPin)
     : Capability(capability_name, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED)

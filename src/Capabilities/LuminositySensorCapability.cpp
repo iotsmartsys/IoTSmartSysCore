@@ -1,6 +1,4 @@
 #include "LuminositySensorCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 LuminositySensorCapability::LuminositySensorCapability(float luminosidadeVariationToleranceToUpdate, float readInterval)
     : Capability(LIGHT_SENSOR_TYPE, "-1"), lastReadTime(0), luminosidadeAmbiente(0), luminosidadeVariationToleranceToUpdate(luminosidadeVariationToleranceToUpdate), readInterval(readInterval * 1000)

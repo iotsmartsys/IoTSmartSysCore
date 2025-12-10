@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 #include "Capability.h"
-#include "Sensors/Modules/SensorUltrassonic_HC_SR04.h"
-#include "Sensors/Modules/SensorModel.h"
+#include "Infra/Sensors/Modules/SensorUltrassonic_HC_SR04.h"
+#include "Infra/Sensors/Modules/SensorModel.h"
 
 
 class DistanceSensorCapability : public Capability

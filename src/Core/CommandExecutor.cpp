@@ -1,7 +1,7 @@
 #include "Core/CommandExecutor.h"
-#include "Utils/Logger.h"
-#include "Settings/ConfigManager.h"
-#include "Wifi/WifiHelper.h"
+
+#include "Infra/Settings/ConfigManager.h"
+#include "Infra/Wifi/WifiHelper.h"
 
 void applyCommandToCapabilities(const CapabilityCommand &command,
                                 std::vector<Capability *> &capabilities,

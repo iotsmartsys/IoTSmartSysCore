@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include "Capability.h"
-#include "Sensors/Modules/WaterLevelSensor.h"
+#include "Infra/Sensors/Modules/WaterLevelSensor.h"
 
 class WaterLevelLitersCapability : public Capability
 {

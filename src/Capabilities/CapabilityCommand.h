@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JsonHelpers/IoTJson.h"
+#include "Infra/JsonHelpers/IoTJson.h"
 #include <vector>
 class CapabilityCommand
 {

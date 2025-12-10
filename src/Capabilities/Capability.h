@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <vector>
 #include "CapabilityState.h"
-#include "Utils/Logger.h"
-#include "Models/ContactState.h"
+#include "Infra/Utils/Logger.h"
 #include "Capabilities/CapabilityType.h"
+#include "Core/Models/DigitalLogic.h"
 
 #define CAPABILITY_CALLBACK_SIGNATURE std::function<void(String *)> callback
 

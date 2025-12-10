@@ -1,5 +1,4 @@
 #include "SwitchCapability.h"
-#include "Utils/Logger.h"
 
 SwitchCapability::SwitchCapability(String capability_name, int switchPin, DigitalLogic stateLogic)
     : Capability(capability_name, SWITCH_TYPE, SWITCH_STATE_OFF)

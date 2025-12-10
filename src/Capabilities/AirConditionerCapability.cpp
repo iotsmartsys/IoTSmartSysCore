@@ -1,10 +1,10 @@
 #include "AirConditionerCapability.h"
-#include "Utils/Logger.h"
+
 #ifdef IRREMOTE_ENABLED
 #include <IRrecv.h>
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
-#include "Sensors/IR/AirConditionerCod.h"
+#include "Infra/Sensors/IR/AirConditionerCod.h"
 
 AirConditionerCapability::AirConditionerCapability(int irPin)
     : Capability("", AIR_CONDITIONER_TYPE, "OFF"), irrecv(nullptr), irPin(irPin), lastState(0), lastSendEvent(0)

@@ -1,6 +1,5 @@
 #include "AlarmCapability.h"
 #include <Arduino.h>
-#include "Utils/Logger.h"
 
 AlarmCapability::AlarmCapability(int alarmPin, DigitalLogic stateLogic)
     : Capability(ALARM_ACTUATOR_TYPE, ALARM_OFF), alarmPin(alarmPin), stateOn(HIGH), stateOff(LOW), lastRing(0), poweredOn(false), lastState(false)

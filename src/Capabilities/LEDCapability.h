@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Models/DigitalLogic.h"
 #include "Capability.h"
 
 class LEDCapability : public Capability

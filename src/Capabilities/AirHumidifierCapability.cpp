@@ -1,5 +1,4 @@
 #include "AirHumidifierCapability.h"
-#include "Utils/Logger.h"
 #ifdef IRREMOTE_ENABLED
 #include <IRremoteESP8266.h>
 #include <IRutils.h>

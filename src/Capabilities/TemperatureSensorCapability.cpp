@@ -1,5 +1,4 @@
 #include "TemperatureSensorCapability.h"
-#include "Utils/Logger.h"
 
 #ifdef DHT_ENABLED
 TemperatureSensorCapability::TemperatureSensorCapability(DHT *dht, unsigned long intervalMinute)

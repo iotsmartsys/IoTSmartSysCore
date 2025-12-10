@@ -1,6 +1,4 @@
 #include "PirSensorCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 PirSensorCapability::PirSensorCapability(int pirPin, int toleranceTime)
     : Capability(PIR_SENSOR_TYPE, PIR_NO_DETECTED), pirPin(pirPin), lastTimePresenceDetected(0), presenceDetected(false), lastState(false), lastSendEvent(0), timeTolerance(toleranceTime * 1000 * 60)

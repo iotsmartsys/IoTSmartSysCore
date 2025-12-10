@@ -1,6 +1,4 @@
 #include "LightCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 LightCapability::LightCapability(int lightPin, DigitalLogic digitalLogic)
     : Capability(LIGHT_ACTUATOR_TYPE, LIGHT_STATE_OFF), lightPin(lightPin), backLightPin(-1), lightState(false), digitalLogic(digitalLogic)

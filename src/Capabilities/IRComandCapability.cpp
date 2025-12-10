@@ -1,6 +1,4 @@
 #include "IRComandCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 IRCommandCapability::IRCommandCapability(String capability_name, int irPin)
     : Capability(capability_name, IR_TYPE, ""), irPin(irPin), currentState(0), lastState(0)

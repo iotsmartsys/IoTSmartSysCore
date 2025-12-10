@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 #include "Capability.h"
-#include "Models/DigitalLogic.h"
 
 class SwitchPlugCapability : public Capability
 {

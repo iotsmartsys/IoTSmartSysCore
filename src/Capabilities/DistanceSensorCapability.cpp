@@ -1,5 +1,4 @@
 #include "DistanceSensorCapability.h"
-#include "Utils/Logger.h"
 
 DistanceSensorCapability::DistanceSensorCapability(int trigPin, int echoPin, SensorModel sensorModel)
     : Capability("", DISTANCE_SENSOR_TYPE, "0"), trigPin(trigPin), echoPin(echoPin), sensorModel(sensorModel), lastDistance(0), distanceCm(0), distanceInch(0), minDistance(20), maxDistance(400), sr04SensorUltrassonicCapability(nullptr)

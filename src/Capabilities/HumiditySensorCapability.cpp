@@ -1,5 +1,4 @@
 #include "HumiditySensorCapability.h"
-#include "Utils/Logger.h"
 #ifdef DHT_ENABLED
 #include <Arduino.h>
 

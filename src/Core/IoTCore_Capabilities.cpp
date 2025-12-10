@@ -1,7 +1,6 @@
 #include "IoTSmartSysCore.h"
-#include "Utils/Logger.h"
 
-#include "Builders/CapabilityBuilder.h"
+#include "Platform/Builders/CapabilityBuilder.h"
 
 void IoTCore::capabilitiesHandle()
 {

@@ -1,5 +1,4 @@
 #include "IoTSmartSysCore.h"
-#include "Utils/Logger.h"
 
 Property &IoTCore::addProperty(const String &name, const String &value)
 {

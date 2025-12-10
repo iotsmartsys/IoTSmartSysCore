@@ -1,26 +1,22 @@
 #pragma once
 #include <Arduino.h>
-#include "Transports/IMessageClient.h"
-#include "Transports/MqttTransportAdapter.h"
-#include "EspNow/EspNowClientHandler.h"
-#include "Models/Credentials.h"
-#ifdef OTA_ENABLED
-#include "OTA/OTA.h"
-#endif
-#include "Wifi/WifiHelper.h"
+#include "Infra/Transports/IMessageClient.h"
+
+#include "Infra/Wifi/WifiHelper.h"
 #include <vector>
 #include <functional>
 #include <string>
-#include "Builders/CapabilityBuilder.h"
-#include "Models/DeviceAnnouncement.h"
-#include "Models/PropertyState.h"
+#include "Platform/Builders/CapabilityBuilder.h"
+#include "Core/Models/DeviceAnnouncement.h"
+#include "Core/Models/PropertyState.h"
 #include "Capabilities/GlpSensorCapability.h"
 
 #ifdef ESP_NOW_ENABLED
 #include "esp_now_utils/esp_now_utils.h"
 #endif
+#include "Infra/Settings/Models/Settings.h"
+#include "Core/Models/Property.h"
 
-#include "OTA/FirmwareUpdater.h"
 
 #ifndef DISCOVERY_TOPIC_DEFAULT
 #define DISCOVERY_TOPIC_DEFAULT "smarthome/discovery"

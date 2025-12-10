@@ -1,6 +1,4 @@
 #include "RGBLightCapability.h"
-#include "Utils/Logger.h"
-#include <Arduino.h>
 
 #ifdef RGB_ENABLED
 

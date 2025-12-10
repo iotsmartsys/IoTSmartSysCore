@@ -1,5 +1,4 @@
 #include "ValveCapability.h"
-#include "Utils/Logger.h"
 
 ValveCapability::ValveCapability(String capability_name, int pin, DigitalLogic stateLogic)
     : Capability(capability_name, VaLVE_ACTUATOR_TYPE, stateLogic == DigitalLogic::NORMAL ? VALVE_STATE_CLOSED : VALVE_STATE_OPEN)
