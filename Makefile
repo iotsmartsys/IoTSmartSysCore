@@ -35,5 +35,5 @@ tag:
 	git push origin "v$$VERSION"
 
 
-test:
+test-u:
 	pio test -vvv -e esp32_glp_meter

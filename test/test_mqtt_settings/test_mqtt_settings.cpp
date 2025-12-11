@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <unity.h>
 
-#include "Settings/Models/MqttSettings.h"
+#include "Infra/Settings/Models/MqttSettings.h"
 
 void test_command_topic_placeholder_is_replaced()
 {

@@ -3,22 +3,30 @@
 #include "BH1750SensorCapability.h"
 #include "Utils/Logger.h"
 
-BH1750 bh1750Sensor;
-
-
-BH1750SensorCapability::BH1750SensorCapability(BH1750 *lightMeter, float readInterval) : LuminositySensorCapability(0, readInterval)
-{
-    this->lightMeter = lightMeter;
+namespace {
+    BH1750 defaultBh1750;
 }
 
-BH1750SensorCapability::BH1750SensorCapability(BH1750 *lightMeter, float luminosidadeVariationToleranceToUpdate, float readInterval) : LuminositySensorCapability(luminosidadeVariationToleranceToUpdate, readInterval)
+
+BH1750SensorCapability::BH1750SensorCapability(BH1750 *lightMeter, float readInterval)
+    : BH1750SensorCapability(lightMeter, 0.0f, readInterval)
 {
-    this->lightMeter = lightMeter;
 }
 
-BH1750SensorCapability::BH1750SensorCapability(float luminosidadeVariationToleranceToUpdate, float readInterval) : LuminositySensorCapability(luminosidadeVariationToleranceToUpdate, readInterval)
+BH1750SensorCapability::BH1750SensorCapability(BH1750 *lightMeter,
+                                               float luminosidadeVariationToleranceToUpdate,
+                                               float readInterval)
+    : LuminositySensorCapability(luminosidadeVariationToleranceToUpdate, readInterval),
+      lightMeter(lightMeter ? lightMeter : &defaultBh1750)
 {
-    this->lightMeter = &bh1750Sensor;
+}
+
+BH1750SensorCapability::BH1750SensorCapability(float luminosidadeVariationToleranceToUpdate,
+                                               float readInterval)
+    : BH1750SensorCapability(&defaultBh1750,
+                             luminosidadeVariationToleranceToUpdate,
+                             readInterval)
+{
 }
 
 void BH1750SensorCapability::setup()
