@@ -1,4 +1,6 @@
 
+#pragma once
+
 namespace iotsmartsys::core
 {
     enum class ICapabilityType

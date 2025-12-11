@@ -34,6 +34,7 @@ tag:
 	git tag -a "v$$VERSION" -m "Release IoTSmartSysCore v$$VERSION"; \
 	git push origin "v$$VERSION"
 
-
 test-u:
-	pio test -vvv -e esp32_glp_meter
+	clear
+	clear
+	pio test -vvv -e esp32_test

@@ -34,7 +34,7 @@ namespace iotsmartsys::core
         power(SWITCH_STATE_OFF);
     }
 
-    bool LightCapability::isOn()
+    bool LightCapability::isOn() const
     {
         return value == SWITCH_STATE_ON;
     }
@@ -46,6 +46,6 @@ namespace iotsmartsys::core
 
     void LightCapability::power(const std::string &state)
     {
-        applyCommand(iotsmartsys::core::ICapabilityCommand{capability_name, type, state});
+        applyCommand(iotsmartsys::core::ICommand{type, state});
     }
 } // namespace iotsmartsys::core

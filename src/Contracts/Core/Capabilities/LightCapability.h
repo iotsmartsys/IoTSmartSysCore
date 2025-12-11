@@ -15,7 +15,7 @@ namespace iotsmartsys::core
         void toggle();
         void turnOn();
         void turnOff();
-        bool isOn();
+        bool isOn() const;
         void executeCommand(const std::string &state);
 
     private:

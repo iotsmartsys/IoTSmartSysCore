@@ -4,7 +4,6 @@
 
 namespace iotsmartsys::core
 {
-
     class ICapabilityState
     {
     public:

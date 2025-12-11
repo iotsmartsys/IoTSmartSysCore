@@ -34,7 +34,7 @@ namespace iotsmartsys::core
         std::string type;
         std::string value;
 
-        void applyCommand(ICapabilityCommand command)
+        void applyCommand(ICommand command)
         {
             if (hardware_adapator)
             {

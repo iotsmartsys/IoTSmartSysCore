@@ -8,7 +8,16 @@ namespace iotsmartsys::core
     {
     public:
         std::string capability_name;
-        std::string value;
         std::string device_id;
+        std::string value;
     };
+
+    class ICommand
+    {
+
+    public:
+        std::string command;
+        std::string value;
+    };
+
 }
