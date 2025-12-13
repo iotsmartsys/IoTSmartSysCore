@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     LightCapability::LightCapability(std::string name,
-                                     IHardwareAdapater &hardwareAdapter)
+                                     IHardwareAdapter &hardwareAdapter)
         : ICapability(&hardwareAdapter, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF)
     {
     }

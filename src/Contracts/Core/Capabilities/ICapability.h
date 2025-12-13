@@ -4,7 +4,7 @@
 #include "ICapabilityState.h"
 #include "ICapabilityCommand.h"
 #include "ICapabilityType.h"
-#include "Contracts/Core/Adapters/IHardwareAdapater.h"
+#include "Contracts/Core/Adapters/IHardwareAdapter.h"
 #include "Contracts/Core/Providers/ITimeProvider.h"
 
 namespace iotsmartsys::core
@@ -17,13 +17,13 @@ namespace iotsmartsys::core
         ICapability(std::string capability_name, std::string type, std::string value)
             : capability_name(capability_name), type(type), value(value) {}
 
-        ICapability(IHardwareAdapater *hardware_adapator,
+        ICapability(IHardwareAdapter *hardware_adapator,
                     std::string capability_name,
                     std::string type,
                     std::string value)
             : hardware_adapator(hardware_adapator), capability_name(capability_name), type(type), value(value) {}
 
-        ICapability(IHardwareAdapater *hardware_adapator,
+        ICapability(IHardwareAdapter *hardware_adapator,
                     std::string type,
                     std::string value)
             : hardware_adapator(hardware_adapator), capability_name(""), type(type), value(value) {}
@@ -83,7 +83,7 @@ namespace iotsmartsys::core
         }
 
     private:
-        IHardwareAdapater *hardware_adapator;
+        IHardwareAdapter *hardware_adapator;
         bool changed = false;
     };
 }
