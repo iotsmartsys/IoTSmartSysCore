@@ -1,7 +1,7 @@
-// Platform/Arduino/ArduinoTimeProvider.h
+#pragma once
 
 #include <Arduino.h>
-#include "Contracts/Core/Providers/ITimeProvider.h"
+#include "Contracts/Providers/ITimeProvider.h"
 
 namespace iotsmartsys::platform::arduino
 {

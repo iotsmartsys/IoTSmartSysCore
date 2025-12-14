@@ -1,10 +1,9 @@
 // Platform/Arduino/Bh1750LuminositySensor.h
-#pragma once
 
 #include <Arduino.h>
 #include <Wire.h>
 #include <BH1750.h>
-#include "Contracts/Core/Sensors/ILuminositySensor.h"
+#include "Contracts/Sensors/ILuminositySensor.h"
 
 namespace iotsmartsys::platform::arduino
 {

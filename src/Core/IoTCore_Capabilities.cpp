@@ -111,16 +111,6 @@ PirSensorCapability &IoTCore::addPirSensorCapability(String capability_name, int
     return *pirSensorCapability;
 }
 
-LightCapability &IoTCore::addLightCapability(String capability_name, int lightPin)
-{
-    return capabilityBuilder->addLightCapability(capability_name, lightPin);
-}
-
-LightCapability &IoTCore::addLightCapability(int lightPin, DigitalLogic digitalLogic)
-{
-    return capabilityBuilder->addLightCapability(lightPin, digitalLogic);
-}
-
 AlarmCapability &IoTCore::addAlarmCapability(int alarmPin, DigitalLogic stateLogic)
 {
     return capabilityBuilder->addAlarmCapability(alarmPin, stateLogic);

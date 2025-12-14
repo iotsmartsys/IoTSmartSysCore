@@ -4,7 +4,6 @@
 #include <vector>
 #include "Capabilities/Capability.h"
 #include "Capabilities/PirSensorCapability.h"
-#include "Capabilities/LightCapability.h"
 #include "Capabilities/AlarmCapability.h"
 #include "Capabilities/DoorSensorCapability.h"
 #include "Capabilities/LEDCapability.h"
@@ -75,8 +74,7 @@ public:
     IRProximitySensorCapability &addIRProximitySensorCapability(String capability_name, int irPin);
     PirSensorCapability &addPirSensorCapability(int pirPin, int toleranceTime = 5);
     PirSensorCapability &addPirSensorCapability(String capability_name, int pirPin, int toleranceTime = 5);
-    LightCapability &addLightCapability(String capability_name, int lightPin);
-    LightCapability &addLightCapability(int lightPin, DigitalLogic digitalLogic = DigitalLogic::NORMAL);
+
     AlarmCapability &addAlarmCapability(int alarmPin, DigitalLogic stateLogic = DigitalLogic::INVERSE);
     AlarmCapability &addAlarmCapability(int alarmPin, long ringDuration, DigitalLogic stateLogic = DigitalLogic::INVERSE);
     DoorSensorCapability &addDoorSensorCapability(int doorPin);

@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "Contracts/Core/Adapters/IHardwareAdapter.h"
+#include "Contracts/Adapters/IHardwareAdapter.h"
 #include <cstddef>
 
 namespace iotsmartsys::core
@@ -9,6 +9,8 @@ namespace iotsmartsys::core
     class IHardwareAdapterFactory
     {
     public:
+        using AdapterDestructor = void (*)(void *);
+
         IHardwareAdapterFactory() = default;
         virtual ~IHardwareAdapterFactory() = default;
 
@@ -19,6 +21,12 @@ namespace iotsmartsys::core
         virtual std::size_t relayAdapterAlign() const = 0;
 
         virtual IHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) = 0;
+        virtual AdapterDestructor relayAdapterDestructor() const = 0;
+
+        virtual std::size_t outputAdapterSize() const = 0;
+        virtual std::size_t outputAdapterAlign() const = 0;
+        virtual IHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) = 0;
+        virtual AdapterDestructor outputAdapterDestructor() const = 0;
     };
 
 } // namespace iotsmartsys::core

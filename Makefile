@@ -37,4 +37,4 @@ tag:
 test-u:
 	clear
 	clear
-	pio test -vvv -e esp32_test
+	pio test -vvv -e esp32s3_test

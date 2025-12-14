@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "Contracts/Core/Adapters/IHardwareAdapterFactory.h"
+#include "Contracts/Adapters/IHardwareAdapterFactory.h"
 
 namespace iotsmartsys::platform::arduino
 {
@@ -18,6 +18,12 @@ namespace iotsmartsys::platform::arduino
         std::size_t relayAdapterAlign() const override;
 
         iotsmartsys::core::IHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) override;
+        AdapterDestructor relayAdapterDestructor() const override;
+
+        std::size_t outputAdapterSize() const override;
+        std::size_t outputAdapterAlign() const override;
+        iotsmartsys::core::IHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) override;
+        AdapterDestructor outputAdapterDestructor() const override;
     };
 
 } // namespace iotsmartsys::platform::arduino

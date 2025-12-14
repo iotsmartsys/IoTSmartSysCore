@@ -2,18 +2,35 @@
 #include <unity.h>
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
+#include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
+#include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
+
+#include "Contracts/Logging/Log.h"
 
 using namespace iotsmartsys;
 
+static iotsmartsys::platform::arduino::ArduinoSerialLogger logger(Serial);
 static platform::arduino::ArduinoHardwareAdapterFactory hwFactory;
+static platform::arduino::ArduinoTimeProvider timeProvider;
 
 // storage fixo (sem heap)
 static core::ICapability *capSlots[8];
 static void (*capDtors[8])(void *);
+static void *adapterSlots[8];
+static void (*adapterDtors[8])(void *);
 static uint8_t arena[2048];
 
 // builder
-static app::CapabilitiesBuilder builder(hwFactory, capSlots, capDtors, 8, arena, sizeof(arena));
+static app::CapabilitiesBuilder builder(
+    hwFactory,
+    capSlots,
+    capDtors,
+    8,
+    adapterSlots,
+    adapterDtors,
+    8,
+    arena,
+    sizeof(arena));
 
 static void reset_builder_storage()
 {
@@ -22,17 +39,21 @@ static void reset_builder_storage()
     {
         capSlots[i] = nullptr;
         capDtors[i] = nullptr;
+        adapterSlots[i] = nullptr;
+        adapterDtors[i] = nullptr;
     }
 }
 
-void test_builder_addRelay_and_execute_commands()
+void test_builder_addLight_and_alarm()
 {
     reset_builder_storage();
 
+    const uint8_t alarmPin = PIN_TEST + 1;
+
     app::LightConfig lightCfg;
     lightCfg.capability_name = "luz_sala";
-    lightCfg.pin = 5;
-    lightCfg.activeHigh = true;
+    lightCfg.pin = PIN_TEST;
+    lightCfg.activeHigh = false;
 
     auto *luz = builder.addLight(lightCfg);
     TEST_ASSERT_NOT_NULL(luz);
@@ -46,17 +67,46 @@ void test_builder_addRelay_and_execute_commands()
     TEST_ASSERT_TRUE(luz->hasChanged());
 
     TEST_ASSERT_TRUE(luz->isOn());
-
+    delay(3000);
     luz->turnOff();
     TEST_ASSERT_TRUE(luz->hasChanged());
     TEST_ASSERT_FALSE(luz->isOn());
+
+    app::AlarmConfig alarmCfg;
+    alarmCfg.capability_name = "alarme_sala";
+    alarmCfg.pin = alarmPin;
+    alarmCfg.activeState = false;
+
+    auto *alarme = builder.addAlarm(alarmCfg);
+    TEST_ASSERT_NOT_NULL(alarme);
+
+    list = builder.build();
+    TEST_ASSERT_EQUAL(2, list.count);
+
+    alarme->setup();
+
+    alarme->powerOn();
+    TEST_ASSERT_TRUE(alarme->hasChanged());
+    auto s = alarme->readState();
+    TEST_ASSERT_EQUAL_STRING("on", s.value.c_str());
+    delay(3000);
+    alarme->powerOff();
+    TEST_ASSERT_TRUE(alarme->hasChanged());
+    s = alarme->readState();
+    TEST_ASSERT_EQUAL_STRING("off", s.value.c_str());
 }
 
 void setup()
 {
     delay(200);
+    Serial.begin(115200);
+    iotsmartsys::core::Log::setLogger(&logger);
+    iotsmartsys::core::Time::setProvider(&timeProvider);
+
+    iotsmartsys::core::Log::get().info("BOOT", "Iniciando...");
+    delay(200);
     UNITY_BEGIN();
-    RUN_TEST(test_builder_addRelay_and_execute_commands);
+    RUN_TEST(test_builder_addLight_and_alarm);
     UNITY_END();
 }
 

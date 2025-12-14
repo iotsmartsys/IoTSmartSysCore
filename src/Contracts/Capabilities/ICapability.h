@@ -4,8 +4,11 @@
 #include "ICapabilityState.h"
 #include "ICapabilityCommand.h"
 #include "ICapabilityType.h"
-#include "Contracts/Core/Adapters/IHardwareAdapter.h"
-#include "Contracts/Core/Providers/ITimeProvider.h"
+#include "Contracts/Adapters/IHardwareAdapter.h"
+#include "Contracts/Providers/ITimeProvider.h"
+#include "Contracts/Logging/ILogger.h"
+#include "Contracts/Logging/Log.h"
+#include "Contracts/Providers/Time.h"
 
 namespace iotsmartsys::core
 {
@@ -82,8 +85,12 @@ namespace iotsmartsys::core
             this->capability_name = new_capability_name;
         }
 
-    private:
+    protected:
+        core::ILogger &logger = core::Log::get();
+        core::ITimeProvider &timeProvider = core::Time::get();
         IHardwareAdapter *hardware_adapator;
+
+    private:
         bool changed = false;
     };
 }

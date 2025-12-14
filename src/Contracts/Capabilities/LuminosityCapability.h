@@ -2,7 +2,7 @@
 #pragma once
 
 #include "ICapability.h"
-#include "Contracts/Core/Sensors/ILuminositySensor.h"
+#include "Contracts/Sensors/ILuminositySensor.h"
 
 namespace iotsmartsys::core
 {

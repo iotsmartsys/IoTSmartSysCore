@@ -4,10 +4,11 @@
 #include <stddef.h>
 #include <new>
 
-#include "Contracts/Core/Capabilities/ICapability.h"
-#include "Contracts/Core/Capabilities/LightCapability.h"
 #include "App/Builders/Configs/LightConfig.h"
-#include "Contracts/Core/Adapters/IHardwareAdapterFactory.h"
+#include "Contracts/Adapters/IHardwareAdapterFactory.h"
+#include "Contracts/Capabilities/ICapability.h"
+#include "Contracts/Capabilities/LightCapability.h"
+#include "Contracts/Capabilities/AlarmCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -26,11 +27,14 @@ namespace iotsmartsys::app
         using ICapability = iotsmartsys::core::ICapability;
 
         CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory& factory,
-                                             ICapability **capSlots,
-                                             void (**destructors)(void *),
-                                             size_t capSlotsMax,
-                                             uint8_t *arena,
-                                             size_t arenaBytes);
+                            ICapability **capSlots,
+                            void (**capDestructors)(void *),
+                            size_t capSlotsMax,
+                            void **adapterSlots,
+                            void (**adapterDestructors)(void *),
+                            size_t adapterSlotsMax,
+                            uint8_t *arena,
+                            size_t arenaBytes);
 
         CapabilitiesBuilder(const CapabilitiesBuilder &) = delete;
         CapabilitiesBuilder &operator=(const CapabilitiesBuilder &) = delete;
@@ -43,17 +47,24 @@ namespace iotsmartsys::app
         CapabilityList build() const;
 
         iotsmartsys::core::LightCapability *addLight(const LightConfig &cfg);
+        iotsmartsys::core::AlarmCapability *addAlarm(const AlarmConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);
         bool registerCapability(ICapability *cap, void (*destructor)(void *));
+        bool registerAdapter(void *adapter, void (*destructor)(void *));
 
     private:
         iotsmartsys::core::IHardwareAdapterFactory& _factory;
         iotsmartsys::core::ICapability **_caps{nullptr};
-        void (**_destructors)(void *){nullptr};
+        void (**_capDestructors)(void *){nullptr};
         size_t _capsMax{0};
         size_t _count{0};
+
+        void **_adapters{nullptr};
+        void (**_adapterDestructors)(void *){nullptr};
+        size_t _adaptersMax{0};
+        size_t _adaptersCount{0};
 
         uint8_t *_arena{nullptr};
         size_t _arenaBytes{0};

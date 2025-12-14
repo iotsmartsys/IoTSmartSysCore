@@ -5,24 +5,23 @@
 #include "Contracts/Adapters/IHardwareAdapter.h"
 #include "HardwareDigitalLogic.h"
 #include "Contracts/Capabilities/ICapabilityType.h"
-#include "Contracts/Logging/Log.h"
 
 namespace iotsmartsys::platform::arduino
 {
 
-    class RelayHardwareAdapter : public core::IHardwareAdapter
+    class OutputHardwareAdapter : public core::IHardwareAdapter
     {
     public:
-        RelayHardwareAdapter(int pin, HardwareDigitalLogic logic)
-            : relayPin(pin), logic(logic)
+        OutputHardwareAdapter(int pin, HardwareDigitalLogic logic)
+            : pin(pin), logic(logic)
         {
             relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
         }
 
         void setup() override
         {
-            pinMode(relayPin, OUTPUT);
-            digitalWrite(relayPin, relayState);
+            pinMode(pin, OUTPUT);
+            digitalWrite(pin, relayState);
         }
 
         bool applyCommand(const core::IHardwareCommand &command) override
@@ -52,7 +51,7 @@ namespace iotsmartsys::platform::arduino
             }
             else
             {
-
+                Serial.println("Comando inválido recebido: " + String(value.c_str()));
                 return false; // Comando inválido
             }
 
@@ -62,18 +61,18 @@ namespace iotsmartsys::platform::arduino
 
         std::string getState() override
         {
-            return (digitalRead(relayPin) == ((logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
+            return (digitalRead(pin) == ((logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
         }
 
     private:
-        int relayPin;
+        int pin;
         int relayState;
         HardwareDigitalLogic logic;
 
         void updateHardware()
         {
-            iotsmartsys::core::Log::get().info("Atualizando estado do relé no pino ");
-            digitalWrite(relayPin, relayState);
+            Serial.print("Atualizando estado do relé no pino ");
+            digitalWrite(pin, relayState);
         }
     };
 

@@ -1,5 +1,4 @@
 #include "CapabilitiesBuilder.h"
-#include "Contracts/Core/Adapters/IHardwareAdapterFactory.h"
 
 namespace iotsmartsys::app
 {
@@ -9,25 +8,28 @@ namespace iotsmartsys::app
         return (value + (alignment - 1)) & ~(alignment - 1);
     }
 
-    CapabilitiesBuilder::CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory& factory,
+    CapabilitiesBuilder::CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory &factory,
                                              ICapability **capSlots,
-                                             void (**destructors)(void *),
+                                             void (**capDestructors)(void *),
                                              size_t capSlotsMax,
+                                             void **adapterSlots,
+                                             void (**adapterDestructors)(void *),
+                                             size_t adapterSlotsMax,
                                              uint8_t *arena,
                                              size_t arenaBytes)
         : _factory(factory),
           _caps(capSlots),
-          _destructors(destructors),
+          _capDestructors(capDestructors),
           _capsMax(capSlotsMax),
+          _adapters(adapterSlots),
+          _adapterDestructors(adapterDestructors),
+          _adaptersMax(adapterSlotsMax),
           _arena(arena),
           _arenaBytes(arenaBytes)
     {
-        // Zera contadores
         _count = 0;
+        _adaptersCount = 0;
         _arenaOffset = 0;
-
-        // (Opcional) zerar arrays se quiser
-        // for (size_t i = 0; i < _capsMax; ++i) { _caps[i] = nullptr; _destructors[i] = nullptr; }
     }
 
     void CapabilitiesBuilder::reset()
@@ -35,15 +37,27 @@ namespace iotsmartsys::app
         for (size_t i = _count; i > 0; --i)
         {
             const size_t idx = i - 1;
-            if (_caps[idx] && _destructors[idx])
+            if (_caps[idx] && _capDestructors[idx])
             {
-                _destructors[idx]((void *)_caps[idx]);
+                _capDestructors[idx]((void *)_caps[idx]);
             }
             _caps[idx] = nullptr;
-            _destructors[idx] = nullptr;
+            _capDestructors[idx] = nullptr;
+        }
+
+        for (size_t i = _adaptersCount; i > 0; --i)
+        {
+            const size_t idx = i - 1;
+            if (_adapters[idx] && _adapterDestructors[idx])
+            {
+                _adapterDestructors[idx](_adapters[idx]);
+            }
+            _adapters[idx] = nullptr;
+            _adapterDestructors[idx] = nullptr;
         }
 
         _count = 0;
+        _adaptersCount = 0;
         _arenaOffset = 0;
     }
 
@@ -81,8 +95,19 @@ namespace iotsmartsys::app
             return false;
 
         _caps[_count] = cap;
-        _destructors[_count] = destructor;
+        _capDestructors[_count] = destructor;
         _count++;
+        return true;
+    }
+
+    bool CapabilitiesBuilder::registerAdapter(void *adapter, void (*destructor)(void *))
+    {
+        if (_adaptersCount >= _adaptersMax)
+            return false;
+
+        _adapters[_adaptersCount] = adapter;
+        _adapterDestructors[_adaptersCount] = destructor;
+        _adaptersCount++;
         return true;
     }
 
@@ -90,10 +115,13 @@ namespace iotsmartsys::app
 
     iotsmartsys::core::LightCapability *CapabilitiesBuilder::addLight(const LightConfig &cfg)
     {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
         const std::size_t size = _factory.relayAdapterSize();
         const std::size_t align = _factory.relayAdapterAlign();
 
-        void *mem = allocateAligned(size, align); // sua arena
+        void *mem = allocateAligned(size, align);
         if (!mem)
             return nullptr;
 
@@ -105,7 +133,10 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
-        // 1) Reserva memória alinhada para LightCapability
+        auto adapterDtor = _factory.relayAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
         void *memcap = allocateAligned(sizeof(iotsmartsys::core::LightCapability),
                                        alignof(iotsmartsys::core::LightCapability));
         if (!memcap)
@@ -115,7 +146,6 @@ namespace iotsmartsys::app
             cfg.capability_name,
             *hardwareAdapter);
 
-        // 3) Registra destructor (sem precisar de virtual destructor)
         auto dtor = [](void *p)
         {
             static_cast<iotsmartsys::core::LightCapability *>(p)->~LightCapability();
@@ -123,21 +153,64 @@ namespace iotsmartsys::app
 
         if (!registerCapability(cap, dtor))
         {
-            // Sem slot: chama destrutor manualmente (arena fica “perdida”, mas é ok; você pode resetar tudo depois)
             cap->~LightCapability();
             return nullptr;
         }
 
-        // 4) Estado inicial (se fizer sentido no teu design)
         if (cfg.initialOn)
         {
-            // Se sua LightCapability tiver método de ligar, use aqui.
-            // Se não tiver, você pode só refletir state:
             cap->updateState("on");
         }
         else
         {
             cap->updateState("off");
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addAlarm ---------------------------
+
+    iotsmartsys::core::AlarmCapability *CapabilitiesBuilder::addAlarm(const AlarmConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createOutput(
+            mem,
+            cfg.pin,
+            cfg.activeState);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.outputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::AlarmCapability),
+                                       alignof(iotsmartsys::core::AlarmCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::AlarmCapability(*hardwareAdapter);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::AlarmCapability *>(p)->~AlarmCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~AlarmCapability();
+            return nullptr;
         }
 
         return cap;

@@ -1,4 +1,4 @@
-#include "Contracts/Core/Capabilities/LightCapability.h"
+#include "Contracts/Capabilities/LightCapability.h"
 
 namespace iotsmartsys::core
 {
