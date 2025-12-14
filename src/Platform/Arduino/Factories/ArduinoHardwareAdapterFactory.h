@@ -24,6 +24,11 @@ namespace iotsmartsys::platform::arduino
         std::size_t outputAdapterAlign() const override;
         iotsmartsys::core::IHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) override;
         AdapterDestructor outputAdapterDestructor() const override;
+
+        std::size_t inputAdapterSize() const override;
+        std::size_t inputAdapterAlign() const override;
+        iotsmartsys::core::IHardwareAdapter *createInput(void *mem, std::uint8_t pin) override;
+        AdapterDestructor inputAdapterDestructor() const override;
     };
 
 } // namespace iotsmartsys::platform::arduino

@@ -1,15 +1,10 @@
 #pragma once
 
 #include <string>
+#include "IHardwareCommand.h"
 
 namespace iotsmartsys::core
 {
-    struct IHardwareCommand
-    {
-    public:
-        std::string command;
-    };
-
     struct IHardwareAdapter
     {
     public:

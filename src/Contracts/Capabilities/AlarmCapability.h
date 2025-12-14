@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     class AlarmCapability : public ICapability
     {
     public:
-        AlarmCapability(IHardwareAdapter &hardwareAdapter) ;
+        AlarmCapability(IHardwareAdapter &hardwareAdapter);
 
         void setup() override;
         void handle() override;

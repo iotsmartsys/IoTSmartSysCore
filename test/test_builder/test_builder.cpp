@@ -50,6 +50,7 @@ void test_builder_addLight_and_alarm()
 
     const uint8_t alarmPin = PIN_TEST + 1;
 
+    // adicionar luz
     app::LightConfig lightCfg;
     lightCfg.capability_name = "luz_sala";
     lightCfg.pin = PIN_TEST;
@@ -72,6 +73,7 @@ void test_builder_addLight_and_alarm()
     TEST_ASSERT_TRUE(luz->hasChanged());
     TEST_ASSERT_FALSE(luz->isOn());
 
+    // adicionar alarme
     app::AlarmConfig alarmCfg;
     alarmCfg.capability_name = "alarme_sala";
     alarmCfg.pin = alarmPin;
@@ -94,6 +96,24 @@ void test_builder_addLight_and_alarm()
     TEST_ASSERT_TRUE(alarme->hasChanged());
     s = alarme->readState();
     TEST_ASSERT_EQUAL_STRING("off", s.value.c_str());
+
+    // adicionar sensor de porta
+    app::DoorSensorConfig doorSensorCfg;
+    doorSensorCfg.capability_name = "sensor_porta";
+    doorSensorCfg.pin = PIN_TEST + 2;
+
+    auto *sensorPorta = builder.addDoorSensor(doorSensorCfg);
+    TEST_ASSERT_NOT_NULL(sensorPorta);
+
+    list = builder.build();
+    TEST_ASSERT_EQUAL(3, list.count);
+
+    sensorPorta->setup();
+
+    TEST_ASSERT_FALSE(sensorPorta->hasChanged());
+
+    // Reset builder storage
+    reset_builder_storage();
 }
 
 void setup()

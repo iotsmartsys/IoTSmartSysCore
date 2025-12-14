@@ -3,6 +3,7 @@
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 #include "Platform/Arduino/Adapters/RelayHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
+#include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
 
 namespace iotsmartsys::platform::arduino
 {
@@ -74,6 +75,36 @@ namespace iotsmartsys::platform::arduino
 
         // ✅ sem heap, sem fragmentação
         return new (mem) OutputHardwareAdapter(pin, logic);
+    }
+
+    /* Input */
+    std::size_t ArduinoHardwareAdapterFactory::inputAdapterSize() const
+    {
+        return sizeof(InputHardwareAdapter);
+    }
+
+    std::size_t ArduinoHardwareAdapterFactory::inputAdapterAlign() const
+    {
+        return alignof(InputHardwareAdapter);
+    }
+
+    static void destroyInputAdapter(void *p)
+    {
+        if (!p) return;
+        static_cast<InputHardwareAdapter *>(p)->~InputHardwareAdapter();
+    }
+
+    ArduinoHardwareAdapterFactory::AdapterDestructor ArduinoHardwareAdapterFactory::inputAdapterDestructor() const
+    {
+        return &destroyInputAdapter;
+    }
+
+    iotsmartsys::core::IHardwareAdapter *ArduinoHardwareAdapterFactory::createInput(
+        void *mem,
+        std::uint8_t pin)
+    {
+        // ✅ sem heap, sem fragmentação
+        return new (mem) InputHardwareAdapter(pin);
     }
 
 } // namespace iotsmartsys::platform::arduino

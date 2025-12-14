@@ -111,23 +111,6 @@ PirSensorCapability &IoTCore::addPirSensorCapability(String capability_name, int
     return *pirSensorCapability;
 }
 
-AlarmCapability &IoTCore::addAlarmCapability(int alarmPin, DigitalLogic stateLogic)
-{
-    return capabilityBuilder->addAlarmCapability(alarmPin, stateLogic);
-}
-
-AlarmCapability &IoTCore::addAlarmCapability(String capability_name, int alarmPin, DigitalLogic stateLogic)
-{
-    AlarmCapability *alarmCapability = &capabilityBuilder->addAlarmCapability(alarmPin, stateLogic);
-    alarmCapability->rename(capability_name);
-    return *alarmCapability;
-}
-
-AlarmCapability &IoTCore::addAlarmCapability(int alarmPin, long ringDuration, DigitalLogic stateLogic)
-{
-    return capabilityBuilder->addAlarmCapability(alarmPin, ringDuration, stateLogic);
-}
-
 DoorSensorCapability &IoTCore::addDoorSensorCapability(int doorPin)
 {
     return capabilityBuilder->addDoorSensorCapability(doorPin);

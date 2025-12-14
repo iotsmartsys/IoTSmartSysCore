@@ -104,9 +104,6 @@ public:
     /// @return A reference to the created PirSensorCapability
     PirSensorCapability &addPirSensorCapability(String capability_name, int pirPin, int toleranceTime = 5);
     
-    AlarmCapability &addAlarmCapability(int alarmPin, DigitalLogic stateLogic = DigitalLogic::INVERSE);
-    AlarmCapability &addAlarmCapability(int alarmPin, long ringDuration, DigitalLogic stateLogic = DigitalLogic::NORMAL);
-    AlarmCapability &addAlarmCapability(String capability_name, int alarmPin, DigitalLogic stateLogic = DigitalLogic::NORMAL);
     DoorSensorCapability &addDoorSensorCapability(int doorPin);
     LEDCapability &addLEDCapability(String capability_name, int ledPin, DigitalLogic ledLogic = DigitalLogic::NORMAL);
     ValveCapability &addValveCapability(String capability_name, int valvePin, DigitalLogic valveLogic = DigitalLogic::NORMAL);

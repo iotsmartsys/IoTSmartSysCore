@@ -27,6 +27,11 @@ namespace iotsmartsys::core
         virtual std::size_t outputAdapterAlign() const = 0;
         virtual IHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) = 0;
         virtual AdapterDestructor outputAdapterDestructor() const = 0;
+
+        virtual std::size_t inputAdapterSize() const = 0;
+        virtual std::size_t inputAdapterAlign() const = 0;
+        virtual IHardwareAdapter *createInput(void *mem, std::uint8_t pin) = 0;
+        virtual AdapterDestructor inputAdapterDestructor() const = 0;
     };
 
 } // namespace iotsmartsys::core

@@ -216,4 +216,50 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addDoorSensor ---------------------------
+    iotsmartsys::core::DoorSensorCapability *CapabilitiesBuilder::addDoorSensor(const DoorSensorConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.inputAdapterSize();
+        const std::size_t align = _factory.inputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createInput(
+            mem,
+            cfg.pin);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.inputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::DoorSensorCapability),
+                                       alignof(iotsmartsys::core::DoorSensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::DoorSensorCapability(
+            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::DoorSensorCapability *>(p)->~DoorSensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~DoorSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app

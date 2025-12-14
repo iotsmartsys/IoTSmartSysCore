@@ -114,20 +114,6 @@ PirSensorCapability &CollectionCapabilityBuilder::addPirSensorCapability(String 
     return *pirSensorCapability;
 }
 
-AlarmCapability &CollectionCapabilityBuilder::addAlarmCapability(int alarmPin, long ringDuration, DigitalLogic stateLogic)
-{
-    AlarmCapability *alarmCapability = new AlarmCapability(alarmPin, stateLogic);
-    alarmCapability->setRingDuration(ringDuration);
-    capabilities.push_back(alarmCapability);
-    return *alarmCapability;
-}
-AlarmCapability &CollectionCapabilityBuilder::addAlarmCapability(int alarmPin, DigitalLogic stateLogic)
-{
-    AlarmCapability *alarmCapability = new AlarmCapability(alarmPin, stateLogic);
-    capabilities.push_back(alarmCapability);
-    return *alarmCapability;
-}
-
 DoorSensorCapability &CollectionCapabilityBuilder::addDoorSensorCapability(int doorPin)
 {
     DoorSensorCapability *doorSensorCapability = new DoorSensorCapability(doorPin);
