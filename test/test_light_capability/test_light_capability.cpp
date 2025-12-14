@@ -4,7 +4,7 @@
 #include "Platform/Arduino/Adapters/RelayHardwareAdapter.h"
 
 using namespace iotsmartsys;
-platform::arduino::RelayHardwareAdapter relayAdapter(2, platform::arduino::HardwareDigitalLogic::HIGH_IS_ON);
+platform::arduino::RelayHardwareAdapter relayAdapter(PIN_TEST, platform::arduino::HardwareDigitalLogic::HIGH_IS_ON);
 core::LightCapability lightCap("TestLight", relayAdapter);
 
 void test_light_capability()
