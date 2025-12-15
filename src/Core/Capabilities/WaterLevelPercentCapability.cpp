@@ -21,7 +21,6 @@ namespace iotsmartsys::core
         if (!sensor)
             return;
 
-        // sensor handles its own read interval; call its handle helper
         sensor->handle();
 
         float current = sensor->getLevelPercent();

@@ -20,6 +20,7 @@
 #include "Contracts/Capabilities/LEDCapability.h"
 #include "Contracts/Capabilities/WaterFlowHallSensorCapability.h"
 #include "Contracts/Capabilities/WaterLevelPercentCapability.h"
+#include "Contracts/Capabilities/WaterLevelLitersCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -69,7 +70,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::ValveCapability *addValve(const SwitchPlugConfig &cfg);
         iotsmartsys::core::LEDCapability *addLED(const LightConfig &cfg);
         iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensor(const WaterFlowHallSensorConfig &cfg);
-    iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercent(const WaterLevelSensorConfig &cfg);
+        iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercent(const WaterLevelSensorConfig &cfg);
+        iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLiters(const WaterLevelSensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);

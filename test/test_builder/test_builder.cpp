@@ -71,7 +71,7 @@ void test_builder_capabilities()
     TEST_ASSERT_TRUE(luz->hasChanged());
 
     TEST_ASSERT_TRUE(luz->isOn());
-    delay(3000);
+    delay(500);
     luz->turnOff();
     TEST_ASSERT_TRUE(luz->hasChanged());
     TEST_ASSERT_FALSE(luz->isOn());
@@ -120,7 +120,7 @@ void test_builder_capabilities()
     app::PirSensorConfig pirSensorCfg;
     pirSensorCfg.capability_name = "sensor_pir";
     pirSensorCfg.pin = 46; // pino de teste para sensor PIR
-    pirSensorCfg.toleranceTime = 3; // 3 segundos
+    pirSensorCfg.toleranceTime = 1; // 1 segundos
     auto *sensorPir = builder.addPirSensor(pirSensorCfg);
     TEST_ASSERT_NOT_NULL(sensorPir);
     list = builder.build();
@@ -134,7 +134,7 @@ void test_builder_capabilities()
     app::ClapSensorConfig clapCfg;
     clapCfg.capability_name = "sensor_clap";
     clapCfg.pin = PIN_TEST; // pino de teste para sensor de palmas
-    clapCfg.toleranceTime = 2; // 2 segundos
+    clapCfg.toleranceTime = 1; // 1 segundos
     auto *sensorClap = builder.addClapSensor(clapCfg);
     TEST_ASSERT_NOT_NULL(sensorClap);
     list = builder.build();
@@ -149,7 +149,7 @@ void test_builder_capabilities()
     // Simula o input de palmas no pino sem detectar palmas
     pinMode(PIN_TEST, OUTPUT);
     digitalWrite(PIN_TEST, LOW);
-    delay(3000);
+    delay(1200);
     sensorClap->handle();
     TEST_ASSERT_FALSE(sensorClap->isClapDetected());
     TEST_ASSERT_TRUE(sensorClap->hasChanged());
@@ -171,7 +171,7 @@ void test_builder_capabilities()
     TEST_ASSERT_TRUE(switchPlug->hasChanged());
     auto st = switchPlug->readState();
     TEST_ASSERT_EQUAL_STRING("on", st.value.c_str());
-    delay(1000);
+    delay(100);
     switchPlug->turnOff();
     TEST_ASSERT_TRUE(switchPlug->hasChanged());
     st = switchPlug->readState();

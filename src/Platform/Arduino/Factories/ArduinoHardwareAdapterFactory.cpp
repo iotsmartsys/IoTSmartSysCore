@@ -138,10 +138,8 @@ namespace iotsmartsys::platform::arduino
         float maxLevelCm,
         iotsmartsys::core::WaterLevelRecipentType recipentType)
     {
-        // Criar o sensor ultrassônico HC-SR04
         auto *sr04Sensor = new SensorUltrassonic_HC_SR04(trigPin, echoPin, static_cast<long>(minLevelCm), static_cast<long>(maxLevelCm));
 
-        // ✅ sem heap, sem fragmentação
         return new (mem) ArduinoUltrassonicWaterLevelSensor(sr04Sensor, recipentType);
     }
 } // namespace iotsmartsys::platform::arduino

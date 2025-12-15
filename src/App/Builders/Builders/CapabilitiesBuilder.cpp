@@ -182,7 +182,7 @@ namespace iotsmartsys::app
         if (!mem)
             return nullptr;
 
-    bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
+        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
 
         auto *hardwareAdapter = _factory.createOutput(
             mem,
@@ -328,7 +328,7 @@ namespace iotsmartsys::app
         if (!mem)
             return nullptr;
 
-    bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
+        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
 
         auto *hardwareAdapter = _factory.createOutput(
             mem,
@@ -729,6 +729,34 @@ namespace iotsmartsys::app
         if (!registerCapability(cap, dtor))
         {
             cap->~WaterLevelPercentCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addWaterLevelLiters ---------------------------
+    iotsmartsys::core::WaterLevelLitersCapability *CapabilitiesBuilder::addWaterLevelLiters(const WaterLevelSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::WaterLevelLitersCapability),
+                                       alignof(iotsmartsys::core::WaterLevelLitersCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::WaterLevelLitersCapability(
+            static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::WaterLevelLitersCapability *>(p)->~WaterLevelLitersCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~WaterLevelLitersCapability();
             return nullptr;
         }
 

@@ -7,11 +7,12 @@
 #include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
 #include "Contracts/Logging/Log.h"
 #include "mocks/TestWaterLevelSensor.h"
+#include "mocks/MockHardwareAdapterFactory.h"
 
 using namespace iotsmartsys;
 
 static platform::arduino::ArduinoSerialLogger logger(Serial);
-static platform::arduino::ArduinoHardwareAdapterFactory hwFactory;
+static iotsmartsys::test::mocks::MockHardwareAdapterFactory hwFactory;
 static platform::arduino::ArduinoTimeProvider timeProvider;
 
 // storage for builder
@@ -32,9 +33,8 @@ static app::CapabilitiesBuilder builder(
     arena,
     sizeof(arena));
 
-void test_waterlevelpercent_builder()
+void test_waterlevelliters_builder()
 {
-    // reset builder
     builder.reset();
     for (size_t i = 0; i < 8; ++i)
     {
@@ -45,13 +45,14 @@ void test_waterlevelpercent_builder()
     }
 
     TestWaterLevelSensor sensor;
-    sensor.setLevel(12.345f);
+    hwFactory.setWaterLevelSensor(&sensor);
+    sensor.setLiters(223.456f);
 
     app::WaterLevelSensorConfig cfg;
-    cfg.capability_name = "nivel_tanque";
+    cfg.capability_name = "nivel_litros";
     cfg.sensor = &sensor;
 
-    auto *cap = builder.addWaterLevelPercent(cfg);
+    auto *cap = builder.addWaterLevelLiters(cfg);
     TEST_ASSERT_NOT_NULL(cap);
 
     auto list = builder.build();
@@ -59,10 +60,17 @@ void test_waterlevelpercent_builder()
 
     cap->setup();
     cap->handle();
+    TEST_ASSERT_EQUAL(223.456f, cap->getLevelLiters());
+
+    delay(1200); // simulate time passing
+    sensor.setLiters(225.567f);
+    cap->handle();
+
+    TEST_ASSERT_EQUAL(225.567f, cap->getLevelLiters());
 
     TEST_ASSERT_TRUE(cap->hasChanged());
     auto s = cap->readState();
-    TEST_ASSERT_NOT_EQUAL_MESSAGE("0", s.value.c_str(), "Water level percent should not be zero");
+    TEST_ASSERT_NOT_EQUAL_MESSAGE("0", s.value.c_str(), "Water level in liters is not as expected");
 }
 
 void setup()
@@ -73,7 +81,7 @@ void setup()
     core::Time::setProvider(&timeProvider);
 
     UNITY_BEGIN();
-    RUN_TEST(test_waterlevelpercent_builder);
+    RUN_TEST(test_waterlevelliters_builder);
     UNITY_END();
 }
 

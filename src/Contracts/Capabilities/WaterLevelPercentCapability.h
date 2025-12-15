@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ICapability.h"
-#include "../Providers/ITimeProvider.h"
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 
 namespace iotsmartsys::core

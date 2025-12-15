@@ -66,7 +66,6 @@ void test_water_flow_with_builder_capabilities()
 
 void setup()
 {
-    delay(200);
     Serial.begin(115200);
     iotsmartsys::core::Log::setLogger(&logger);
     iotsmartsys::core::Time::setProvider(&timeProvider);
