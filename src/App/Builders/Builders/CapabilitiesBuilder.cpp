@@ -707,4 +707,32 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addWaterLevelPercent ---------------------------
+    iotsmartsys::core::WaterLevelPercentCapability *CapabilitiesBuilder::addWaterLevelPercent(const WaterLevelSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::WaterLevelPercentCapability),
+                                       alignof(iotsmartsys::core::WaterLevelPercentCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::WaterLevelPercentCapability(
+            cfg.sensor);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::WaterLevelPercentCapability *>(p)->~WaterLevelPercentCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~WaterLevelPercentCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app

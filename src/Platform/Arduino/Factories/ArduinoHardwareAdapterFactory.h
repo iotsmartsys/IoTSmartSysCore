@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
+#include "Contracts/Sensors/IWaterLevelSensor.h"
 
 namespace iotsmartsys::platform::arduino
 {
@@ -32,6 +33,11 @@ namespace iotsmartsys::platform::arduino
         iotsmartsys::core::IHardwareAdapter *createInput(void *mem, std::uint8_t pin) override;
         AdapterDestructor inputAdapterDestructor() const override;
 
+        /* IWaterLevelSensor */
+        std::size_t waterLevelSensorAdapterSize() const override;
+        std::size_t waterLevelSensorAdapterAlign() const override;
+        iotsmartsys::core::IWaterLevelSensor *createWaterLevelSensor(void *mem, std::uint8_t trigPin, std::uint8_t echoPin, float minLevelCm, float maxLevelCm, iotsmartsys::core::WaterLevelRecipentType recipentType) override;
+        AdapterDestructor waterLevelSensorAdapterDestructor() const override;
 
     };
 

@@ -2,6 +2,7 @@
 
 #include "CapabilityConfig.h"
 #include "Core/Models/DigitalLogic.h"
+#include "Contracts/Sensors/IWaterLevelSensor.h"
 
 namespace iotsmartsys::app
 {
@@ -57,6 +58,12 @@ namespace iotsmartsys::app
     struct WaterFlowHallSensorConfig : public CapabilityConfig
     {
         uint8_t pin;
+    };
+
+    struct WaterLevelSensorConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::IWaterLevelSensor *sensor{nullptr};
     };
 
 } // namespace iotsmartsys::app

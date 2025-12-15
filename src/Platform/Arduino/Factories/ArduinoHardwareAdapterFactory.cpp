@@ -4,6 +4,7 @@
 #include "Platform/Arduino/Adapters/RelayHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
+#include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
 
 namespace iotsmartsys::platform::arduino
 {
@@ -20,7 +21,8 @@ namespace iotsmartsys::platform::arduino
 
     static void destroyRelayAdapter(void *p)
     {
-        if (!p) return;
+        if (!p)
+            return;
         static_cast<RelayHardwareAdapter *>(p)->~RelayHardwareAdapter();
     }
 
@@ -52,10 +54,11 @@ namespace iotsmartsys::platform::arduino
     {
         return alignof(OutputHardwareAdapter);
     }
-    
+
     static void destroyOutputAdapter(void *p)
     {
-        if (!p) return;
+        if (!p)
+            return;
         static_cast<OutputHardwareAdapter *>(p)->~OutputHardwareAdapter();
     }
 
@@ -63,7 +66,7 @@ namespace iotsmartsys::platform::arduino
     {
         return &destroyOutputAdapter;
     }
-    
+
     iotsmartsys::core::IHardwareAdapter *ArduinoHardwareAdapterFactory::createOutput(
         void *mem,
         std::uint8_t pin,
@@ -90,7 +93,8 @@ namespace iotsmartsys::platform::arduino
 
     static void destroyInputAdapter(void *p)
     {
-        if (!p) return;
+        if (!p)
+            return;
         static_cast<InputHardwareAdapter *>(p)->~InputHardwareAdapter();
     }
 
@@ -107,4 +111,37 @@ namespace iotsmartsys::platform::arduino
         return new (mem) InputHardwareAdapter(pin);
     }
 
+    /* IWaterLevelSensor */
+    std::size_t ArduinoHardwareAdapterFactory::waterLevelSensorAdapterSize() const
+    {
+        return sizeof(ArduinoUltrassonicWaterLevelSensor);
+    }
+    std::size_t ArduinoHardwareAdapterFactory::waterLevelSensorAdapterAlign() const
+    {
+        return alignof(ArduinoUltrassonicWaterLevelSensor);
+    }
+    static void destroyWaterLevelSensorAdapter(void *p)
+    {
+        if (!p)
+            return;
+        static_cast<ArduinoUltrassonicWaterLevelSensor *>(p)->~ArduinoUltrassonicWaterLevelSensor();
+    }
+    ArduinoHardwareAdapterFactory::AdapterDestructor ArduinoHardwareAdapterFactory::waterLevelSensorAdapterDestructor() const
+    {
+        return &destroyWaterLevelSensorAdapter;
+    }
+    iotsmartsys::core::IWaterLevelSensor *ArduinoHardwareAdapterFactory::createWaterLevelSensor(
+        void *mem,
+        std::uint8_t trigPin,
+        std::uint8_t echoPin,
+        float minLevelCm,
+        float maxLevelCm,
+        iotsmartsys::core::WaterLevelRecipentType recipentType)
+    {
+        // Criar o sensor ultrassônico HC-SR04
+        auto *sr04Sensor = new SensorUltrassonic_HC_SR04(trigPin, echoPin, static_cast<long>(minLevelCm), static_cast<long>(maxLevelCm));
+
+        // ✅ sem heap, sem fragmentação
+        return new (mem) ArduinoUltrassonicWaterLevelSensor(sr04Sensor, recipentType);
+    }
 } // namespace iotsmartsys::platform::arduino

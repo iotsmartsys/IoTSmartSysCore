@@ -1,0 +1,21 @@
+#pragma once
+
+namespace iotsmartsys::core
+{
+    enum class WaterLevelRecipentType
+    {
+        Circle1000L = 1,
+        Circle2000L = 2,
+        Circle5000L = 3,
+    };
+
+#define RECIPENT_1000L_HEIGHT 58.00
+#define RECIPENT_1000L_DISTANCE_TO_SENSOR 28.00
+#define RECIPENT_1000L_DIAMETER_TOP 148.00
+#define RECIPENT_1000L_DIAMETER_BASE 114.00
+
+#define RECIPENT_2000L_HEIGHT 68.00
+#define RECIPENT_2000L_DISTANCE_TO_SENSOR 37.48
+#define RECIPENT_2000L_DIAMETER_TOP 193.00
+#define RECIPENT_2000L_DIAMETER_BASE 163.00
+}
