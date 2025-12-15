@@ -54,4 +54,9 @@ namespace iotsmartsys::app
         int toleranceTimeMs = 50; // debounce in ms
     };
 
+    struct WaterFlowHallSensorConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+    };
+
 } // namespace iotsmartsys::app

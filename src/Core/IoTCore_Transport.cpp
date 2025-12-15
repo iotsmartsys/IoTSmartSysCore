@@ -72,7 +72,7 @@ void IoTCore::subscribe(const char *topic)
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        // std::cerr << e.what() << '\n';
     }
 }
 
@@ -90,7 +90,7 @@ void IoTCore::sendState(CapabilityState state)
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        // std::cerr << e.what() << '\n';
     }
 }
 
@@ -108,7 +108,7 @@ void IoTCore::sendDeviceIncoming(DeviceAnnouncement announcement)
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        // std::cerr << e.what() << '\n';
     }
 }
 

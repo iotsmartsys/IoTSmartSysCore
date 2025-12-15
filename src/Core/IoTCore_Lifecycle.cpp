@@ -48,24 +48,24 @@ IoTCore::~IoTCore()
     }
     properties.clear();
 
-    if (ledCapability)
-    {
-        delete ledCapability;
-        ledCapability = nullptr;
-    }
+    // if (ledCapability)
+    // {
+    //     delete ledCapability;
+    //     ledCapability = nullptr;
+    // }
 
-    if (capabilityBuilder)
-    {
-        delete capabilityBuilder;
-        capabilityBuilder = nullptr;
-    }
+    // if (capabilityBuilder)
+    // {
+    //     delete capabilityBuilder;
+    //     capabilityBuilder = nullptr;
+    // }
 }
 
-LEDCapability &IoTCore::configureLEDControl(int ledPin, DigitalLogic ledLogic)
-{
-    ledCapability = new LEDCapability("led_control", ledPin, ledLogic);
-    return *ledCapability;
-}
+// LEDCapability &IoTCore::configureLEDControl(int ledPin, DigitalLogic ledLogic)
+// {
+//     ledCapability = new LEDCapability("led_control", ledPin, ledLogic);
+//     return *ledCapability;
+// }
 
 void IoTCore::setup()
 {
@@ -95,7 +95,7 @@ void IoTCore::setup()
     ConfigManager::instance().loadConfig();
     if (capabilities.size() == 0)
     {
-        this->capabilities = capabilityBuilder->build();
+        // this->capabilities = capabilityBuilder->build();
     }
     for (const auto &cap : capabilities)
     {
@@ -132,11 +132,11 @@ void IoTCore::setup()
 
     transport->setup();
 
-    if (ledCapability != nullptr)
-    {
-        ledCapability->setup();
-        ledCapability->turnOn();
-    }
+    // if (ledCapability != nullptr)
+    // {
+    //     ledCapability->setup();
+    //     ledCapability->turnOn();
+    // }
 
 #ifdef ESP_NOW_ENABLED
 
@@ -161,8 +161,8 @@ void IoTCore::handle()
             inRecoveryMode = true;
         }
 
-        if (ledCapability)
-            ledCapability->blink(2000);
+        // if (ledCapability)
+        //     ledCapability->blink(2000);
 
         if (millis() - lastRecoveryAttempt > 10000)
         {
@@ -188,16 +188,16 @@ void IoTCore::handle()
 
         if (transport && transport->isPowerOn())
         {
-            if (ledCapability != nullptr && ledCapability->isOn() == false)
-                ledCapability->turnOn();
+            // if (ledCapability != nullptr && ledCapability->isOn() == false)
+            //     ledCapability->turnOn();
 
             capabilitiesHandle();
         }
         else
         {
             LOG_PRINTLN("[IoTCore] Dispositivo está desligado. Ignorando loop.");
-            if (ledCapability != nullptr)
-                ledCapability->blink(2500);
+            // if (ledCapability != nullptr)
+            //     ledCapability->blink(2500);
         }
 
         notifyDeviceState();
@@ -218,7 +218,7 @@ void IoTCore::handle()
     catch (const std::exception &e)
     {
         LOG_PRINTLN("[IoTCore] Erro ao processar loop principal.");
-        std::cerr << e.what() << '\n';
+        // std::cerr << e.what() << '\n';
     }
 
 #if defined(NODE_BLE_ENABLED)

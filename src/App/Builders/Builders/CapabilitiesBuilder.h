@@ -18,6 +18,7 @@
 #include "Contracts/Capabilities/TouchButtonCapability.h"
 #include "Contracts/Capabilities/ValveCapability.h"
 #include "Contracts/Capabilities/LEDCapability.h"
+#include "Contracts/Capabilities/WaterFlowHallSensorCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -66,6 +67,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::TouchButtonCapability *addTouchButton(const PushButtonConfig &cfg);
         iotsmartsys::core::ValveCapability *addValve(const SwitchPlugConfig &cfg);
         iotsmartsys::core::LEDCapability *addLED(const LightConfig &cfg);
+        iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensor(const WaterFlowHallSensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);
