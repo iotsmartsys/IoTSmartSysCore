@@ -177,6 +177,43 @@ void test_builder_capabilities()
     st = switchPlug->readState();
     TEST_ASSERT_EQUAL_STRING("off", st.value.c_str());
 
+    // Adicionar Switch 
+    app::SwitchPlugConfig switchConfig;
+    switchConfig.capability_name = "switch_geral";
+    switchConfig.pin = PIN_TEST; // pino de teste para switch
+    switchConfig.switchLogic = DigitalLogic::NORMAL;
+    auto *switchGeral = builder.addSwitchPlug(switchConfig);
+    TEST_ASSERT_NOT_NULL(switchGeral);
+    list = builder.build();
+    TEST_ASSERT_EQUAL(7, list.count);
+    switchGeral->setup();
+    switchGeral->turnOn();
+    TEST_ASSERT_TRUE(switchGeral->hasChanged());
+    TEST_ASSERT_TRUE(switchGeral->isOn());
+    delay(1000);
+    switchGeral->turnOff();
+    TEST_ASSERT_TRUE(switchGeral->hasChanged());
+    TEST_ASSERT_FALSE(switchGeral->isOn());
+
+    // Adicionar LED
+    app::LightConfig ledConfig;
+    ledConfig.capability_name = "led_indicador";
+    ledConfig.pin = PIN_TEST; // pino de teste para LED
+    ledConfig.activeHigh = true;
+    ledConfig.initialOn = false;
+    auto *ledIndicador = builder.addLED(ledConfig);
+    TEST_ASSERT_NOT_NULL(ledIndicador);
+    list = builder.build();
+    TEST_ASSERT_EQUAL(8, list.count);
+    ledIndicador->setup();
+    ledIndicador->turnOn();
+    TEST_ASSERT_TRUE(ledIndicador->hasChanged());
+    TEST_ASSERT_TRUE(ledIndicador->isOn());
+    delay(1000);
+    ledIndicador->turnOff();
+    TEST_ASSERT_TRUE(ledIndicador->hasChanged());
+    TEST_ASSERT_FALSE(ledIndicador->isOn());
+
     // Reset builder storage
     reset_builder_storage();
 }

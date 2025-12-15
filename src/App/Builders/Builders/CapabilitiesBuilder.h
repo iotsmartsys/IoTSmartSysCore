@@ -13,6 +13,11 @@
 #include "Contracts/Capabilities/PirSensorCapability.h"
 #include "Contracts/Capabilities/SwitchPlugCapability.h"
 #include "Contracts/Capabilities/ClapSensorCapability.h"
+#include "Contracts/Capabilities/SwitchCapability.h"
+#include "Contracts/Capabilities/PushButtonCapability.h"
+#include "Contracts/Capabilities/TouchButtonCapability.h"
+#include "Contracts/Capabilities/ValveCapability.h"
+#include "Contracts/Capabilities/LEDCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -30,7 +35,7 @@ namespace iotsmartsys::app
     public:
         using ICapability = iotsmartsys::core::ICapability;
 
-        CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory& factory,
+        CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory &factory,
                             ICapability **capSlots,
                             void (**capDestructors)(void *),
                             size_t capSlotsMax,
@@ -54,8 +59,13 @@ namespace iotsmartsys::app
         iotsmartsys::core::AlarmCapability *addAlarm(const AlarmConfig &cfg);
         iotsmartsys::core::DoorSensorCapability *addDoorSensor(const DoorSensorConfig &cfg);
         iotsmartsys::core::PirSensorCapability *addPirSensor(const PirSensorConfig &cfg);
-    iotsmartsys::core::SwitchPlugCapability *addSwitchPlug(const SwitchPlugConfig &cfg);
-    iotsmartsys::core::ClapSensorCapability *addClapSensor(const ClapSensorConfig &cfg);
+        iotsmartsys::core::SwitchPlugCapability *addSwitchPlug(const SwitchPlugConfig &cfg);
+        iotsmartsys::core::ClapSensorCapability *addClapSensor(const ClapSensorConfig &cfg);
+        iotsmartsys::core::SwitchCapability *addSwitch(const SwitchPlugConfig &cfg);
+        iotsmartsys::core::PushButtonCapability *addPushButton(const PushButtonConfig &cfg);
+        iotsmartsys::core::TouchButtonCapability *addTouchButton(const PushButtonConfig &cfg);
+        iotsmartsys::core::ValveCapability *addValve(const SwitchPlugConfig &cfg);
+        iotsmartsys::core::LEDCapability *addLED(const LightConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);
@@ -63,7 +73,7 @@ namespace iotsmartsys::app
         bool registerAdapter(void *adapter, void (*destructor)(void *));
 
     private:
-        iotsmartsys::core::IHardwareAdapterFactory& _factory;
+        iotsmartsys::core::IHardwareAdapterFactory &_factory;
         iotsmartsys::core::ICapability **_caps{nullptr};
         void (**_capDestructors)(void *){nullptr};
         size_t _capsMax{0};

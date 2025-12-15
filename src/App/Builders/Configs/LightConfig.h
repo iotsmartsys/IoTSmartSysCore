@@ -42,4 +42,16 @@ namespace iotsmartsys::app
         int toleranceTime = 5; // in seconds
     };
 
+    struct PushButtonConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+        int toleranceTimeMs = 50; // debounce in ms
+    };
+
+    struct TouchButtonConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+        int toleranceTimeMs = 50; // debounce in ms
+    };
+
 } // namespace iotsmartsys::app

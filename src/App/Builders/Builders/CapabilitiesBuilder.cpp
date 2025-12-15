@@ -169,6 +169,263 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addSwitch ---------------------------
+    iotsmartsys::core::SwitchCapability *CapabilitiesBuilder::addSwitch(const SwitchPlugConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+    bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
+
+        auto *hardwareAdapter = _factory.createOutput(
+            mem,
+            cfg.pin,
+            highIsOn);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.outputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::SwitchCapability),
+                                       alignof(iotsmartsys::core::SwitchCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+
+        auto *cap = new (memcap) iotsmartsys::core::SwitchCapability(
+            name,
+            *hardwareAdapter);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::SwitchCapability *>(p)->~SwitchCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~SwitchCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addPushButton ---------------------------
+    iotsmartsys::core::PushButtonCapability *CapabilitiesBuilder::addPushButton(const PushButtonConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.inputAdapterSize();
+        const std::size_t align = _factory.inputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createInput(
+            mem,
+            cfg.pin);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.inputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::PushButtonCapability),
+                                       alignof(iotsmartsys::core::PushButtonCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::PushButtonCapability(
+            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            static_cast<unsigned long>(cfg.toleranceTimeMs));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::PushButtonCapability *>(p)->~PushButtonCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~PushButtonCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addTouchButton ---------------------------
+    iotsmartsys::core::TouchButtonCapability *CapabilitiesBuilder::addTouchButton(const PushButtonConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.inputAdapterSize();
+        const std::size_t align = _factory.inputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createInput(
+            mem,
+            cfg.pin);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.inputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::TouchButtonCapability),
+                                       alignof(iotsmartsys::core::TouchButtonCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::TouchButtonCapability(
+            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            static_cast<unsigned long>(cfg.toleranceTimeMs));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::TouchButtonCapability *>(p)->~TouchButtonCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~TouchButtonCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addValve ---------------------------
+    iotsmartsys::core::ValveCapability *CapabilitiesBuilder::addValve(const SwitchPlugConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+    bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
+
+        auto *hardwareAdapter = _factory.createOutput(
+            mem,
+            cfg.pin,
+            highIsOn);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.outputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::ValveCapability),
+                                       alignof(iotsmartsys::core::ValveCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+
+        auto *cap = new (memcap) iotsmartsys::core::ValveCapability(
+            name,
+            *hardwareAdapter);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::ValveCapability *>(p)->~ValveCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~ValveCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addLED ---------------------------
+    iotsmartsys::core::LEDCapability *CapabilitiesBuilder::addLED(const LightConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.relayAdapterSize();
+        const std::size_t align = _factory.relayAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createRelay(
+            mem,
+            cfg.pin,
+            cfg.activeHigh);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.relayAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::LEDCapability),
+                                       alignof(iotsmartsys::core::LEDCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+
+        auto *cap = new (memcap) iotsmartsys::core::LEDCapability(
+            name,
+            *hardwareAdapter);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::LEDCapability *>(p)->~LEDCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~LEDCapability();
+            return nullptr;
+        }
+
+        if (cfg.initialOn)
+        {
+            cap->updateState("on");
+        }
+        else
+        {
+            cap->updateState("off");
+        }
+
+        return cap;
+    }
+
     // --------------------------- addAlarm ---------------------------
 
     iotsmartsys::core::AlarmCapability *CapabilitiesBuilder::addAlarm(const AlarmConfig &cfg)
