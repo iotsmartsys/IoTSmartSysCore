@@ -39,6 +39,10 @@ namespace iotsmartsys::core
             logf(LogLevel::Error, tag, fmt, args);
             va_end(args);
         }
+        void error(const char *fmt, ...)
+        {
+            error("", fmt);
+        }
 
         void warn(const char *tag, const char *fmt, ...)
         {
@@ -63,10 +67,7 @@ namespace iotsmartsys::core
 
         void info(const char *fmt, ...)
         {
-            va_list args;
-            va_start(args, fmt);
-            logf(LogLevel::Info, "", fmt, args);
-            va_end(args);
+            info("", fmt);
         }
 
         void debug(const char *tag, const char *fmt, ...)
@@ -79,10 +80,7 @@ namespace iotsmartsys::core
 
         void debug(const char *fmt, ...)
         {
-            va_list args;
-            va_start(args, fmt);
-            logf(LogLevel::Debug, "", fmt, args);
-            va_end(args);
+            debug("", fmt);
         }
     };
 

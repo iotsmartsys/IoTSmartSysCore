@@ -10,6 +10,7 @@
 #include "Contracts/Capabilities/LightCapability.h"
 #include "Contracts/Capabilities/AlarmCapability.h"
 #include "Contracts/Capabilities/DoorSensorCapability.h"
+#include "Contracts/Capabilities/PirSensorCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -50,6 +51,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::LightCapability *addLight(const LightConfig &cfg);
         iotsmartsys::core::AlarmCapability *addAlarm(const AlarmConfig &cfg);
         iotsmartsys::core::DoorSensorCapability *addDoorSensor(const DoorSensorConfig &cfg);
+        iotsmartsys::core::PirSensorCapability *addPirSensor(const PirSensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);

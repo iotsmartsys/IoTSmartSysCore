@@ -48,7 +48,7 @@ void test_builder_addLight_and_alarm()
 {
     reset_builder_storage();
 
-    const uint8_t alarmPin = PIN_TEST + 1;
+    const uint8_t alarmPin = 44; // pino de teste para alarme (LED Blue)
 
     // adicionar luz
     app::LightConfig lightCfg;
@@ -100,7 +100,7 @@ void test_builder_addLight_and_alarm()
     // adicionar sensor de porta
     app::DoorSensorConfig doorSensorCfg;
     doorSensorCfg.capability_name = "sensor_porta";
-    doorSensorCfg.pin = PIN_TEST + 2;
+    doorSensorCfg.pin = 45; // pino de teste para sensor de porta
 
     auto *sensorPorta = builder.addDoorSensor(doorSensorCfg);
     TEST_ASSERT_NOT_NULL(sensorPorta);
@@ -111,6 +111,20 @@ void test_builder_addLight_and_alarm()
     sensorPorta->setup();
 
     TEST_ASSERT_FALSE(sensorPorta->hasChanged());
+
+    // Adicionar sensor PIR
+    app::PirSensorConfig pirSensorCfg;
+    pirSensorCfg.capability_name = "sensor_pir";
+    pirSensorCfg.pin = 46; // pino de teste para sensor PIR
+    pirSensorCfg.toleranceTime = 3; // 3 segundos
+    auto *sensorPir = builder.addPirSensor(pirSensorCfg);
+    TEST_ASSERT_NOT_NULL(sensorPir);
+    list = builder.build();
+    TEST_ASSERT_EQUAL(4, list.count);
+
+    sensorPir->setup();
+
+    TEST_ASSERT_FALSE(sensorPir->hasChanged());
 
     // Reset builder storage
     reset_builder_storage();

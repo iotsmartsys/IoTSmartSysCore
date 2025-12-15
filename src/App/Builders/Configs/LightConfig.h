@@ -22,4 +22,10 @@ namespace iotsmartsys::app
     {
         uint8_t pin;
     };
+
+    struct PirSensorConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+        int toleranceTime = 5; // in seconds
+    };
 } // namespace iotsmartsys::core
