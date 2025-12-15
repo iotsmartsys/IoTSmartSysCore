@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CapabilityConfig.h"
+#include "Core/Models/DigitalLogic.h"
 
 namespace iotsmartsys::app
 {
@@ -28,4 +29,17 @@ namespace iotsmartsys::app
         uint8_t pin;
         int toleranceTime = 5; // in seconds
     };
-} // namespace iotsmartsys::core
+
+    struct SwitchPlugConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+        DigitalLogic switchLogic = DigitalLogic::NORMAL;
+    };
+
+    struct ClapSensorConfig : public CapabilityConfig
+    {
+        uint8_t pin;
+        int toleranceTime = 5; // in seconds
+    };
+
+} // namespace iotsmartsys::app

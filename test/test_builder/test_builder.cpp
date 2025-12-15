@@ -4,6 +4,7 @@
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
 #include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
+#include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 
 #include "Contracts/Logging/Log.h"
 
@@ -12,6 +13,7 @@ using namespace iotsmartsys;
 static iotsmartsys::platform::arduino::ArduinoSerialLogger logger(Serial);
 static platform::arduino::ArduinoHardwareAdapterFactory hwFactory;
 static platform::arduino::ArduinoTimeProvider timeProvider;
+static platform::arduino::OutputHardwareAdapter *outputAdapter = new platform::arduino::OutputHardwareAdapter(13, platform::arduino::HardwareDigitalLogic::HIGH_IS_ON);
 
 // storage fixo (sem heap)
 static core::ICapability *capSlots[8];
@@ -44,11 +46,12 @@ static void reset_builder_storage()
     }
 }
 
-void test_builder_addLight_and_alarm()
+void test_builder_capabilities()
 {
     reset_builder_storage();
 
     const uint8_t alarmPin = 44; // pino de teste para alarme (LED Blue)
+
 
     // adicionar luz
     app::LightConfig lightCfg;
@@ -72,6 +75,7 @@ void test_builder_addLight_and_alarm()
     luz->turnOff();
     TEST_ASSERT_TRUE(luz->hasChanged());
     TEST_ASSERT_FALSE(luz->isOn());
+    luz->turnOn();
 
     // adicionar alarme
     app::AlarmConfig alarmCfg;
@@ -126,6 +130,53 @@ void test_builder_addLight_and_alarm()
 
     TEST_ASSERT_FALSE(sensorPir->hasChanged());
 
+    // Adicionar sensor de palmas (clap)
+    app::ClapSensorConfig clapCfg;
+    clapCfg.capability_name = "sensor_clap";
+    clapCfg.pin = PIN_TEST; // pino de teste para sensor de palmas
+    clapCfg.toleranceTime = 2; // 2 segundos
+    auto *sensorClap = builder.addClapSensor(clapCfg);
+    TEST_ASSERT_NOT_NULL(sensorClap);
+    list = builder.build();
+    TEST_ASSERT_EQUAL(5, list.count);
+
+    sensorClap->setup();
+    TEST_ASSERT_FALSE(sensorClap->hasChanged());
+    sensorClap->handle();
+    TEST_ASSERT_TRUE(sensorClap->isClapDetected());
+    TEST_ASSERT_TRUE(sensorClap->hasChanged());
+
+    // Simula o input de palmas no pino sem detectar palmas
+    pinMode(PIN_TEST, OUTPUT);
+    digitalWrite(PIN_TEST, LOW);
+    delay(3000);
+    sensorClap->handle();
+    TEST_ASSERT_FALSE(sensorClap->isClapDetected());
+    TEST_ASSERT_TRUE(sensorClap->hasChanged());
+    
+
+    // Adicionar Switch Plug
+    app::SwitchPlugConfig switchCfg;
+    switchCfg.capability_name = "switch_plug";
+    switchCfg.pin = PIN_TEST; // pino de teste para switch plug
+    switchCfg.switchLogic = DigitalLogic::NORMAL;
+    auto *switchPlug = builder.addSwitchPlug(switchCfg);
+    TEST_ASSERT_NOT_NULL(switchPlug);
+    list = builder.build();
+    TEST_ASSERT_EQUAL(6, list.count);
+
+    switchPlug->setup();
+
+    switchPlug->turnOn();
+    TEST_ASSERT_TRUE(switchPlug->hasChanged());
+    auto st = switchPlug->readState();
+    TEST_ASSERT_EQUAL_STRING("on", st.value.c_str());
+    delay(1000);
+    switchPlug->turnOff();
+    TEST_ASSERT_TRUE(switchPlug->hasChanged());
+    st = switchPlug->readState();
+    TEST_ASSERT_EQUAL_STRING("off", st.value.c_str());
+
     // Reset builder storage
     reset_builder_storage();
 }
@@ -140,7 +191,7 @@ void setup()
     iotsmartsys::core::Log::get().info("BOOT", "Iniciando...");
     delay(200);
     UNITY_BEGIN();
-    RUN_TEST(test_builder_addLight_and_alarm);
+    RUN_TEST(test_builder_capabilities);
     UNITY_END();
 }
 

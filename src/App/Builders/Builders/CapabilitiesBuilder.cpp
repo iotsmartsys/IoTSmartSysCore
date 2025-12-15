@@ -309,4 +309,101 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addClapSensor ---------------------------
+    iotsmartsys::core::ClapSensorCapability *CapabilitiesBuilder::addClapSensor(const ClapSensorConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.inputAdapterSize();
+        const std::size_t align = _factory.inputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createInput(
+            mem,
+            cfg.pin);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.inputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::ClapSensorCapability),
+                                       alignof(iotsmartsys::core::ClapSensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::ClapSensorCapability(
+            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            cfg.toleranceTime);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::ClapSensorCapability *>(p)->~ClapSensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~ClapSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addSwitchPlug ---------------------------
+    iotsmartsys::core::SwitchPlugCapability *CapabilitiesBuilder::addSwitchPlug(const SwitchPlugConfig &cfg)
+    {
+        if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
+
+        auto *hardwareAdapter = _factory.createOutput(
+            mem,
+            cfg.pin,
+            highIsOn);
+
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.outputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::SwitchPlugCapability),
+                                       alignof(iotsmartsys::core::SwitchPlugCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::SwitchPlugCapability(
+            std::string(),
+            *hardwareAdapter);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::SwitchPlugCapability *>(p)->~SwitchPlugCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~SwitchPlugCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app

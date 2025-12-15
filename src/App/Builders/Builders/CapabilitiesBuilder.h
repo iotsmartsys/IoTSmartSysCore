@@ -11,6 +11,8 @@
 #include "Contracts/Capabilities/AlarmCapability.h"
 #include "Contracts/Capabilities/DoorSensorCapability.h"
 #include "Contracts/Capabilities/PirSensorCapability.h"
+#include "Contracts/Capabilities/SwitchPlugCapability.h"
+#include "Contracts/Capabilities/ClapSensorCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -52,6 +54,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::AlarmCapability *addAlarm(const AlarmConfig &cfg);
         iotsmartsys::core::DoorSensorCapability *addDoorSensor(const DoorSensorConfig &cfg);
         iotsmartsys::core::PirSensorCapability *addPirSensor(const PirSensorConfig &cfg);
+    iotsmartsys::core::SwitchPlugCapability *addSwitchPlug(const SwitchPlugConfig &cfg);
+    iotsmartsys::core::ClapSensorCapability *addClapSensor(const ClapSensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);
