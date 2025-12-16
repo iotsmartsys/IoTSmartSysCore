@@ -819,4 +819,32 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addWaterHeight ---------------------------
+    iotsmartsys::core::HeightWaterLevelCapability *CapabilitiesBuilder::addWaterHeight(const WaterLevelSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::HeightWaterLevelCapability),
+                                       alignof(iotsmartsys::core::HeightWaterLevelCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::HeightWaterLevelCapability(
+            static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::HeightWaterLevelCapability *>(p)->~HeightWaterLevelCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~HeightWaterLevelCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app
