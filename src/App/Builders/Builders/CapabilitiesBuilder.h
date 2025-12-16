@@ -21,6 +21,8 @@
 #include "Contracts/Capabilities/WaterFlowHallSensorCapability.h"
 #include "Contracts/Capabilities/WaterLevelPercentCapability.h"
 #include "Contracts/Capabilities/WaterLevelLitersCapability.h"
+#include "Contracts/Capabilities/TemperatureSensorCapability.h"
+#include "Contracts/Capabilities/HumiditySensorCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -72,6 +74,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensor(const WaterFlowHallSensorConfig &cfg);
         iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercent(const WaterLevelSensorConfig &cfg);
         iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLiters(const WaterLevelSensorConfig &cfg);
+    iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensor(const TemperatureSensorConfig &cfg);
+    iotsmartsys::core::HumiditySensorCapability *addHumiditySensor(const HumiditySensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);

@@ -763,4 +763,60 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addTemperatureSensor ---------------------------
+    iotsmartsys::core::TemperatureSensorCapability *CapabilitiesBuilder::addTemperatureSensor(const TemperatureSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::TemperatureSensorCapability),
+                                       alignof(iotsmartsys::core::TemperatureSensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::TemperatureSensorCapability(
+            static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::TemperatureSensorCapability *>(p)->~TemperatureSensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~TemperatureSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addHumiditySensor ---------------------------
+    iotsmartsys::core::HumiditySensorCapability *CapabilitiesBuilder::addHumiditySensor(const HumiditySensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::HumiditySensorCapability),
+                                       alignof(iotsmartsys::core::HumiditySensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::HumiditySensorCapability(
+            *static_cast<iotsmartsys::core::IHumiditySensor *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::HumiditySensorCapability *>(p)->~HumiditySensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~HumiditySensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app

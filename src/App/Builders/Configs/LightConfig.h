@@ -3,6 +3,8 @@
 #include "CapabilityConfig.h"
 #include "Core/Models/DigitalLogic.h"
 #include "Contracts/Sensors/IWaterLevelSensor.h"
+#include "Contracts/Sensors/ITemperatureSensor.h"
+#include "Contracts/Sensors/IHumiditySensor.h"
 
 namespace iotsmartsys::app
 {
@@ -64,6 +66,18 @@ namespace iotsmartsys::app
     {
         // sensor instance provided by the caller; builder won't own the sensor
         iotsmartsys::core::IWaterLevelSensor *sensor{nullptr};
+    };
+
+    struct TemperatureSensorConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::ITemperatureSensor *sensor{nullptr};
+    };
+
+    struct HumiditySensorConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::IHumiditySensor *sensor{nullptr};
     };
 
 } // namespace iotsmartsys::app

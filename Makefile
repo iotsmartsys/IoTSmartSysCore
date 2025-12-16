@@ -37,4 +37,4 @@ tag:
 utest:
 	clear
 	clear
-	pio test -e esp32s3_test --filter test_waterlevelliters
+	pio test -e esp32s3_test --filter test_temperature
