@@ -16,7 +16,7 @@ static platform::arduino::ArduinoTimeProvider timeProvider;
 
 static app::WiFiManager wifi(logger);
 
-static platform::esp32::EspIdfMqttClient mqttClient;
+static platform::esp32::EspIdfMqttClient mqttClient(logger);
 static app::MqttService<12, 16, 256> mqtt(mqttClient, logger);
 
 static void onMqttMessage(void *, const core::MqttMessageView &msg)
@@ -31,7 +31,7 @@ void setup()
     Serial.begin(115200);
     delay(5000); // esperar serial
     Serial.println("[Serial] Starting IoT SmartSys Core example...");
-
+    logger.setMinLevel(core::LogLevel::Debug);
     core::Log::setLogger(&logger);
     core::Time::setProvider(&timeProvider);
     logger.info("Logger and TimeProvider initialized.");
@@ -49,18 +49,23 @@ void setup()
 
     wifi.begin(cfg);
 
+    logger.info("Configuring MQTT client...");
     core::MqttConfig mcfg;
     mcfg.uri = "mqtt://192.168.0.222:1883";
     mcfg.clientId = "esp32s3-basic-usage";
-    mcfg.username = nullptr; // set if needed
-    mcfg.password = nullptr; // set if needed
+    mcfg.username = "smarthomeiot";
+    mcfg.password = "Smarthomeiot@123";
     mcfg.keepAliveSec = 30;
     mcfg.cleanSession = true;
 
+    logger.info("Starting MQTT client...");
     mqtt.begin(mcfg);
-    mqtt.setOnMessage(&onMqttMessage, nullptr);
+    logger.info("MQTT client started.");
 
+    mqtt.setOnMessage(&onMqttMessage, nullptr);
+    logger.info("MQTT message handler set.");
     mqtt.subscribe("iotsmartsys/cmd/#");
+    logger.info("MQTT client subscribed to topic.");
 }
 
 void loop()
