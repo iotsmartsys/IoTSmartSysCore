@@ -138,7 +138,7 @@ namespace iotsmartsys::platform::arduino
         float maxLevelCm,
         iotsmartsys::core::WaterLevelRecipentType recipentType)
     {
-        auto *sr04Sensor = new SensorUltrassonic_HC_SR04(trigPin, echoPin, static_cast<long>(minLevelCm), static_cast<long>(maxLevelCm));
+        auto *sr04Sensor = new SensorUltrassonicHCSR04(trigPin, echoPin, static_cast<long>(minLevelCm), static_cast<long>(maxLevelCm));
 
         return new (mem) ArduinoUltrassonicWaterLevelSensor(sr04Sensor, recipentType);
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "SensorUltrassonic_HC_SR04.h"
+#include "SensorUltrassonicHCSR04.h"
 
 namespace iotsmartsys::platform::arduino
 {
@@ -11,31 +11,31 @@ namespace iotsmartsys::platform::arduino
 #define TIME_TOLERANCE_MEASURE 3 * 1000
 #define MIN_INTERVAL_BETWEEN_SMALLER_READINGS 500
 
-    SensorUltrassonic_HC_SR04::SensorUltrassonic_HC_SR04(int trigPin, int echoPin)
+    SensorUltrassonicHCSR04::SensorUltrassonicHCSR04(int trigPin, int echoPin)
     {
         this->trigPin = trigPin;
         this->echoPin = echoPin;
     }
 
-    SensorUltrassonic_HC_SR04::SensorUltrassonic_HC_SR04(int trigPin, int echoPin, long minDistance, long maxDistance)
-        : SensorUltrassonic_HC_SR04(trigPin, echoPin)
+    SensorUltrassonicHCSR04::SensorUltrassonicHCSR04(int trigPin, int echoPin, long minDistance, long maxDistance)
+        : SensorUltrassonicHCSR04(trigPin, echoPin)
     {
         this->minDistance = minDistance;
         this->maxDistance = maxDistance;
     }
 
-    void SensorUltrassonic_HC_SR04::setup()
+    void SensorUltrassonicHCSR04::setup()
     {
         pinMode(trigPin, OUTPUT);
         pinMode(echoPin, INPUT);
     }
 
-    float SensorUltrassonic_HC_SR04::getDistanceCm() const
+    float SensorUltrassonicHCSR04::getDistanceCm() const
     {
         return distanceCm;
     }
 
-    void SensorUltrassonic_HC_SR04::measureDistance()
+    void SensorUltrassonicHCSR04::measureDistance()
     {
         unsigned long currentTime = millis();
         if (currentTime - lastMeasurementTime < TIME_TOLERANCE_MEASURE)
@@ -79,7 +79,7 @@ namespace iotsmartsys::platform::arduino
         }
     }
 
-    float SensorUltrassonic_HC_SR04::calculateAverage()
+    float SensorUltrassonicHCSR04::calculateAverage()
     {
         int count = bufferFilled ? BUFFER_SIZE : readingIndex;
         float sum = 0;
