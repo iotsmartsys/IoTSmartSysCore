@@ -18,10 +18,10 @@ namespace iotsmartsys::platform::arduino
         float getLevelLiters() override;
         float getHeightWaterInCm() override;
 
-    // implement IHardwareAdapter contract (sensors typically don't support commands)
-    bool applyCommand(const core::IHardwareCommand &command) override;
-    bool applyCommand(const std::string &value) override;
-    std::string getState() override;
+        // implement IHardwareAdapter contract (sensors typically don't support commands)
+        bool applyCommand(const core::IHardwareCommand &command) override;
+        bool applyCommand(const std::string &value) override;
+        std::string getState() override;
 
     private:
         iotsmartsys::core::WaterLevelRecipentType recipentType;
