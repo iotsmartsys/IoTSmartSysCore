@@ -2,14 +2,14 @@
 #include <Arduino.h>
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
-#include "SensorUltrassonic_HC_SR04.h"
+#include "SensorUltrassonicHCSR04.h"
 
 namespace iotsmartsys::platform::arduino
 {
     class ArduinoUltrassonicWaterLevelSensor : public core::IWaterLevelSensor
     {
     public:
-        ArduinoUltrassonicWaterLevelSensor(SensorUltrassonic_HC_SR04 *sr04Sensor, iotsmartsys::core::WaterLevelRecipentType recipentType, unsigned long intervalMs = 0);
+        ArduinoUltrassonicWaterLevelSensor(SensorUltrassonicHCSR04 *sr04Sensor, iotsmartsys::core::WaterLevelRecipentType recipentType, unsigned long intervalMs = 0);
 
         void setup() override;
         void handleSensor() override;
@@ -29,7 +29,7 @@ namespace iotsmartsys::platform::arduino
         int diameterBaseCM;
         int heightCM;
         int distanceToSensorCM;
-        SensorUltrassonic_HC_SR04 *sr04Sensor;
+        SensorUltrassonicHCSR04 *sr04Sensor;
         float actualHeightCM = 0;
 
         unsigned long lastReadTime = 0;

@@ -3,7 +3,7 @@
 
 namespace iotsmartsys::platform::arduino
 {
-    ArduinoUltrassonicWaterLevelSensor::ArduinoUltrassonicWaterLevelSensor(SensorUltrassonic_HC_SR04 *sr04Sensor, iotsmartsys::core::WaterLevelRecipentType recipentType, unsigned long intervalMs) : core::IWaterLevelSensor()
+    ArduinoUltrassonicWaterLevelSensor::ArduinoUltrassonicWaterLevelSensor(SensorUltrassonicHCSR04 *sr04Sensor, iotsmartsys::core::WaterLevelRecipentType recipentType, unsigned long intervalMs) : core::IWaterLevelSensor()
     {
         this->sr04Sensor = sr04Sensor;
         this->recipentType = recipentType;

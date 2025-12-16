@@ -10,12 +10,12 @@ namespace iotsmartsys::platform::arduino
 #define TIME_TOLERANCE_MEASURE 3 * 1000
 #define MIN_INTERVAL_BETWEEN_SMALLER_READINGS 500
 
-    class SensorUltrassonic_HC_SR04
+    class SensorUltrassonicHCSR04
     {
 
     public:
-        SensorUltrassonic_HC_SR04(int trigPin, int echoPin);
-        SensorUltrassonic_HC_SR04(int trigPin, int echoPin, long minDistance, long maxDistance);
+        SensorUltrassonicHCSR04(int trigPin, int echoPin);
+        SensorUltrassonicHCSR04(int trigPin, int echoPin, long minDistance, long maxDistance);
 
         void setup();
 
