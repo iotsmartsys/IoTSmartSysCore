@@ -31,7 +31,7 @@ void setup()
     Serial.begin(115200);
     delay(5000); // esperar serial
     Serial.println("[Serial] Starting IoT SmartSys Core example...");
-    logger.setMinLevel(core::LogLevel::Debug);
+    logger.setMinLevel(core::LogLevel::Warn);
     core::Log::setLogger(&logger);
     core::Time::setProvider(&timeProvider);
     logger.info("Logger and TimeProvider initialized.");
@@ -45,7 +45,7 @@ void setup()
     cfg.autoReconnect = false;
     cfg.persistent = false;
 
-    logger.info("Basic_usageWiFi configuration set. SSID: %s", cfg.ssid);
+    logger.warn("Basic_usageWiFi configuration set. SSID: %s", cfg.ssid);
 
     wifi.begin(cfg);
 
