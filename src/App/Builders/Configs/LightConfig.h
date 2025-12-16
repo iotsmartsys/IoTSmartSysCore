@@ -5,6 +5,9 @@
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 #include "Contracts/Sensors/ITemperatureSensor.h"
 #include "Contracts/Sensors/IHumiditySensor.h"
+#include "Contracts/Sensors/IGlpSensor.h"
+#include "Contracts/Sensors/IGlpMeter.h"
+#include "Contracts/Sensors/IColorSensor.h"
 
 namespace iotsmartsys::app
 {
@@ -66,6 +69,26 @@ namespace iotsmartsys::app
     {
         // sensor instance provided by the caller; builder won't own the sensor
         iotsmartsys::core::IWaterLevelSensor *sensor{nullptr};
+    };
+
+    struct GlpSensorConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::IGlpSensor *sensor{nullptr};
+    };
+
+    struct GlpMeterConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::IGlpMeter *sensor{nullptr};
+    };
+
+    struct OperationalColorSensorConfig : public CapabilityConfig
+    {
+        // sensor instance provided by the caller; builder won't own the sensor
+        iotsmartsys::core::IColorSensor *sensor{nullptr};
+        // milliseconds between reads
+        unsigned long readIntervalMs = 60000;
     };
 
     struct TemperatureSensorConfig : public CapabilityConfig

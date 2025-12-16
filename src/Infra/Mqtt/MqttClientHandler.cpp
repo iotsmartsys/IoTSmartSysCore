@@ -4,7 +4,6 @@
 #else
 #include <ESP8266HTTPClient.h>
 #endif
-#include "Core/CommandExecutor.h"
 #include "Infra/Settings/VersionInfo.h"
 #include "Infra/Wifi/WifiHelper.h"
 #include "Infra/Transports/BridgeHooks.h"

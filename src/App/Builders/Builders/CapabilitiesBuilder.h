@@ -24,6 +24,9 @@
 #include "Contracts/Capabilities/TemperatureSensorCapability.h"
 #include "Contracts/Capabilities/HumiditySensorCapability.h"
 #include "Contracts/Capabilities/HeightWaterLevelCapability.h"
+#include "Contracts/Capabilities/GlpSensorCapability.h"
+#include "Contracts/Capabilities/GlpMeterCapability.h"
+#include "Contracts/Capabilities/OperationalColorSensorCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -78,6 +81,9 @@ namespace iotsmartsys::app
         iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensor(const TemperatureSensorConfig &cfg);
         iotsmartsys::core::HumiditySensorCapability *addHumiditySensor(const HumiditySensorConfig &cfg);
         iotsmartsys::core::HeightWaterLevelCapability *addWaterHeight(const WaterLevelSensorConfig &cfg);
+        iotsmartsys::core::GlpSensorCapability *addGlpSensor(const GlpSensorConfig &cfg);
+        iotsmartsys::core::GlpMeterCapability *addGlpMeter(const GlpMeterConfig &cfg);
+        iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensor(const OperationalColorSensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);

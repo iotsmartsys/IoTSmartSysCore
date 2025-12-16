@@ -847,4 +847,88 @@ namespace iotsmartsys::app
         return cap;
     }
 
+    // --------------------------- addGlpSensor ---------------------------
+    iotsmartsys::core::GlpSensorCapability *CapabilitiesBuilder::addGlpSensor(const GlpSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::GlpSensorCapability),
+                                       alignof(iotsmartsys::core::GlpSensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::GlpSensorCapability(
+            static_cast<iotsmartsys::core::IGlpSensor *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::GlpSensorCapability *>(p)->~GlpSensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~GlpSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addGlpMeter ---------------------------
+    iotsmartsys::core::GlpMeterCapability *CapabilitiesBuilder::addGlpMeter(const GlpMeterConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::GlpMeterCapability),
+                                       alignof(iotsmartsys::core::GlpMeterCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::GlpMeterCapability(
+            static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor));
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::GlpMeterCapability *>(p)->~GlpMeterCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~GlpMeterCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addOperationalColorSensor ---------------------------
+    iotsmartsys::core::OperationalColorSensorCapability *CapabilitiesBuilder::addOperationalColorSensor(const OperationalColorSensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::OperationalColorSensorCapability),
+                                       alignof(iotsmartsys::core::OperationalColorSensorCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::OperationalColorSensorCapability(
+            static_cast<iotsmartsys::core::IColorSensor *>(cfg.sensor), cfg.readIntervalMs);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::OperationalColorSensorCapability *>(p)->~OperationalColorSensorCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~OperationalColorSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
 } // namespace iotsmartsys::app

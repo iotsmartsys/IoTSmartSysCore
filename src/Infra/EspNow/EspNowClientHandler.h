@@ -6,7 +6,6 @@
 #include "Capabilities/Capability.h"
 #include "Capabilities/CapabilityState.h"
 #include "Capabilities/CapabilityCommand.h"
-#include "Core/CommandExecutor.h"
 
 #ifdef ESP32
 #include <WiFi.h>
