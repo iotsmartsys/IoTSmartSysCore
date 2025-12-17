@@ -31,7 +31,7 @@ namespace iotsmartsys::platform::arduino
         return &destroyRelayAdapter;
     }
 
-    iotsmartsys::core::IHardwareAdapter *ArduinoHardwareAdapterFactory::createRelay(
+    iotsmartsys::core::ICommandHardwareAdapter *ArduinoHardwareAdapterFactory::createRelay(
         void *mem,
         std::uint8_t pin,
         bool highIsOn)
@@ -67,7 +67,7 @@ namespace iotsmartsys::platform::arduino
         return &destroyOutputAdapter;
     }
 
-    iotsmartsys::core::IHardwareAdapter *ArduinoHardwareAdapterFactory::createOutput(
+    iotsmartsys::core::ICommandHardwareAdapter *ArduinoHardwareAdapterFactory::createOutput(
         void *mem,
         std::uint8_t pin,
         bool highIsOn)
@@ -103,7 +103,7 @@ namespace iotsmartsys::platform::arduino
         return &destroyInputAdapter;
     }
 
-    iotsmartsys::core::IHardwareAdapter *ArduinoHardwareAdapterFactory::createInput(
+    iotsmartsys::core::IInputHardwareAdapter *ArduinoHardwareAdapterFactory::createInput(
         void *mem,
         std::uint8_t pin)
     {

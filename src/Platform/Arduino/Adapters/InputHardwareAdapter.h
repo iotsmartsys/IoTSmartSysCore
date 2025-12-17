@@ -25,23 +25,6 @@ namespace iotsmartsys::platform::arduino
             return digitalRead(pin) == HIGH;
         }
 
-        bool applyCommand(const iotsmartsys::core::IHardwareCommand &command) override
-        {
-            // Input adapter does not support commands
-            return false;
-        }
-
-        bool applyCommand(const std::string &value) override
-        {
-            // Input adapter does not support commands
-            return false;
-        }
-
-        std::string getState() override
-        {
-            return std::to_string(readInput());
-        }
-
     private:
         int pin;
     };

@@ -17,24 +17,6 @@ public:
     void setDetected(bool d) { detected = d; }
     void setLevelState(const std::string &s) { levelState = s; }
 
-    // IHardwareAdapter trivial implementations for test mock
-    bool applyCommand(const iotsmartsys::core::IHardwareCommand &command) override
-    {
-        (void)command;
-        return false;
-    }
-
-    bool applyCommand(const std::string &value) override
-    {
-        (void)value;
-        return false;
-    }
-
-    std::string getState() override
-    {
-        return levelState;
-    }
-
 private:
     float levelPercent;
     bool detected;

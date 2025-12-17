@@ -2,7 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Contracts/Adapters/IHardwareAdapter.h"
+#include "Contracts/Adapters/ICommandHardwareAdapter.h"
 #include "HardwareDigitalLogic.h"
 #include "Contracts/Capabilities/ICapabilityType.h"
 #include "Contracts/Logging/Log.h"
@@ -10,7 +10,7 @@
 namespace iotsmartsys::platform::arduino
 {
 
-    class RelayHardwareAdapter : public core::IHardwareAdapter
+    class RelayHardwareAdapter : public core::ICommandHardwareAdapter
     {
     public:
         RelayHardwareAdapter(int pin, HardwareDigitalLogic logic)

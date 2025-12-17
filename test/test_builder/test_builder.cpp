@@ -2,6 +2,7 @@
 #include <unity.h>
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
+#include "mocks/MockHardwareAdapterFactory.h"
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
 #include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
@@ -11,7 +12,7 @@
 using namespace iotsmartsys;
 
 static iotsmartsys::platform::arduino::ArduinoSerialLogger logger(Serial);
-static platform::arduino::ArduinoHardwareAdapterFactory hwFactory;
+static test::mocks::MockHardwareAdapterFactory hwFactory;
 static platform::arduino::ArduinoTimeProvider timeProvider;
 static platform::arduino::OutputHardwareAdapter *outputAdapter = new platform::arduino::OutputHardwareAdapter(13, platform::arduino::HardwareDigitalLogic::HIGH_IS_ON);
 

@@ -21,7 +21,7 @@ static app::MqttService<12, 16, 256> mqtt(mqttClient, logger);
 
 static void onMqttMessage(void *, const core::MqttMessageView &msg)
 {
-    logger.info("MQTT RX payload_len=%lu retain=%d",
+    logger.warn("MQTT RX payload_len=%lu retain=%d",
                 (unsigned long)msg.payloadLen,
                 (int)msg.retain);
 }

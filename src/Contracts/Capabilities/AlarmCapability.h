@@ -1,18 +1,18 @@
 #pragma once
 
-#include "ICapability.h"
+#include "ICommandCapability.h"
 #include "Contracts/Adapters/IHardwareAdapter.h"
 
 namespace iotsmartsys::core
 {
 
-    class AlarmCapability : public ICapability
+    class AlarmCapability : public ICommandCapability
     {
     public:
-        AlarmCapability(IHardwareAdapter &hardwareAdapter);
+        AlarmCapability(ICommandHardwareAdapter &hardwareAdapter);
 
-        void setup() override;
-        void handle() override;
+        virtual void setup() override;
+        virtual void handle() override;
 
         bool isActivated();
 

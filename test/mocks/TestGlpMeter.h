@@ -39,24 +39,6 @@ namespace iotsmartsys
             _level = s;
         }
 
-        // IHardwareAdapter trivial implementations for test mock
-        bool applyCommand(const iotsmartsys::core::IHardwareCommand &command) override
-        {
-            (void)command;
-            return false;
-        }
-
-        bool applyCommand(const std::string &value) override
-        {
-            (void)value;
-            return false;
-        }
-
-        std::string getState() override
-        {
-            return _level;
-        }
-
     private:
         float _kg{0.0f};
         float _percent{0.0f};

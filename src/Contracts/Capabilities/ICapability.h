@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "ICapabilityState.h"
-#include "ICapabilityCommand.h"
+#include "Contracts/Events/CapabilityStateChanged.h"
+#include "Contracts/Events/ICapabilityEventSink.h"
+#include "Contracts/Events/CapabilityCommand.h"
 #include "ICapabilityType.h"
 #include "Contracts/Adapters/IHardwareAdapter.h"
 #include "Contracts/Providers/ITimeProvider.h"
@@ -37,14 +38,14 @@ namespace iotsmartsys::core
         std::string type;
         std::string value;
 
-        void applyCommand(ICommand command)
-        {
-            if (hardware_adapator)
-            {
-                hardware_adapator->applyCommand(command.value);
-                updateState(command.value);
-            }
-        }
+        // void applyCommand(CapabilityCommand command)
+        // {
+        //     if (hardware_adapator)
+        //     {
+        //         hardware_adapator->applyCommand(command.value);
+        //         updateState(command.value);
+        //     }
+        // }
 
         void updateState(std::string value)
         {
@@ -52,10 +53,10 @@ namespace iotsmartsys::core
             this->changed = true;
         }
 
-        ICapabilityState readState()
+        CapabilityStateChanged readState()
         {
             this->changed = false;
-            return ICapabilityState(capability_name, value, type);
+            return CapabilityStateChanged(capability_name, value, type);
         }
 
         bool hasChanged()
@@ -69,10 +70,6 @@ namespace iotsmartsys::core
 
         virtual void setup()
         {
-            if (hardware_adapator)
-            {
-                hardware_adapator->setup();
-            }
         }
 
         void applyRenamedName(std::string device_id)

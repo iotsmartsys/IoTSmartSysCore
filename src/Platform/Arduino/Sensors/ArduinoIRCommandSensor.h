@@ -1,7 +1,9 @@
 
 #pragma once
 
+#ifndef UNIT_TEST
 #include <Arduino.h>
+#endif
 #include "Contracts/Sensors/IIRCommandSensor.h"
 #include <IRrecv.h>
 

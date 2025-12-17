@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ICapability.h"
+#include "ICommandCapability.h"
 
 namespace iotsmartsys::core
 {
-    class ValveCapability : public ICapability
+    class ValveCapability : public ICommandCapability
     {
     public:
-        ValveCapability(std::string capability_name, IHardwareAdapter &hardwareAdapter);
+        ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter);
 
         void setup() override;
         void handle() override;

@@ -2,14 +2,14 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Contracts/Adapters/IHardwareAdapter.h"
+#include "Contracts/Adapters/ICommandHardwareAdapter.h"
 #include "HardwareDigitalLogic.h"
 #include "Contracts/Capabilities/ICapabilityType.h"
 
 namespace iotsmartsys::platform::arduino
 {
 
-    class OutputHardwareAdapter : public core::IHardwareAdapter
+    class OutputHardwareAdapter : public core::ICommandHardwareAdapter
     {
     public:
         OutputHardwareAdapter(int pin, HardwareDigitalLogic logic)

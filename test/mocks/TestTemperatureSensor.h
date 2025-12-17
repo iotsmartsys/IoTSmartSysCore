@@ -12,26 +12,6 @@ public:
 
     void setTemperature(float t) { tempCelsius = t; }
 
-    // IHardwareAdapter trivial implementations for test mock
-    bool applyCommand(const iotsmartsys::core::IHardwareCommand &command) override
-    {
-        (void)command;
-        return false;
-    }
-
-    bool applyCommand(const std::string &value) override
-    {
-        (void)value;
-        return false;
-    }
-
-    std::string getState() override
-    {
-        char buf[32];
-        snprintf(buf, sizeof(buf), "%.3f", tempCelsius);
-        return std::string(buf);
-    }
-
 private:
     float tempCelsius;
 };

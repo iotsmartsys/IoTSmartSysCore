@@ -37,7 +37,13 @@ namespace iotsmartsys::platform::arduino
             uint64_t currentValue = results.value;
 
             core::Log::get().debug("Código recebido: 0x");
-            core::Log::get().debug(String(currentValue, HEX).c_str());
+            // Format the value as hexadecimal without using Arduino::String
+            {
+                char buf[32];
+                // Use unsigned long long to be safe for 64-bit values
+                snprintf(buf, sizeof(buf), "%llX", (unsigned long long)currentValue);
+                core::Log::get().debug(buf);
+            }
 
             core::Log::get().debug("resultToSourceCode: 0X");
             lastState = currentValue;

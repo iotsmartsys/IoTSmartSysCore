@@ -1,22 +1,21 @@
 
 #pragma once
 
-#include "ICapability.h"
+#include "ICommandCapability.h"
 
 namespace iotsmartsys::core
 {
-    class LightCapability : public ICapability
+    class LightCapability : public ICommandCapability
     {
     public:
         LightCapability(std::string name,
-                        IHardwareAdapter &hardwareAdapter);
+                        ICommandHardwareAdapter &hardwareAdapter);
         void handle() override;
 
         void toggle();
         void turnOn();
         void turnOff();
         bool isOn() const;
-        void executeCommand(const std::string &state);
 
     private:
         void power(const std::string &state);

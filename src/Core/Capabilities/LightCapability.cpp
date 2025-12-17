@@ -3,8 +3,8 @@
 namespace iotsmartsys::core
 {
     LightCapability::LightCapability(std::string name,
-                                     IHardwareAdapter &hardwareAdapter)
-        : ICapability(&hardwareAdapter, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF)
+                                     ICommandHardwareAdapter &hardwareAdapter)
+        : ICommandCapability(&hardwareAdapter, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF)
     {
     }
 
@@ -39,13 +39,9 @@ namespace iotsmartsys::core
         return value == SWITCH_STATE_ON;
     }
 
-    void LightCapability::executeCommand(const std::string &state)
-    {
-        power(state);
-    }
 
     void LightCapability::power(const std::string &state)
     {
-        applyCommand(iotsmartsys::core::ICommand{type, state});
+        applyCommand(CapabilityCommand{type, state});
     }
 } // namespace iotsmartsys::core

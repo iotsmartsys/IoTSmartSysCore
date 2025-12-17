@@ -2,15 +2,15 @@
 
 namespace iotsmartsys::core
 {
-    LEDCapability::LEDCapability(std::string capability_name, IHardwareAdapter &hardwareAdapter)
-        : ICapability(&hardwareAdapter, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
-          blinkInterval(0), lastToggleTs(0), blinking(false)
-    {
-    }
+        LEDCapability::LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter)
+                : ICommandCapability(&hardwareAdapter, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
+                    blinkInterval(0), lastToggleTs(0), blinking(false)
+        {
+        }
 
     void LEDCapability::setup()
     {
-        ICapability::setup();
+        ICommandCapability::setup();
     }
 
     void LEDCapability::handle()
@@ -39,12 +39,12 @@ namespace iotsmartsys::core
 
     void LEDCapability::turnOn()
     {
-        applyCommand(ICommand{type, std::string(LED_STATE_ON)});
+        applyCommand(CapabilityCommand{type, std::string(LED_STATE_ON)});
     }
 
     void LEDCapability::turnOff()
     {
-        applyCommand(ICommand{type, std::string(LED_STATE_OFF)});
+        applyCommand(CapabilityCommand{type, std::string(LED_STATE_OFF)});
     }
 
     bool LEDCapability::isOn() const
@@ -72,7 +72,7 @@ namespace iotsmartsys::core
 
     void LEDCapability::power(const std::string &state)
     {
-        applyCommand(ICommand{type, state});
+        applyCommand(CapabilityCommand{type, state});
     }
 
 } // namespace iotsmartsys::core

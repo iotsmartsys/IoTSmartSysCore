@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    AlarmCapability::AlarmCapability(IHardwareAdapter &hardwareAdapter)
-        : ICapability(&hardwareAdapter, ALARM_ACTUATOR_TYPE, ALARM_OFF),
+    AlarmCapability::AlarmCapability(ICommandHardwareAdapter &hardwareAdapter)
+        : ICommandCapability(&hardwareAdapter, ALARM_ACTUATOR_TYPE, ALARM_OFF),
           alarmPin(-1),
           stateOn(1),
           stateOff(0),
@@ -67,9 +67,9 @@ namespace iotsmartsys::core
 
     void AlarmCapability::powerOn()
     {
-        if (hardware_adapator)
+        if (command_hardware_adapater)
         {
-            hardware_adapator->applyCommand(POWER_ON_COMMAND);
+            command_hardware_adapater->applyCommand(POWER_ON_COMMAND);
         }
         poweredOn = true;
         ring();
@@ -78,9 +78,9 @@ namespace iotsmartsys::core
 
     void AlarmCapability::powerOff()
     {
-        if (hardware_adapator)
+        if (command_hardware_adapater)
         {
-            hardware_adapator->applyCommand(POWER_OFF_COMMAND);
+            command_hardware_adapater->applyCommand(POWER_OFF_COMMAND);
         }
         poweredOn = false;
         updateState(ALARM_OFF);

@@ -2,19 +2,19 @@
 
 namespace iotsmartsys::core
 {
-    SwitchCapability::SwitchCapability(std::string capability_name, IHardwareAdapter &hardwareAdapter)
-        : ICapability(&hardwareAdapter, capability_name, SWITCH_TYPE, SWITCH_STATE_OFF)
+    SwitchCapability::SwitchCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter)
+        : ICommandCapability(&hardwareAdapter, capability_name, SWITCH_TYPE, SWITCH_STATE_OFF)
     {
     }
 
     void SwitchCapability::setup()
     {
-        ICapability::setup();
+        ICommandCapability::setup();
     }
 
     void SwitchCapability::handle()
     {
-        std::string hwState = hardware_adapator ? hardware_adapator->getState() : std::string(SWITCH_STATE_OFF);
+        std::string hwState = command_hardware_adapater ? command_hardware_adapater->getState() : std::string(SWITCH_STATE_OFF);
         if (hwState != value)
         {
             updateState(hwState);
@@ -31,12 +31,12 @@ namespace iotsmartsys::core
 
     void SwitchCapability::turnOn()
     {
-        applyCommand(ICommand{type, std::string(SWITCH_STATE_ON)});
+        applyCommand(CapabilityCommand{type, std::string(SWITCH_STATE_ON)});
     }
 
     void SwitchCapability::turnOff()
     {
-        applyCommand(ICommand{type, std::string(SWITCH_STATE_OFF)});
+        applyCommand(CapabilityCommand{type, std::string(SWITCH_STATE_OFF)});
     }
 
     bool SwitchCapability::isOn() const
@@ -44,14 +44,9 @@ namespace iotsmartsys::core
         return value == SWITCH_STATE_ON;
     }
 
-    void SwitchCapability::executeCommand(const std::string &state)
-    {
-        power(state);
-    }
-
     void SwitchCapability::power(const std::string &state)
     {
-        applyCommand(ICommand{type, state});
+        applyCommand(CapabilityCommand{type, state});
     }
 
 } // namespace iotsmartsys::core

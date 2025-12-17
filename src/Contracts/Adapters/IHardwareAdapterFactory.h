@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 #include "Contracts/Adapters/IHardwareAdapter.h"
+#include "Contracts/Adapters/ICommandHardwareAdapter.h"
+#include "Contracts/Adapters/IInputHardwareAdapter.h"
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
 #include <cstddef>
@@ -22,19 +24,19 @@ namespace iotsmartsys::core
         // Relay Adapter
         virtual std::size_t relayAdapterSize() const = 0;
         virtual std::size_t relayAdapterAlign() const = 0;
-        virtual IHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) = 0;
+        virtual ICommandHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) = 0;
         virtual AdapterDestructor relayAdapterDestructor() const = 0;
 
         // Output Adapter
         virtual std::size_t outputAdapterSize() const = 0;
         virtual std::size_t outputAdapterAlign() const = 0;
-        virtual IHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) = 0;
+        virtual ICommandHardwareAdapter *createOutput(void *mem, std::uint8_t pin, bool highIsOn) = 0;
         virtual AdapterDestructor outputAdapterDestructor() const = 0;
 
         // Input Adapter
         virtual std::size_t inputAdapterSize() const = 0;
         virtual std::size_t inputAdapterAlign() const = 0;
-        virtual IHardwareAdapter *createInput(void *mem, std::uint8_t pin) = 0;
+        virtual IInputHardwareAdapter *createInput(void *mem, std::uint8_t pin) = 0;
         virtual AdapterDestructor inputAdapterDestructor() const = 0;
 
         // IWaterLevelSensor

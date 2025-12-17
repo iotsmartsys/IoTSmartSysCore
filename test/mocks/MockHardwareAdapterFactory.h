@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
+#include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 
 namespace iotsmartsys::test::mocks
 {
@@ -29,19 +30,22 @@ namespace iotsmartsys::test::mocks
         /* Relay Adapter - not used in this mock */
         std::size_t relayAdapterSize() const override { return 0; }
         std::size_t relayAdapterAlign() const override { return 1; }
-        iotsmartsys::core::IHardwareAdapter *createRelay(void * /*mem*/, std::uint8_t /*pin*/, bool /*highIsOn*/) override { return nullptr; }
+        iotsmartsys::core::ICommandHardwareAdapter *createRelay(void * /*mem*/, std::uint8_t /*pin*/, bool /*highIsOn*/) override
+        {
+            return new iotsmartsys::platform::arduino::OutputHardwareAdapter(43, iotsmartsys::platform::arduino::HardwareDigitalLogic::HIGH_IS_ON);
+        }
         AdapterDestructor relayAdapterDestructor() const override { return &MockHardwareAdapterFactory::noopDestructor; }
 
         /* Output Adapter - not used in this mock */
         std::size_t outputAdapterSize() const override { return 0; }
         std::size_t outputAdapterAlign() const override { return 1; }
-        iotsmartsys::core::IHardwareAdapter *createOutput(void * /*mem*/, std::uint8_t /*pin*/, bool /*highIsOn*/) override { return nullptr; }
+        iotsmartsys::core::ICommandHardwareAdapter *createOutput(void * /*mem*/, std::uint8_t /*pin*/, bool /*highIsOn*/) override { return nullptr; }
         AdapterDestructor outputAdapterDestructor() const override { return &MockHardwareAdapterFactory::noopDestructor; }
 
         /* Input Adapter - not used in this mock */
         std::size_t inputAdapterSize() const override { return 0; }
         std::size_t inputAdapterAlign() const override { return 1; }
-        iotsmartsys::core::IHardwareAdapter *createInput(void * /*mem*/, std::uint8_t /*pin*/) override { return nullptr; }
+        iotsmartsys::core::IInputHardwareAdapter *createInput(void * /*mem*/, std::uint8_t /*pin*/) override { return nullptr; }
         AdapterDestructor inputAdapterDestructor() const override { return &MockHardwareAdapterFactory::noopDestructor; }
 
         /* IWaterLevelSensor - returns the pre-set instance (no ownership taken)
