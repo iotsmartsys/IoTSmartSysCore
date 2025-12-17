@@ -4,8 +4,8 @@
 
 namespace iotsmartsys::core
 {
-    WaterLevelPercentCapability::WaterLevelPercentCapability(IWaterLevelSensor *sensor)
-        : ICapability(nullptr, WATER_LEVEL_PERCENT_SENSOR_TYPE, "0"), sensor(sensor), lastPercent(0.0f)
+    WaterLevelPercentCapability::WaterLevelPercentCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, WATER_LEVEL_PERCENT_SENSOR_TYPE, "0"), sensor(sensor), lastPercent(0.0f)
     {
     }
 

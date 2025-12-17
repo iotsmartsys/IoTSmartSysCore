@@ -45,6 +45,7 @@ namespace iotsmartsys::app
         using ICapability = iotsmartsys::core::ICapability;
 
         CapabilitiesBuilder(iotsmartsys::core::IHardwareAdapterFactory &factory,
+                            iotsmartsys::core::ICapabilityEventSink &eventSink,
                             ICapability **capSlots,
                             void (**capDestructors)(void *),
                             size_t capSlotsMax,
@@ -92,6 +93,7 @@ namespace iotsmartsys::app
 
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;
+        iotsmartsys::core::ICapabilityEventSink &_eventSink;
         iotsmartsys::core::ICapability **_caps{nullptr};
         void (**_capDestructors)(void *){nullptr};
         size_t _capsMax{0};

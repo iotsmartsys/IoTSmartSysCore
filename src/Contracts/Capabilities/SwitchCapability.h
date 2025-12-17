@@ -7,7 +7,7 @@ namespace iotsmartsys::core
     class SwitchCapability : public ICommandCapability
     {
     public:
-        SwitchCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter);
+        SwitchCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

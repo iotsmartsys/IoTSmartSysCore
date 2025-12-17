@@ -7,7 +7,7 @@ namespace iotsmartsys::core
     class LEDCapability : public ICommandCapability
     {
     public:
-        LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter);
+        LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

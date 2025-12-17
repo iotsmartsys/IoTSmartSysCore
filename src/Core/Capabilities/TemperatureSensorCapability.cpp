@@ -2,7 +2,7 @@
 
 namespace iotsmartsys::core
 {
-    TemperatureSensorCapability::TemperatureSensorCapability(ITemperatureSensor *sensor) : ICapability(sensor, TEMPERATURE_SENSOR_TYPE, "0"), currentTemperature(0.0f), sensor(sensor)
+    TemperatureSensorCapability::TemperatureSensorCapability(ITemperatureSensor *sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs) : ICapability(event_sink, TEMPERATURE_SENSOR_TYPE, "0"), currentTemperature(0.0f), sensor(sensor), readIntervalMs(readIntervalMs)
     {
     }
 

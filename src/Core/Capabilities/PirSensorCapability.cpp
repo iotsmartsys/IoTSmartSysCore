@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    PirSensorCapability::PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, int timeTolerance)
-        : ICapability(input_hardware_adapter, PIR_SENSOR_TYPE, PIR_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
+    PirSensorCapability::PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
+        : ICapability(event_sink, PIR_SENSOR_TYPE, PIR_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
           lastTimePresenceDetected(0), presenceDetected(false), lastState(false), timeTolerance(timeTolerance)
     {
     }

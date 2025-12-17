@@ -11,7 +11,7 @@ namespace iotsmartsys::core
     public:
         LuminosityCapability(const std::string &name,
                              ILuminositySensor &sensor,
-                             core::ITimeProvider &timeProvider,
+                             ICapabilityEventSink *event_sink,
                              float variationTolerance,
                              float readIntervalSeconds);
 
@@ -21,7 +21,6 @@ namespace iotsmartsys::core
 
     
     protected:
-        core::ITimeProvider &_timeProvider;
 
     private:
         ILuminositySensor &_sensor;

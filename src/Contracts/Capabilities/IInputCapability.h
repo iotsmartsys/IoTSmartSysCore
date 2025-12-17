@@ -9,9 +9,10 @@ namespace iotsmartsys::core
     {
     public:
         IInputCapability(IInputHardwareAdapter *input_hardware_adapter,
+                         ICapabilityEventSink *event_sink,
                          std::string type,
                          std::string value)
-            : ICapability(input_hardware_adapter, type, value), inputHardwareAdapter(input_hardware_adapter) {}
+            : ICapability(event_sink, type, value), inputHardwareAdapter(input_hardware_adapter) {}
 
         virtual ~IInputCapability() = default;
 

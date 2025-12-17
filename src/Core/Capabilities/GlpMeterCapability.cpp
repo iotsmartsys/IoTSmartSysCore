@@ -4,8 +4,8 @@
 
 using namespace iotsmartsys::core;
 
-GlpMeterCapability::GlpMeterCapability(IGlpMeter *meter)
-    : ICapability("glp_meter", "glp_meter", "0"), meter(meter)
+GlpMeterCapability::GlpMeterCapability(IGlpMeter *meter, ICapabilityEventSink *event_sink)
+    : ICapability(event_sink, GLP_METER_TYPE, "glp_meter", "0"), meter(meter)
 {
 }
 

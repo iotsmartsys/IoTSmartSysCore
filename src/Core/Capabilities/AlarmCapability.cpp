@@ -2,9 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    AlarmCapability::AlarmCapability(ICommandHardwareAdapter &hardwareAdapter)
-        : ICommandCapability(&hardwareAdapter, ALARM_ACTUATOR_TYPE, ALARM_OFF),
-          alarmPin(-1),
+    AlarmCapability::AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+        : ICommandCapability(&hardwareAdapter, event_sink, ALARM_ACTUATOR_TYPE, ALARM_OFF),
           stateOn(1),
           stateOff(0),
           lastRing(0),

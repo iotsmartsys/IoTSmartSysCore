@@ -2,8 +2,9 @@
 
 namespace iotsmartsys::core
 {
-    DoorSensorCapability::DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter)
-        : ICapability(input_hardware_adapter, DOOR_SENSOR_TYPE, DOOR_SENSOR_OPEN), inputHardwareAdapter(input_hardware_adapter), lastDoorState(0), doorState(false)
+    DoorSensorCapability::DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter,
+                                               ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, DOOR_SENSOR_TYPE, DOOR_SENSOR_OPEN), inputHardwareAdapter(input_hardware_adapter), lastDoorState(0), doorState(false)
     {
     }
 

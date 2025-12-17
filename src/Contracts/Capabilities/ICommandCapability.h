@@ -18,15 +18,17 @@ namespace iotsmartsys::core
     {
     public:
         ICommandCapability(ICommandHardwareAdapter *hardware_adapator,
+                           ICapabilityEventSink *event_sink,
                            std::string capability_name,
                            std::string type,
                            std::string value)
-            : ICapability(command_hardware_adapater, capability_name, type, value), command_hardware_adapater(hardware_adapator) {}
+            : ICapability(event_sink, capability_name, type, value), command_hardware_adapater(hardware_adapator) {}
 
         ICommandCapability(ICommandHardwareAdapter *hardware_adapator,
+                           ICapabilityEventSink *event_sink,
                            std::string type,
                            std::string value)
-            : ICapability(command_hardware_adapater, "", type, value), command_hardware_adapater(hardware_adapator) {}
+            : ICapability(event_sink, type, value), command_hardware_adapater(hardware_adapator) {}
 
         virtual ~ICommandCapability() {}
 
@@ -51,6 +53,5 @@ namespace iotsmartsys::core
         ICommandHardwareAdapter *command_hardware_adapater;
 
     private:
-        bool changed = false;
     };
 }

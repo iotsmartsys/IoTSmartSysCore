@@ -9,7 +9,8 @@ namespace iotsmartsys::core
     class DoorSensorCapability : public ICapability
     {
     public:
-        DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter);
+        DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter,
+                             ICapabilityEventSink *event_sink);
 
         void handle() override;
 

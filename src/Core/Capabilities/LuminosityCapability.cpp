@@ -3,14 +3,13 @@
 namespace iotsmartsys::core
 {
     LuminosityCapability::LuminosityCapability(const std::string &name,
-                                               ILuminositySensor &sensor,
-                                               core::ITimeProvider &timeProvider,
+                                               ILuminositySensor &sensor, 
+                                               ICapabilityEventSink *event_sink,
                                                float variationTolerance,
                                                float readIntervalSeconds)
-        : ICapability(LIGHT_SENSOR_TYPE, "-1"),
+        : ICapability(event_sink, LIGHT_SENSOR_TYPE, "-1"),
           _sensor(sensor),
           _variationTolerance(variationTolerance),
-          _timeProvider(timeProvider),
           _readIntervalMs(static_cast<unsigned long>(readIntervalSeconds * 1000.0f))
     {
     }
@@ -21,7 +20,7 @@ namespace iotsmartsys::core
 
     void LuminosityCapability::handle()
     {
-        unsigned long currentTime = static_cast<unsigned long>(_timeProvider.nowMs());
+        unsigned long currentTime = static_cast<unsigned long>(timeProvider.nowMs());
         if (currentTime - _lastReadMs < _readIntervalMs)
         {
             return;

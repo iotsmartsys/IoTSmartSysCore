@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class WaterLevelPercentCapability : public ICapability
     {
     public:
-        WaterLevelPercentCapability(IWaterLevelSensor *sensor);
+        WaterLevelPercentCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

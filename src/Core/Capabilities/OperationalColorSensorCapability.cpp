@@ -2,8 +2,8 @@
 
 using namespace iotsmartsys::core;
 
-OperationalColorSensorCapability::OperationalColorSensorCapability(IColorSensor *sensor, unsigned long readIntervalMs)
-    : ICapability(nullptr, OPERATIONAL_COLOR_SENSOR_TYPE, OPERATIONAL_COLOR_SENSOR_NORMAL), sensor(sensor), lastState(), lastCheckMillis(0), readIntervalMs(readIntervalMs)
+OperationalColorSensorCapability::OperationalColorSensorCapability(IColorSensor *sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs)
+    : ICapability(event_sink, OPERATIONAL_COLOR_SENSOR_TYPE, OPERATIONAL_COLOR_SENSOR_NORMAL), sensor(sensor), lastState(), lastCheckMillis(0), readIntervalMs(readIntervalMs)
 {
 }
 

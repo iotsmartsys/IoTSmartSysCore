@@ -16,21 +16,22 @@ namespace iotsmartsys::core
     struct ICapability
     {
     public:
-        ICapability(std::string type, std::string value)
-            : capability_name(""), type(type), value(value) {}
+        ICapability(std::string type, std::string value, ICapabilityEventSink *event_sink)
+            : capability_name(""), type(type), value(value), event_sink(event_sink) {}
         ICapability(std::string capability_name, std::string type, std::string value)
             : capability_name(capability_name), type(type), value(value) {}
 
-        ICapability(IHardwareAdapter *hardware_adapator,
+        ICapability(ICapabilityEventSink *event_sink,
                     std::string capability_name,
                     std::string type,
                     std::string value)
-            : hardware_adapator(hardware_adapator), capability_name(capability_name), type(type), value(value) {}
+            : capability_name(capability_name), type(type), value(value), event_sink(event_sink) {}
 
-        ICapability(IHardwareAdapter *hardware_adapator,
-                    std::string type,
-                    std::string value)
-            : hardware_adapator(hardware_adapator), capability_name(""), type(type), value(value) {}
+        ICapability(
+            ICapabilityEventSink *event_sink,
+            std::string type,
+            std::string value)
+            : capability_name(""), type(type), value(value), event_sink(event_sink) {}
 
         virtual ~ICapability() {}
 
@@ -38,19 +39,16 @@ namespace iotsmartsys::core
         std::string type;
         std::string value;
 
-        // void applyCommand(CapabilityCommand command)
-        // {
-        //     if (hardware_adapator)
-        //     {
-        //         hardware_adapator->applyCommand(command.value);
-        //         updateState(command.value);
-        //     }
-        // }
-
         void updateState(std::string value)
         {
             this->value = value;
             this->changed = true;
+            if (this->event_sink)
+            {
+                CapabilityStateChanged ev = readState();
+                this->event_sink->onStateChanged(ev);
+                this->changed = false;
+            }
         }
 
         CapabilityStateChanged readState()
@@ -85,7 +83,7 @@ namespace iotsmartsys::core
     protected:
         core::ILogger &logger = core::Log::get();
         core::ITimeProvider &timeProvider = core::Time::get();
-        IHardwareAdapter *hardware_adapator;
+        ICapabilityEventSink *event_sink;
 
     private:
         bool changed = false;

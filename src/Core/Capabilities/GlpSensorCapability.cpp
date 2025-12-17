@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    GlpSensorCapability::GlpSensorCapability(IGlpSensor *sensor)
-        : ICapability(nullptr, GLP_SENSOR_TYPE, GLP_SENSOR_LEVEL_NONE), sensor(sensor), levelPercent(0.0f), lastLevel(), lastCheckMillis(0)
+    GlpSensorCapability::GlpSensorCapability(IGlpSensor *sensor, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, GLP_SENSOR_TYPE, GLP_SENSOR_LEVEL_NONE), sensor(sensor), levelPercent(0.0f), lastLevel(), lastCheckMillis(0)
     {
     }
 

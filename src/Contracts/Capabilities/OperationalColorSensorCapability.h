@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     class OperationalColorSensorCapability : public ICapability
     {
     public:
-        explicit OperationalColorSensorCapability(IColorSensor *sensor, unsigned long readIntervalMs = 60000);
+        explicit OperationalColorSensorCapability(IColorSensor *sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs = 60000);
 
         void setup() override;
         void handle() override;

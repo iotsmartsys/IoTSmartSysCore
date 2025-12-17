@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter *input_hardware_adapter, int toleranceTimeSeconds)
-        : ICapability(input_hardware_adapter, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
+    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
+        : ICapability(event_sink, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
           lastTimeClapDetected(0), clapDetected(false), lastState(false), timeTolerance(toleranceTimeSeconds * 1000)
     {
     }

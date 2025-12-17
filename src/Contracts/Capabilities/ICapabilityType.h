@@ -102,7 +102,7 @@ namespace iotsmartsys::core
 
 #define VALVE_STATE_OPEN "open"
 #define VALVE_STATE_CLOSED "closed"
-#define VaLVE_ACTUATOR_TYPE "Valve Actuator"
+#define VALVE_ACTUATOR_TYPE "Valve Actuator"
 
 #define WATER_FLOW_SENSOR_TYPE "Water Flow (L)"
 #define WATER_LEVEL_LITERS_SENSOR_TYPE "Water Level (L)"

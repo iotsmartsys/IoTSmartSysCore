@@ -3,8 +3,8 @@
 namespace iotsmartsys::core
 {
 
-    HumiditySensorCapability::HumiditySensorCapability(IHumiditySensor &sensor)
-        : ICapability(&sensor, HUMIDITY_SENSOR_TYPE, "0"),
+    HumiditySensorCapability::HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, HUMIDITY_SENSOR_TYPE, "0"),
           sensor(&sensor),
           humidity(0.0f),
           lastReadTime(0),

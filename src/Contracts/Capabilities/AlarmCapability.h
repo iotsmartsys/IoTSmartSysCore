@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     class AlarmCapability : public ICommandCapability
     {
     public:
-        AlarmCapability(ICommandHardwareAdapter &hardwareAdapter);
+        AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         virtual void setup() override;
         virtual void handle() override;
@@ -23,7 +23,6 @@ namespace iotsmartsys::core
         void powerOff();
 
     private:
-        int alarmPin;
         int stateOn;
         int stateOff;
         unsigned long lastRing;

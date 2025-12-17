@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class HumiditySensorCapability : public ICapability
     {
     public:
-        HumiditySensorCapability(IHumiditySensor &sensor);
+        HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink);
 
         void handle() override;
         float getHumidity() const;

@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    ValveCapability::ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter)
-        : ICommandCapability(&hardwareAdapter, capability_name, VaLVE_ACTUATOR_TYPE, VALVE_STATE_CLOSED)
+    ValveCapability::ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+        : ICommandCapability(&hardwareAdapter, event_sink, capability_name, VALVE_ACTUATOR_TYPE, VALVE_STATE_CLOSED)
     {
     }
 

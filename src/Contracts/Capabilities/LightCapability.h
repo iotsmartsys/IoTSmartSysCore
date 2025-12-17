@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     {
     public:
         LightCapability(std::string name,
-                        ICommandHardwareAdapter &hardwareAdapter);
+                        ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
         void handle() override;
 
         void toggle();

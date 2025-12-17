@@ -2,11 +2,10 @@
 
 namespace iotsmartsys::core
 {
-    SwitchCapability::SwitchCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter)
-        : ICommandCapability(&hardwareAdapter, capability_name, SWITCH_TYPE, SWITCH_STATE_OFF)
+    SwitchCapability::SwitchCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+        : ICommandCapability(&hardwareAdapter, event_sink, capability_name, SWITCH_TYPE, SWITCH_STATE_OFF)
     {
     }
-
     void SwitchCapability::setup()
     {
         ICommandCapability::setup();

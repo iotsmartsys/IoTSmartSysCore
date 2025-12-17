@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     class GlpMeterCapability : public ICapability
     {
     public:
-        explicit GlpMeterCapability(IGlpMeter *meter);
+        explicit GlpMeterCapability(IGlpMeter *meter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

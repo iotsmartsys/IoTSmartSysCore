@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    PushButtonCapability::PushButtonCapability(IInputHardwareAdapter *input_hardware_adapter, unsigned long toleranceTimeMs)
-        : IInputCapability(input_hardware_adapter, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
+    PushButtonCapability::PushButtonCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
+        : IInputCapability(input_hardware_adapter, event_sink, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
           toleranceTimeMs(toleranceTimeMs),
           lastState(false),
           lastChangeTs(0)

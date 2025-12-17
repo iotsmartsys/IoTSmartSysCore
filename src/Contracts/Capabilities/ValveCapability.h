@@ -7,7 +7,7 @@ namespace iotsmartsys::core
     class ValveCapability : public ICommandCapability
     {
     public:
-        ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter);
+        ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

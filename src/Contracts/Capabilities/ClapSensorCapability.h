@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class ClapSensorCapability : public ICapability
     {
     public:
-        ClapSensorCapability(IInputHardwareAdapter *input_hardware_adapter, int toleranceTimeSeconds);
+        ClapSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds);
 
         void handle() override;
 

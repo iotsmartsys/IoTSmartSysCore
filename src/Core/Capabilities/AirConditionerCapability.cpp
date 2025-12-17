@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    AirConditionerCapability::AirConditionerCapability(IIRCommandSensor *sensor, IAirConditionerInterpreter *interpreter)
-        : ICapability(sensor, AIR_CONDITIONER_TYPE, "OFF"), sensor(sensor), interpreter(interpreter)
+    AirConditionerCapability::AirConditionerCapability(IIRCommandSensor *sensor, IAirConditionerInterpreter *interpreter, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, AIR_CONDITIONER_TYPE, "OFF"), sensor(sensor), interpreter(interpreter)
     {
         // Initialization code if needed
     }

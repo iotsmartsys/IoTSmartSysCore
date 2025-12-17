@@ -4,8 +4,8 @@
 
 namespace iotsmartsys::core
 {
-    WaterFlowHallSensorCapability::WaterFlowHallSensorCapability(IInputHardwareAdapter *input_hardware_adapter)
-        : IInputCapability(input_hardware_adapter, WATER_FLOW_SENSOR_TYPE, "0"),
+    WaterFlowHallSensorCapability::WaterFlowHallSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink)
+        : IInputCapability(input_hardware_adapter, event_sink, WATER_FLOW_SENSOR_TYPE, "0"),
           lastMillis(0),
           pulseCount(0),
           totalLiters(0.0f),

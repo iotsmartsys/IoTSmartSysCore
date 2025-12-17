@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    HeightWaterLevelCapability::HeightWaterLevelCapability(IWaterLevelSensor *sensor)
-        : ICapability(nullptr, HEIGHT_WATER_LEVEL_SENSOR_TYPE, "0"), sensor(sensor), levelCm(0.0f), lastLevelCm(0.0f), lastCheckMillis(0)
+    HeightWaterLevelCapability::HeightWaterLevelCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, HEIGHT_WATER_LEVEL_SENSOR_TYPE, "0"), sensor(sensor), levelCm(0.0f), lastLevelCm(0.0f), lastCheckMillis(0)
     {
     }
 

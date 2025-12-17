@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class GlpSensorCapability : public ICapability
     {
     public:
-        GlpSensorCapability(IGlpSensor *sensor);
+        GlpSensorCapability(IGlpSensor *sensor, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;

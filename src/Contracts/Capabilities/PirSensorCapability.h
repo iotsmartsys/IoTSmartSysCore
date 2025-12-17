@@ -9,7 +9,7 @@ namespace iotsmartsys::core
     class PirSensorCapability : public ICapability
     {
     public:
-        PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, int toleranceTime);
+        PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
 
         void handle() override;
 
