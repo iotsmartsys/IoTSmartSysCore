@@ -10,7 +10,7 @@ namespace iotsmartsys::core
 
     void MqttSink::onStateChanged(const CapabilityStateChanged &ev)
     {
-        std::string topic = "device/state";
+        std::string topic = "iotsmartsys/state/alive";
         std::string payload = "{ \"device_id\":\"" + ev.device_id + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"}";
 
         mqttClient.publish(topic.c_str(),

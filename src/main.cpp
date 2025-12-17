@@ -37,8 +37,8 @@ void setup()
     logger.info("Logger and TimeProvider initialized.");
 
     app::WiFiConfig cfg;
-    cfg.ssid = "IoT_SmartHome";
-    cfg.password = "Ma522770";
+    cfg.ssid = WIFI_SSID;
+    cfg.password = WIFI_PASSWORD;
     cfg.initialBackoffMs = 1000;
     cfg.maxBackoffMs = 60000;
     cfg.jitterMs = 300;
@@ -51,10 +51,10 @@ void setup()
 
     logger.info("Configuring MQTT client...");
     core::MqttConfig mcfg;
-    mcfg.uri = "mqtt://192.168.0.222:1883";
+    mcfg.uri = MQTT_BROKER;
     mcfg.clientId = "esp32s3-basic-usage";
-    mcfg.username = "smarthomeiot";
-    mcfg.password = "Smarthomeiot@123";
+    mcfg.username = MQTT_USERNAME;
+    mcfg.password = MQTT_PASSWORD;
     mcfg.keepAliveSec = 30;
     mcfg.cleanSession = true;
 
