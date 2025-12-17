@@ -8,13 +8,13 @@ namespace iotsmartsys::core
     class HeightWaterLevelCapability : public ICapability
     {
     public:
-        HeightWaterLevelCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink);
+        HeightWaterLevelCapability(IWaterLevelSensor &sensor, ICapabilityEventSink *event_sink);
 
         void handle() override;
         float getHeightWaterInCm() const;
 
     private:
-        IWaterLevelSensor *sensor;
+        IWaterLevelSensor &sensor;
         float levelCm;
         float lastLevelCm = 0.0f;
         unsigned long lastCheckMillis = 0;

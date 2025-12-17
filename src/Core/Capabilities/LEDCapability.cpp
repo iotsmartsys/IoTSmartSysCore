@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
         LEDCapability::LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-                : ICommandCapability(&hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
+                : ICommandCapability(hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
                     blinkInterval(0), lastToggleTs(0), blinking(false)
         {
         }

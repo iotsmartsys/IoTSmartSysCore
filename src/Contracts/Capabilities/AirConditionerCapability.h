@@ -9,14 +9,14 @@ namespace iotsmartsys::core
     class AirConditionerCapability : public ICapability
     {
     public:
-        AirConditionerCapability(IIRCommandSensor *sensor, IAirConditionerInterpreter *interpreter, ICapabilityEventSink *event_sink);
+        AirConditionerCapability(IIRCommandSensor &sensor, IAirConditionerInterpreter &interpreter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;
 
     private:
-        IIRCommandSensor *sensor;
-        IAirConditionerInterpreter *interpreter;
+        IIRCommandSensor &sensor;
+        IAirConditionerInterpreter &interpreter;
     };
 
 } // namespace iotsmartsys::core

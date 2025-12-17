@@ -2,9 +2,13 @@
 
 namespace iotsmartsys::core
 {
-    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
-        : ICapability(event_sink, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
-          lastTimeClapDetected(0), clapDetected(false), lastState(false), timeTolerance(toleranceTimeSeconds * 1000)
+    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
+        : IInputCapability(input_hardware_adapter, event_sink, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED), lastTimeClapDetected(0), clapDetected(false), lastState(false), timeTolerance(toleranceTimeSeconds * 1000)
+    {
+    }
+
+    ClapSensorCapability::ClapSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
+        : IInputCapability(input_hardware_adapter, event_sink, capability_name, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED), lastTimeClapDetected(0), clapDetected(false), lastState(false), timeTolerance(toleranceTimeSeconds * 1000)
     {
     }
 
@@ -29,7 +33,7 @@ namespace iotsmartsys::core
 
     bool ClapSensorCapability::isTriggered() const
     {
-        return inputHardwareAdapter->digitalActive();
+        return inputHardwareAdapter.digitalActive();
     }
 
     bool ClapSensorCapability::isClapDetected() const
@@ -40,6 +44,11 @@ namespace iotsmartsys::core
     long ClapSensorCapability::getTimeSinceLastClapDetected() const
     {
         return timeProvider.nowMs() - lastTimeClapDetected;
+    }
+
+    void ClapSensorCapability::setup()
+    {
+        ICapability::setup();
     }
 
 } // namespace iotsmartsys::core

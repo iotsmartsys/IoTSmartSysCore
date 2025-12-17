@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     ValveCapability::ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(&hardwareAdapter, event_sink, capability_name, VALVE_ACTUATOR_TYPE, VALVE_STATE_CLOSED)
+        : ICommandCapability(hardwareAdapter, event_sink, capability_name, VALVE_ACTUATOR_TYPE, VALVE_STATE_CLOSED)
     {
     }
 
@@ -14,7 +14,7 @@ namespace iotsmartsys::core
 
     void ValveCapability::handle()
     {
-        std::string hwState = command_hardware_adapater ? command_hardware_adapater->getState() : std::string(VALVE_STATE_CLOSED);
+        std::string hwState = command_hardware_adapter.getState();
         if (hwState != value)
         {
             updateState(hwState);

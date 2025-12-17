@@ -81,7 +81,22 @@ namespace iotsmartsys::core
         }
 
     protected:
-        core::ILogger &logger = core::Log::get();
+        // Forwarding logger: always forwards at call-time to core::Log::get(),
+        // so instances constructed before Log::setLogger(...) still see the
+        // real logger once it's registered.
+        struct ForwardingLogger : public ILogger
+        {
+            void logf(LogLevel level, const char *tag, const char *fmt, va_list args) override
+            {
+                // Forward to the current global logger implementation
+                core::Log::get().logf(level, tag, fmt, args);
+            }
+        };
+
+        // single forwarding instance shared by all capabilities
+        inline static ForwardingLogger _forwardingLogger{};
+
+        core::ILogger &logger = _forwardingLogger;
         core::ITimeProvider &timeProvider = core::Time::get();
         ICapabilityEventSink *event_sink;
 

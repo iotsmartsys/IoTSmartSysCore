@@ -9,6 +9,7 @@ namespace iotsmartsys::core
     {
     public:
         HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink);
+        HumiditySensorCapability(std::string capability_name, IHumiditySensor &sensor, ICapabilityEventSink *event_sink);
 
         void handle() override;
         float getHumidity() const;
@@ -18,7 +19,7 @@ namespace iotsmartsys::core
         float humidity = 0;
         float currentHumidity{0.0f};
         unsigned long lastReadTime = 0;
-        IHumiditySensor *sensor;
+        IHumiditySensor &sensor;
 
         bool isValidHumidity(float hum) const;
     };

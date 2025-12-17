@@ -8,6 +8,13 @@
 #include "Contracts/Transports/IMqttClient.h"
 #include "Core/Services/MqttService.h"
 #include "Platform/Espressif/Mqtt/EspIdfMqttClient.h"
+#include "Core/Sinks/MqttSink.h"
+#include "Contracts/Events/CapabilityStateChanged.h"
+#include "Contracts/Capabilities/LightCapability.h"
+#include "Contracts/Capabilities/PushButtonCapability.h"
+#include "Platform/Arduino/Adapters/RelayHardwareAdapter.h"
+#include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
+#include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 using namespace iotsmartsys;
 
@@ -18,6 +25,7 @@ static app::WiFiManager wifi(logger);
 
 static platform::esp32::EspIdfMqttClient mqttClient(logger);
 static app::MqttService<12, 16, 256> mqtt(mqttClient, logger);
+static core::MqttSink *mqttSink = new core::MqttSink(mqttClient);
 
 static void onMqttMessage(void *, const core::MqttMessageView &msg)
 {
@@ -25,13 +33,49 @@ static void onMqttMessage(void *, const core::MqttMessageView &msg)
                 (unsigned long)msg.payloadLen,
                 (int)msg.retain);
 }
+#define BUTTON_PIN ESP32_S3_GPIO0
+#define LED_PIN PIN_TEST
+
+platform::arduino::RelayHardwareAdapter relayAdapter(LED_PIN, platform::arduino::HardwareDigitalLogic::LOW_IS_ON);
+core::LightCapability lightCap("living_room", relayAdapter, mqttSink);
+platform::arduino::InputHardwareAdapter buttonAdapter(BUTTON_PIN, platform::arduino::HardwareDigitalLogic::LOW_IS_ON, platform::arduino::InputPullMode::UP);
+core::PushButtonCapability buttonCap("button", buttonAdapter, mqttSink);
+unsigned long lastButtonCheck = 0;
+void simulatedButtonPress()
+{
+    buttonCap.handle();
+    if (buttonCap.isPressed())
+    {
+        logger.info("Button pressed, LED state toggled.");
+        lightCap.toggle();
+        lastButtonCheck = millis();
+        logger.info("LED is now %s", lightCap.isOn() ? "ON" : "OFF");
+    }
+    else
+    {
+        // logger.info("Button not pressed.");
+    }
+    if (millis() - lastButtonCheck > 5000 && lastButtonCheck != 0)
+    {
+        digitalWrite(43, !digitalRead(43));
+        lastButtonCheck = millis();
+    }
+
+    lightCap.handle();
+
+    delay(200); // debounce
+}
 
 void setup()
 {
     Serial.begin(115200);
-    delay(5000); // esperar serial
+    delay(500); // esperar serial
+
+    pinMode(BUTTON_PIN, INPUT_PULLUP); // importante
+    relayAdapter.setup();
+
     Serial.println("[Serial] Starting IoT SmartSys Core example...");
-    logger.setMinLevel(core::LogLevel::Warn);
+    logger.setMinLevel(core::LogLevel::Debug);
     core::Log::setLogger(&logger);
     core::Time::setProvider(&timeProvider);
     logger.info("Logger and TimeProvider initialized.");
@@ -70,6 +114,7 @@ void setup()
 
 void loop()
 {
+    simulatedButtonPress();
     wifi.handle();
     mqtt.handle();
 

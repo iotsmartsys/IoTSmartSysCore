@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     AlarmCapability::AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(&hardwareAdapter, event_sink, ALARM_ACTUATOR_TYPE, ALARM_OFF),
+        : ICommandCapability(hardwareAdapter, event_sink, ALARM_ACTUATOR_TYPE, ALARM_OFF),
           stateOn(1),
           stateOff(0),
           lastRing(0),
@@ -66,10 +66,7 @@ namespace iotsmartsys::core
 
     void AlarmCapability::powerOn()
     {
-        if (command_hardware_adapater)
-        {
-            command_hardware_adapater->applyCommand(POWER_ON_COMMAND);
-        }
+        command_hardware_adapter.applyCommand(POWER_ON_COMMAND);
         poweredOn = true;
         ring();
         updateState(ALARM_ON);
@@ -77,10 +74,7 @@ namespace iotsmartsys::core
 
     void AlarmCapability::powerOff()
     {
-        if (command_hardware_adapater)
-        {
-            command_hardware_adapater->applyCommand(POWER_OFF_COMMAND);
-        }
+        command_hardware_adapter.applyCommand(POWER_OFF_COMMAND);
         poweredOn = false;
         updateState(ALARM_OFF);
     }

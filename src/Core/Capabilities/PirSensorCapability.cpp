@@ -2,9 +2,14 @@
 
 namespace iotsmartsys::core
 {
-    PirSensorCapability::PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
-        : ICapability(event_sink, PIR_SENSOR_TYPE, PIR_NO_DETECTED), inputHardwareAdapter(input_hardware_adapter),
+    PirSensorCapability::PirSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
+        : IInputCapability(input_hardware_adapter, event_sink, PIR_SENSOR_TYPE, PIR_NO_DETECTED),
           lastTimePresenceDetected(0), presenceDetected(false), lastState(false), timeTolerance(timeTolerance)
+    {
+    }
+
+    PirSensorCapability::PirSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
+        : IInputCapability(input_hardware_adapter, event_sink, capability_name, PIR_SENSOR_TYPE, PIR_NO_DETECTED), lastTimePresenceDetected(0), presenceDetected(false), lastState(false), timeTolerance(timeTolerance)
     {
     }
 
@@ -33,7 +38,7 @@ namespace iotsmartsys::core
 
     bool PirSensorCapability::isTriggered() const
     {
-        return inputHardwareAdapter->digitalActive();
+        return inputHardwareAdapter.digitalActive();
     }
 
     bool PirSensorCapability::isPresenceDetected() const
@@ -44,6 +49,11 @@ namespace iotsmartsys::core
     long PirSensorCapability::getTimeSinceLastPresenceDetected() const
     {
         return timeProvider.nowMs() - lastTimePresenceDetected;
+    }
+    
+    void PirSensorCapability::setup()
+    {
+        ICapability::setup();
     }
     
 } // namespace iotsmartsys::core

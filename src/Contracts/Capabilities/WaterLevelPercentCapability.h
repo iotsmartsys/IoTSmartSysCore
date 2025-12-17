@@ -8,14 +8,14 @@ namespace iotsmartsys::core
     class WaterLevelPercentCapability : public ICapability
     {
     public:
-        WaterLevelPercentCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink);
+        WaterLevelPercentCapability(IWaterLevelSensor &sensor, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;
         float getLevelPercent() const;
 
     private:
-        IWaterLevelSensor *sensor{nullptr};
+        IWaterLevelSensor &sensor;
         float lastPercent{0.0f};
     };
 

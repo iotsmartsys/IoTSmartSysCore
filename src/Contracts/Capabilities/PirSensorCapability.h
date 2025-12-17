@@ -1,16 +1,18 @@
 #pragma once
 
-#include "ICapability.h"
+#include "IInputCapability.h"
 #include "Contracts/Adapters/IInputHardwareAdapter.h"
 
 namespace iotsmartsys::core
 {
 
-    class PirSensorCapability : public ICapability
+    class PirSensorCapability : public IInputCapability
     {
     public:
-        PirSensorCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
+        PirSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
+        PirSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
 
+        void setup() override;
         void handle() override;
 
         bool isPresenceDetected() const;
@@ -21,7 +23,6 @@ namespace iotsmartsys::core
         bool lastState;
         int timeTolerance;
         bool pirState;
-        IInputHardwareAdapter *inputHardwareAdapter;
 
         bool isTriggered() const;
         long getTimeSinceLastPresenceDetected() const;

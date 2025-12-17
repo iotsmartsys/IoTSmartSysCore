@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     SwitchPlugCapability::SwitchPlugCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(&hardwareAdapter, event_sink, capability_name, SWITCH_PLUG_TYPE, SWITCH_STATE_OFF)
+        : ICommandCapability(hardwareAdapter, event_sink, capability_name, SWITCH_PLUG_TYPE, SWITCH_STATE_OFF)
     {
     }
 
@@ -16,7 +16,7 @@ namespace iotsmartsys::core
     {
         // no periodic action required; state changes happen via commands or hardware
         // but keep parity with legacy: update internal state from hardware if needed
-        std::string hwState = command_hardware_adapater ? command_hardware_adapater->getState() : std::string(SWITCH_STATE_OFF);
+        std::string hwState = command_hardware_adapter.getState();
         if (hwState != value)
         {
             updateState(hwState);

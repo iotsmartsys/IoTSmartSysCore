@@ -9,13 +9,13 @@ namespace iotsmartsys::core
     {
 
     public:
-        WaterLevelLitersCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink);
+        WaterLevelLitersCapability(IWaterLevelSensor &sensor, ICapabilityEventSink *event_sink);
 
         void handle() override;
         float getLevelLiters();
 
     private:
-        IWaterLevelSensor *sensor;
+        IWaterLevelSensor &sensor;
         float levelLiters;
         float lastLevelLiters = 0.0;
         unsigned long lastCheckMillis = 0;

@@ -8,7 +8,6 @@ namespace iotsmartsys::core
     {
     public:
         std::string capability_name;
-        std::string device_id;
         std::string value;
     };
 

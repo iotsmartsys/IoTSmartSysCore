@@ -9,10 +9,10 @@ namespace iotsmartsys::core
     {
     public:
         static void setProvider(ITimeProvider *provider) { _provider = provider; }
-        static ITimeProvider &get() { return *_provider; }
+        static ITimeProvider &get();
 
     private:
-        inline static ITimeProvider *_provider = nullptr;
+        static ITimeProvider *_provider;
     };
 
 }

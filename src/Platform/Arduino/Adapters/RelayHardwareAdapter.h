@@ -44,15 +44,17 @@ namespace iotsmartsys::platform::arduino
         {
             if (value == SWITCH_STATE_ON)
             {
+                digitalWrite(43, LOW);
                 relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
             }
             else if (value == SWITCH_STATE_OFF)
             {
+                digitalWrite(43, HIGH);
                 relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
             }
             else
             {
-
+               core::Log::get().error("RelayHardwareAdapter", "Invalid command value: %s", value.c_str());
                 return false; // Comando inválido
             }
 

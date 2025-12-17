@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class GlpSensorCapability : public ICapability
     {
     public:
-        GlpSensorCapability(IGlpSensor *sensor, ICapabilityEventSink *event_sink);
+        GlpSensorCapability(IGlpSensor &sensor, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;
@@ -18,7 +18,7 @@ namespace iotsmartsys::core
         std::string getLevelString() const;
 
     private:
-        IGlpSensor *sensor;
+        IGlpSensor &sensor;
         float levelPercent{0.0f};
         std::string lastLevel;
         unsigned long lastCheckMillis{0};

@@ -253,7 +253,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::PushButtonCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
             static_cast<unsigned long>(cfg.toleranceTimeMs));
 
@@ -301,7 +301,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::TouchButtonCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
             static_cast<unsigned long>(cfg.toleranceTimeMs));
 
@@ -509,7 +509,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::DoorSensorCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -556,7 +556,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::PirSensorCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
             cfg.toleranceTime);
 
@@ -604,7 +604,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::ClapSensorCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
             cfg.toleranceTime);
 
@@ -701,7 +701,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::WaterFlowHallSensorCapability(
-            static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
+            *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -730,7 +730,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::WaterLevelPercentCapability(
-            cfg.sensor,
+            *static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -759,7 +759,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::WaterLevelLitersCapability(
-            static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
+            *static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -788,7 +788,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::TemperatureSensorCapability(
-            static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
+            *static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -846,7 +846,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::HeightWaterLevelCapability(
-            static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
+            *static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -875,7 +875,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::GlpSensorCapability(
-            static_cast<iotsmartsys::core::IGlpSensor *>(cfg.sensor),
+            *static_cast<iotsmartsys::core::IGlpSensor *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -904,7 +904,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::GlpMeterCapability(
-            static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
+            *static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
             &_eventSink);
 
         auto dtor = [](void *p)
@@ -933,7 +933,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::OperationalColorSensorCapability(
-            static_cast<iotsmartsys::core::IColorSensor *>(cfg.sensor), &_eventSink, cfg.readIntervalMs);
+            *static_cast<iotsmartsys::core::IColorSensor *>(cfg.sensor), &_eventSink, cfg.readIntervalMs);
 
         auto dtor = [](void *p)
         {

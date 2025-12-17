@@ -7,7 +7,8 @@ namespace iotsmartsys::core
     class TouchButtonCapability : public IInputCapability
     {
     public:
-        TouchButtonCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
+    TouchButtonCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
+    TouchButtonCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
 
         void setup() override;
         void handle() override;

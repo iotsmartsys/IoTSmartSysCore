@@ -2,25 +2,22 @@
 
 namespace iotsmartsys::core
 {
-    HeightWaterLevelCapability::HeightWaterLevelCapability(IWaterLevelSensor *sensor, ICapabilityEventSink *event_sink)
+    HeightWaterLevelCapability::HeightWaterLevelCapability(IWaterLevelSensor &sensor, ICapabilityEventSink *event_sink)
         : ICapability(event_sink, HEIGHT_WATER_LEVEL_SENSOR_TYPE, "0"), sensor(sensor), levelCm(0.0f), lastLevelCm(0.0f), lastCheckMillis(0)
     {
     }
 
     void HeightWaterLevelCapability::handle()
     {
-        if (!sensor)
-            return;
-
         unsigned long now = timeProvider.nowMs();
         // Check every second
         if (now - lastCheckMillis >= 1000 || lastLevelCm == 0.0f)
         {
             lastCheckMillis = now;
 
-            sensor->handle();
+            sensor.handle();
 
-            float actualLevel = sensor->getHeightWaterInCm();
+            float actualLevel = sensor.getHeightWaterInCm();
             if (lastLevelCm != actualLevel)
             {
                 lastLevelCm = actualLevel;

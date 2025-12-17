@@ -5,12 +5,21 @@ namespace iotsmartsys::core
 
     HumiditySensorCapability::HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
         : ICapability(event_sink, HUMIDITY_SENSOR_TYPE, "0"),
-          sensor(&sensor),
+          sensor(sensor),
           humidity(0.0f),
           lastReadTime(0),
           readIntervalMs(60000) // default to 1 minute
     {
     }
+
+        HumiditySensorCapability::HumiditySensorCapability(std::string capability_name, IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
+                : ICapability(event_sink, capability_name, HUMIDITY_SENSOR_TYPE, "0"),
+                    sensor(sensor),
+                    humidity(0.0f),
+                    lastReadTime(0),
+                    readIntervalMs(60000) // default to 1 minute
+        {
+        }
 
     void HumiditySensorCapability::handle()
     {
@@ -19,7 +28,7 @@ namespace iotsmartsys::core
             return;
 
         lastReadTime = currentTime;
-        float newHumidity = sensor->getHumidityPercentage();
+        float newHumidity = sensor.getHumidityPercentage();
 
         if (isValidHumidity(newHumidity))
         {

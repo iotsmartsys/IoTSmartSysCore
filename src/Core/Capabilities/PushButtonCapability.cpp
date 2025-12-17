@@ -2,8 +2,16 @@
 
 namespace iotsmartsys::core
 {
-    PushButtonCapability::PushButtonCapability(IInputHardwareAdapter *input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
+    PushButtonCapability::PushButtonCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
         : IInputCapability(input_hardware_adapter, event_sink, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
+          toleranceTimeMs(toleranceTimeMs),
+          lastState(false),
+          lastChangeTs(0)
+    {
+    }
+
+    PushButtonCapability::PushButtonCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
+        : IInputCapability(input_hardware_adapter, event_sink, capability_name, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
           toleranceTimeMs(toleranceTimeMs),
           lastState(false),
           lastChangeTs(0)
@@ -15,9 +23,10 @@ namespace iotsmartsys::core
         ICapability::setup();
     }
 
-    void PushButtonCapability::handle()
+     void PushButtonCapability::handle()
     {
-        bool current = inputHardwareAdapter->digitalActive();
+        logger.debug("PushButton", "Handling state...");
+        bool current = inputHardwareAdapter.digitalActive();
         auto now = timeProvider.nowMs();
         if (current != lastState)
         {

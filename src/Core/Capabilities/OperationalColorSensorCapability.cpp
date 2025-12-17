@@ -2,7 +2,7 @@
 
 using namespace iotsmartsys::core;
 
-OperationalColorSensorCapability::OperationalColorSensorCapability(IColorSensor *sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs)
+OperationalColorSensorCapability::OperationalColorSensorCapability(IColorSensor &sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs)
     : ICapability(event_sink, OPERATIONAL_COLOR_SENSOR_TYPE, OPERATIONAL_COLOR_SENSOR_NORMAL), sensor(sensor), lastState(), lastCheckMillis(0), readIntervalMs(readIntervalMs)
 {
 }
@@ -10,21 +10,17 @@ OperationalColorSensorCapability::OperationalColorSensorCapability(IColorSensor 
 void OperationalColorSensorCapability::setup()
 {
     ICapability::setup();
-    if (sensor)
-        sensor->setup();
+    sensor.setup();
 }
 
 void OperationalColorSensorCapability::handle()
 {
-    if (!sensor)
-        return;
-
     unsigned long now = timeProvider.nowMs();
     if (now - lastCheckMillis >= readIntervalMs || lastState.empty())
     {
         lastCheckMillis = now;
-        sensor->handle();
-        std::string st = sensor->getStateString();
+        sensor.handle();
+        std::string st = sensor.getStateString();
         if (st != lastState)
         {
             lastState = st;

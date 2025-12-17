@@ -1,17 +1,19 @@
 #pragma once
 
-#include "ICapability.h"
+#include "IInputCapability.h"
 #include "Contracts/Adapters/IInputHardwareAdapter.h"
 
 namespace iotsmartsys::core
 {
 
-    class DoorSensorCapability : public ICapability
+    class DoorSensorCapability : public IInputCapability
     {
     public:
-        DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter,
+        DoorSensorCapability(IInputHardwareAdapter &input_hardware_adapter,
                              ICapabilityEventSink *event_sink);
+        DoorSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink);
 
+        void setup() override;
         void handle() override;
 
         bool isOpen();
@@ -19,6 +21,5 @@ namespace iotsmartsys::core
     private:
         bool lastDoorState;
         bool doorState;
-        IInputHardwareAdapter *inputHardwareAdapter;
     };
 } // namespace iotsmartsys::core

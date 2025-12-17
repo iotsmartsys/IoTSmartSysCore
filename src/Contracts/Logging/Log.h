@@ -9,10 +9,10 @@ namespace iotsmartsys::core
     {
     public:
         static void setLogger(ILogger *logger) { _logger = logger; }
-        static ILogger &get() { return *_logger; }
+        static ILogger &get();
 
     private:
-        inline static ILogger *_logger = nullptr;
+        static ILogger *_logger;
     };
 
 }

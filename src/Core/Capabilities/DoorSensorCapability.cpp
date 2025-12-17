@@ -2,15 +2,21 @@
 
 namespace iotsmartsys::core
 {
-    DoorSensorCapability::DoorSensorCapability(IInputHardwareAdapter *input_hardware_adapter,
+    DoorSensorCapability::DoorSensorCapability(IInputHardwareAdapter &input_hardware_adapter,
                                                ICapabilityEventSink *event_sink)
-        : ICapability(event_sink, DOOR_SENSOR_TYPE, DOOR_SENSOR_OPEN), inputHardwareAdapter(input_hardware_adapter), lastDoorState(0), doorState(false)
+        : IInputCapability(input_hardware_adapter, event_sink, DOOR_SENSOR_TYPE, DOOR_SENSOR_OPEN), lastDoorState(0), doorState(false)
+    {
+    }
+
+    DoorSensorCapability::DoorSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter,
+                                               ICapabilityEventSink *event_sink)
+        : IInputCapability(input_hardware_adapter, event_sink, capability_name, DOOR_SENSOR_TYPE, DOOR_SENSOR_OPEN), lastDoorState(0), doorState(false)
     {
     }
 
     void DoorSensorCapability::handle()
     {
-        bool currentState = inputHardwareAdapter->digitalActive();
+        bool currentState = inputHardwareAdapter.digitalActive();
         if (currentState != lastDoorState)
         {
             lastDoorState = currentState;
@@ -21,6 +27,11 @@ namespace iotsmartsys::core
 
     bool DoorSensorCapability::isOpen()
     {
-        return inputHardwareAdapter->digitalActive();
+        return inputHardwareAdapter.digitalActive();
+    }
+    
+    void DoorSensorCapability::setup()
+    {
+        ICapability::setup();
     }
 } // namespace iotsmartsys::core
