@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <cstddef>
 
+#include "Contracts/Connectivity/ConnectivityGate.h"
+
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
 #include "Contracts/Transports/IMqttClient.h"
@@ -40,6 +42,12 @@ public:
         _nextActionAtMs = 0;
         _state = State::Idle;
 
+        // garante que o estado de MQTT no latch começa limpo
+        {
+            auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+        }
+
         _subCount = 0;
         _qHead = _qTail = _qCount = 0;
 
@@ -48,9 +56,11 @@ public:
         _logger.info("MQTT", "MQTT client initialized.");
         _client.begin(_cfg);
 
-        _logger.info("MQTT", "Starting initial connection...");
-        startConnect();
-        _logger.info("MQTT", "Initial connection started.");
+        _logger.info("MQTT", "Scheduling initial connection...");
+        // não tenta conectar MQTT se ainda não houver Wi-Fi+IP; o handle() vai disparar assim que a rede estiver pronta
+        _state = State::BackoffWaiting;
+        const uint32_t now = _time ? _time->nowMs() : 0;
+        _nextActionAtMs = now; // tenta já na próxima chamada de handle()
     }
 
     void handle()
@@ -66,6 +76,10 @@ public:
                     _state = State::Online;
                     _attempt = 0;
                     _logger.info("MQTT", "Online");
+                    {
+                        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                        gate.setBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                    }
                     resubscribeAll();
                     drainQueue();
                 } else if (_nextActionAtMs && now >= _nextActionAtMs) {
@@ -80,6 +94,10 @@ public:
             case State::Online:
                 if (!_client.isConnected()) {
                     _logger.warn("MQTT", "Disconnected");
+                    {
+                        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                        gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                    }
                     scheduleRetry();
                 } else {
                     // tenta drenar aos poucos (sem travar)
@@ -136,9 +154,20 @@ private:
 private:
     void startConnect()
     {
+        const uint32_t now = _time ? _time->nowMs() : 0;
+
+        // Gate: nunca tenta MQTT sem Wi-Fi + IP (evita spam de connect antes da rede)
+        {
+            auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            if (!gate.isNetworkReady()) {
+                _state = State::BackoffWaiting;
+                _nextActionAtMs = now + 500; // reavalia logo, sem bloquear
+                return;
+            }
+        }
+
         _state = State::Connecting;
         _logger.debug("MQTT", "Starting connection attempt %lu", (unsigned long)(_attempt + 1));
-        const uint32_t now = _time ? _time->nowMs() : 0;
         _nextActionAtMs = now + 15000; // soft-timeout de conexão
         _logger.info("MQTT", "Connecting (attempt=%lu)", (unsigned long)(_attempt + 1));
         _client.start();
@@ -151,6 +180,10 @@ private:
         const uint32_t backoff = computeBackoffMs();
 
         _client.stop();
+        {
+            auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+        }
         _state = State::BackoffWaiting;
         _nextActionAtMs = now + backoff;
 

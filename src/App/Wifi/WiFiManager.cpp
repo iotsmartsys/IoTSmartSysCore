@@ -1,4 +1,5 @@
 #include "Contracts/Connections/WiFiManager.h"
+#include "Contracts/Connectivity/ConnectivityGate.h"
 
 namespace iotsmartsys::app
 {
@@ -10,7 +11,6 @@ namespace iotsmartsys::app
 
     void WiFiManager::begin(const WiFiConfig &cfg)
     {
-        // initialize time provider here (setup() should have called Time::setProvider)
         _timeProvider = &iotsmartsys::core::Time::get();
 
         _cfg = cfg;
@@ -19,8 +19,15 @@ namespace iotsmartsys::app
         _state = State::Idle;
         _nextActionAtMs = 0;
 
+        // garante que o estado latched de conectividade começa limpo
+        {
+            auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::IP_READY |
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+        }
+
 #ifdef ESP32
-        // event-driven (mais robusto)
         _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t)
                                 { this->onWiFiEvent(event); });
 #endif
@@ -28,8 +35,6 @@ namespace iotsmartsys::app
         WiFi.mode(WIFI_STA);
         WiFi.persistent(_cfg.persistent);
 
-        // Eu prefiro controlar reconexão manualmente.
-        // Se você quiser testar com autoReconnect=true, dá, mas pode ficar “duas lógicas brigando”.
 #ifdef ESP32
         WiFi.setAutoReconnect(_cfg.autoReconnect);
 #endif
@@ -65,7 +70,7 @@ namespace iotsmartsys::app
 
     void WiFiManager::handle()
     {
-    const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
+        const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
 
         switch (_state)
         {
@@ -74,8 +79,6 @@ namespace iotsmartsys::app
             break;
 
         case State::Connecting:
-            // fallback para casos em que evento não venha / travou
-            // (sem bloquear)
             if (isConnected())
             {
                 _state = State::Connected;
@@ -117,10 +120,18 @@ namespace iotsmartsys::app
         }
 
         _gotIp = false;
+
+        {
+            auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::IP_READY |
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+        }
+
         _state = State::Connecting;
 
         // timeout “soft”: se passar, entra em retry (sem bloquear)
-    const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
+        const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
         _nextActionAtMs = now + 15000; // 15s
 
         _log.info("WIFI", "Connecting to SSID=%s (attempt=%lu)", _cfg.ssid, (unsigned long)(_attempt + 1));
@@ -133,7 +144,7 @@ namespace iotsmartsys::app
     {
         _attempt++;
 
-    const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
+        const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
         const uint32_t backoff = computeBackoffMs();
 
         _nextActionAtMs = now + backoff;
@@ -174,15 +185,29 @@ namespace iotsmartsys::app
 #ifdef ESP32
     void WiFiManager::onWiFiEvent(WiFiEvent_t event)
     {
+        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+
         switch (event)
         {
+        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+            // Wi-Fi associado (ainda pode não ter IP)
+            gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
+            break;
+
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             _gotIp = true;
+            // Wi-Fi + IP prontos
+            gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                         iotsmartsys::core::ConnectivityGate::IP_READY);
             // o handle() consolida estado e loga
             break;
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
             _gotIp = false;
+            // Ao desconectar, invalida rede e MQTT
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::IP_READY |
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
             // não reconecta aqui direto (pra não reconectar em ISR/event flood)
             // o handle() vai perceber e aplicar retry/backoff
             break;
