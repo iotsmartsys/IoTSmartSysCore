@@ -1,5 +1,6 @@
 // Platform/Espressif/Settings/EspIdfNvsSettingsProvider.cpp
 #include "EspIdfNvsSettingsProvider.h"
+#include "Contracts/Common/Error.h"
 
 #include <cstring>
 #include <algorithm>
@@ -7,6 +8,30 @@
 namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core;
+    using core::common::Error;
+
+    static Error map_esp_err(esp_err_t e)
+    {
+        switch (e)
+        {
+        case ESP_OK:
+            return Error::Ok;
+#ifdef ESP_ERR_NVS_NOT_FOUND
+        case ESP_ERR_NVS_NOT_FOUND:
+            return Error::NotFound;
+#endif
+        case ESP_ERR_NO_MEM:
+            return Error::NoMem;
+        case ESP_ERR_INVALID_ARG:
+            return Error::InvalidArg;
+        case ESP_ERR_INVALID_STATE:
+            return Error::InvalidState;
+        case ESP_ERR_TIMEOUT:
+            return Error::Timeout;
+        default:
+            return Error::StorageReadFail;
+        }
+    }
 
     esp_err_t EspIdfNvsSettingsProvider::ensureNvsInit()
     {
@@ -164,50 +189,49 @@ namespace iotsmartsys::platform::espressif
 
         return (err == ESP_OK && required == sizeof(StoredSettings));
     }
-
-    esp_err_t EspIdfNvsSettingsProvider::load(core::settings::Settings &out)
+    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::load(core::settings::Settings &out)
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         nvs_handle_t h;
         err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &h);
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         size_t required = 0;
         err = nvs_get_blob(h, NVS_KEY, nullptr, &required);
         if (err != ESP_OK)
         {
             nvs_close(h);
-            return err; // ESP_ERR_NVS_NOT_FOUND etc.
+            return map_esp_err(err); // ESP_ERR_NVS_NOT_FOUND etc.
         }
 
         if (required != sizeof(StoredSettings))
         {
             nvs_close(h);
-            return ESP_ERR_INVALID_SIZE;
+            return iotsmartsys::core::common::Error::StorageReadFail;
         }
 
         StoredSettings stored{};
         err = nvs_get_blob(h, NVS_KEY, &stored, &required);
         nvs_close(h);
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         if (stored.version != STORAGE_VERSION)
-            return ESP_ERR_INVALID_VERSION;
+            return iotsmartsys::core::common::Error::StorageVersionMismatch;
 
         fromStored(stored, out);
-        return ESP_OK;
+        return iotsmartsys::core::common::Error::Ok;
     }
 
-    esp_err_t EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
+    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         StoredSettings stored{};
         toStored(settings, stored);
@@ -215,30 +239,30 @@ namespace iotsmartsys::platform::espressif
         nvs_handle_t h;
         err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         err = nvs_set_blob(h, NVS_KEY, &stored, sizeof(stored));
         if (err != ESP_OK)
         {
             nvs_close(h);
-            return err;
+            return map_esp_err(err);
         }
 
         err = nvs_commit(h);
         nvs_close(h);
-        return err;
+        return map_esp_err(err);
     }
 
-    esp_err_t EspIdfNvsSettingsProvider::erase()
+    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::erase()
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         nvs_handle_t h;
         err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
-            return err;
+            return map_esp_err(err);
 
         err = nvs_erase_key(h, NVS_KEY);
         if (err == ESP_ERR_NVS_NOT_FOUND)
@@ -247,6 +271,6 @@ namespace iotsmartsys::platform::espressif
         if (err == ESP_OK)
             err = nvs_commit(h);
         nvs_close(h);
-        return err;
+        return map_esp_err(err);
     }
 } // namespace iotsmartsys::platform::espressif

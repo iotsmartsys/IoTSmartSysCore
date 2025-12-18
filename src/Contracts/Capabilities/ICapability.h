@@ -93,8 +93,8 @@ namespace iotsmartsys::core
             }
         };
 
-        // single forwarding instance shared by all capabilities
-        inline static ForwardingLogger _forwardingLogger{};
+    // single forwarding instance shared by all capabilities
+    static ForwardingLogger _forwardingLogger;
 
         core::ILogger &logger = _forwardingLogger;
         core::ITimeProvider &timeProvider = core::Time::get();

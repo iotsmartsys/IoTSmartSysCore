@@ -1,7 +1,10 @@
 
+
 #include "EspIdfSettingsParser.h"
 
 #include <cstring>
+
+#include "Contracts/Common/Error.h"
 
 extern "C"
 {
@@ -11,6 +14,7 @@ extern "C"
 namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core::settings;
+    using iotsmartsys::core::common::Error;
 
     // Helpers cJSON
     bool EspIdfSettingsParser::jsonGetString(void *obj, const char *key, std::string &out)
@@ -43,11 +47,11 @@ namespace iotsmartsys::platform::espressif
         return true;
     }
 
-    esp_err_t EspIdfSettingsParser::parseMqttConfig(void *cfgObj, MqttConfig &out, bool allowTtl)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parseMqttConfig(void *cfgObj, MqttConfig &out, bool allowTtl)
     {
         auto *cfg = static_cast<cJSON *>(cfgObj);
         if (!cJSON_IsObject(cfg))
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         // defaults
         out = MqttConfig{};
@@ -57,14 +61,14 @@ namespace iotsmartsys::platform::espressif
 
         // host obrigatório
         if (!jsonGetString(cfg, "host", out.host) || out.host.empty())
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         // port obrigatório no seu JSON (mas vamos aceitar default se vier ausente)
         int port = 1883;
         if (jsonGetInt(cfg, "port", port))
         {
             if (port <= 0 || port > 65535)
-                return ESP_ERR_SETTINGS_PARSE_OUT_OF_RANGE;
+                return Error::Overflow;
             out.port = port;
         }
 
@@ -85,38 +89,38 @@ namespace iotsmartsys::platform::espressif
             {
                 // Guard rails: TTL em minutos, 0..1440 (1 dia) por segurança
                 if (ttl < 0 || ttl > 1440)
-                    return ESP_ERR_SETTINGS_PARSE_OUT_OF_RANGE;
+                    return Error::Overflow;
                 out.ttl = ttl;
             }
         }
 
         // validação mínima final
         if (!out.isValid())
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
-        return ESP_OK;
+        return Error::Ok;
     }
 
-    esp_err_t EspIdfSettingsParser::parseMqtt(void *mqttObj, MqttSettings &out)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parseMqtt(void *mqttObj, MqttSettings &out)
     {
         auto *mqtt = static_cast<cJSON *>(mqttObj);
         if (!cJSON_IsObject(mqtt))
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         cJSON *primary = cJSON_GetObjectItemCaseSensitive(mqtt, "primary");
         cJSON *secondary = cJSON_GetObjectItemCaseSensitive(mqtt, "secondary");
         cJSON *topic = cJSON_GetObjectItemCaseSensitive(mqtt, "topic");
 
         // primary obrigatório
-        esp_err_t err = parseMqttConfig(primary, out.primary, /*allowTtl*/ false);
-        if (err != ESP_OK)
+        iotsmartsys::core::common::Error err = parseMqttConfig(primary, out.primary, /*allowTtl*/ false);
+        if (err != Error::Ok)
             return err;
 
         // secondary opcional
         if (cJSON_IsObject(secondary))
         {
             err = parseMqttConfig(secondary, out.secondary, /*allowTtl*/ true);
-            if (err != ESP_OK)
+            if (err != Error::Ok)
                 return err;
         }
         else
@@ -132,23 +136,23 @@ namespace iotsmartsys::platform::espressif
             (void)jsonGetString(topic, "notify", out.notify_topic);
         }
 
-        return ESP_OK;
+        return Error::Ok;
     }
 
-    esp_err_t EspIdfSettingsParser::parseFirmware(void *fwObj, FirmwareConfig &out)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parseFirmware(void *fwObj, FirmwareConfig &out)
     {
         auto *fw = static_cast<cJSON *>(fwObj);
         if (!cJSON_IsObject(fw))
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         std::string url, manifest, update;
         bool verify = false;
 
         if (!jsonGetString(fw, "url", url) || url.empty())
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         if (!jsonGetString(fw, "manifest", manifest) || manifest.empty())
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         (void)jsonGetBool(fw, "verifysha256", verify);
 
@@ -166,49 +170,49 @@ namespace iotsmartsys::platform::espressif
         out.manifest = manifest;
         out.verify_sha256 = verify;
 
-        return ESP_OK;
+        return Error::Ok;
     }
 
-    esp_err_t EspIdfSettingsParser::parseWifi(void *wifiObj, WifiConfig &out)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parseWifi(void *wifiObj, WifiConfig &out)
     {
         auto *wifi = static_cast<cJSON *>(wifiObj);
         if (!cJSON_IsObject(wifi))
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         // No JSON que você mostrou, wifi não veio (você disse que esse JSON é exatamente o que vai gravar).
         // Então: se não existir, não falha. Aqui a função assume que foi chamada só se existir.
         (void)jsonGetString(wifi, "ssid", out.ssid);
         (void)jsonGetString(wifi, "password", out.password);
-        return ESP_OK;
+        return Error::Ok;
     }
 
-    esp_err_t EspIdfSettingsParser::parseApi(void *apiObj, ApiConfig &out)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parseApi(void *apiObj, ApiConfig &out)
     {
         auto *api = static_cast<cJSON *>(apiObj);
         if (!cJSON_IsObject(api))
-            return ESP_ERR_SETTINGS_PARSE_MISSING_FIELD;
+            return Error::InvalidState;
 
         (void)jsonGetString(api, "key", out.key);
         (void)jsonGetString(api, "basic_auth", out.basic_auth);
-        return ESP_OK;
+        return Error::Ok;
     }
 
-    esp_err_t EspIdfSettingsParser::parse(const char *json, Settings &out)
+    iotsmartsys::core::common::Error EspIdfSettingsParser::parse(const char *json, Settings &out)
     {
         if (!json || *json == '\0')
-            return ESP_ERR_SETTINGS_PARSE_INVALID_JSON;
+            return Error::InvalidArg;
 
         cJSON *root = cJSON_Parse(json);
         if (!root)
-            return ESP_ERR_SETTINGS_PARSE_INVALID_JSON;
+            return Error::InvalidArg;
 
         // Garantia de cleanup em qualquer return:
-        esp_err_t result = ESP_OK;
+        iotsmartsys::core::common::Error result = Error::Ok;
 
         // mqtt obrigatório
         cJSON *mqtt = cJSON_GetObjectItemCaseSensitive(root, "mqtt");
         result = parseMqtt(mqtt, out.mqtt);
-        if (result != ESP_OK)
+        if (result != Error::Ok)
         {
             cJSON_Delete(root);
             return result;
@@ -217,7 +221,7 @@ namespace iotsmartsys::platform::espressif
         // firmware obrigatório (no seu JSON atual)
         cJSON *fw = cJSON_GetObjectItemCaseSensitive(root, "firmware");
         result = parseFirmware(fw, out.firmware);
-        if (result != ESP_OK)
+        if (result != Error::Ok)
         {
             cJSON_Delete(root);
             return result;
@@ -252,6 +256,6 @@ namespace iotsmartsys::platform::espressif
         }
 
         cJSON_Delete(root);
-        return ESP_OK;
+        return Error::Ok;
     }
 } // namespace iotsmartsys::platform::espressif
