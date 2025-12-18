@@ -1,3 +1,4 @@
+#ifndef UNIT_TEST
 #include <Arduino.h>
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
 #include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
@@ -71,7 +72,7 @@ void setup()
     Serial.begin(115200);
     delay(500); // esperar serial
 
-    pinMode(BUTTON_PIN, INPUT_PULLUP); // importante
+    buttonAdapter.setup();
     relayAdapter.setup();
 
     Serial.println("[Serial] Starting IoT SmartSys Core example...");
@@ -95,8 +96,8 @@ void setup()
 
     logger.info("Configuring MQTT client...");
     core::MqttConfig mcfg;
-    mcfg.uri = MQTT_BROKER;
     mcfg.clientId = "esp32s3-basic-usage";
+    mcfg.uri = MQTT_BROKER;
     mcfg.username = MQTT_USERNAME;
     mcfg.password = MQTT_PASSWORD;
     mcfg.keepAliveSec = 30;
@@ -143,3 +144,4 @@ void loop()
 
     delay(2);
 }
+#endif
