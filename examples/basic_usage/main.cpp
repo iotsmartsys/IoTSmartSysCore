@@ -16,7 +16,7 @@ static platform::arduino::ArduinoTimeProvider timeProvider;
 
 static app::WiFiManager wifi(logger);
 
-static platform::esp32::EspIdfMqttClient mqttClient;
+static platform::espressif::EspIdfMqttClient mqttClient;
 static app::MqttService<12, 16, 256> mqtt(mqttClient, logger);
 
 static void onMqttMessage(void *, const core::MqttMessageView &msg)

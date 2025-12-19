@@ -29,9 +29,6 @@ public:
     {
         _logger.info("MQTT", "MqttService::begin()");
 
-        // resolve time provider at begin() time because the global Time provider
-        // might be set after static construction of this service (see main.cpp)
-    // Time::get() returns a reference; take its address to obtain pointer safely
     _time = &iotsmartsys::core::Time::get();
         if (!_time) {
             _logger.warn("MQTT", "Time provider is not set yet");
@@ -43,7 +40,7 @@ public:
         _state = State::Idle;
         _lastNetworkReady = false;
 
-        // garante que o estado de MQTT no latch começa limpo
+        // Ensure MQTT_CONNECTED bit is clear at start
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
@@ -58,10 +55,10 @@ public:
         _client.begin(_cfg);
 
         _logger.info("MQTT", "Scheduling initial connection...");
-        // não tenta conectar MQTT se ainda não houver Wi-Fi+IP; o handle() vai disparar assim que a rede estiver pronta
+        // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
-        _nextActionAtMs = now; // tenta já na próxima chamada de handle()
+        _nextActionAtMs = now; // connect on first handle()
     }
 
     void handle()
