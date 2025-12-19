@@ -1,4 +1,3 @@
-#pragma once
 
 #include <Arduino.h>
 #include "SensorUltrassonicHCSR04.h"

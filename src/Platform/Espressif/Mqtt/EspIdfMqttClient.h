@@ -10,7 +10,7 @@ extern "C"
 #include "mqtt_client.h"
 }
 
-namespace iotsmartsys::platform::esp32
+namespace iotsmartsys::platform::espressif
 {
 
     class EspIdfMqttClient : public iotsmartsys::core::IMqttClient

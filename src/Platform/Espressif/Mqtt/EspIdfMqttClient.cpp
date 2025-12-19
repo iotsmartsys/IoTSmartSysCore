@@ -2,7 +2,7 @@
 #include "EspIdfMqttClient.h"
 #include <cstring>
 
-namespace iotsmartsys::platform::esp32
+namespace iotsmartsys::platform::espressif
 {
     EspIdfMqttClient::EspIdfMqttClient(iotsmartsys::core::ILogger &log)
         : _logger(log)

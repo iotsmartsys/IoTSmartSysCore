@@ -4,3 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 private.ini
+*main.cpp
+*.exclude

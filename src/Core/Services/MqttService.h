@@ -41,6 +41,7 @@ public:
         _attempt = 0;
         _nextActionAtMs = 0;
         _state = State::Idle;
+        _lastNetworkReady = false;
 
         // garante que o estado de MQTT no latch começa limpo
         {
@@ -67,6 +68,34 @@ public:
     {
         const uint32_t now = _time ? _time->nowMs() : 0;
 
+        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+        const bool networkReady = gate.isNetworkReady();
+
+        // Logs claros de transição de rede (evento latched)
+        if (networkReady != _lastNetworkReady) {
+            if (networkReady) {
+                _logger.info("MQTT", "NetworkReady=TRUE (Wi-Fi+IP). MQTT pode conectar.");
+            } else {
+                _logger.warn("MQTT", "NetworkReady=FALSE (Wi-Fi/IP caiu). Pausando MQTT.");
+            }
+            _lastNetworkReady = networkReady;
+        }
+
+        // Se a rede não está pronta, pare MQTT imediatamente (sem esperar timeout) e aguarde.
+        if (!networkReady) {
+            if (_state == State::Connecting || _state == State::Online) {
+                _logger.warn("MQTT", "Stopping MQTT due to NetworkReady=FALSE");
+                _client.stop();
+                gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                _state = State::BackoffWaiting;
+                _nextActionAtMs = now + 500; // reavalia logo, sem bloquear
+            } else {
+                // garante bit limpo mesmo se já estiver em backoff/idle
+                gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+            }
+            return;
+        }
+
         switch (_state) {
             case State::Idle:
                 break;
@@ -83,6 +112,7 @@ public:
                     resubscribeAll();
                     drainQueue();
                 } else if (_nextActionAtMs && now >= _nextActionAtMs) {
+                    _logger.warn("MQTT", "Connect timeout (soft-timeout). Scheduling retry.");
                     scheduleRetry();
                 }
                 break;
@@ -156,12 +186,12 @@ private:
     {
         const uint32_t now = _time ? _time->nowMs() : 0;
 
-        // Gate: nunca tenta MQTT sem Wi-Fi + IP (evita spam de connect antes da rede)
+        // Gate redundante (segurança): nunca tenta MQTT sem Wi-Fi + IP
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             if (!gate.isNetworkReady()) {
                 _state = State::BackoffWaiting;
-                _nextActionAtMs = now + 500; // reavalia logo, sem bloquear
+                _nextActionAtMs = now + 1000;
                 return;
             }
         }
@@ -268,6 +298,7 @@ private:
     State _state{State::Idle};
     uint32_t _attempt{0};
     uint32_t _nextActionAtMs{0};
+    bool _lastNetworkReady{false};
 
     // subscribe list (sem heap): guarde só tópicos "const char*"
     const char* _subs[MaxTopics]{};
