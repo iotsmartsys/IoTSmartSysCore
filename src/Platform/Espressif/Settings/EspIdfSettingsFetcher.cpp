@@ -1,5 +1,5 @@
 #include "Platform/Espressif/Settings/EspIdfSettingsFetcher.h"
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 #include <cstring>
 #include <algorithm>
@@ -15,25 +15,25 @@ extern "C"
 namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core::settings;
-    using iotsmartsys::core::common::Error;
+    using iotsmartsys::core::common::StateResult;
     static const char *TAG = "SettingsFetcher";
 
-    static Error map_esp_err(esp_err_t e)
+    static StateResult map_esp_err(esp_err_t e)
     {
         switch (e)
         {
         case ESP_OK:
-            return Error::Ok;
+            return StateResult::Ok;
         case ESP_ERR_NO_MEM:
-            return Error::NoMem;
+            return StateResult::NoMem;
         case ESP_ERR_INVALID_ARG:
-            return Error::InvalidArg;
+            return StateResult::InvalidArg;
         case ESP_ERR_INVALID_STATE:
-            return Error::InvalidState;
+            return StateResult::InvalidState;
         case ESP_ERR_TIMEOUT:
-            return Error::Timeout;
+            return StateResult::Timeout;
         default:
-            return Error::IoError;
+            return StateResult::IoError;
         }
     }
 
@@ -82,18 +82,18 @@ namespace iotsmartsys::platform::espressif
         _cancel = true;
     }
 
-    iotsmartsys::core::common::Error EspIdfSettingsFetcher::start(const SettingsFetchRequest &req,
+    iotsmartsys::core::common::StateResult EspIdfSettingsFetcher::start(const SettingsFetchRequest &req,
                                                                   SettingsFetchCallback cb,
                                                                   void *user_ctx)
     {
         if (!cb || !req.url || req.url[0] == '\0')
-            return Error::InvalidArg;
+            return StateResult::InvalidArg;
 
         xSemaphoreTake(_mutex, portMAX_DELAY);
         if (_running)
         {
             xSemaphoreGive(_mutex);
-            return Error::InvalidState; // já rodando
+            return StateResult::InvalidState; // já rodando
         }
 
         _req = req;
@@ -112,7 +112,7 @@ namespace iotsmartsys::platform::espressif
         if (!_body)
         {
             xSemaphoreGive(_mutex);
-            return Error::NoMem;
+            return StateResult::NoMem;
         }
         resetBody();
 
@@ -132,11 +132,11 @@ namespace iotsmartsys::platform::espressif
             free(_body);
             _body = nullptr;
             xSemaphoreGive(_mutex);
-            return Error::NoMem;
+            return StateResult::NoMem;
         }
 
         xSemaphoreGive(_mutex);
-        return Error::Ok;
+        return StateResult::Ok;
     }
 
     void EspIdfSettingsFetcher::taskEntry(void *arg)
@@ -161,7 +161,7 @@ namespace iotsmartsys::platform::espressif
         {
             if (_cancel)
             {
-                finishAndCallback(Error::InvalidState, -1, true);
+                finishAndCallback(StateResult::InvalidState, -1, true);
                 return;
             }
 
@@ -170,20 +170,20 @@ namespace iotsmartsys::platform::espressif
 
             if (_cancel)
             {
-                finishAndCallback(Error::InvalidState, http_status, true);
+                finishAndCallback(StateResult::InvalidState, http_status, true);
                 return;
             }
 
             if (err == ESP_OK && http_status >= 200 && http_status < 300)
             {
-                finishAndCallback(Error::Ok, http_status, false);
+                finishAndCallback(StateResult::Ok, http_status, false);
                 return;
             }
 
             if (!shouldRetry(err, http_status, attempt))
             {
                 // sem retry: retorna erro final
-                finishAndCallback(err == ESP_OK ? Error::Unknown : map_esp_err(err), http_status, false);
+                finishAndCallback(err == ESP_OK ? StateResult::Unknown : map_esp_err(err), http_status, false);
                 return;
             }
 
@@ -191,7 +191,7 @@ namespace iotsmartsys::platform::espressif
             vTaskDelay(pdMS_TO_TICKS(backoff));
         }
 
-        finishAndCallback(Error::Unknown, http_status, false);
+        finishAndCallback(StateResult::Unknown, http_status, false);
     }
 
     esp_err_t EspIdfSettingsFetcher::performOnce(int &out_http_status)
@@ -338,7 +338,7 @@ namespace iotsmartsys::platform::espressif
         return std::max<std::uint32_t>(total, 50);
     }
 
-    void EspIdfSettingsFetcher::finishAndCallback(iotsmartsys::core::common::Error err, int http_status, bool cancelled)
+    void EspIdfSettingsFetcher::finishAndCallback(iotsmartsys::core::common::StateResult err, int http_status, bool cancelled)
     {
         SettingsFetchResult r;
         r.err = err;

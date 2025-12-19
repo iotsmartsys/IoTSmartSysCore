@@ -3,7 +3,7 @@
 namespace iotsmartsys::core::settings
 {
 
-    using iotsmartsys::core::common::Error;
+    using iotsmartsys::core::common::StateResult;
 
     SettingsGateImpl::SettingsGateImpl()
     {
@@ -56,7 +56,7 @@ namespace iotsmartsys::core::settings
         setLevel(SettingsReadyLevel::Synced);
     }
 
-    void SettingsGateImpl::signalError(Error err)
+    void SettingsGateImpl::signalError(StateResult err)
     {
         lock();
         _last_err = err;
@@ -64,17 +64,17 @@ namespace iotsmartsys::core::settings
         // Não rebaixa o nível — gate é “latch”: depois que ficou pronto, não volta.
     }
 
-    Error SettingsGateImpl::runWhenReady(SettingsReadyLevel want, SettingsGateCallback cb, void *user_ctx)
+    StateResult SettingsGateImpl::runWhenReady(SettingsReadyLevel want, SettingsGateCallback cb, void *user_ctx)
     {
         if (!cb)
-            return Error::InvalidArg;
+            return StateResult::InvalidArg;
 
         // Se já está pronto, executa imediatamente (fora do lock)
         const auto cur = level();
         if (isAtLeast(cur, want))
         {
             cb(cur, user_ctx);
-            return Error::Ok;
+            return StateResult::Ok;
         }
 
         // Senão, registra para depois
@@ -88,11 +88,11 @@ namespace iotsmartsys::core::settings
                 s.cb = cb;
                 s.ctx = user_ctx;
                 unlock();
-                return Error::Ok;
+                return StateResult::Ok;
             }
         }
         unlock();
-        return Error::NoMem; // sem slot
+        return StateResult::NoMem; // sem slot
     }
 
     void SettingsGateImpl::setLevel(SettingsReadyLevel newLevel)

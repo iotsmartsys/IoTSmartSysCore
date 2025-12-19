@@ -1,5 +1,5 @@
 #include "Contracts/Settings/SettingsManager.h"
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 extern "C"
 {
@@ -28,20 +28,20 @@ namespace iotsmartsys::core::settings
         }
     }
 
-    iotsmartsys::core::common::Error SettingsManager::initLoadFromCache()
+    iotsmartsys::core::common::StateResult SettingsManager::initLoadFromCache()
     {
         using namespace iotsmartsys::core::common;
 
         if (!_mutex)
-            return Error::NoMem;
+            return StateResult::NoMem;
 
         Settings loaded;
         // provider returns platform result; o provider agora retorna Error
-        const Error perr = _provider.load(loaded);
-        const Error err = perr;
+        const StateResult perr = _provider.load(loaded);
+        const StateResult err = perr;
 
         xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
-        if (err == Error::Ok)
+        if (err == StateResult::Ok)
         {
             _current = loaded;
             _has_current = true;
@@ -58,7 +58,7 @@ namespace iotsmartsys::core::settings
         xSemaphoreGive((SemaphoreHandle_t)_mutex);
 
         // Gate: Available somente quando cache (NVS) carregar OK.
-        if (err == Error::Ok)
+        if (err == StateResult::Ok)
         {
             iotsmartsys::core::settings::ISettingsGate &gate = _settingsGate;
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
@@ -70,19 +70,19 @@ namespace iotsmartsys::core::settings
         return err;
     }
 
-    iotsmartsys::core::common::Error SettingsManager::refreshFromApiAsync(const SettingsFetchRequest &req)
+    iotsmartsys::core::common::StateResult SettingsManager::refreshFromApiAsync(const SettingsFetchRequest &req)
     {
         using namespace iotsmartsys::core::common;
 
         if (!_mutex)
-            return Error::NoMem;
+            return StateResult::NoMem;
 
         xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
         _state = SettingsManagerState::FetchingFromApi;
         xSemaphoreGive((SemaphoreHandle_t)_mutex);
 
         // fetcher já roda em task própria; aqui retorna rápido
-        const Error r = _fetcher.start(req, &SettingsManager::onFetchCompletedStatic, this);
+        const StateResult r = _fetcher.start(req, &SettingsManager::onFetchCompletedStatic, this);
         return r;
     }
 
@@ -143,7 +143,7 @@ namespace iotsmartsys::core::settings
             self->onFetchCompleted(res);
     }
 
-    void SettingsManager::updateStatsFail(iotsmartsys::core::common::Error err, int http_status)
+    void SettingsManager::updateStatsFail(iotsmartsys::core::common::StateResult err, int http_status)
     {
         _stats.api_fetch_fail++;
         _stats.last_err = err;
@@ -161,20 +161,20 @@ namespace iotsmartsys::core::settings
         if (res.cancelled)
         {
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
-            _stats.last_err = iotsmartsys::core::common::Error::InvalidState;
+            _stats.last_err = iotsmartsys::core::common::StateResult::InvalidState;
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Idle);
             xSemaphoreGive((SemaphoreHandle_t)_mutex);
 
             iotsmartsys::core::settings::ISettingsGate &gate = _settingsGate;
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
             xSemaphoreGive((SemaphoreHandle_t)_mutex);
-            gate.signalError(iotsmartsys::core::common::Error::InvalidState);
+            gate.signalError(iotsmartsys::core::common::StateResult::InvalidState);
 
             return;
         }
 
         // Falha de HTTP/transporte ou status != 2xx => mantém redundância (NVS/memória)
-        if (res.err != iotsmartsys::core::common::Error::Ok || res.http_status < 200 || res.http_status >= 300)
+        if (res.err != iotsmartsys::core::common::StateResult::Ok || res.http_status < 200 || res.http_status >= 300)
         {
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
             updateStatsFail(res.err, res.http_status);
@@ -186,9 +186,9 @@ namespace iotsmartsys::core::settings
             xSemaphoreGive((SemaphoreHandle_t)_mutex);
 
             // Se transporte foi Ok mas status HTTP falhou, use InvalidState como fallback.
-            const auto gateErr = (res.err != iotsmartsys::core::common::Error::Ok)
+            const auto gateErr = (res.err != iotsmartsys::core::common::StateResult::Ok)
                                      ? res.err
-                                     : iotsmartsys::core::common::Error::InvalidState;
+                                     : iotsmartsys::core::common::StateResult::InvalidState;
             gate.signalError(gateErr);
 
             return;
@@ -196,8 +196,8 @@ namespace iotsmartsys::core::settings
 
         // Parse
         Settings parsed;
-        const iotsmartsys::core::common::Error perr = _parser.parse(res.body, parsed);
-        if (perr != iotsmartsys::core::common::Error::Ok)
+        const iotsmartsys::core::common::StateResult perr = _parser.parse(res.body, parsed);
+        if (perr != iotsmartsys::core::common::StateResult::Ok)
         {
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
             _stats.parse_fail++;
@@ -215,8 +215,8 @@ namespace iotsmartsys::core::settings
         }
 
         // Persistir no NVS (redundância). API continua sendo fonte de verdade.
-        const iotsmartsys::core::common::Error serr = _provider.save(parsed);
-        if (serr != iotsmartsys::core::common::Error::Ok)
+        const iotsmartsys::core::common::StateResult serr = _provider.save(parsed);
+        if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
             // Importante: mesmo se falhar NVS, você *pode* usar o settings em memória.
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
@@ -236,7 +236,7 @@ namespace iotsmartsys::core::settings
             _current = parsed;
             _has_current = true;
             _stats.api_fetch_ok++;
-            _stats.last_err = iotsmartsys::core::common::Error::Ok;
+            _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
             _stats.last_http_status = res.http_status;
             setState(SettingsManagerState::Ready);
             xSemaphoreGive((SemaphoreHandle_t)_mutex);

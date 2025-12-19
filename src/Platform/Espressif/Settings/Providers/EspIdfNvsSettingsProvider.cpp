@@ -1,6 +1,6 @@
 // Platform/Espressif/Settings/EspIdfNvsSettingsProvider.cpp
 #include "EspIdfNvsSettingsProvider.h"
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 #include <cstring>
 #include <algorithm>
@@ -8,28 +8,28 @@
 namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core;
-    using core::common::Error;
+    using core::common::StateResult;
 
-    static Error map_esp_err(esp_err_t e)
+    static StateResult map_esp_err(esp_err_t e)
     {
         switch (e)
         {
         case ESP_OK:
-            return Error::Ok;
+            return StateResult::Ok;
 #ifdef ESP_ERR_NVS_NOT_FOUND
         case ESP_ERR_NVS_NOT_FOUND:
-            return Error::NotFound;
+            return StateResult::NotFound;
 #endif
         case ESP_ERR_NO_MEM:
-            return Error::NoMem;
+            return StateResult::NoMem;
         case ESP_ERR_INVALID_ARG:
-            return Error::InvalidArg;
+            return StateResult::InvalidArg;
         case ESP_ERR_INVALID_STATE:
-            return Error::InvalidState;
+            return StateResult::InvalidState;
         case ESP_ERR_TIMEOUT:
-            return Error::Timeout;
+            return StateResult::Timeout;
         default:
-            return Error::StorageReadFail;
+            return StateResult::StorageReadFail;
         }
     }
 
@@ -189,7 +189,7 @@ namespace iotsmartsys::platform::espressif
 
         return (err == ESP_OK && required == sizeof(StoredSettings));
     }
-    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::load(core::settings::Settings &out)
+    iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::load(core::settings::Settings &out)
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
@@ -211,7 +211,7 @@ namespace iotsmartsys::platform::espressif
         if (required != sizeof(StoredSettings))
         {
             nvs_close(h);
-            return iotsmartsys::core::common::Error::StorageReadFail;
+            return iotsmartsys::core::common::StateResult::StorageReadFail;
         }
 
         StoredSettings stored{};
@@ -221,13 +221,13 @@ namespace iotsmartsys::platform::espressif
             return map_esp_err(err);
 
         if (stored.version != STORAGE_VERSION)
-            return iotsmartsys::core::common::Error::StorageVersionMismatch;
+            return iotsmartsys::core::common::StateResult::StorageVersionMismatch;
 
         fromStored(stored, out);
-        return iotsmartsys::core::common::Error::Ok;
+        return iotsmartsys::core::common::StateResult::Ok;
     }
 
-    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
+    iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
@@ -253,7 +253,7 @@ namespace iotsmartsys::platform::espressif
         return map_esp_err(err);
     }
 
-    iotsmartsys::core::common::Error EspIdfNvsSettingsProvider::erase()
+    iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::erase()
     {
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)

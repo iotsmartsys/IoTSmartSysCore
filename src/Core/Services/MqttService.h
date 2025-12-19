@@ -59,7 +59,7 @@ namespace iotsmartsys::app
                 iotsmartsys::core::settings::SettingsReadyLevel::Available,
                 &MqttService::onSettingsReadyThunk,
                 this);
-            if (gateSubErr != iotsmartsys::core::common::Error::Ok)
+            if (gateSubErr != iotsmartsys::core::common::StateResult::Ok)
             {
                 _logger.warn("MQTT", "SettingsGate subscription failed (err=%d). MQTT will stay blocked by SettingsReady.", (int)gateSubErr);
             }
@@ -92,7 +92,7 @@ namespace iotsmartsys::app
             if (_statusLogEveryMs && (_lastStatusLogAtMs == 0 || (now - _lastStatusLogAtMs) >= _statusLogEveryMs))
             {
                 const int32_t until = (_nextActionAtMs > now) ? (int32_t)(_nextActionAtMs - now) : 0;
-                _logger.info(
+                _logger.debug(
                     "MQTT",
                     "Status: state=%s net=%d settings=%d client=%d attempt=%lu nextInMs=%ld",
                     stateToStr(_state),

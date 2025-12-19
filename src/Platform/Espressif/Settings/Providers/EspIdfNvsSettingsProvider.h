@@ -17,9 +17,9 @@ namespace iotsmartsys::platform::espressif
         EspIdfNvsSettingsProvider() = default;
         ~EspIdfNvsSettingsProvider() override = default;
 
-    iotsmartsys::core::common::Error load(core::settings::Settings &out) override;
-    iotsmartsys::core::common::Error save(const core::settings::Settings &settings) override;
-    iotsmartsys::core::common::Error erase() override;
+    iotsmartsys::core::common::StateResult load(core::settings::Settings &out) override;
+    iotsmartsys::core::common::StateResult save(const core::settings::Settings &settings) override;
+    iotsmartsys::core::common::StateResult erase() override;
         bool exists() override;
 
     private:

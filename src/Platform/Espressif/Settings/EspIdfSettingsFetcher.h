@@ -17,7 +17,7 @@ namespace iotsmartsys::platform::espressif
         EspIdfSettingsFetcher();
         ~EspIdfSettingsFetcher() override;
 
-    iotsmartsys::core::common::Error start(const iotsmartsys::core::settings::SettingsFetchRequest &req,
+    iotsmartsys::core::common::StateResult start(const iotsmartsys::core::settings::SettingsFetchRequest &req,
             iotsmartsys::core::settings::SettingsFetchCallback cb,
             void *user_ctx) override;
 
@@ -57,6 +57,6 @@ namespace iotsmartsys::platform::espressif
 
         void resetBody();
         bool appendBody(const char *data, int len);
-    void finishAndCallback(iotsmartsys::core::common::Error err, int http_status, bool cancelled);
+    void finishAndCallback(iotsmartsys::core::common::StateResult err, int http_status, bool cancelled);
     };
 } // namespace iotsmartsys::platform::espressif

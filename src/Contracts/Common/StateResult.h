@@ -4,7 +4,7 @@
 
 namespace iotsmartsys::core::common
 {
-    enum class Error : std::uint8_t
+    enum class StateResult : std::uint8_t
     {
         Ok = 0,
 
@@ -37,5 +37,5 @@ namespace iotsmartsys::core::common
         Unknown
     };
 
-    inline bool ok(Error e) { return e == Error::Ok; }
+    inline bool ok(StateResult e) { return e == StateResult::Ok; }
 } // namespace iotsmartsys::core::common

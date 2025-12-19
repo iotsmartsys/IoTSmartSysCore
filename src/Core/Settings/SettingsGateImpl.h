@@ -21,9 +21,9 @@ namespace iotsmartsys::core::settings
 
         void signalAvailable() override;
         void signalSynced() override;
-        void signalError(iotsmartsys::core::common::Error err) override;
+        void signalError(iotsmartsys::core::common::StateResult err) override;
 
-        iotsmartsys::core::common::Error runWhenReady(
+        iotsmartsys::core::common::StateResult runWhenReady(
             SettingsReadyLevel want,
             SettingsGateCallback cb,
             void *user_ctx) override;
@@ -41,7 +41,7 @@ namespace iotsmartsys::core::settings
 
         mutable SemaphoreHandle_t _mutex = nullptr;
         SettingsReadyLevel _level = SettingsReadyLevel::None;
-        iotsmartsys::core::common::Error _last_err = iotsmartsys::core::common::Error::Ok;
+        iotsmartsys::core::common::StateResult _last_err = iotsmartsys::core::common::StateResult::Ok;
 
         Sub _subs[kMaxSubs];
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 namespace iotsmartsys::core::settings
 {
@@ -25,10 +25,10 @@ namespace iotsmartsys::core::settings
         // Sinais vindos do SettingsManager:
         virtual void signalAvailable() = 0; // cache carregou OK
         virtual void signalSynced() = 0;    // API OK (aplicado)
-        virtual void signalError(iotsmartsys::core::common::Error err) = 0;
+        virtual void signalError(iotsmartsys::core::common::StateResult err) = 0;
 
         // Gate: executa cb quando atingir o nível desejado (ou imediatamente se já tiver atingido)
-        virtual iotsmartsys::core::common::Error runWhenReady(
+        virtual iotsmartsys::core::common::StateResult runWhenReady(
             SettingsReadyLevel want,
             SettingsGateCallback cb,
             void *user_ctx) = 0;

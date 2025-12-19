@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 namespace iotsmartsys::core::settings
 {
@@ -33,7 +33,7 @@ namespace iotsmartsys::core::settings
 
     struct SettingsFetchResult
     {
-        iotsmartsys::core::common::Error err{iotsmartsys::core::common::Error::Unknown}; // erro de transporte/timeout/etc.
+        iotsmartsys::core::common::StateResult err{iotsmartsys::core::common::StateResult::Unknown}; // erro de transporte/timeout/etc.
         int http_status{-1};     // status HTTP (200, 401, 500...), -1 se não houve
         bool cancelled{false};
 
@@ -48,7 +48,7 @@ namespace iotsmartsys::core::settings
     public:
         virtual ~ISettingsFetcher() = default;
 
-    virtual iotsmartsys::core::common::Error start(const SettingsFetchRequest &req,
+    virtual iotsmartsys::core::common::StateResult start(const SettingsFetchRequest &req,
                 SettingsFetchCallback cb,
                 void *user_ctx) = 0;
 

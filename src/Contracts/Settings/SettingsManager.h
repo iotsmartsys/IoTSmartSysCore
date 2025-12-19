@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "Contracts/Common/Error.h"
+#include "Contracts/Common/StateResult.h"
 
 #include "Contracts/Settings/Settings.h"
 #include "Contracts/Settings/ISettingsFetcher.h"
@@ -30,7 +30,7 @@ namespace iotsmartsys::core::settings
         std::uint32_t nvs_save_fail{0};
 
         int last_http_status{-1};
-        iotsmartsys::core::common::Error last_err{iotsmartsys::core::common::Error::Ok};
+        iotsmartsys::core::common::StateResult last_err{iotsmartsys::core::common::StateResult::Ok};
     };
 
     // Callback disparado quando settings atuais foram atualizados com sucesso a partir da API
@@ -48,11 +48,11 @@ namespace iotsmartsys::core::settings
         // Retorna:
         //  - ESP_OK: carregou do NVS
         //  - ESP_ERR_NVS_NOT_FOUND/ESP_FAIL/etc: não carregou, mas o manager continua funcional
-        iotsmartsys::core::common::Error initLoadFromCache();
+        iotsmartsys::core::common::StateResult initLoadFromCache();
 
         // 2) Dispara atualização via API (assíncrono; não trava firmware).
         // Use a API como fonte de verdade; se falhar, mantém cache atual.
-        iotsmartsys::core::common::Error refreshFromApiAsync(const SettingsFetchRequest &req);
+        iotsmartsys::core::common::StateResult refreshFromApiAsync(const SettingsFetchRequest &req);
 
         // Cancela fetch se estiver rodando
         void cancel();
@@ -75,7 +75,7 @@ namespace iotsmartsys::core::settings
         void onFetchCompleted(const SettingsFetchResult &res);
 
         void setState(SettingsManagerState s);
-        void updateStatsFail(iotsmartsys::core::common::Error err, int http_status);
+        void updateStatsFail(iotsmartsys::core::common::StateResult err, int http_status);
 
         core::providers::ISettingsProvider &_provider;
         ISettingsFetcher &_fetcher;
