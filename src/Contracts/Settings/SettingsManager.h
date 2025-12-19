@@ -48,7 +48,7 @@ namespace iotsmartsys::core::settings
         // Retorna:
         //  - ESP_OK: carregou do NVS
         //  - ESP_ERR_NVS_NOT_FOUND/ESP_FAIL/etc: não carregou, mas o manager continua funcional
-        iotsmartsys::core::common::StateResult initLoadFromCache();
+        iotsmartsys::core::common::StateResult init();
 
         // 2) Dispara atualização via API (assíncrono; não trava firmware).
         // Use a API como fonte de verdade; se falhar, mantém cache atual.

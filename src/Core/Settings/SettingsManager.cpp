@@ -28,7 +28,7 @@ namespace iotsmartsys::core::settings
         }
     }
 
-    iotsmartsys::core::common::StateResult SettingsManager::initLoadFromCache()
+    iotsmartsys::core::common::StateResult SettingsManager::init()
     {
         using namespace iotsmartsys::core::common;
 

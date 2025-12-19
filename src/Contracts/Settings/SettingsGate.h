@@ -32,6 +32,8 @@ namespace iotsmartsys::core::settings
             SettingsReadyLevel want,
             SettingsGateCallback cb,
             void *user_ctx) = 0;
+
+        virtual void handle() = 0;
     };
 
 } // namespace iotsmartsys::core::settings

@@ -28,6 +28,8 @@ namespace iotsmartsys::core::settings
             SettingsGateCallback cb,
             void *user_ctx) override;
 
+        void handle() override;
+
     private:
         struct Sub
         {
