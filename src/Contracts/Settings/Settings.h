@@ -15,5 +15,10 @@ namespace iotsmartsys::core::settings
         FirmwareConfig firmware;
         WifiConfig wifi;
         ApiConfig api;
+
+        bool isValidWifiConfig() const
+        {
+            return (wifi.ssid.empty() == false && wifi.password.empty() == false);
+        }
     };
 } // namespace iotsmartsys::core::settings

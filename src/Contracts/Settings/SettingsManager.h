@@ -7,6 +7,7 @@
 #include "Contracts/Settings/ISettingsFetcher.h"
 #include "Contracts/Settings/ISettingsParser.h"
 #include "Contracts/Providers/ISettingsProvider.h"
+#include "Contracts/Settings/SettingsGate.h"
 
 namespace iotsmartsys::core::settings
 {
@@ -28,8 +29,8 @@ namespace iotsmartsys::core::settings
         std::uint32_t parse_fail{0};
         std::uint32_t nvs_save_fail{0};
 
-    int last_http_status{-1};
-    iotsmartsys::core::common::Error last_err{iotsmartsys::core::common::Error::Ok};
+        int last_http_status{-1};
+        iotsmartsys::core::common::Error last_err{iotsmartsys::core::common::Error::Ok};
     };
 
     // Callback disparado quando settings atuais foram atualizados com sucesso a partir da API
@@ -40,7 +41,8 @@ namespace iotsmartsys::core::settings
     public:
         SettingsManager(core::providers::ISettingsProvider &provider,
                         ISettingsFetcher &fetcher,
-                        ISettingsParser &parser);
+                        ISettingsParser &parser,
+                        ISettingsGate &settingsGate);
         ~SettingsManager();
         // 1) Carrega do NVS se existir (rápido). Nunca bloqueia com rede.
         // Retorna:
@@ -73,7 +75,7 @@ namespace iotsmartsys::core::settings
         void onFetchCompleted(const SettingsFetchResult &res);
 
         void setState(SettingsManagerState s);
-    void updateStatsFail(iotsmartsys::core::common::Error err, int http_status);
+        void updateStatsFail(iotsmartsys::core::common::Error err, int http_status);
 
         core::providers::ISettingsProvider &_provider;
         ISettingsFetcher &_fetcher;
@@ -89,5 +91,7 @@ namespace iotsmartsys::core::settings
         // callback
         SettingsUpdatedCallback _updated_cb{nullptr};
         void *_updated_ctx{nullptr};
+
+        iotsmartsys::core::settings::ISettingsGate &_settingsGate;
     };
 } // namespace iotsmartsys::core::settings

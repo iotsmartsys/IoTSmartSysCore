@@ -12,6 +12,8 @@
 #include <ESP8266WiFi.h>
 #endif
 
+#include "Contracts/Settings/Settings.h"
+
 namespace iotsmartsys::app
 {
 
@@ -23,12 +25,22 @@ namespace iotsmartsys::app
         // retry policy
         uint32_t initialBackoffMs = 1000;
         uint32_t maxBackoffMs = 60000;
-        uint32_t jitterMs = 250;              // random 0..jitterMs
-        uint8_t maxFastRetries = 5;           // antes de aumentar muito o backoff
-        uint32_t reconnectMinUptimeMs = 3000; // evita flapping
+        uint32_t jitterMs = 250;
+        uint8_t maxFastRetries = 5;
+        uint32_t reconnectMinUptimeMs = 3000;
 
-        bool persistent = false;    // evita gravar NVS toda hora
-        bool autoReconnect = false; // a gente controla (mais previsível)
+        bool persistent = false;
+        bool autoReconnect = false;
+
+        bool loadFromSettings(const core::settings::Settings &s)
+        {
+            if (!s.isValidWifiConfig())
+                return false;
+
+            ssid = s.wifi.ssid.c_str();
+            password = s.wifi.password.c_str();
+            return true;
+        }
     };
 
     class WiFiManager
@@ -69,9 +81,9 @@ namespace iotsmartsys::app
         uint32_t _attempt{0};
         uint32_t _nextActionAtMs{0};
 
-    uint32_t _connectedAtMs{0};
-    bool _gotIp{false};
-    iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
+        uint32_t _connectedAtMs{0};
+        bool _gotIp{false};
+        iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
     };
 
 } // namespace iotsmartsys::app
