@@ -13,6 +13,8 @@ namespace iotsmartsys::core::settings
         std::string password;
         std::string protocol;
         int ttl{0};
+        uint16_t keepAliveSec{30};
+        bool cleanSession{true};
 
         unsigned long getReconnectIntervalMs() const
         {

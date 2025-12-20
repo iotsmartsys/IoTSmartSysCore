@@ -8,6 +8,8 @@
 #include "Contracts/Settings/ISettingsParser.h"
 #include "Contracts/Providers/ISettingsProvider.h"
 #include "Contracts/Settings/SettingsGate.h"
+#include "Contracts/Logging/ILogger.h"
+#include "Contracts/Settings/IReadOnlySettingsProvider.h"
 
 namespace iotsmartsys::core::settings
 {
@@ -36,14 +38,14 @@ namespace iotsmartsys::core::settings
     // Callback disparado quando settings atuais foram atualizados com sucesso a partir da API
     using SettingsUpdatedCallback = void (*)(const Settings &new_settings, void *user_ctx);
 
-    class SettingsManager
+    class SettingsManager : public iotsmartsys::core::settings::IReadOnlySettingsProvider
     {
     public:
         SettingsManager(core::providers::ISettingsProvider &provider,
                         ISettingsFetcher &fetcher,
                         ISettingsParser &parser,
                         ISettingsGate &settingsGate);
-        ~SettingsManager();
+        ~SettingsManager() override;
         // 1) Carrega do NVS se existir (rápido). Nunca bloqueia com rede.
         // Retorna:
         //  - ESP_OK: carregou do NVS
@@ -70,7 +72,12 @@ namespace iotsmartsys::core::settings
         // Estatísticas simples para debug/telemetria
         SettingsManagerStats stats() const;
 
+        // Optional loop hook. Default is no-op so SettingsManager can be instantiated directly.
+        void saveWiFiOnly(const WifiConfig &wifi);
+        void handle();
+
     private:
+        iotsmartsys::core::ILogger *_logger;
         static void onFetchCompletedStatic(const SettingsFetchResult &res, void *ctx);
         void onFetchCompleted(const SettingsFetchResult &res);
 
@@ -93,5 +100,7 @@ namespace iotsmartsys::core::settings
         void *_updated_ctx{nullptr};
 
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;
+
+        void syncFromApi();
     };
 } // namespace iotsmartsys::core::settings

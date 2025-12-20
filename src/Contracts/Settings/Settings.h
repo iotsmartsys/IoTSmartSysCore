@@ -10,7 +10,9 @@ namespace iotsmartsys::core::settings
     struct Settings
     {
         bool in_config_mode{true};
-
+        
+        const char *clientId;
+        
         MqttSettings mqtt;
         FirmwareConfig firmware;
         WifiConfig wifi;

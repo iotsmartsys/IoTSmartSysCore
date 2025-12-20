@@ -56,6 +56,11 @@ namespace iotsmartsys::core::settings
         setLevel(SettingsReadyLevel::Synced);
     }
 
+    void SettingsGateImpl::signalSyncing()
+    {
+        setLevel(SettingsReadyLevel::Syncing);
+    }
+
     void SettingsGateImpl::signalError(StateResult err)
     {
         lock();

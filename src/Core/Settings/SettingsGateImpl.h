@@ -21,14 +21,13 @@ namespace iotsmartsys::core::settings
 
         void signalAvailable() override;
         void signalSynced() override;
+        void signalSyncing() override;
         void signalError(iotsmartsys::core::common::StateResult err) override;
 
         iotsmartsys::core::common::StateResult runWhenReady(
             SettingsReadyLevel want,
             SettingsGateCallback cb,
             void *user_ctx) override;
-
-        void handle() override;
 
     private:
         struct Sub

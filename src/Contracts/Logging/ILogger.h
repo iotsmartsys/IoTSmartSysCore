@@ -31,6 +31,19 @@ namespace iotsmartsys::core
             va_end(args);
         }
 
+        void trace(const char *tag, const char *fmt, ...)
+        {
+            va_list args;
+            va_start(args, fmt);
+            logf(LogLevel::Trace, tag, fmt, args);
+            va_end(args);
+        }
+
+        void trace(const char *fmt, ...)
+        {
+            trace("", fmt);
+        }
+
         // Helpers comuns
         void error(const char *tag, const char *fmt, ...)
         {

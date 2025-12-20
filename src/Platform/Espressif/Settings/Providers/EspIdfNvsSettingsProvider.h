@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Contracts/Providers/ISettingsProvider.h"
+#include "Contracts/Logging/ILogger.h"
 
 extern "C"
 {
@@ -14,15 +15,17 @@ namespace iotsmartsys::platform::espressif
     class EspIdfNvsSettingsProvider final : public core::providers::ISettingsProvider
     {
     public:
-        EspIdfNvsSettingsProvider() = default;
+        EspIdfNvsSettingsProvider();
         ~EspIdfNvsSettingsProvider() override = default;
 
-    iotsmartsys::core::common::StateResult load(core::settings::Settings &out) override;
-    iotsmartsys::core::common::StateResult save(const core::settings::Settings &settings) override;
-    iotsmartsys::core::common::StateResult erase() override;
+        iotsmartsys::core::common::StateResult load(core::settings::Settings &out) override;
+        iotsmartsys::core::common::StateResult save(const core::settings::Settings &settings) override;
+        iotsmartsys::core::common::StateResult saveWiFiOnly(const core::settings::WifiConfig &wifi) override;
+        iotsmartsys::core::common::StateResult erase() override;
         bool exists() override;
 
     private:
+        iotsmartsys::core::ILogger *_logger;
         static constexpr const char *NVS_NAMESPACE = "iotsys";
         static constexpr const char *NVS_KEY = "settings";
 
