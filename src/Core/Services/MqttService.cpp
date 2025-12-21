@@ -30,7 +30,7 @@ namespace iotsmartsys::app
                                                              const RetryPolicy &policy)
     {
         _logger.info("MQTT", "MqttService::begin()");
-
+        
         _time = &iotsmartsys::core::Time::get();
         if (!_time)
         {
@@ -65,7 +65,7 @@ namespace iotsmartsys::app
         _subCount = 0;
         _qHead = _qTail = _qCount = 0;
 
-        _logger.info("MQTT", "Initializing MQTT client...");
+        _logger.info("MQTT", "Initializing MQTT client uri='%s'", cfg.uri);
         _client.setOnMessage(&MqttService::onMessageThunk, this);
         _logger.info("MQTT", "MQTT client initialized.");
         _client.begin(_cfg);

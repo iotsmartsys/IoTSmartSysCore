@@ -34,6 +34,12 @@ namespace iotsmartsys::platform::espressif
         c.password = cfg.password;
         c.keepalive = cfg.keepAliveSec;
         c.disable_clean_session = cfg.cleanSession ? 0 : 1;
+        _logger.debug("[MQTT DBG] Config: uri='%s' client_id='%s' username='%s' keepalive=%d clean_session=%d",
+                           c.uri ? c.uri : "(null)",
+                           c.client_id ? c.client_id : "(null)",
+                           c.username ? c.username : "(null)",
+                           c.keepalive,
+                           c.disable_clean_session);
 
         _logger.info("[MQTT DBG] esp_mqtt_client_init()...");
         _client = esp_mqtt_client_init(&c);

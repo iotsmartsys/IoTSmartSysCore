@@ -258,37 +258,50 @@ namespace iotsmartsys::platform::espressif
         }
 
         // Read current stored blob (if any). We'll preserve WiFi if the incoming settings doesn't include it.
-        StoredSettings existing{};
+        StoredSettings *existing = new StoredSettings();
         bool hasExisting = false;
         {
             size_t required = sizeof(StoredSettings);
-            esp_err_t rerr = nvs_get_blob(h, NVS_KEY, &existing, &required);
-            if (rerr == ESP_OK && required == sizeof(StoredSettings) && existing.version == STORAGE_VERSION)
+            esp_err_t rerr = nvs_get_blob(h, NVS_KEY, existing, &required);
+            if (rerr == ESP_OK && required == sizeof(StoredSettings) && existing->version == STORAGE_VERSION)
             {
                 hasExisting = true;
             }
         }
 
-        StoredSettings stored{};
-        toStored(settings, stored);
+        StoredSettings *stored = new StoredSettings();
+        std::memset(stored, 0, sizeof(*stored));
+        toStored(settings, *stored);
 
         // Preserve WiFi if caller did not provide it (common when settings come from API without WiFi fields)
-        const bool incomingWifiEmpty = (stored.wifi.ssid[0] == '\0' && stored.wifi.password[0] == '\0');
+        const bool incomingWifiEmpty = (stored->wifi.ssid[0] == '\0' && stored->wifi.password[0] == '\0');
         if (hasExisting && incomingWifiEmpty)
         {
-            std::memcpy(&stored.wifi, &existing.wifi, sizeof(stored.wifi));
+            std::memcpy(&stored->wifi, &existing->wifi, sizeof(stored->wifi));
             _logger->debug("EspIdfNvsSettingsProvider", "Preserving WiFi from existing NVS blob (incoming settings had empty WiFi)");
         }
 
-        err = nvs_set_blob(h, NVS_KEY, &stored, sizeof(stored));
+        err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
         if (err != ESP_OK)
         {
             _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
+            delete existing;
+            delete stored;
             nvs_close(h);
             return map_esp_err(err);
         }
-
+        _logger->debug("EspIdfNvsSettingsProvider", "nvs set_blob succeeded, committing...");
         err = nvs_commit(h);
+        if (err != ESP_OK)
+        {
+            _logger->error("EspIdfNvsSettingsProvider", "nvs commit failed: %d", (int)err);
+        }
+        else
+        {
+            _logger->debug("EspIdfNvsSettingsProvider", "nvs commit succeeded");
+        }
+        delete existing;
+        delete stored;
         nvs_close(h);
         return map_esp_err(err);
     }
@@ -312,36 +325,37 @@ namespace iotsmartsys::platform::espressif
         }
 
         // Load existing settings (if present). If not present, create a fresh StoredSettings
-        // so we can persist WiFi-only fields on first boot.
-        StoredSettings stored{};
+        // so we can persist WiFi-only fields on first boot. Use heap allocation to avoid
+        // exhausting the FreeRTOS task stack.
+        StoredSettings *stored = new StoredSettings();
         size_t required = sizeof(StoredSettings);
-        err = nvs_get_blob(h, NVS_KEY, &stored, &required);
+        err = nvs_get_blob(h, NVS_KEY, stored, &required);
         if (err != ESP_OK || required != sizeof(StoredSettings))
         {
             // No existing blob or invalid size: create a new default-stored object.
             _logger->debug("EspIdfNvsSettingsProvider", "nvs get_blob not found or invalid size: %d - creating new stored blob", (int)err);
-            std::memset(&stored, 0, sizeof(stored));
-            stored.version = STORAGE_VERSION;
+            std::memset(stored, 0, sizeof(*stored));
+            stored->version = STORAGE_VERSION;
             // continue — we'll set wifi fields below and persist the new blob
         }
 
         // Update only WiFi settings
-
-        copyStr(stored.wifi.ssid, sizeof(stored.wifi.ssid), wifi.ssid);
+        copyStr(stored->wifi.ssid, sizeof(stored->wifi.ssid), wifi.ssid);
         _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi settings to NVS: SSID='%s'", wifi.ssid.c_str());
-        // Never log passwords. If you need diagnostics, log only length.
+        // Never log passwords; log only length for diagnostics.
         _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi password_len=%u", (unsigned)wifi.password.size());
 
-        copyStr(stored.wifi.password, sizeof(stored.wifi.password), wifi.password);
+        copyStr(stored->wifi.password, sizeof(stored->wifi.password), wifi.password);
 
-        // Debug: show what we'll write for WiFi (without password)
-        _logger->debug("EspIdfNvsSettingsProvider", "About to write stored.wifi: SSID='%s' password_len=%u", stored.wifi.ssid, (unsigned)std::strlen(stored.wifi.password));
+        // Debug: show what we'll write for WiFi (without password content)
+        _logger->debug("EspIdfNvsSettingsProvider", "About to write stored.wifi: SSID='%s' password_len=%u", stored->wifi.ssid, (unsigned)std::strlen(stored->wifi.password));
 
         // Save back
-        err = nvs_set_blob(h, NVS_KEY, &stored, sizeof(stored));
+        err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
         if (err != ESP_OK)
         {
             _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
+            delete stored;
             nvs_close(h);
             return map_esp_err(err);
         }
@@ -356,17 +370,18 @@ namespace iotsmartsys::platform::espressif
             esp_err_t rerr = nvs_open(NVS_NAMESPACE, NVS_READONLY, &hr);
             if (rerr == ESP_OK)
             {
-                StoredSettings verify{};
-                size_t vreq = sizeof(verify);
-                rerr = nvs_get_blob(hr, NVS_KEY, &verify, &vreq);
-                if (rerr == ESP_OK && vreq == sizeof(verify))
+                StoredSettings *verify = new StoredSettings();
+                size_t vreq = sizeof(*verify);
+                rerr = nvs_get_blob(hr, NVS_KEY, verify, &vreq);
+                if (rerr == ESP_OK && vreq == sizeof(*verify))
                 {
-                    _logger->debug("EspIdfNvsSettingsProvider", "Readback stored.wifi: SSID='%s' password_len=%u", verify.wifi.ssid, (unsigned)std::strlen(verify.wifi.password));
+                    _logger->debug("EspIdfNvsSettingsProvider", "Readback stored.wifi: SSID='%s' password_len=%u", verify->wifi.ssid, (unsigned)std::strlen(verify->wifi.password));
                 }
                 else
                 {
                     _logger->warn("EspIdfNvsSettingsProvider", "Readback failed: err=%d vreq=%u", (int)rerr, (unsigned)vreq);
                 }
+                delete verify;
                 nvs_close(hr);
             }
             else
@@ -375,6 +390,7 @@ namespace iotsmartsys::platform::espressif
             }
         }
 
+        delete stored;
         nvs_close(h);
         return map_esp_err(err);
     }
