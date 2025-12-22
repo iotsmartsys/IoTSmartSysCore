@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <string>
 
 #include "Contracts/Connectivity/ConnectivityGate.h"
 #include "Contracts/Settings/SettingsGate.h"
@@ -27,10 +28,10 @@ namespace iotsmartsys::app
     public:
         explicit MqttService(iotsmartsys::core::IMqttClient &client,
                              iotsmartsys::core::ILogger &log,
+                             iotsmartsys::core::settings::ISettingsGate &settingsGate,
                              iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider);
 
         void begin(const iotsmartsys::core::MqttConfig &cfg,
-                   iotsmartsys::core::settings::ISettingsGate &settingsGate,
                    const RetryPolicy &policy = RetryPolicy{});
 
         void handle();
@@ -46,7 +47,7 @@ namespace iotsmartsys::app
         bool isOnline() const;
 
     private:
-        iotsmartsys::core::settings::ISettingsGate *_settingsGate{nullptr};
+        iotsmartsys::core::settings::ISettingsGate &_settingsGate;
         bool _settingsReady{false};
         bool _lastSettingsReady{false};
 
@@ -87,6 +88,11 @@ namespace iotsmartsys::app
         iotsmartsys::core::ITimeProvider *_time;
 
         iotsmartsys::core::MqttConfig _cfg{};
+        // persistent storage for strings referenced by _cfg (avoid dangling pointers)
+        std::string _uriStr;
+        std::string _usernameStr;
+        std::string _passwordStr;
+        std::string _clientIdStr;
         RetryPolicy _policy{};
 
         State _state{State::Idle};

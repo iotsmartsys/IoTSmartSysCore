@@ -1,8 +1,10 @@
 #include "Core/Services/MqttService.h"
+#include "Contracts/Providers/ServiceProvider.h"
 
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
+#include <string>
 
 #ifdef ESP32
 #include <esp_system.h>
@@ -14,23 +16,24 @@ namespace iotsmartsys::app
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::IMqttClient &client,
                                                               iotsmartsys::core::ILogger &log,
+                                                              iotsmartsys::core::settings::ISettingsGate &settingsGate,
                                                               iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider)
-        : _client(client), _logger(log), _time(nullptr), _settingsProvider(settingsProvider)
+        : _client(client), _logger(log), _time(nullptr), _settingsProvider(settingsProvider), _settingsGate(settingsGate)
     {
         // Ensure MQTT_CONNECTED bit is clear at start
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+
         }
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     void MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::MqttConfig &cfg,
-                                                             iotsmartsys::core::settings::ISettingsGate &settingsGate,
                                                              const RetryPolicy &policy)
     {
         _logger.info("MQTT", "MqttService::begin()");
-        
+
         _time = &iotsmartsys::core::Time::get();
         if (!_time)
         {
@@ -49,11 +52,10 @@ namespace iotsmartsys::app
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
         }
-        _settingsGate = &settingsGate;
         _settingsReady = false;
         _lastSettingsReady = false;
         _lastStatusLogAtMs = 0;
-        const auto gateSubErr = _settingsGate->runWhenReady(
+        const auto gateSubErr = _settingsGate.runWhenReady(
             iotsmartsys::core::settings::SettingsReadyLevel::Available,
             &MqttService::onSettingsReadyThunk,
             this);
@@ -84,8 +86,7 @@ namespace iotsmartsys::app
 
         auto &gate = iotsmartsys::core::ConnectivityGate::instance();
         const bool networkReady = gate.isNetworkReady();
-        const bool settingsReady = _settingsReady;
-        const bool canConnect = networkReady && settingsReady;
+        const bool canConnect = networkReady && _settingsReady;
 
         // Snapshot periódico para diagnosticar facilmente "por que não conectou"
         if (_statusLogEveryMs && (_lastStatusLogAtMs == 0 || (now - _lastStatusLogAtMs) >= _statusLogEveryMs))
@@ -96,7 +97,7 @@ namespace iotsmartsys::app
                 "Status: state=%s net=%d settings=%d client=%d attempt=%lu nextInMs=%ld",
                 stateToStr(_state),
                 (int)networkReady,
-                (int)settingsReady,
+                (int)_settingsReady,
                 (int)_client.isConnected(),
                 (unsigned long)_attempt,
                 (long)until);
@@ -125,10 +126,13 @@ namespace iotsmartsys::app
             _lastNetworkReady = networkReady;
         }
 
+        auto *settingsGate = iotsmartsys::core::ServiceProvider::instance().getSettingsGate();
+        _settingsReady = settingsGate->level() >= iotsmartsys::core::settings::SettingsReadyLevel::Available;
+
         // Logs claros de transição de settings (evento latched)
-        if (settingsReady != _lastSettingsReady)
+        if (_settingsReady != _lastSettingsReady)
         {
-            if (settingsReady)
+            if (_settingsReady)
             {
                 _logger.info("MQTT", "SettingsReady=TRUE (cache OK). MQTT pode conectar quando NetworkReady=TRUE.");
             }
@@ -136,7 +140,7 @@ namespace iotsmartsys::app
             {
                 _logger.warn("MQTT", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando MQTT.");
             }
-            _lastSettingsReady = settingsReady;
+            _lastSettingsReady = _settingsReady;
         }
 
         // Gate composto: MQTT só pode operar quando rede (Wi-Fi+IP) E settings (cache ok) estiverem prontos.
@@ -287,13 +291,36 @@ namespace iotsmartsys::app
 
         iotsmartsys::core::settings::Settings settings;
         _settingsProvider.copyCurrent(settings);
-        _cfg.uri = settings.mqtt.primary.host.c_str();
-        _cfg.username = settings.mqtt.primary.user.c_str();
-        _cfg.password = settings.mqtt.primary.password.c_str();
-        _cfg.clientId = settings.clientId;
+
+        // Build persistent strings inside the service so we don't point to
+        // temporaries owned by the local 'settings' object (that would dangle
+        // after this function returns). Use a full URI (protocol://host:port)
+        // if possible.
+        const std::string proto = settings.mqtt.primary.protocol.empty() ? std::string("mqtt") : settings.mqtt.primary.protocol;
+        const std::string host = settings.mqtt.primary.host.empty() ? std::string() : settings.mqtt.primary.host;
+        const int port = (settings.mqtt.primary.port > 0) ? settings.mqtt.primary.port : 1883;
+        if (!host.empty())
+        {
+            _uriStr = proto + "://" + host + ":" + std::to_string(port);
+        }
+        else
+        {
+            _uriStr.clear();
+        }
+
+        _usernameStr = settings.mqtt.primary.user;
+        _passwordStr = settings.mqtt.primary.password;
+        _clientIdStr = settings.clientId ? settings.clientId : std::string();
+
+        // Point _cfg members to the service-owned strings (stable storage)
+        _cfg.uri = _uriStr.empty() ? nullptr : _uriStr.c_str();
+        _cfg.username = _usernameStr.empty() ? nullptr : _usernameStr.c_str();
+        _cfg.password = _passwordStr.empty() ? nullptr : _passwordStr.c_str();
+        _cfg.clientId = _clientIdStr.empty() ? nullptr : _clientIdStr.c_str();
         _cfg.keepAliveSec = settings.mqtt.primary.keepAliveSec;
         _cfg.cleanSession = settings.mqtt.primary.cleanSession;
-        begin(_cfg, *_settingsGate, _policy);
+
+        begin(_cfg, _policy);
 
         // Gate redundante (segurança): nunca tenta MQTT sem Wi-Fi + IP
         {

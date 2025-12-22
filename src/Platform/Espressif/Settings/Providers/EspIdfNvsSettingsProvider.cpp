@@ -39,8 +39,8 @@ namespace iotsmartsys::platform::espressif
     static void ensureClientId(iotsmartsys::core::settings::Settings &dst)
     {
         // Se já veio preenchido, não sobrescreve.
-        if (dst.clientId != nullptr && dst.clientId[0] != '\0')
-            return;
+        // if (dst.clientId != nullptr && dst.clientId[0] != '\0')
+        //     return;
 
         uint8_t mac[6] = {0};
         esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_STA);

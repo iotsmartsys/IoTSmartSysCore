@@ -21,7 +21,7 @@ namespace iotsmartsys::core
         virtual ITimeProvider *time() const = 0;
 
         virtual settings::IReadOnlySettingsProvider *settings() const = 0;
-        virtual settings::ISettingsGate *settingsGate() const = 0;
+        virtual settings::ISettingsGate *getSettingsGate() const = 0;
     };
 
 } // namespace iotsmartsys::core

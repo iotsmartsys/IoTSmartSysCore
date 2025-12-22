@@ -28,7 +28,7 @@ namespace iotsmartsys::core
     ITimeProvider *ServiceProvider::time() const { return _time; }
 
     settings::IReadOnlySettingsProvider *ServiceProvider::settings() const { return _settings; }
-    settings::ISettingsGate *ServiceProvider::settingsGate() const { return _settingsGate; }
+    settings::ISettingsGate *ServiceProvider::getSettingsGate() const { return _settingsGate; }
 
     bool ServiceProvider::isReady() const
     {

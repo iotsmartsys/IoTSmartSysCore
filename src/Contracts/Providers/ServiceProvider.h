@@ -24,7 +24,7 @@ namespace iotsmartsys::core
         ITimeProvider *time() const override;
 
         settings::IReadOnlySettingsProvider *settings() const override;
-        settings::ISettingsGate *settingsGate() const override;
+        settings::ISettingsGate *getSettingsGate() const override;
 
         // útil para debug (opcional)
         bool isReady() const;

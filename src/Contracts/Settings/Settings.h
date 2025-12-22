@@ -14,6 +14,24 @@ namespace iotsmartsys::core::settings
 
         const char *clientId;
         LogLevel logLevel{LogLevel::Error};
+        const char *logLevelStr() const
+        {
+            switch (logLevel)
+            {
+            case LogLevel::Error:
+                return "error";
+            case LogLevel::Warn:
+                return "warn";
+            case LogLevel::Info:
+                return "info";
+            case LogLevel::Debug:
+                return "debug";
+            case LogLevel::Trace:
+                return "trace";
+            default:
+                return "error";
+            }
+        }
 
         MqttSettings mqtt;
         FirmwareConfig firmware;
