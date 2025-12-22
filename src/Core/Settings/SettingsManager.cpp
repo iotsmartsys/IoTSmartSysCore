@@ -246,6 +246,8 @@ namespace iotsmartsys::core::settings
         }
 
         // Persistir no NVS (redundância). API continua sendo fonte de verdade.
+        _current.applyChanges(parsed);
+        _has_current = true;
         const iotsmartsys::core::common::StateResult serr = _provider.save(parsed);
         if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
@@ -256,8 +258,8 @@ namespace iotsmartsys::core::settings
             _stats.last_err = serr;
             _stats.last_http_status = res.http_status;
 
-            _current = parsed;
-            _has_current = true;
+            // _current = parsed;
+            // _has_current = true;
             _stats.api_fetch_ok++;
             setState(SettingsManagerState::Ready);
             xSemaphoreGive((SemaphoreHandle_t)_mutex);
@@ -266,8 +268,8 @@ namespace iotsmartsys::core::settings
         {
             _logger->debug("SettingsManager", "nvs save OK");
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
-            _current = parsed;
-            _has_current = true;
+            // _current = parsed;
+            // _has_current = true;
             _stats.api_fetch_ok++;
             _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
             _stats.last_http_status = res.http_status;

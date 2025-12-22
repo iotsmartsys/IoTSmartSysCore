@@ -37,6 +37,42 @@ namespace iotsmartsys::core::settings
         FirmwareConfig firmware;
         WifiConfig wifi;
         ApiConfig api;
+        bool _is_changed{false};
+
+        void applyChanges(const Settings &other)
+        {
+            in_config_mode = other.in_config_mode;
+            if (logLevel != other.logLevel)
+            {
+                logLevel = other.logLevel;
+                _is_changed = true;
+            }
+            if (api.hasChanged(other.api))
+            {
+                api = other.api;
+                _is_changed = true;
+            }
+            if (firmware.hasChanged(other.firmware))
+            {
+                firmware = other.firmware;
+                _is_changed = true;
+            }
+            if (mqtt.hasChanged(other.mqtt))
+            {
+                mqtt = other.mqtt;
+                _is_changed = true;
+            }
+            if (wifi.hasChanged(other.wifi) && other.isValidWifiConfig())
+            {
+                wifi = other.wifi;
+                _is_changed = true;
+            }
+        }
+
+        bool hasChanges() const
+        {
+            return _is_changed;
+        }
 
         bool isValidWifiConfig() const
         {

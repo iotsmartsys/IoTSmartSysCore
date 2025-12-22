@@ -29,6 +29,15 @@ namespace iotsmartsys::core::settings
             }
             return topic;
         }
+
+        bool hasChanged(const MqttSettings &other) const
+        {
+            return (primary.hasChanged(other.primary) ||
+                    secondary.hasChanged(other.secondary) ||
+                    announce_topic != other.announce_topic ||
+                    command_topic != other.command_topic ||
+                    notify_topic != other.notify_topic);
+        }
     };
 
 } // namespace iotsmartsys::core::settings

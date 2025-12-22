@@ -55,6 +55,13 @@ namespace iotsmartsys::core::settings
 
             return FirmwareUpdateMethod::NONE;
         }
+
+        bool hasChanged(const FirmwareConfig &other) const
+        {
+            return (url != other.url || manifest != other.manifest ||
+                    verify_sha256 != other.verify_sha256 ||
+                    update != other.update);
+        }
     };
 
 } // namespace iotsmartsys::core::settings

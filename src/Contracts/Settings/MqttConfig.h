@@ -25,6 +25,15 @@ namespace iotsmartsys::core::settings
         {
             return !host.empty() && port > 0 && port <= 65535;
         }
+
+        bool hasChanged(const MqttConfig &other) const
+        {
+            return (host != other.host || port != other.port ||
+                    user != other.user || password != other.password ||
+                    protocol != other.protocol || ttl != other.ttl ||
+                    keepAliveSec != other.keepAliveSec ||
+                    cleanSession != other.cleanSession);
+        }
     };
 
 } // namespace iotsmartsys::core::settings
