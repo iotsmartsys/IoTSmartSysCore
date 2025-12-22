@@ -3,11 +3,60 @@
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
 
+#include <cstdio>
+#include "esp_system.h"
+#include "esp_mac.h"
 #include <cstring>
 #include <algorithm>
 
 namespace iotsmartsys::platform::espressif
 {
+    static const char *clientIdPrefix()
+    {
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+        return "esp32s3";
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+        return "esp32c3";
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
+        return "esp32c2";
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+        return "esp32c6";
+#elif defined(CONFIG_IDF_TARGET_ESP32H2)
+        return "esp32h2";
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+        return "esp32s2";
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+        return "esp32";
+#else
+        return "esp";
+#endif
+    }
+
+    // Storage estável para Settings::clientId (const char*) sem heap.
+    // Se você tiver vários devices/tasks chamando load(), isso ainda é ok se for só “um clientId por firmware”.
+    static char s_clientId[32] = {0};
+
+    static void ensureClientId(iotsmartsys::core::settings::Settings &dst)
+    {
+        // Se já veio preenchido, não sobrescreve.
+        if (dst.clientId != nullptr && dst.clientId[0] != '\0')
+            return;
+
+        uint8_t mac[6] = {0};
+        esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
+        if (err != ESP_OK)
+        {
+            // fallback: base mac
+            (void)esp_base_mac_addr_get(mac);
+        }
+
+        // últimos 3 bytes => 6 dígitos hex
+        std::snprintf(s_clientId, sizeof(s_clientId), "%s-%02X%02X%02X",
+                      clientIdPrefix(), mac[3], mac[4], mac[5]);
+
+        dst.clientId = s_clientId;
+    }
+
     using namespace iotsmartsys::core;
     using core::common::StateResult;
 
@@ -104,6 +153,8 @@ namespace iotsmartsys::platform::espressif
         dst.version = STORAGE_VERSION;
         dst.in_config_mode = src.in_config_mode ? 1 : 0;
 
+        dst.logLevel = static_cast<int>(src.logLevel);
+
         // MQTT primary
         copyStr(dst.mqtt.primary.host, sizeof(dst.mqtt.primary.host), src.mqtt.primary.host);
         dst.mqtt.primary.port = src.mqtt.primary.port;
@@ -182,6 +233,28 @@ namespace iotsmartsys::platform::espressif
         // api
         dst.api.key = toString(src.api.key);
         dst.api.basic_auth = toString(src.api.basic_auth);
+        switch (src.logLevel)
+        {
+        case 0:
+            dst.logLevel = iotsmartsys::core::LogLevel::Error;
+            break;
+        case 1:
+            dst.logLevel = iotsmartsys::core::LogLevel::Warn;
+            break;
+        case 2:
+            dst.logLevel = iotsmartsys::core::LogLevel::Info;
+            break;
+        case 3:
+            dst.logLevel = iotsmartsys::core::LogLevel::Debug;
+            break;
+        case 4:
+            dst.logLevel = iotsmartsys::core::LogLevel::Trace;
+            break;
+        default:
+            dst.logLevel = iotsmartsys::core::LogLevel::Error;
+            break;
+        }
+        ensureClientId(dst);
     }
 
     bool EspIdfNvsSettingsProvider::exists()

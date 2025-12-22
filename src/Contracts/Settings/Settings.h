@@ -4,15 +4,17 @@
 #include "FirmwareConfig.h"
 #include "WifiConfig.h"
 #include "ApiConfig.h"
+#include "Contracts/Logging/ILogger.h"
 
 namespace iotsmartsys::core::settings
 {
     struct Settings
     {
         bool in_config_mode{true};
-        
+
         const char *clientId;
-        
+        LogLevel logLevel{LogLevel::Error};
+
         MqttSettings mqtt;
         FirmwareConfig firmware;
         WifiConfig wifi;

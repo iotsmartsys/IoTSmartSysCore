@@ -76,6 +76,7 @@ namespace iotsmartsys::platform::espressif
         {
             std::uint32_t version;
             std::uint8_t in_config_mode;
+            std::int32_t logLevel;
 
             StoredMqttSettings mqtt;
             StoredFirmwareConfig firmware;

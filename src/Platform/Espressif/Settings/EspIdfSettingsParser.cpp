@@ -255,6 +255,23 @@ namespace iotsmartsys::platform::espressif
             // Se você quiser, adicionamos no model.
         }
 
+        // log_level opcional
+        cJSON *ll = cJSON_GetObjectItemCaseSensitive(root, "log_level");
+        if (cJSON_IsString(ll) && ll->valuestring)
+        {
+            std::string logLevel = ll->valuestring;
+            if (logLevel == "trace")
+                out.logLevel = iotsmartsys::core::LogLevel::Trace;
+            else if (logLevel == "debug")
+                out.logLevel = iotsmartsys::core::LogLevel::Debug;
+            else if (logLevel == "info")
+                out.logLevel = iotsmartsys::core::LogLevel::Info;
+            else if (logLevel == "warn")
+                out.logLevel = iotsmartsys::core::LogLevel::Warn;
+            else if (logLevel == "error")
+                out.logLevel = iotsmartsys::core::LogLevel::Error;
+        }
+
         cJSON_Delete(root);
         return StateResult::Ok;
     }
