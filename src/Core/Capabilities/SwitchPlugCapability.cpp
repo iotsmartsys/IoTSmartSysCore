@@ -7,11 +7,6 @@ namespace iotsmartsys::core
     {
     }
 
-    void SwitchPlugCapability::setup()
-    {
-        ICommandCapability::setup();
-    }
-
     void SwitchPlugCapability::handle()
     {
         // no periodic action required; state changes happen via commands or hardware

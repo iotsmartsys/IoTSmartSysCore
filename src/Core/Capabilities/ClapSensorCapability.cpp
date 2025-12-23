@@ -46,9 +46,4 @@ namespace iotsmartsys::core
         return timeProvider.nowMs() - lastTimeClapDetected;
     }
 
-    void ClapSensorCapability::setup()
-    {
-        ICapability::setup();
-    }
-
 } // namespace iotsmartsys::core

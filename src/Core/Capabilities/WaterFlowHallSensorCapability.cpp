@@ -11,16 +11,12 @@ namespace iotsmartsys::core
           totalLiters(0.0f),
           lastTotalLiters(0.0f)
     {
+        lastMillis = static_cast<unsigned long>(timeProvider.nowMs());
     }
 
     WaterFlowHallSensorCapability::WaterFlowHallSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink)
         : IInputCapability(input_hardware_adapter, event_sink, capability_name, WATER_FLOW_SENSOR_TYPE, "0"), lastMillis(0), pulseCount(0), totalLiters(0.0f), lastTotalLiters(0.0f)
     {
-    }
-
-    void WaterFlowHallSensorCapability::setup()
-    {
-        ICapability::setup();
         lastMillis = static_cast<unsigned long>(timeProvider.nowMs());
     }
 

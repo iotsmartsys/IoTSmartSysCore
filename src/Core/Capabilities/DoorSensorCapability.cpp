@@ -29,9 +29,4 @@ namespace iotsmartsys::core
     {
         return inputHardwareAdapter.digitalActive();
     }
-    
-    void DoorSensorCapability::setup()
-    {
-        ICapability::setup();
-    }
 } // namespace iotsmartsys::core

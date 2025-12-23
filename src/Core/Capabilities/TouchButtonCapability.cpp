@@ -15,11 +15,6 @@ namespace iotsmartsys::core
     {
     }
 
-    void TouchButtonCapability::setup()
-    {
-        ICapability::setup();
-    }
-
     void TouchButtonCapability::handle()
     {
         bool current = inputHardwareAdapter.digitalActive();

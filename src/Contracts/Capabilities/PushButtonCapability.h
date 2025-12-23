@@ -11,7 +11,6 @@ namespace iotsmartsys::core
         PushButtonCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
         PushButtonCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
 
-        void setup() override;
         void handle() override;
 
         bool isPressed() const;

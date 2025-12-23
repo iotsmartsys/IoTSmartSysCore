@@ -51,9 +51,4 @@ namespace iotsmartsys::core
         return timeProvider.nowMs() - lastTimePresenceDetected;
     }
     
-    void PirSensorCapability::setup()
-    {
-        ICapability::setup();
-    }
-    
 } // namespace iotsmartsys::core

@@ -12,7 +12,6 @@ namespace iotsmartsys::core
         PirSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
         PirSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTime);
 
-        void setup() override;
         void handle() override;
 
         bool isPresenceDetected() const;

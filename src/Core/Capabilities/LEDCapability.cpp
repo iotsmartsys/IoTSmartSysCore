@@ -7,12 +7,7 @@ namespace iotsmartsys::core
           blinkInterval(0), lastToggleTs(0), blinking(false)
     {
     }
-
-    void LEDCapability::setup()
-    {
-        ICommandCapability::setup();
-    }
-
+    
     void LEDCapability::handle()
     {
         if (!blinking || blinkInterval == 0)

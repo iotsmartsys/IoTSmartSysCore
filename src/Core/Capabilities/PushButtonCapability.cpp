@@ -18,12 +18,7 @@ namespace iotsmartsys::core
     {
     }
 
-    void PushButtonCapability::setup()
-    {
-        ICapability::setup();
-    }
-
-     void PushButtonCapability::handle()
+    void PushButtonCapability::handle()
     {
         logger.debug("PushButton", "Handling state...");
         bool current = inputHardwareAdapter.digitalActive();

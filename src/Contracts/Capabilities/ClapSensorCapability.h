@@ -11,7 +11,6 @@ namespace iotsmartsys::core
         ClapSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds);
     ClapSensorCapability(const char *capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds);
 
-        void setup() override;
         void handle() override;
 
         bool isClapDetected() const;

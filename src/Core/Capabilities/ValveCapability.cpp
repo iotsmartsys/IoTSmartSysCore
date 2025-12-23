@@ -7,11 +7,6 @@ namespace iotsmartsys::core
     {
     }
 
-    void ValveCapability::setup()
-    {
-        ICommandCapability::setup();
-    }
-
     void ValveCapability::handle()
     {
         std::string hwState = command_hardware_adapter.getState();

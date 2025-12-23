@@ -10,18 +10,9 @@ namespace iotsmartsys::core
           poweredOn(false),
           lastState(false)
     {
-    }
-
-    void AlarmCapability::setup()
-    {
-        // Prepare the underlying hardware and reset state to off
-        ICapability::setup();
-        poweredOn = false;
-        lastState = false;
         lastRing = timeProvider.nowMs();
-        updateState(ALARM_OFF);
     }
-
+    
     void AlarmCapability::handle()
     {
         if (poweredOn)

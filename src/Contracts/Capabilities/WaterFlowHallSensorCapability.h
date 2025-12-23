@@ -12,7 +12,6 @@ namespace iotsmartsys::core
         WaterFlowHallSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink);
         WaterFlowHallSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink);
 
-        void setup() override;
         void handle() override;
 
         // called by ISR or test harness to increment pulse count

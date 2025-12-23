@@ -37,7 +37,11 @@ namespace iotsmartsys::core
 
         virtual ~IInputCapability() = default;
 
-        virtual void setup() = 0;
+        virtual void setup() override
+        {
+            inputHardwareAdapter.setup();
+        }
+        
         virtual void handle() = 0;
 
     protected:

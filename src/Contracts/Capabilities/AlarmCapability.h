@@ -11,7 +11,6 @@ namespace iotsmartsys::core
     public:
         AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
-        virtual void setup() override;
         virtual void handle() override;
 
         bool isActivated();
