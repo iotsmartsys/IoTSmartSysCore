@@ -43,6 +43,8 @@ namespace iotsmartsys::core
 
         virtual void setup() override
         {
+            command_hardware_adapter.setup();
+            updateState(command_hardware_adapter.getState());
         }
 
         virtual void handle() override
