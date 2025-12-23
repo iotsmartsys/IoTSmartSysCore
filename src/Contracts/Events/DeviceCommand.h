@@ -7,17 +7,9 @@ namespace iotsmartsys::core
     class DeviceCommand
     {
     public:
-        std::string capability_name;
-        std::string device_id;
-        std::string value;
-    };
-
-    class Command
-    {
-
-    public:
-        std::string command;
-        std::string value;
+        const char *capability_name;
+        const char *device_id;
+        const char *value;
     };
 
 }

@@ -19,26 +19,39 @@ namespace iotsmartsys::core
     public:
         ICommandCapability(ICommandHardwareAdapter &hardware_adapator,
                            ICapabilityEventSink *event_sink,
-                           std::string capability_name,
-                           std::string type,
-                           std::string value)
+                           const char *capability_name,
+                           const char *type,
+                           const char *value)
             : ICapability(event_sink, capability_name, type, value), command_hardware_adapter(hardware_adapator) {}
+
+        // Backwards-compatible overloads accepting std::string
+        ICommandCapability(ICommandHardwareAdapter &hardware_adapator,
+                           ICapabilityEventSink *event_sink,
+                           const std::string &capability_name,
+                           const std::string &type,
+                           const std::string &value)
+            : ICommandCapability(hardware_adapator, event_sink, capability_name.c_str(), type.c_str(), value.c_str()) {}
 
         ICommandCapability(ICommandHardwareAdapter &hardware_adapator,
                            ICapabilityEventSink *event_sink,
-                           std::string type,
-                           std::string value)
+                           const char *type,
+                           const char *value)
             : ICapability(event_sink, type, value), command_hardware_adapter(hardware_adapator) {}
+
+        ICommandCapability(ICommandHardwareAdapter &hardware_adapator,
+                           ICapabilityEventSink *event_sink,
+                           const std::string &type,
+                           const std::string &value)
+            : ICommandCapability(hardware_adapator, event_sink, type.c_str(), value.c_str()) {}
 
         virtual ~ICommandCapability() {}
 
-        void applyCommand(DeviceCommand command)
+        void applyCommand(CapabilityCommand command)
         {
             logger.info("COMMAND", "Applying command: capability=%s value=%s",
-                        command.capability_name.c_str(),
-                        command.value.c_str());
+                        command.capability_name,
+                        command.value);
             command_hardware_adapter.applyCommand(command.value);
-            updateState(command.value);
         }
 
         virtual void setup() override

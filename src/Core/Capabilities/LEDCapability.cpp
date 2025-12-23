@@ -2,11 +2,11 @@
 
 namespace iotsmartsys::core
 {
-        LEDCapability::LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-                : ICommandCapability(hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
-                    blinkInterval(0), lastToggleTs(0), blinking(false)
-        {
-        }
+    LEDCapability::LEDCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+        : ICommandCapability(hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
+          blinkInterval(0), lastToggleTs(0), blinking(false)
+    {
+    }
 
     void LEDCapability::setup()
     {
@@ -39,12 +39,12 @@ namespace iotsmartsys::core
 
     void LEDCapability::turnOn()
     {
-        applyCommand(DeviceCommand{type, std::string(LED_STATE_ON)});
+        applyCommand(CapabilityCommand{type.c_str(), LED_STATE_ON});
     }
 
     void LEDCapability::turnOff()
     {
-        applyCommand(DeviceCommand{type, std::string(LED_STATE_OFF)});
+        applyCommand(CapabilityCommand{type.c_str(), LED_STATE_OFF});
     }
 
     bool LEDCapability::isOn() const
@@ -52,7 +52,7 @@ namespace iotsmartsys::core
         return value == LED_STATE_ON;
     }
 
-    void LEDCapability::executeCommand(const std::string &state)
+    void LEDCapability::executeCommand(const char *state)
     {
         power(state);
     }
@@ -70,9 +70,9 @@ namespace iotsmartsys::core
         lastToggleTs = timeProvider.nowMs();
     }
 
-    void LEDCapability::power(const std::string &state)
+    void LEDCapability::power(const char *state)
     {
-        applyCommand(DeviceCommand{type, state});
+        applyCommand(CapabilityCommand{type.c_str(), state});
     }
 
 } // namespace iotsmartsys::core

@@ -7,7 +7,9 @@ namespace iotsmartsys::core
     class ValveCapability : public ICommandCapability
     {
     public:
-        ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        ValveCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        ValveCapability(const std::string &capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+            : ValveCapability(capability_name.c_str(), hardwareAdapter, event_sink) {}
 
         void setup() override;
         void handle() override;
@@ -17,7 +19,8 @@ namespace iotsmartsys::core
         bool isOpen() const;
 
     private:
-        void power(const std::string &state);
+        void power(const char *state);
+        void power(const std::string &state) { power(state.c_str()); }
     };
 
 } // namespace iotsmartsys::core

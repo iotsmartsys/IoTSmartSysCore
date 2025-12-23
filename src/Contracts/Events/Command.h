@@ -2,10 +2,10 @@
 
 namespace iotsmartsys::core
 {
-    class CapabilityCommand
+    class Command
     {
     public:
-        const char *capability_name;
+        const char *command;
         const char *value;
     };
 

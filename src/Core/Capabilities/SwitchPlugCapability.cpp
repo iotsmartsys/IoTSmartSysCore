@@ -2,7 +2,7 @@
 
 namespace iotsmartsys::core
 {
-    SwitchPlugCapability::SwitchPlugCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+    SwitchPlugCapability::SwitchPlugCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapter, event_sink, capability_name, SWITCH_PLUG_TYPE, SWITCH_STATE_OFF)
     {
     }
@@ -33,12 +33,12 @@ namespace iotsmartsys::core
 
     void SwitchPlugCapability::turnOn()
     {
-        applyCommand(DeviceCommand{type, std::string(SWITCH_STATE_ON)});
+        applyCommand(CapabilityCommand{type.c_str(), SWITCH_STATE_ON});
     }
 
     void SwitchPlugCapability::turnOff()
     {
-        applyCommand(DeviceCommand{type, std::string(SWITCH_STATE_OFF)});
+        applyCommand(CapabilityCommand{type.c_str(), SWITCH_STATE_OFF});
     }
 
     bool SwitchPlugCapability::isOn() const
@@ -46,9 +46,9 @@ namespace iotsmartsys::core
         return value == SWITCH_STATE_ON;
     }
     
-    void SwitchPlugCapability::power(const std::string &state)
+    void SwitchPlugCapability::power(const char *state)
     {
-        applyCommand(DeviceCommand{type, state});
+        applyCommand(CapabilityCommand{type.c_str(), state});
     }
 
 } // namespace iotsmartsys::core

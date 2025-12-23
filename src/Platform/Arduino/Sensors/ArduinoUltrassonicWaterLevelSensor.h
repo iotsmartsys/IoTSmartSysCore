@@ -20,7 +20,9 @@ namespace iotsmartsys::platform::arduino
 
     // implement IHardwareAdapter contract (sensors typically don't support commands)
     bool applyCommand(const core::IHardwareCommand &command);
-    bool applyCommand(const std::string &value);
+    bool applyCommand(const char *value);
+    // Backwards-compatible overload
+    bool applyCommand(const std::string &value) { return applyCommand(value.c_str()); }
     std::string getState();
 
     private:

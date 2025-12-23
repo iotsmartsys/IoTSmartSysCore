@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <cstring>
 #include "Contracts/Adapters/ICommandHardwareAdapter.h"
 #include "HardwareDigitalLogic.h"
 #include "Contracts/Capabilities/ICapabilityType.h"
@@ -15,49 +16,82 @@ namespace iotsmartsys::platform::arduino
         OutputHardwareAdapter(int pin, HardwareDigitalLogic logic)
             : pin(pin), logic(logic)
         {
-            relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+            pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
         }
 
         void setup() override
         {
             pinMode(pin, OUTPUT);
-            digitalWrite(pin, relayState);
+            digitalWrite(pin, pinState);
         }
 
         bool applyCommand(const core::IHardwareCommand &command) override
         {
             if (command.command == SWITCH_STATE_ON)
             {
-                relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
             }
             else if (command.command == SWITCH_STATE_OFF)
             {
-                relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
             }
-
-            updateHardware();
-            return true;
-        }
-
-        bool applyCommand(const std::string &value) override
-        {
-            if (value == SWITCH_STATE_ON)
+            else if (command.command == TOGGLE_COMMAND)
             {
-                relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
-            }
-            else if (value == SWITCH_STATE_OFF)
-            {
-                relayState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                if (digitalRead(pin) == HIGH)
+                {
+                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                }
+                else
+                {
+                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                }
             }
             else
             {
-                Serial.println("Comando inválido recebido: " + String(value.c_str()));
+                Serial.print("Comando inválido recebido: ");
+                Serial.println(command.command.c_str());
                 return false; // Comando inválido
             }
 
             updateHardware();
             return true;
         }
+
+        // Primary implementation using C-string to match core::ICommandHardwareAdapter
+        bool applyCommand(const char *value) override
+        {
+            if (strcmp(value, SWITCH_STATE_ON) == 0)
+            {
+                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+            }
+            else if (strcmp(value, SWITCH_STATE_OFF) == 0)
+            {
+                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+            }
+            else if (strcmp(value, TOGGLE_COMMAND) == 0)
+            {
+                if (digitalRead(pin) == HIGH)
+                {
+                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                }
+                else
+                {
+                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                }
+            }
+            else
+            {
+                Serial.print("Comando inválido recebido: ");
+                Serial.println(value);
+                return false; // Comando inválido
+            }
+
+            updateHardware();
+            return true;
+        }
+
+        // Backwards-compatible overload accepting std::string
+        bool applyCommand(const std::string &value) { return applyCommand(value.c_str()); }
 
         std::string getState() override
         {
@@ -66,13 +100,13 @@ namespace iotsmartsys::platform::arduino
 
     private:
         int pin;
-        int relayState;
+        int pinState;
         HardwareDigitalLogic logic;
 
         void updateHardware()
         {
             Serial.print("Atualizando estado do relé no pino ");
-            digitalWrite(pin, relayState);
+            digitalWrite(pin, pinState);
         }
     };
 

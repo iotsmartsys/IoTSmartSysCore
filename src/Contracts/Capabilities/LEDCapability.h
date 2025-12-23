@@ -7,7 +7,10 @@ namespace iotsmartsys::core
     class LEDCapability : public ICommandCapability
     {
     public:
-        LEDCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        LEDCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        // Backwards-compatible overload
+        LEDCapability(const std::string &capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+            : LEDCapability(capability_name.c_str(), hardwareAdapter, event_sink) {}
 
         void setup() override;
         void handle() override;
@@ -16,11 +19,11 @@ namespace iotsmartsys::core
         void turnOn();
         void turnOff();
         bool isOn() const;
-        void executeCommand(const std::string &state);
+    void executeCommand(const char *state);
         void blink(unsigned long intervalMs);
 
     private:
-        void power(const std::string &state);
+    void power(const char *state);
         unsigned long blinkInterval{0};
         unsigned long lastToggleTs{0};
         bool blinking{false};

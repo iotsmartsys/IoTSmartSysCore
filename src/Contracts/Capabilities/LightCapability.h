@@ -8,8 +8,10 @@ namespace iotsmartsys::core
     class LightCapability : public ICommandCapability
     {
     public:
-        LightCapability(std::string name,
+        LightCapability(const char *name,
                         ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        LightCapability(const std::string &name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+            : LightCapability(name.c_str(), hardwareAdapter, event_sink) {}
 
         void toggle();
         void turnOn();
@@ -17,6 +19,7 @@ namespace iotsmartsys::core
         bool isOn() const;
 
     private:
-        void power(const std::string &state);
+        void power(const char *state);
+        void power(const std::string &state) { power(state.c_str()); }
     };
 }

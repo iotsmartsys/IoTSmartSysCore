@@ -96,7 +96,7 @@ namespace iotsmartsys::platform::arduino
         return false;
     }
 
-    bool ArduinoUltrassonicWaterLevelSensor::applyCommand(const std::string &value)
+    bool ArduinoUltrassonicWaterLevelSensor::applyCommand(const char *value)
     {
         (void)value;
         return false;

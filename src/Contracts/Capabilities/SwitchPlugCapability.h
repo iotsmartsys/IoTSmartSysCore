@@ -7,7 +7,10 @@ namespace iotsmartsys::core
     class SwitchPlugCapability : public ICommandCapability
     {
     public:
-        SwitchPlugCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        SwitchPlugCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        // Backwards-compatible overload
+        SwitchPlugCapability(const std::string &capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+            : SwitchPlugCapability(capability_name.c_str(), hardwareAdapter, event_sink) {}
 
         void setup() override;
         void handle() override;
@@ -18,7 +21,8 @@ namespace iotsmartsys::core
         bool isOn() const;
 
     private:
-        void power(const std::string &state);
+        void power(const char *state);
+        void power(const std::string &state) { power(state.c_str()); }
     };
 
 } // namespace iotsmartsys::core

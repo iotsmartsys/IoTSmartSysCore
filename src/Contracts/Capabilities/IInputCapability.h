@@ -10,16 +10,30 @@ namespace iotsmartsys::core
     public:
         IInputCapability(IInputHardwareAdapter &input_hardware_adapter,
                          ICapabilityEventSink *event_sink,
-                         std::string type,
-                         std::string value)
+                         const char *type,
+                         const char *value)
             : ICapability(event_sink, type, value), inputHardwareAdapter(input_hardware_adapter) {}
 
         IInputCapability(IInputHardwareAdapter &input_hardware_adapter,
                          ICapabilityEventSink *event_sink,
-                         std::string capability_name,
-                         std::string type,
-                         std::string value)
+                         const char *capability_name,
+                         const char *type,
+                         const char *value)
             : ICapability(event_sink, capability_name, type, value), inputHardwareAdapter(input_hardware_adapter) {}
+
+        // Backwards-compatible overloads that accept std::string
+        IInputCapability(IInputHardwareAdapter &input_hardware_adapter,
+                         ICapabilityEventSink *event_sink,
+                         const std::string &type,
+                         const std::string &value)
+            : IInputCapability(input_hardware_adapter, event_sink, type.c_str(), value.c_str()) {}
+
+        IInputCapability(IInputHardwareAdapter &input_hardware_adapter,
+                         ICapabilityEventSink *event_sink,
+                         const std::string &capability_name,
+                         const std::string &type,
+                         const std::string &value)
+            : IInputCapability(input_hardware_adapter, event_sink, capability_name.c_str(), type.c_str(), value.c_str()) {}
 
         virtual ~IInputCapability() = default;
 

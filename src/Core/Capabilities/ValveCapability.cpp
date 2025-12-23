@@ -2,7 +2,7 @@
 
 namespace iotsmartsys::core
 {
-    ValveCapability::ValveCapability(std::string capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+    ValveCapability::ValveCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapter, event_sink, capability_name, VALVE_ACTUATOR_TYPE, VALVE_STATE_CLOSED)
     {
     }
@@ -23,12 +23,12 @@ namespace iotsmartsys::core
 
     void ValveCapability::turnOpen()
     {
-        applyCommand(DeviceCommand{type, std::string(VALVE_STATE_OPEN)});
+        applyCommand(CapabilityCommand{type.c_str(), VALVE_STATE_OPEN});
     }
 
     void ValveCapability::turnClosed()
     {
-        applyCommand(DeviceCommand{type, std::string(VALVE_STATE_CLOSED)});
+        applyCommand(CapabilityCommand{type.c_str(), VALVE_STATE_CLOSED});
     }
 
     bool ValveCapability::isOpen() const
@@ -36,9 +36,9 @@ namespace iotsmartsys::core
         return value == VALVE_STATE_OPEN;
     }
 
-    void ValveCapability::power(const std::string &state)
+    void ValveCapability::power(const char *state)
     {
-        applyCommand(DeviceCommand{type, state});
+        applyCommand(CapabilityCommand{type.c_str(), state});
     }
 
 } // namespace iotsmartsys::core
