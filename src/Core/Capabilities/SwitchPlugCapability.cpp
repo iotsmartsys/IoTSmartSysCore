@@ -33,12 +33,12 @@ namespace iotsmartsys::core
 
     void SwitchPlugCapability::turnOn()
     {
-        applyCommand(CapabilityCommand{type, std::string(SWITCH_STATE_ON)});
+        applyCommand(DeviceCommand{type, std::string(SWITCH_STATE_ON)});
     }
 
     void SwitchPlugCapability::turnOff()
     {
-        applyCommand(CapabilityCommand{type, std::string(SWITCH_STATE_OFF)});
+        applyCommand(DeviceCommand{type, std::string(SWITCH_STATE_OFF)});
     }
 
     bool SwitchPlugCapability::isOn() const
@@ -48,7 +48,7 @@ namespace iotsmartsys::core
     
     void SwitchPlugCapability::power(const std::string &state)
     {
-        applyCommand(CapabilityCommand{type, state});
+        applyCommand(DeviceCommand{type, state});
     }
 
 } // namespace iotsmartsys::core

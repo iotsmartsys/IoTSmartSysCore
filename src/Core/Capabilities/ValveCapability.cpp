@@ -23,12 +23,12 @@ namespace iotsmartsys::core
 
     void ValveCapability::turnOpen()
     {
-        applyCommand(CapabilityCommand{type, std::string(VALVE_STATE_OPEN)});
+        applyCommand(DeviceCommand{type, std::string(VALVE_STATE_OPEN)});
     }
 
     void ValveCapability::turnClosed()
     {
-        applyCommand(CapabilityCommand{type, std::string(VALVE_STATE_CLOSED)});
+        applyCommand(DeviceCommand{type, std::string(VALVE_STATE_CLOSED)});
     }
 
     bool ValveCapability::isOpen() const
@@ -38,7 +38,7 @@ namespace iotsmartsys::core
 
     void ValveCapability::power(const std::string &state)
     {
-        applyCommand(CapabilityCommand{type, state});
+        applyCommand(DeviceCommand{type, state});
     }
 
 } // namespace iotsmartsys::core

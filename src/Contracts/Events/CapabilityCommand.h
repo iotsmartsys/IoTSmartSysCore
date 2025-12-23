@@ -4,7 +4,7 @@
 
 namespace iotsmartsys::core
 {
-    class CapabilityCommand
+    class DeviceCommand
     {
     public:
         std::string capability_name;

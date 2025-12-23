@@ -39,12 +39,12 @@ namespace iotsmartsys::core
 
     void LEDCapability::turnOn()
     {
-        applyCommand(CapabilityCommand{type, std::string(LED_STATE_ON)});
+        applyCommand(DeviceCommand{type, std::string(LED_STATE_ON)});
     }
 
     void LEDCapability::turnOff()
     {
-        applyCommand(CapabilityCommand{type, std::string(LED_STATE_OFF)});
+        applyCommand(DeviceCommand{type, std::string(LED_STATE_OFF)});
     }
 
     bool LEDCapability::isOn() const
@@ -72,7 +72,7 @@ namespace iotsmartsys::core
 
     void LEDCapability::power(const std::string &state)
     {
-        applyCommand(CapabilityCommand{type, state});
+        applyCommand(DeviceCommand{type, state});
     }
 
 } // namespace iotsmartsys::core

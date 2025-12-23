@@ -39,6 +39,6 @@ namespace iotsmartsys::core
     void LightCapability::power(const std::string &state)
     {
         logger.debug("LightCapability", "Setting power state to %s", state.c_str());
-        ICommandCapability::applyCommand(CapabilityCommand{type, state});
+        ICommandCapability::applyCommand(DeviceCommand{type, state});
     }
 } // namespace iotsmartsys::core

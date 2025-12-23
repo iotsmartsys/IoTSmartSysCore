@@ -64,7 +64,7 @@ namespace iotsmartsys::app
             _logger.warn("MQTT", "SettingsGate subscription failed (err=%d). MQTT will stay blocked by SettingsReady.", (int)gateSubErr);
         }
 
-        _subCount = 0;
+        // _subCount = 0;
         _qHead = _qTail = _qCount = 0;
 
         _logger.info("MQTT", "Initializing MQTT client uri='%s'", cfg.uri);
@@ -231,6 +231,7 @@ namespace iotsmartsys::app
         // guarda para resubscribe
         if (_subCount < MaxTopics)
         {
+            _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
             _subs[_subCount++] = topic;
         }
         else
@@ -241,7 +242,12 @@ namespace iotsmartsys::app
 
         if (_client.isConnected())
         {
+            _logger.info("MQTT", "(func subscribe) Client connected, subscribing to topic: %s", topic);
             return _client.subscribe(topic);
+        }
+        else
+        {
+            _logger.info("MQTT", "(func subscribe) Client not connected, enqueuing topic: %s", topic);
         }
         return true;
     }
@@ -389,8 +395,10 @@ namespace iotsmartsys::app
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     void MqttService<MaxTopics, QueueLen, MaxPayload>::resubscribeAll()
     {
+        _logger.info("MQTT", "Resubscribing to %lu topics", (unsigned long)_subCount);
         for (std::size_t i = 0; i < _subCount; ++i)
         {
+            _logger.info("MQTT", "Resubscribing to topic: %s", _subs[i]);
             _client.subscribe(_subs[i]);
         }
     }

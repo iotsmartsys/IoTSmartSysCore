@@ -32,7 +32,7 @@ namespace iotsmartsys::core
 
         virtual ~ICommandCapability() {}
 
-        void applyCommand(CapabilityCommand command)
+        void applyCommand(DeviceCommand command)
         {
             logger.info("COMMAND", "Applying command: capability=%s value=%s",
                         command.capability_name.c_str(),
