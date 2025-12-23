@@ -27,17 +27,11 @@
 #include "Contracts/Capabilities/GlpSensorCapability.h"
 #include "Contracts/Capabilities/GlpMeterCapability.h"
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
+#include <stdexcept>
+#include "Contracts/Capabilities/Managers/CapabilityManager.h"
 
 namespace iotsmartsys::app
 {
-
-    struct CapabilityList
-    {
-        iotsmartsys::core::ICapability *const *items{nullptr};
-        size_t count{0};
-
-        iotsmartsys::core::ICapability *operator[](size_t i) const { return items[i]; }
-    };
 
     class CapabilitiesBuilder
     {
@@ -63,7 +57,7 @@ namespace iotsmartsys::app
         size_t count() const { return _count; }
         size_t remainingArenaBytes() const;
 
-        CapabilityList build() const;
+        iotsmartsys::core::CapabilityManager build() const;
 
         iotsmartsys::core::LightCapability *addLight(const LightConfig &cfg);
         iotsmartsys::core::AlarmCapability *addAlarm(const AlarmConfig &cfg);
@@ -90,6 +84,7 @@ namespace iotsmartsys::app
         void *allocateAligned(size_t sizeBytes, size_t alignment);
         bool registerCapability(ICapability *cap, void (*destructor)(void *));
         bool registerAdapter(void *adapter, void (*destructor)(void *));
+        iotsmartsys::core::settings::Settings *_currentSettings{nullptr};
 
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;

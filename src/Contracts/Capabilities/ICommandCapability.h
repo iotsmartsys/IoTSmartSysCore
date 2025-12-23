@@ -46,6 +46,13 @@ namespace iotsmartsys::core
 
         virtual ~ICommandCapability() {}
 
+        // Override to allow safe runtime-query from base ICapability
+        // without using dynamic_cast (RTTI disabled).
+        virtual ICommandCapability *asCommandCapability() override
+        {
+            return this;
+        }
+
         void applyCommand(CapabilityCommand command)
         {
             logger.info("COMMAND", "Applying command: capability=%s value=%s",

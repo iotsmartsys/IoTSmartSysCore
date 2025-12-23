@@ -23,7 +23,7 @@ namespace iotsmartsys::core
         ILogger *logger() const override;
         ITimeProvider *time() const override;
 
-        settings::IReadOnlySettingsProvider *settings() const override;
+        settings::IReadOnlySettingsProvider *getSettingsProvider() const override;
         settings::ISettingsGate *getSettingsGate() const override;
 
         // útil para debug (opcional)
@@ -36,7 +36,7 @@ namespace iotsmartsys::core
         ILogger *_logger{nullptr};
         ITimeProvider *_time{nullptr};
 
-        settings::IReadOnlySettingsProvider *_settings{nullptr};
+        settings::IReadOnlySettingsProvider *_settingsProvider{nullptr};
         settings::ISettingsGate *_settingsGate{nullptr};
     };
 

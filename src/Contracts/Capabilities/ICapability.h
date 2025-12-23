@@ -13,6 +13,10 @@
 
 namespace iotsmartsys::core
 {
+    // forward-declare ICommandCapability so ICapability can expose a
+    // safe runtime-query method without requiring RTTI (dynamic_cast).
+    struct ICommandCapability;
+
     struct ICapability
     {
     public:
@@ -54,9 +58,17 @@ namespace iotsmartsys::core
 
         virtual ~ICapability() {}
 
-    std::string capability_name;
-    std::string type;
-    std::string value;
+        // Safe runtime query: return a pointer to ICommandCapability when
+        // the concrete instance implements it, otherwise nullptr. This
+        // avoids using dynamic_cast and works without RTTI enabled.
+        virtual ICommandCapability *asCommandCapability()
+        {
+            return nullptr;
+        }
+
+        std::string capability_name;
+        std::string type;
+        std::string value;
 
         void updateState(const char *value)
         {
@@ -93,6 +105,7 @@ namespace iotsmartsys::core
 
         virtual void setup()
         {
+            
         }
 
         void applyRenamedName(const char *device_id)

@@ -1,4 +1,5 @@
 #include "MqttSink.h"
+#include "Contracts/Providers/ServiceProvider.h"
 
 namespace iotsmartsys::core
 {
@@ -10,6 +11,7 @@ namespace iotsmartsys::core
 
     void MqttSink::onStateChanged(const CapabilityStateChanged &ev)
     {
+        
         std::string topic = "iotsmartsys/state/alive";
         std::string payload = "{ \"device_id\":\"" + ev.device_id + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"}";
 

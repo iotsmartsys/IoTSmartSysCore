@@ -232,7 +232,7 @@ namespace iotsmartsys::app
         if (_subCount < MaxTopics)
         {
             _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
-            _subs[_subCount++] = topic;
+            _subs[_subCount++] = (topic ? topic : "");
         }
         else
         {
@@ -398,8 +398,8 @@ namespace iotsmartsys::app
         _logger.info("MQTT", "Resubscribing to %lu topics", (unsigned long)_subCount);
         for (std::size_t i = 0; i < _subCount; ++i)
         {
-            _logger.info("MQTT", "Resubscribing to topic: %s", _subs[i]);
-            _client.subscribe(_subs[i]);
+            _logger.info("MQTT", "Resubscribing to topic: %s", _subs[i].c_str());
+            _client.subscribe(_subs[i].c_str());
         }
     }
 

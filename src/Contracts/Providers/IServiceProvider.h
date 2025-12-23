@@ -20,7 +20,7 @@ namespace iotsmartsys::core
         virtual ILogger *logger() const = 0;
         virtual ITimeProvider *time() const = 0;
 
-        virtual settings::IReadOnlySettingsProvider *settings() const = 0;
+        virtual settings::IReadOnlySettingsProvider *getSettingsProvider() const = 0;
         virtual settings::ISettingsGate *getSettingsGate() const = 0;
     };
 

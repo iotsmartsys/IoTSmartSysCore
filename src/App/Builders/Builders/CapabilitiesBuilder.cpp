@@ -1,4 +1,5 @@
 #include "CapabilitiesBuilder.h"
+#include "Contracts/Providers/ServiceProvider.h"
 
 namespace iotsmartsys::app
 {
@@ -70,12 +71,19 @@ namespace iotsmartsys::app
         return _arenaBytes - _arenaOffset;
     }
 
-    CapabilityList CapabilitiesBuilder::build() const
+    iotsmartsys::core::CapabilityManager CapabilitiesBuilder::build() const
     {
-        CapabilityList list;
-        list.items = _caps;
-        list.count = _count;
-        return list;
+        auto &settingsProvider = *iotsmartsys::core::ServiceProvider::instance().getSettingsProvider();
+        auto &settingsGate = *iotsmartsys::core::ServiceProvider::instance().getSettingsGate();
+        auto &logger = *iotsmartsys::core::ServiceProvider::instance().logger();
+        logger.info("CAP_BUILDER", "Building CapabilityManager with %zu capabilities.", _count);
+        iotsmartsys::core::CapabilityManager manager(_caps, _count,
+                                                     settingsGate,
+                                                     logger,
+                                                     settingsProvider);
+
+        logger.info("CAP_BUILDER", "CapabilityManager built successfully.");
+        return manager;
     }
 
     void *CapabilitiesBuilder::allocateAligned(size_t sizeBytes, size_t alignment)
@@ -463,7 +471,7 @@ namespace iotsmartsys::app
         if (!memcap)
             return nullptr;
 
-    auto *cap = new (memcap) iotsmartsys::core::AlarmCapability(*hardwareAdapter, &_eventSink);
+        auto *cap = new (memcap) iotsmartsys::core::AlarmCapability(*hardwareAdapter, &_eventSink);
 
         auto dtor = [](void *p)
         {

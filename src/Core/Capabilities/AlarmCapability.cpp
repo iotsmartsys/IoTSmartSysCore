@@ -12,7 +12,7 @@ namespace iotsmartsys::core
     {
         lastRing = timeProvider.nowMs();
     }
-    
+
     void AlarmCapability::handle()
     {
         if (poweredOn)
