@@ -1,7 +1,10 @@
 #pragma once
 
-enum class DigitalLogic
+namespace iotsmartsys::core
 {
-    NORMAL = 1,
-    INVERSE = 0
-};
+    enum class DigitalLogic
+    {
+        Normal = 1,
+        Inverse = 0
+    };
+} // namespace iotsmartsys::core

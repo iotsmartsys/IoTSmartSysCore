@@ -15,12 +15,6 @@ namespace iotsmartsys::platform::arduino
         ArduinoHardwareAdapterFactory() = default;
         ~ArduinoHardwareAdapterFactory() override = default;
 
-        /* Relay Adapter */
-        std::size_t relayAdapterSize() const override;
-        std::size_t relayAdapterAlign() const override;
-        iotsmartsys::core::ICommandHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) override;
-        AdapterDestructor relayAdapterDestructor() const override;
-
         /* Output Adapter */
         std::size_t outputAdapterSize() const override;
         std::size_t outputAdapterAlign() const override;
@@ -39,6 +33,11 @@ namespace iotsmartsys::platform::arduino
         iotsmartsys::core::IWaterLevelSensor *createWaterLevelSensor(void *mem, std::uint8_t trigPin, std::uint8_t echoPin, float minLevelCm, float maxLevelCm, iotsmartsys::core::WaterLevelRecipentType recipentType) override;
         AdapterDestructor waterLevelSensorAdapterDestructor() const override;
 
+        /* IColorSensor */
+        // std::size_t colorSensorAdapterSize() const override;
+        // std::size_t colorSensorAdapterAlign() const override;
+        // iotsmartsys::core::IColorSensor *createColorSensor(void *mem, std::uint8_t pin) override;
+        // AdapterDestructor colorSensorAdapterDestructor() const override;
     };
 
 } // namespace iotsmartsys::platform::arduino

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <new>
 
-#include "App/Builders/Configs/LightConfig.h"
+#include "App/Builders/Configs/HardwareConfig.h"
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
 #include "Contracts/Capabilities/ICapability.h"
 #include "Contracts/Capabilities/LightCapability.h"

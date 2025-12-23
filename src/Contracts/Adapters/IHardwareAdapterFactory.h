@@ -1,11 +1,12 @@
 #pragma once
 #include <stdint.h>
+#include <cstddef>
 #include "Contracts/Adapters/IHardwareAdapter.h"
 #include "Contracts/Adapters/ICommandHardwareAdapter.h"
 #include "Contracts/Adapters/IInputHardwareAdapter.h"
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
-#include <cstddef>
+#include "Contracts/Sensors/IColorSensor.h"
 
 namespace iotsmartsys::core
 {
@@ -20,12 +21,6 @@ namespace iotsmartsys::core
 
         IHardwareAdapterFactory(const IHardwareAdapterFactory &) = delete;
         IHardwareAdapterFactory &operator=(const IHardwareAdapterFactory &) = delete;
-
-        // Relay Adapter
-        virtual std::size_t relayAdapterSize() const = 0;
-        virtual std::size_t relayAdapterAlign() const = 0;
-        virtual ICommandHardwareAdapter *createRelay(void *mem, std::uint8_t pin, bool highIsOn) = 0;
-        virtual AdapterDestructor relayAdapterDestructor() const = 0;
 
         // Output Adapter
         virtual std::size_t outputAdapterSize() const = 0;
@@ -44,6 +39,12 @@ namespace iotsmartsys::core
         virtual std::size_t waterLevelSensorAdapterAlign() const = 0;
         virtual IWaterLevelSensor *createWaterLevelSensor(void *mem, std::uint8_t trigPin, std::uint8_t echoPin, float minLevelCm, float maxLevelCm, core::WaterLevelRecipentType recipentType) = 0;
         virtual AdapterDestructor waterLevelSensorAdapterDestructor() const = 0;
+
+        // IColorSensor
+        // virtual std::size_t colorSensorAdapterSize() const = 0;
+        // virtual std::size_t colorSensorAdapterAlign() const = 0;
+        // virtual IColorSensor *createColorSensor(void *mem, std::uint8_t pin) = 0;
+        // virtual AdapterDestructor colorSensorAdapterDestructor() const = 0;
     };
 
 } // namespace iotsmartsys::core

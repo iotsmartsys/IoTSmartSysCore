@@ -128,22 +128,22 @@ namespace iotsmartsys::app
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;
 
-        const std::size_t size = _factory.relayAdapterSize();
-        const std::size_t align = _factory.relayAdapterAlign();
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
 
         void *mem = allocateAligned(size, align);
         if (!mem)
             return nullptr;
 
-        auto *hardwareAdapter = _factory.createRelay(
+        auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            cfg.activeHigh);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
 
-        auto adapterDtor = _factory.relayAdapterDestructor();
+        auto adapterDtor = _factory.outputAdapterDestructor();
         if (!registerAdapter(hardwareAdapter, adapterDtor))
             return nullptr;
 
@@ -167,15 +167,6 @@ namespace iotsmartsys::app
             return nullptr;
         }
 
-        if (cfg.initialOn)
-        {
-            cap->updateState("on");
-        }
-        else
-        {
-            cap->updateState("off");
-        }
-
         return cap;
     }
 
@@ -192,12 +183,10 @@ namespace iotsmartsys::app
         if (!mem)
             return nullptr;
 
-        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
-
         auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            highIsOn);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -246,7 +235,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -263,7 +252,7 @@ namespace iotsmartsys::app
         auto *cap = new (memcap) iotsmartsys::core::PushButtonCapability(
             *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
-            static_cast<unsigned long>(cfg.toleranceTimeMs));
+            static_cast<unsigned long>(cfg.debounceTimeMs));
 
         auto dtor = [](void *p)
         {
@@ -294,7 +283,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -311,7 +300,7 @@ namespace iotsmartsys::app
         auto *cap = new (memcap) iotsmartsys::core::TouchButtonCapability(
             *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
-            static_cast<unsigned long>(cfg.toleranceTimeMs));
+            static_cast<unsigned long>(cfg.debounceTimeMs));
 
         auto dtor = [](void *p)
         {
@@ -340,12 +329,10 @@ namespace iotsmartsys::app
         if (!mem)
             return nullptr;
 
-        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
-
         auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            highIsOn);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -386,22 +373,22 @@ namespace iotsmartsys::app
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;
 
-        const std::size_t size = _factory.relayAdapterSize();
-        const std::size_t align = _factory.relayAdapterAlign();
+        const std::size_t size = _factory.outputAdapterSize();
+        const std::size_t align = _factory.outputAdapterAlign();
 
         void *mem = allocateAligned(size, align);
         if (!mem)
             return nullptr;
 
-        auto *hardwareAdapter = _factory.createRelay(
+        auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            cfg.activeHigh);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
 
-        auto adapterDtor = _factory.relayAdapterDestructor();
+        auto adapterDtor = _factory.outputAdapterDestructor();
         if (!registerAdapter(hardwareAdapter, adapterDtor))
             return nullptr;
 
@@ -428,15 +415,6 @@ namespace iotsmartsys::app
             return nullptr;
         }
 
-        if (cfg.initialOn)
-        {
-            cap->updateState("on");
-        }
-        else
-        {
-            cap->updateState("off");
-        }
-
         return cap;
     }
 
@@ -456,8 +434,8 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            cfg.activeState);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -502,7 +480,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -549,7 +527,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -566,7 +544,7 @@ namespace iotsmartsys::app
         auto *cap = new (memcap) iotsmartsys::core::PirSensorCapability(
             *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
-            cfg.toleranceTime);
+            cfg.debounceTimeMs);
 
         auto dtor = [](void *p)
         {
@@ -597,7 +575,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -614,7 +592,7 @@ namespace iotsmartsys::app
         auto *cap = new (memcap) iotsmartsys::core::ClapSensorCapability(
             *static_cast<iotsmartsys::core::IInputHardwareAdapter *>(hardwareAdapter),
             &_eventSink,
-            cfg.toleranceTime);
+            cfg.debounceTimeMs);
 
         auto dtor = [](void *p)
         {
@@ -643,12 +621,10 @@ namespace iotsmartsys::app
         if (!mem)
             return nullptr;
 
-        bool highIsOn = (cfg.switchLogic == DigitalLogic::NORMAL);
-
         auto *hardwareAdapter = _factory.createOutput(
             mem,
-            cfg.pin,
-            highIsOn);
+            cfg.GPIO,
+            cfg.highIsOn);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -694,7 +670,7 @@ namespace iotsmartsys::app
 
         auto *hardwareAdapter = _factory.createInput(
             mem,
-            cfg.pin);
+            cfg.GPIO);
 
         if (!hardwareAdapter)
             return nullptr;
@@ -941,7 +917,7 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto *cap = new (memcap) iotsmartsys::core::OperationalColorSensorCapability(
-            *static_cast<iotsmartsys::core::IColorSensor *>(cfg.sensor), &_eventSink, cfg.readIntervalMs);
+            *static_cast<iotsmartsys::core::IColorSensor *>(cfg.sensor), &_eventSink, cfg.debounceTimeMs);
 
         auto dtor = [](void *p)
         {
