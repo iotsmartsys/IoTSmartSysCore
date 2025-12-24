@@ -5,9 +5,10 @@
 namespace iotsmartsys
 {
     SmartSysApp::SmartSysApp()
-        : logger_(Serial),
-          timeProvider_(),
-          sp_(iotsmartsys::core::ServiceProvider::init(&logger_)),
+        : serviceManager_(core::ServiceManager::init()),
+          logger_(serviceManager_.logger()),
+          settingsManager_(serviceManager_.settingsManager()),
+          settingsGate_(serviceManager_.settingsGate()),
           mqttClient_(logger_),
           mqttSink_(mqttClient_),
           builder_(hwFactory_,
@@ -21,24 +22,8 @@ namespace iotsmartsys
                    arena_,
                    sizeof(arena_)),
           wifi_(logger_),
-          settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_)
     {
-    }
-
-    void SmartSysApp::registerGlobalServices()
-    {
-        logger_.info("iiotsmartsys::core::ServiceProvider::instance().");
-        sp_.setLogger(&logger_);
-        logger_.info("sp.setLogger(&logger);");
-        sp_.setTime(&iotsmartsys::core::Time::get());
-        logger_.info("sp.setTime(&iotsmartsys::core::Time::get());");
-
-        sp_.setSettings(&settingsManager_); // settingsManager implementa IReadOnlySettings
-        logger_.info("sp.setSettings(&settingsManager);");
-
-        sp_.setSettingsGate(&settingsGate_); // SettingsGateImpl
-        logger_.info("sp.setSettingsGate(&settingsGate);");
     }
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
@@ -100,11 +85,8 @@ namespace iotsmartsys
 
         Serial.println("Pode me ver");
 
-        logger_.setMinLevel(core::LogLevel::Debug);
+        serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
-        core::Time::setProvider(&timeProvider_);
-
-        registerGlobalServices();
 
         logger_.info("Starting IoT SmartSys Core example...");
 
@@ -118,7 +100,7 @@ namespace iotsmartsys
         {
             if (settingsManager_.copyCurrent(settings_))
             {
-                logger_.setMinLevel(settings_.logLevel);
+                serviceManager_.setLogLevel(settings_.logLevel);
                 logger_.info("[SettingsManager] Loaded settings from NVS cache.");
                 logger_.debug("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
                 logger_.debug("WiFi Password='%s'", settings_.wifi.password.c_str());

@@ -7,8 +7,6 @@
 //  Contracts / Core abstractions
 // -----------------------------------------------------------------------------
 #include "Contracts/Logging/Log.h"
-#include "Contracts/Providers/ServiceProvider.h"
-#include "Contracts/Providers/Time.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 #include "Contracts/Transports/IMqttClient.h"
 
@@ -37,6 +35,7 @@
 //  App / Core services built on top of contracts
 // -----------------------------------------------------------------------------
 #include "Contracts/Connections/WiFiManager.h"
+#include "Core/Providers/ServiceManager.h"
 #include "Core/Sinks/MqttSink.h"
 #include "Core/Services/MqttService.h"
 #include "Core/Settings/SettingsGateImpl.h"
@@ -76,18 +75,18 @@ namespace iotsmartsys
         iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
 
     private:
-        void registerGlobalServices();
         static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);
         void onMqttMessage(const core::MqttMessageView &msg);
         static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
         void onSettingsUpdated(const core::settings::Settings &newSettings);
         void applySettingsToRuntime(const core::settings::Settings &settings);
 
-        platform::espressif::EspIdfCommandParser commandParser_;
+        core::ServiceManager &serviceManager_;
+        core::ILogger &logger_;
+        core::settings::SettingsManager &settingsManager_;
+        core::settings::ISettingsGate &settingsGate_;
 
-        platform::arduino::ArduinoSerialLogger logger_;
-        platform::arduino::ArduinoTimeProvider timeProvider_;
-        iotsmartsys::core::ServiceProvider &sp_;
+        platform::espressif::EspIdfCommandParser commandParser_;
         platform::espressif::EspIdfMqttClient mqttClient_;
 
         iotsmartsys::core::settings::Settings settings_;
@@ -104,17 +103,8 @@ namespace iotsmartsys
         iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
 
         app::WiFiManager wifi_;
-
-        iotsmartsys::platform::espressif::EspIdfSettingsFetcher settingsFetcher_;
-        iotsmartsys::platform::espressif::EspIdfSettingsParser settingsParser_;
-        iotsmartsys::platform::espressif::EspIdfNvsSettingsProvider settingsProvider_;
-        iotsmartsys::core::settings::SettingsGateImpl settingsGate_;
-
-        iotsmartsys::core::settings::SettingsManager settingsManager_;
-
         app::MqttService<12, 16, 256> mqtt_;
 
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
-        bool lastNetworkReady_ = false;
     };
 } // namespace iotsmartsys
