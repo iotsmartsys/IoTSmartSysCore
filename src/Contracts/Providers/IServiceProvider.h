@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Contracts/Settings/SettingsManager.h"
+#include "Contracts/Connections/WiFiManager.h"
 
 namespace iotsmartsys::core
 {
@@ -26,6 +27,7 @@ namespace iotsmartsys::core
         virtual settings::ISettingsGate *getSettingsGate() const = 0;
 
         virtual settings::SettingsManager *getSettingsManager() const = 0;
+        virtual core::WiFiManager *getWiFiManager() const = 0;
     };
 
 } // namespace iotsmartsys::core

@@ -16,7 +16,8 @@ namespace iotsmartsys::core
           settingsParser_(),
           settingsProvider_(),
           settingsGate_(),
-          settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_)
+          settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
+          wifiManager_(logger_)
     {
         registerServices();
     }
@@ -31,6 +32,7 @@ namespace iotsmartsys::core
         serviceProvider_.setSettings(&settingsManager_);
         serviceProvider_.setSettingsGate(&settingsGate_);
         serviceProvider_.setSettingsManager(&settingsManager_);
+        serviceProvider_.setWiFiManager(&wifiManager_);
     }
 
     ILogger &ServiceManager::logger() { return logger_; }
@@ -38,6 +40,7 @@ namespace iotsmartsys::core
     settings::SettingsManager &ServiceManager::settingsManager() { return settingsManager_; }
     settings::ISettingsGate &ServiceManager::settingsGate() { return settingsGate_; }
     settings::IReadOnlySettingsProvider &ServiceManager::settingsProvider() { return settingsManager_; }
+    core::WiFiManager &ServiceManager::wifiManager() { return wifiManager_; }
 
     void ServiceManager::setLogLevel(LogLevel level) { logger_.setMinLevel(level); }
 } // namespace iotsmartsys::core

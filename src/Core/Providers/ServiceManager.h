@@ -24,6 +24,7 @@ namespace iotsmartsys::core
         settings::SettingsManager &settingsManager();
         settings::ISettingsGate &settingsGate();
         settings::IReadOnlySettingsProvider &settingsProvider();
+        core::WiFiManager &wifiManager();
 
         void setLogLevel(LogLevel level);
 
@@ -39,5 +40,6 @@ namespace iotsmartsys::core
         platform::espressif::EspIdfNvsSettingsProvider settingsProvider_;
         settings::SettingsGateImpl settingsGate_;
         settings::SettingsManager settingsManager_;
+        core::WiFiManager wifiManager_;
     };
 } // namespace iotsmartsys::core

@@ -2,7 +2,6 @@
 #include "OTA.h"
 #include <Arduino.h>
 #include <ArduinoOTA.h>
-#include "Infra/Utils/Logger.h"
 
 #ifdef ESP32
 #include <WiFi.h>

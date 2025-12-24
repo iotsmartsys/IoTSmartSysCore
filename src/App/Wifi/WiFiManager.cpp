@@ -1,7 +1,7 @@
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 
-namespace iotsmartsys::app
+namespace iotsmartsys::core
 {
 
     WiFiManager::WiFiManager(iotsmartsys::core::ILogger &log)
@@ -217,5 +217,26 @@ namespace iotsmartsys::app
         }
     }
 #endif
+
+    std::vector<std::string> WiFiManager::getAvailableSSIDs()
+    {
+        std::vector<std::string> ssids;
+
+        int n = WiFi.scanNetworks();
+        if (n <= 0)
+        {
+            _log.info("WIFI", "No networks found");
+            return ssids;
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            ssids.push_back(WiFi.SSID(i).c_str());
+        }
+
+        WiFi.scanDelete(); // limpa resultados do scan
+
+        return ssids;
+    }
 
 } // namespace iotsmartsys::app

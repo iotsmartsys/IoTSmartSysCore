@@ -13,6 +13,7 @@ using HttpServer = ESP8266WebServer;
 #endif
 
 #include "Core/Provisioning/IProvisioningChannel.h"
+#include "Contracts/Connections/WiFiManager.h"
 
 namespace iotsmartsys::core::provisioning
 {
@@ -22,7 +23,7 @@ namespace iotsmartsys::core::provisioning
     {
     public:
         /// @brief Cria uma nova instância do canal de portal web.
-        WebPortalProvisioningChannel();
+        WebPortalProvisioningChannel(core::WiFiManager &wifiManager);
 
         /// @brief Inicia o portal de configuração em modo AP.
         void begin() override;
@@ -49,6 +50,7 @@ namespace iotsmartsys::core::provisioning
         bool _active = false;
         bool _configSaved = false;
 
+        core::WiFiManager &_wifiManager;
         HttpServer _server;
         DNSServer _dnsServer;
 

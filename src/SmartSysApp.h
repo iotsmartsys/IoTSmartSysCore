@@ -102,7 +102,7 @@ namespace iotsmartsys
 
         iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
 
-        app::WiFiManager wifi_;
+        core::WiFiManager wifi_;
         app::MqttService<12, 16, 256> mqtt_;
 
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;

@@ -3,20 +3,21 @@
 #include <Arduino.h>
 #include <vector>
 #include <string>
-#include "Infra/Wifi/WifiHelper.h"
 
-namespace iotsmartsys::core::provisioning {
+namespace iotsmartsys::core::provisioning
+{
 
     constexpr uint8_t DNS_PORT = 53;
 
-    WebPortalProvisioningChannel::WebPortalProvisioningChannel()
-        : _server(80)
+    WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager)
+        : _wifiManager(wifiManager), _server(80)
     {
     }
 
     void WebPortalProvisioningChannel::begin()
     {
-        if (_active) {
+        if (_active)
+        {
             return;
         }
 
@@ -26,11 +27,11 @@ namespace iotsmartsys::core::provisioning {
 
         WiFi.mode(WIFI_AP);
 
-    #if defined(ESP32)
+#if defined(ESP32)
         String apName = "ESP-Config-" + String((uint32_t)ESP.getEfuseMac(), HEX);
-    #else
+#else
         String apName = "ESP-Config-" + String(ESP.getChipId(), HEX);
-    #endif
+#endif
 
         WiFi.softAP(apName.c_str());
 
@@ -43,14 +44,21 @@ namespace iotsmartsys::core::provisioning {
 
         _dnsServer.start(DNS_PORT, "*", ip);
 
-        _server.on("/", HTTP_GET, [this]() { handleRoot(); });
-        _server.on("/generate_204", HTTP_GET, [this]() { handleRoot(); });
-        _server.on("/hotspot-detect.html", HTTP_GET, [this]() { handleRoot(); });
-        _server.on("/ncsi.txt", HTTP_GET, [this]() { handleRoot(); });
-        _server.on("/connecttest.txt", HTTP_GET, [this]() { handleRoot(); });
+        _server.on("/", HTTP_GET, [this]()
+                   { handleRoot(); });
+        _server.on("/generate_204", HTTP_GET, [this]()
+                   { handleRoot(); });
+        _server.on("/hotspot-detect.html", HTTP_GET, [this]()
+                   { handleRoot(); });
+        _server.on("/ncsi.txt", HTTP_GET, [this]()
+                   { handleRoot(); });
+        _server.on("/connecttest.txt", HTTP_GET, [this]()
+                   { handleRoot(); });
 
-        _server.on("/save", HTTP_POST, [this]() { handleSave(); });
-        _server.onNotFound([this]() { handleNotFound(); });
+        _server.on("/save", HTTP_POST, [this]()
+                   { handleSave(); });
+        _server.onNotFound([this]()
+                           { handleNotFound(); });
 
         _server.begin();
         Serial.println(F("[PortalConfig] Servidor HTTP iniciado na porta 80."));
@@ -61,7 +69,8 @@ namespace iotsmartsys::core::provisioning {
 
     void WebPortalProvisioningChannel::loop()
     {
-        if (!_active) {
+        if (!_active)
+        {
             return;
         }
 
@@ -71,7 +80,8 @@ namespace iotsmartsys::core::provisioning {
 
     void WebPortalProvisioningChannel::stop()
     {
-        if (!_active) {
+        if (!_active)
+        {
             return;
         }
 
@@ -85,12 +95,14 @@ namespace iotsmartsys::core::provisioning {
         sendStatus(ProvisioningStatus::Idle, "Portal parado");
     }
 
-    void WebPortalProvisioningChannel::sendStatus(ProvisioningStatus status, const char* msg)
+    void WebPortalProvisioningChannel::sendStatus(ProvisioningStatus status, const char *msg)
     {
-        if (_statusCb) {
+        if (_statusCb)
+        {
             _statusCb(status, msg);
         }
-        if (msg) {
+        if (msg)
+        {
             Serial.println(msg);
         }
     }
@@ -118,11 +130,15 @@ namespace iotsmartsys::core::provisioning {
         page += F("<label for='ssid'>Nome da rede Wi-Fi (SSID)</label>");
         page += F("<select id='ssid' name='ssid' required>");
 
-        std::vector<std::string> ssids = getAvailableSSIDs();
-        if (ssids.empty()) {
+        std::vector<std::string> ssids = _wifiManager.getAvailableSSIDs();
+        if (ssids.empty())
+        {
             page += F("<option value=''>Nenhuma rede encontrada</option>");
-        } else {
-            for (const auto& s : ssids) {
+        }
+        else
+        {
+            for (const auto &s : ssids)
+            {
                 String ssidStr(s.c_str());
                 page += F("<option value='");
                 page += ssidStr;
@@ -151,10 +167,10 @@ namespace iotsmartsys::core::provisioning {
 
     void WebPortalProvisioningChannel::handleSave()
     {
-        const String ssid         = _server.arg("ssid");
-        const String password     = _server.arg("password");
+        const String ssid = _server.arg("ssid");
+        const String password = _server.arg("password");
         const String deviceApiKey = _server.arg("device_api_key");
-        const String basicAuth    = _server.arg("basic_auth");
+        const String basicAuth = _server.arg("basic_auth");
 
         _server.send(200, "text/html",
                      F("<!DOCTYPE html><html><head><meta charset='utf-8'>"
@@ -166,18 +182,19 @@ namespace iotsmartsys::core::provisioning {
 
         _configSaved = true;
 
-        _wifiSsidStorage      = ssid.c_str();
-        _wifiPasswordStorage  = password.c_str();
-        _deviceApiKeyStorage  = deviceApiKey.c_str();
-        _basicAuthStorage     = basicAuth.c_str();
+        _wifiSsidStorage = ssid.c_str();
+        _wifiPasswordStorage = password.c_str();
+        _deviceApiKeyStorage = deviceApiKey.c_str();
+        _basicAuthStorage = basicAuth.c_str();
 
-        if (_configCb) {
+        if (_configCb)
+        {
             DeviceConfig cfg;
-            cfg.wifi.ssid      = _wifiSsidStorage.c_str();
-            cfg.wifi.password  = _wifiPasswordStorage.c_str();
-            cfg.deviceApiKey   = _deviceApiKeyStorage.empty() ? nullptr : _deviceApiKeyStorage.c_str();
-            cfg.basicAuth      = _basicAuthStorage.empty() ? nullptr : _basicAuthStorage.c_str();
-            cfg.source         = ProvisioningSource::WebPortal;
+            cfg.wifi.ssid = _wifiSsidStorage.c_str();
+            cfg.wifi.password = _wifiPasswordStorage.c_str();
+            cfg.deviceApiKey = _deviceApiKeyStorage.empty() ? nullptr : _deviceApiKeyStorage.c_str();
+            cfg.basicAuth = _basicAuthStorage.empty() ? nullptr : _basicAuthStorage.c_str();
+            cfg.source = ProvisioningSource::WebPortal;
 
             _configCb(cfg);
         }

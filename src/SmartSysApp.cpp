@@ -114,7 +114,7 @@ namespace iotsmartsys
                 if (settings_.isValidWifiConfig())
                 {
                     logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
-                    iotsmartsys::app::WiFiConfig cfg;
+                    iotsmartsys::core::WiFiConfig cfg;
                     cfg.loadFromSettings(settings_);
 
                     wifi_.begin(cfg);
@@ -124,7 +124,7 @@ namespace iotsmartsys
 
                     const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
                     settingsManager_.saveWiFiOnly(cfgWifi);
-                    iotsmartsys::app::WiFiConfig cfg;
+                    iotsmartsys::core::WiFiConfig cfg;
                     cfg.ssid = cfgWifi.ssid.c_str();
                     cfg.password = cfgWifi.password.c_str();
                     wifi_.begin(cfg);
@@ -139,7 +139,7 @@ namespace iotsmartsys
 
             const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
             settingsManager_.saveWiFiOnly(cfgWifi);
-            iotsmartsys::app::WiFiConfig cfg;
+            iotsmartsys::core::WiFiConfig cfg;
             cfg.ssid = cfgWifi.ssid.c_str();
             cfg.password = cfgWifi.password.c_str();
             wifi_.begin(cfg);

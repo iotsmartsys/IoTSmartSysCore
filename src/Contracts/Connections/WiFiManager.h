@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
@@ -14,7 +15,7 @@
 
 #include "Contracts/Settings/Settings.h"
 
-namespace iotsmartsys::app
+namespace iotsmartsys::core
 {
 
     struct WiFiConfig
@@ -53,6 +54,7 @@ namespace iotsmartsys::app
 
         bool isConnected() const;
         const char *stateName() const;
+        std::vector<std::string> getAvailableSSIDs();
 
     private:
         enum class State : uint8_t

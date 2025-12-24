@@ -1,5 +1,4 @@
 #include "Display_ST7789_170_320.h"
-#include "Infra/Utils/Logger.h"
 #if defined(ST7789_170x320_ENABLED)
 
 Adafruit_ST7789 lcd = Adafruit_ST7789(LCD_CS, LCD_DC, LCD_RST);
