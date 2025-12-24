@@ -23,16 +23,18 @@ namespace iotsmartsys::core
 
     void ServiceProvider::setSettings(settings::IReadOnlySettingsProvider *settings) { _settingsProvider = settings; }
     void ServiceProvider::setSettingsGate(settings::ISettingsGate *gate) { _settingsGate = gate; }
+    void ServiceProvider::setSettingsManager(settings::SettingsManager *manager) { _settingsManager = manager; }
 
     ILogger *ServiceProvider::logger() const { return _logger; }
     ITimeProvider *ServiceProvider::time() const { return _time; }
 
     settings::IReadOnlySettingsProvider *ServiceProvider::getSettingsProvider() const { return _settingsProvider; }
     settings::ISettingsGate *ServiceProvider::getSettingsGate() const { return _settingsGate; }
+    settings::SettingsManager *ServiceProvider::getSettingsManager() const { return _settingsManager; }
 
     bool ServiceProvider::isReady() const
     {
-        return _logger && _time && _settingsProvider && _settingsGate;
+        return _logger && _time && _settingsProvider && _settingsGate && _settingsManager;
     }
 
 } // namespace iotsmartsys::core

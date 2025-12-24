@@ -316,6 +316,32 @@ namespace iotsmartsys::core::settings
         _logger->trace("SettingsManager", "_settingsGate.level() = %d", (int)_settingsGate.level());
     }
 
+    bool SettingsManager::save(const Settings &settings)
+    {
+        _logger->debug("SettingsManager", "save() called");
+        if (!_mutex)
+            return false;
+
+        xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
+
+        _current.applyChanges(settings);
+        _has_current = true;
+
+        const auto serr = _provider.save(settings);
+        if (serr != iotsmartsys::core::common::StateResult::Ok)
+        {
+            _logger->debug("SettingsManager", "save: NVS save failed: %d", (int)serr);
+            _stats.nvs_save_fail++;
+            _stats.last_err = serr;
+            xSemaphoreGive((SemaphoreHandle_t)_mutex);
+            return false;
+        }
+        _logger->debug("SettingsManager", "save: NVS save OK");
+        _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
+        xSemaphoreGive((SemaphoreHandle_t)_mutex);
+        return true;
+    }
+
     void SettingsManager::saveWiFiOnly(const WifiConfig &wifi)
     {
         _logger->debug("SettingsManager", "saveWiFiOnly() called");

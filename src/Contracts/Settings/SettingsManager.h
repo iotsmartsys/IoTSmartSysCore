@@ -74,6 +74,7 @@ namespace iotsmartsys::core::settings
 
         // Optional loop hook. Default is no-op so SettingsManager can be instantiated directly.
         void saveWiFiOnly(const WifiConfig &wifi);
+        bool save(const Settings &settings);
         void handle();
 
     private:

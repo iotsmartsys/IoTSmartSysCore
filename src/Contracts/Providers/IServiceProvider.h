@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Contracts/Settings/SettingsManager.h"
+
 namespace iotsmartsys::core
 {
 
@@ -22,6 +24,8 @@ namespace iotsmartsys::core
 
         virtual settings::IReadOnlySettingsProvider *getSettingsProvider() const = 0;
         virtual settings::ISettingsGate *getSettingsGate() const = 0;
+
+        virtual settings::SettingsManager *getSettingsManager() const = 0;
     };
 
 } // namespace iotsmartsys::core

@@ -18,6 +18,7 @@ namespace iotsmartsys::core
 
         void setSettings(settings::IReadOnlySettingsProvider *settings);
         void setSettingsGate(settings::ISettingsGate *gate);
+        void setSettingsManager(settings::SettingsManager *manager);
 
         // IServiceProvider
         ILogger *logger() const override;
@@ -25,6 +26,8 @@ namespace iotsmartsys::core
 
         settings::IReadOnlySettingsProvider *getSettingsProvider() const override;
         settings::ISettingsGate *getSettingsGate() const override;
+
+        settings::SettingsManager *getSettingsManager() const override;
 
         // útil para debug (opcional)
         bool isReady() const;
@@ -38,6 +41,7 @@ namespace iotsmartsys::core
 
         settings::IReadOnlySettingsProvider *_settingsProvider{nullptr};
         settings::ISettingsGate *_settingsGate{nullptr};
+        settings::SettingsManager *_settingsManager{nullptr};
     };
 
 } // namespace iotsmartsys::core
