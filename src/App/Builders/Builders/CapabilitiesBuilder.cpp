@@ -171,7 +171,7 @@ namespace iotsmartsys::app
     }
 
     // --------------------------- addSwitch ---------------------------
-    iotsmartsys::core::SwitchCapability *CapabilitiesBuilder::addSwitch(const SwitchPlugConfig &cfg)
+    iotsmartsys::core::SwitchCapability *CapabilitiesBuilder::addSwitch(const SwitchConfig &cfg)
     {
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;
@@ -269,7 +269,7 @@ namespace iotsmartsys::app
     }
 
     // --------------------------- addTouchButton ---------------------------
-    iotsmartsys::core::TouchButtonCapability *CapabilitiesBuilder::addTouchButton(const PushButtonConfig &cfg)
+    iotsmartsys::core::TouchButtonCapability *CapabilitiesBuilder::addTouchButton(const TouchButtonConfig &cfg)
     {
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;
@@ -317,7 +317,7 @@ namespace iotsmartsys::app
     }
 
     // --------------------------- addValve ---------------------------
-    iotsmartsys::core::ValveCapability *CapabilitiesBuilder::addValve(const SwitchPlugConfig &cfg)
+    iotsmartsys::core::ValveCapability *CapabilitiesBuilder::addValve(const ValveConfig &cfg)
     {
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;
@@ -609,7 +609,7 @@ namespace iotsmartsys::app
     }
 
     // --------------------------- addSwitchPlug ---------------------------
-    iotsmartsys::core::SwitchPlugCapability *CapabilitiesBuilder::addSwitchPlug(const SwitchPlugConfig &cfg)
+    iotsmartsys::core::SwitchPlugCapability *CapabilitiesBuilder::addSwitchPlug(const SwitchConfig &cfg)
     {
         if (_count >= _capsMax || _adaptersCount >= _adaptersMax)
             return nullptr;

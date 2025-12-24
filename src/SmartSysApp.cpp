@@ -1,0 +1,324 @@
+#include "SmartSysApp.h"
+
+#include <cstdio>
+
+namespace iotsmartsys
+{
+    SmartSysApp::SmartSysApp()
+        : logger_(Serial),
+          timeProvider_(),
+          sp_(iotsmartsys::core::ServiceProvider::init(&logger_)),
+          mqttClient_(logger_),
+          mqttSink_(mqttClient_),
+          builder_(hwFactory_,
+                   mqttSink_,
+                   capSlots_,
+                   capDtors_,
+                   8,
+                   adapterSlots_,
+                   adapterDtors_,
+                   8,
+                   arena_,
+                   sizeof(arena_)),
+          wifi_(logger_),
+          settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
+          mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_)
+    {
+    }
+
+    void SmartSysApp::registerGlobalServices()
+    {
+        logger_.info("iiotsmartsys::core::ServiceProvider::instance().");
+        sp_.setLogger(&logger_);
+        logger_.info("sp.setLogger(&logger);");
+        sp_.setTime(&iotsmartsys::core::Time::get());
+        logger_.info("sp.setTime(&iotsmartsys::core::Time::get());");
+
+        sp_.setSettings(&settingsManager_); // settingsManager implementa IReadOnlySettings
+        logger_.info("sp.setSettings(&settingsManager);");
+
+        sp_.setSettingsGate(&settingsGate_); // SettingsGateImpl
+        logger_.info("sp.setSettingsGate(&settingsGate);");
+    }
+
+    void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
+    {
+        return;
+    }
+
+    void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
+    {
+        logger_.info("=== MQTT Message Received ===");
+
+        iotsmartsys::core::DeviceCommand cmd;
+        commandParser_.parseCommand(msg.payload, msg.payloadLen, cmd);
+        logger_.info("Capability: %s", cmd.capability_name);
+        logger_.info("Value: %s", cmd.value);
+        logger_.info("device_id: %s", cmd.device_id);
+        logger_.info("=== End MQTT Message ===");
+        if (capabilityManager_)
+        {
+            auto *cap = capabilityManager_->getCommandCapabilityByName(cmd.capability_name);
+            if (cap)
+            {
+                logger_.info("Found capability: %s", cmd.capability_name);
+                iotsmartsys::core::CapabilityCommand capabilityCmd;
+                capabilityCmd.capability_name = cmd.capability_name;
+                capabilityCmd.value = cmd.value;
+                cap->applyCommand(capabilityCmd);
+            }
+            else
+            {
+                logger_.error("Capability not found: %s", cmd.capability_name);
+            }
+        }
+        else
+        {
+            logger_.error("CapabilityManager is null. Cannot apply command.");
+        }
+    }
+
+    void SmartSysApp::onSettingsUpdated(const iotsmartsys::core::settings::Settings &newSettings)
+    {
+        logger_.warn("[SettingsManager] Settings updated from API. Re-applying runtime config...");
+        if (newSettings.hasChanges())
+        {
+            logger_.warn("[SettingsManager] Settings have changes. Applying...");
+        }
+        else
+        {
+            logger_.warn("[SettingsManager] Settings have NO changes. Skipping apply.");
+            return;
+        }
+        applySettingsToRuntime(newSettings);
+    }
+
+    void SmartSysApp::setup()
+    {
+        Serial.begin(115200);
+        delay(5000);
+
+        Serial.println("Pode me ver");
+
+        logger_.setMinLevel(core::LogLevel::Debug);
+        core::Log::setLogger(&logger_);
+        core::Time::setProvider(&timeProvider_);
+
+        registerGlobalServices();
+
+        logger_.info("Starting IoT SmartSys Core example...");
+
+        settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
+        logger_.info("SettingsManager callback for updates set.");
+
+        const auto cacheErr = settingsManager_.init();
+        logger_.info("SettingsManager init() completed with result %d", (int)cacheErr);
+
+        if (cacheErr == iotsmartsys::core::common::StateResult::Ok)
+        {
+            if (settingsManager_.copyCurrent(settings_))
+            {
+                logger_.setMinLevel(settings_.logLevel);
+                logger_.info("[SettingsManager] Loaded settings from NVS cache.");
+                logger_.debug("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
+                logger_.debug("WiFi Password='%s'", settings_.wifi.password.c_str());
+                logger_.debug("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
+                logger_.debug("MQtt Broker Port=%d", settings_.mqtt.primary.port);
+                logger_.debug("MQtt Broker User='%s'", settings_.mqtt.primary.user.c_str());
+                logger_.debug("MQtt Broker Password='%s'", settings_.mqtt.primary.password.c_str());
+                logger_.debug("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
+                logger_.warn("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
+
+                if (settings_.isValidWifiConfig())
+                {
+                    logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
+                    iotsmartsys::app::WiFiConfig cfg;
+                    cfg.loadFromSettings(settings_);
+
+                    wifi_.begin(cfg);
+                }
+                else
+                {
+
+                    const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
+                    settingsManager_.saveWiFiOnly(cfgWifi);
+                    iotsmartsys::app::WiFiConfig cfg;
+                    cfg.ssid = cfgWifi.ssid.c_str();
+                    cfg.password = cfgWifi.password.c_str();
+                    wifi_.begin(cfg);
+
+                    logger_.warn("[SettingsManager] Cached WiFi settings from NVS are invalid. Skipping WiFi apply.");
+                }
+            }
+        }
+        else
+        {
+            logger_.warn("[SettingsManager] No cached settings found (or load failed). Using compile-time defaults until API refresh.");
+
+            const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
+            settingsManager_.saveWiFiOnly(cfgWifi);
+            iotsmartsys::app::WiFiConfig cfg;
+            cfg.ssid = cfgWifi.ssid.c_str();
+            cfg.password = cfgWifi.password.c_str();
+            wifi_.begin(cfg);
+        }
+
+        logger_.info("ClientId do Device: %s", settings_.clientId);
+
+        iotsmartsys::core::ConnectivityGate::init(latch_);
+        logger_.info("ConnectivityGate initialized.");
+
+        char topic[128];
+        snprintf(topic, sizeof(topic), "device/%s/command",
+                 settings_.clientId ? settings_.clientId : "");
+        logger_.info("MAIND -- snprintf to topic: %s", topic);
+        mqtt_.subscribe(topic);
+        mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
+        logger_.info("MQTT onMessage callback set.");
+
+        static iotsmartsys::core::CapabilityManager capManager = builder_.build();
+        capabilityManager_ = &capManager;
+        capabilityManager_->setup();
+
+        delay(1000);
+    }
+
+    void SmartSysApp::handle()
+    {
+        if (capabilityManager_)
+        {
+            capabilityManager_->handle();
+        }
+
+        wifi_.handle();
+        mqtt_.handle();
+        settingsManager_.handle();
+    }
+
+    void SmartSysApp::onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg)
+    {
+        if (!ctx)
+        {
+            return;
+        }
+        static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
+    }
+
+    void SmartSysApp::onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx)
+    {
+        if (!ctx)
+        {
+            return;
+        }
+        static_cast<SmartSysApp *>(ctx)->onSettingsUpdated(newSettings);
+    }
+
+    /// @brief Adds a new alarm capability to the application.
+    iotsmartsys::core::AlarmCapability *SmartSysApp::addAlarmCapability(iotsmartsys::app::AlarmConfig cfg)
+    {
+        return builder_.addAlarm(cfg);
+    }
+
+    /// @brief Adds a new door sensor capability to the application.
+    iotsmartsys::core::DoorSensorCapability *SmartSysApp::addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg)
+    {
+        return builder_.addDoorSensor(cfg);
+    }
+
+    /// @brief Adds a new clap sensor capability to the application.
+    iotsmartsys::core::ClapSensorCapability *SmartSysApp::addClapSensorCapability(iotsmartsys::app::ClapSensorConfig cfg)
+    {
+        return builder_.addClapSensor(cfg);
+    }
+
+    /// @brief Adds a new light capability to the application.
+    iotsmartsys::core::LightCapability *SmartSysApp::addLightCapability(iotsmartsys::app::LightConfig cfg)
+    {
+        return builder_.addLight(cfg);
+    }
+
+    /// @brief Adds a new GLP sensor capability to the application.
+    iotsmartsys::core::GlpSensorCapability *SmartSysApp::addGlpSensorCapability(iotsmartsys::app::GlpSensorConfig cfg)
+    {
+        return builder_.addGlpSensor(cfg);
+    }
+
+    /// @brief Adds a new GLP meter capability to the application.
+    iotsmartsys::core::GlpMeterCapability *SmartSysApp::addGlpMeterCapability(iotsmartsys::app::GlpMeterConfig cfg)
+    {
+        return builder_.addGlpMeter(cfg);
+    }
+
+    /// @brief Adds a new humidity sensor capability to the application.
+    iotsmartsys::core::HumiditySensorCapability *SmartSysApp::addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig cfg)
+    {
+        return builder_.addHumiditySensor(cfg);
+    }
+
+    /// @brief Adds a new height water level capability to the application.
+    iotsmartsys::core::HeightWaterLevelCapability *SmartSysApp::addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
+    {
+        return builder_.addWaterHeight(cfg);
+    }
+
+    /// @brief Adds a new LED capability to the application.
+    iotsmartsys::core::LEDCapability *SmartSysApp::addLedCapability(iotsmartsys::app::LightConfig cfg)
+    {
+        return builder_.addLED(cfg);
+    }
+
+    /// @brief Adds a new PIR sensor capability to the application.
+    iotsmartsys::core::PirSensorCapability *SmartSysApp::addPirSensorCapability(iotsmartsys::app::PirSensorConfig cfg)
+    {
+        return builder_.addPirSensor(cfg);
+    }
+
+    /// @brief Adds a new push button capability to the application.
+    iotsmartsys::core::PushButtonCapability *SmartSysApp::addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg)
+    {
+        return builder_.addPushButton(cfg);
+    }
+
+    /// @brief Adds a new touch button capability to the application.
+    iotsmartsys::core::TouchButtonCapability *SmartSysApp::addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig cfg)
+    {
+        return builder_.addTouchButton(cfg);
+    }
+
+    /// @brief Adds a new switch capability to the application.
+    iotsmartsys::core::SwitchCapability *SmartSysApp::addSwitchCapability(iotsmartsys::app::SwitchConfig cfg)
+    {
+        return builder_.addSwitch(cfg);
+    }
+
+    /// @brief Adds a new valve capability to the application.
+    iotsmartsys::core::ValveCapability *SmartSysApp::addValveCapability(iotsmartsys::app::ValveConfig cfg)
+    {
+        return builder_.addValve(cfg);
+    }
+
+    /// @brief Adds a new operational color sensor capability to the application.
+    iotsmartsys::core::OperationalColorSensorCapability *SmartSysApp::addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig cfg)
+    {
+        return builder_.addOperationalColorSensor(cfg);
+    }
+
+    /// @brief Adds a new temperature sensor capability to the application.
+    iotsmartsys::core::TemperatureSensorCapability *SmartSysApp::addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg)
+    {
+        return builder_.addTemperatureSensor(cfg);
+    }
+
+    /// @brief Adds a new water level liters capability to the application.
+    iotsmartsys::core::WaterLevelLitersCapability *SmartSysApp::addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
+    {
+        return builder_.addWaterLevelLiters(cfg);
+    }
+
+    /// @brief Adds a new water level percent capability to the application.
+    iotsmartsys::core::WaterLevelPercentCapability *SmartSysApp::addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
+    {
+        return builder_.addWaterLevelPercent(cfg);
+    }
+
+} // namespace iotsmartsys

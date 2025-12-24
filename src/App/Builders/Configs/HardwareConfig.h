@@ -28,7 +28,10 @@ namespace iotsmartsys::app
     {
     };
 
-    class SwitchPlugConfig : public HardwareConfig
+    class SwitchConfig : public HardwareConfig
+    {
+    };
+    class ValveConfig : public HardwareConfig
     {
     };
 
