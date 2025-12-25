@@ -1,7 +1,7 @@
 #include "BleProvisioningChannel.h"
 
-#include <Arduino.h>
 #include <cstring>
+#include <string>
 
 extern "C"
 {
@@ -47,7 +47,7 @@ namespace iotsmartsys::core::provisioning
     static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE;
     static const uint8_t char_prop_notify_read = ESP_GATT_CHAR_PROP_BIT_NOTIFY | ESP_GATT_CHAR_PROP_BIT_READ;
 
-    static const uint8_t status_init_val[] = "WAITING_CONFIG";
+    static uint8_t s_status_value[96] = "WAITING_CONFIG";
     static uint16_t s_ccc_default = 0x0000;
 
     static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] = {
@@ -57,9 +57,11 @@ namespace iotsmartsys::core::provisioning
         [IDX_CHAR_CONFIG] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ, sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_read_write}},
         [IDX_CHAR_VAL_CONFIG] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&WIFI_CONFIG_CHAR_UUID, ESP_GATT_PERM_WRITE, 96, 0, nullptr}},
         [IDX_CHAR_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ, sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_notify_read}},
-        [IDX_CHAR_VAL_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&WIFI_STATUS_CHAR_UUID, ESP_GATT_PERM_READ, sizeof(status_init_val), sizeof(status_init_val), (uint8_t *)status_init_val}},
-        [IDX_CHAR_CFG_STATUS] = {{ESP_GATT_AUTO_RSP},{ESP_UUID_LEN_16, (uint8_t*)&client_characteristic_cfg_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,sizeof(uint16_t), sizeof(uint16_t), (uint8_t*)&s_ccc_default},
-},
+        [IDX_CHAR_VAL_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&WIFI_STATUS_CHAR_UUID, ESP_GATT_PERM_READ, sizeof(s_status_value), (uint16_t)strlen((const char *)s_status_value), (uint8_t *)s_status_value}},
+        [IDX_CHAR_CFG_STATUS] = {
+            {ESP_GATT_AUTO_RSP},
+            {ESP_UUID_LEN_16, (uint8_t *)&client_characteristic_cfg_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, sizeof(uint16_t), sizeof(uint16_t), (uint8_t *)&s_ccc_default},
+        },
     };
 
     static esp_ble_adv_params_t s_advParams = {
@@ -70,6 +72,10 @@ namespace iotsmartsys::core::provisioning
         .channel_map = ADV_CHNL_ALL,
         .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY};
 
+    static bool s_adv_cfg_done = false;
+    static bool s_scan_rsp_cfg_done = false;
+    static char s_adv_name[32] = "IoTSmartSysSetup";
+
     static void build_ble_device_name(char *out, size_t out_len)
     {
         esp_chip_info_t chip_info;
@@ -79,40 +85,39 @@ namespace iotsmartsys::core::provisioning
         switch (chip_info.model)
         {
         case CHIP_ESP32:
-            model = "ESP32";
+            model = "esp32";
             break;
         case CHIP_ESP32S2:
-            model = "ESP32S2";
+            model = "esp32s2";
             break;
         case CHIP_ESP32S3:
-            model = "ESP32S3";
+            model = "esp32s3";
             break;
         case CHIP_ESP32C3:
-            model = "ESP32C3";
+            model = "esp32c3";
             break;
         // case CHIP_ESP32C6:
         //     model = "ESP32C6";
         //     break;
         case CHIP_ESP32H2:
-            model = "ESP32H2";
+            model = "esp32h2";
             break;
         default:
             model = "ESP";
             break;
         }
 
-        uint64_t mac = 0;
-#if defined(ESP32)
-        mac = ESP.getEfuseMac();
-#else
-        mac = esp_efuse_mac_get_default();
-#endif
+        uint8_t mac[6] = {0};
+        esp_efuse_mac_get_default(mac);
 
-        uint32_t suffix = (uint32_t)(mac & 0xFFFFFFULL);
+        uint32_t suffix = ((uint32_t)mac[3] << 16) | ((uint32_t)mac[4] << 8) | mac[5];
         snprintf(out, out_len, "%s-%06lX", model, (unsigned long)suffix);
     }
 
-    BleProvisioningChannel::BleProvisioningChannel() = default;
+    BleProvisioningChannel::BleProvisioningChannel(core::ILogger &logger)
+        : _logger(logger)
+    {
+    }
 
     void BleProvisioningChannel::begin()
     {
@@ -165,7 +170,9 @@ namespace iotsmartsys::core::provisioning
             return;
         }
 
-        Serial.println(msg);
+        _logger.info(TAG, "%s", msg);
+
+        ESP_LOGI(TAG, "%s", msg);
 
         if (_gattsIf == ESP_GATT_IF_NONE)
         {
@@ -177,9 +184,16 @@ namespace iotsmartsys::core::provisioning
             return;
         }
 
+        uint16_t msg_len = (uint16_t)strlen(msg);
+        const uint16_t max_len = (uint16_t)sizeof(s_status_value);
+        if (msg_len > max_len)
+        {
+            msg_len = max_len;
+        }
+
         esp_ble_gatts_set_attr_value(
             s_handleTable[IDX_CHAR_VAL_STATUS],
-            (uint16_t)strlen(msg),
+            msg_len,
             (const uint8_t *)msg);
 
         if (_connId != 0xFFFF && _notifyEnabled)
@@ -188,7 +202,7 @@ namespace iotsmartsys::core::provisioning
                 _gattsIf,
                 _connId,
                 s_handleTable[IDX_CHAR_VAL_STATUS],
-                (uint16_t)strlen(msg),
+                msg_len,
                 (uint8_t *)msg,
                 false);
         }
@@ -307,13 +321,35 @@ namespace iotsmartsys::core::provisioning
 
     void BleProvisioningChannel::startAdvertising()
     {
-        esp_ble_adv_data_t adv_data = {};
-        adv_data.set_scan_rsp = false;
-        adv_data.include_name = true;
-        adv_data.include_txpower = true;
-        adv_data.flag = ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT;
+        s_adv_cfg_done = false;
+        s_scan_rsp_cfg_done = false;
 
-        esp_ble_gap_config_adv_data(&adv_data);
+        const uint8_t adv_raw[] = {
+            0x02, 0x01, 0x06,
+            0x03, 0x03, 0xCD, 0xAB};
+
+        esp_err_t err1 = esp_ble_gap_config_adv_data_raw((uint8_t *)adv_raw, sizeof(adv_raw));
+        if (err1 != ESP_OK)
+        {
+            ESP_LOGE(TAG, "esp_ble_gap_config_adv_data_raw failed: %s", esp_err_to_name(err1));
+        }
+
+        uint8_t scan_rsp_raw[2 + sizeof(s_adv_name)] = {0};
+        size_t name_len = strnlen(s_adv_name, sizeof(s_adv_name) - 1);
+        if (name_len > 29)
+        {
+            name_len = 29;
+        }
+
+        scan_rsp_raw[0] = (uint8_t)(name_len + 1);
+        scan_rsp_raw[1] = 0x09;
+        memcpy(&scan_rsp_raw[2], s_adv_name, name_len);
+
+        esp_err_t err2 = esp_ble_gap_config_scan_rsp_data_raw(scan_rsp_raw, (uint16_t)(name_len + 2));
+        if (err2 != ESP_OK)
+        {
+            ESP_LOGE(TAG, "esp_ble_gap_config_scan_rsp_data_raw failed: %s", esp_err_to_name(err2));
+        }
     }
 
     void BleProvisioningChannel::gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
@@ -325,8 +361,19 @@ namespace iotsmartsys::core::provisioning
 
         switch (event)
         {
-        case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-            esp_ble_gap_start_advertising(&s_advParams);
+        case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
+            s_adv_cfg_done = true;
+            if (s_adv_cfg_done && s_scan_rsp_cfg_done)
+            {
+                esp_ble_gap_start_advertising(&s_advParams);
+            }
+            break;
+        case ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT:
+            s_scan_rsp_cfg_done = true;
+            if (s_adv_cfg_done && s_scan_rsp_cfg_done)
+            {
+                esp_ble_gap_start_advertising(&s_advParams);
+            }
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
             if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS)
@@ -353,7 +400,9 @@ namespace iotsmartsys::core::provisioning
             s_instance->_gattsIf = gatts_if;
             char dev_name[32];
             build_ble_device_name(dev_name, sizeof(dev_name));
-            esp_ble_gap_set_device_name(dev_name);
+            strncpy(s_adv_name, dev_name, sizeof(s_adv_name) - 1);
+            s_adv_name[sizeof(s_adv_name) - 1] = '\0';
+            esp_ble_gap_set_device_name(s_adv_name);
             startAdvertising();
             esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, HRS_IDX_NB, 0);
             break;
