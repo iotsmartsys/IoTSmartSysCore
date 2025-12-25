@@ -192,6 +192,7 @@ namespace iotsmartsys::platform::espressif
         if (!cJSON_IsObject(api))
             return StateResult::InvalidState;
 
+        (void)jsonGetString(api, "url", out.url);
         (void)jsonGetString(api, "key", out.key);
         (void)jsonGetString(api, "basic_auth", out.basic_auth);
         return StateResult::Ok;

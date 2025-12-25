@@ -68,6 +68,7 @@ namespace iotsmartsys::platform::espressif
 
         struct StoredApiConfig
         {
+            char url[128];
             char key[128];
             char basic_auth[160];
         };

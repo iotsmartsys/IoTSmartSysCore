@@ -67,6 +67,8 @@ namespace iotsmartsys::core::settings
                 wifi = other.wifi;
                 _is_changed = true;
             }
+
+            
         }
 
         bool hasChanges() const

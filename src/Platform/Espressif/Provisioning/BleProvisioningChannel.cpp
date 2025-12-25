@@ -76,6 +76,10 @@ namespace iotsmartsys::core::provisioning
     static bool s_scan_rsp_cfg_done = false;
     static char s_adv_name[32] = "IoTSmartSysSetup";
 
+    static std::string s_rx_buffer;
+    static size_t s_rx_expected_len = 0;
+    static bool s_rx_in_progress = false;
+
     static void build_ble_device_name(char *out, size_t out_len)
     {
         esp_chip_info_t chip_info;
@@ -112,6 +116,23 @@ namespace iotsmartsys::core::provisioning
 
         uint32_t suffix = ((uint32_t)mac[3] << 16) | ((uint32_t)mac[4] << 8) | mac[5];
         snprintf(out, out_len, "%s-%06lX", model, (unsigned long)suffix);
+    }
+
+    static bool starts_with(const char *s, const char *prefix)
+    {
+        if (!s || !prefix)
+        {
+            return false;
+        }
+
+        while (*prefix)
+        {
+            if (*s++ != *prefix++)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     BleProvisioningChannel::BleProvisioningChannel(core::ILogger &logger)
@@ -210,18 +231,89 @@ namespace iotsmartsys::core::provisioning
 
     void BleProvisioningChannel::onConfigWrite(const uint8_t *data, uint16_t len)
     {
-        if (!data || len == 0 || len > 95)
+        _logger.debug(TAG, "onConfigWrite: len=%u data=%p", (unsigned)len, (const void *)data);
+        if (!data || len == 0 || len > 96)
         {
+            _logger.debug(TAG, "onConfigWrite: INVALID_LENGTH (len=%u)", (unsigned)len);
             sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:INVALID_LENGTH");
             return;
         }
 
-        char payload[96];
+        char payload[97];
         memcpy(payload, data, len);
         payload[len] = '\0';
+        _logger.debug(TAG, "onConfigWrite: payload='%s' (len=%u)", payload, (unsigned)len);
 
         sendStatus(ProvisioningStatus::ReceivingData, "[BLE] CONFIG_RECEIVED");
-        parseAndStore(payload);
+
+        if (starts_with(payload, "BEGIN|"))
+        {
+            s_rx_buffer.clear();
+            s_rx_in_progress = true;
+            s_rx_expected_len = (size_t)strtoul(payload + 6, nullptr, 10);
+            sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] RX_BEGIN");
+            return;
+        }
+
+        if (starts_with(payload, "DATA|"))
+        {
+            if (!s_rx_in_progress)
+            {
+                sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:RX_NOT_STARTED");
+                return;
+            }
+
+            const char *p = payload + 5;
+            const char *sep = strchr(p, '|');
+            if (!sep)
+            {
+                sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:RX_BAD_DATA");
+                return;
+            }
+
+            const char *chunk = sep + 1;
+            s_rx_buffer.append(chunk);
+
+            if (s_rx_expected_len > 0 && s_rx_buffer.size() > s_rx_expected_len)
+            {
+                s_rx_in_progress = false;
+                s_rx_buffer.clear();
+                s_rx_expected_len = 0;
+                sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:RX_TOO_LARGE");
+                return;
+            }
+
+            sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] RX_DATA");
+            return;
+        }
+
+        if (strcmp(payload, "END") == 0)
+        {
+            if (!s_rx_in_progress)
+            {
+                sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:RX_NOT_STARTED");
+                return;
+            }
+
+            if (s_rx_expected_len > 0 && s_rx_buffer.size() != s_rx_expected_len)
+            {
+                s_rx_in_progress = false;
+                s_rx_buffer.clear();
+                s_rx_expected_len = 0;
+                sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:RX_LEN_MISMATCH");
+                return;
+            }
+
+            parseAndStore(s_rx_buffer.c_str());
+
+            s_rx_in_progress = false;
+            s_rx_buffer.clear();
+            s_rx_expected_len = 0;
+        }
+        else
+        {
+            parseAndStore(payload);
+        }
 
         if (_wifiSsidStorage.empty() || _wifiPasswordStorage.empty())
         {
@@ -234,6 +326,7 @@ namespace iotsmartsys::core::provisioning
             DeviceConfig cfg;
             cfg.wifi.ssid = _wifiSsidStorage.c_str();
             cfg.wifi.password = _wifiPasswordStorage.c_str();
+            cfg.deviceApiUrl = _deviceApiUrlStorage.empty() ? nullptr : _deviceApiUrlStorage.c_str();
             cfg.deviceApiKey = _deviceApiKeyStorage.empty() ? nullptr : _deviceApiKeyStorage.c_str();
             cfg.basicAuth = _basicAuthStorage.empty() ? nullptr : _basicAuthStorage.c_str();
             cfg.source = ProvisioningSource::Ble;
@@ -248,6 +341,7 @@ namespace iotsmartsys::core::provisioning
     {
         _wifiSsidStorage.clear();
         _wifiPasswordStorage.clear();
+        _deviceApiUrlStorage.clear();
         _deviceApiKeyStorage.clear();
         _basicAuthStorage.clear();
 
@@ -278,6 +372,7 @@ namespace iotsmartsys::core::provisioning
         size_t pos = 0;
         _wifiSsidStorage = nextPart(p, pos);
         _wifiPasswordStorage = nextPart(p, pos);
+        _deviceApiUrlStorage = nextPart(p, pos);
         _deviceApiKeyStorage = nextPart(p, pos);
         _basicAuthStorage = nextPart(p, pos);
     }
@@ -434,6 +529,11 @@ namespace iotsmartsys::core::provisioning
         {
             s_instance->_connId = 0xFFFF;
             s_instance->_notifyEnabled = false;
+
+            s_rx_in_progress = false;
+            s_rx_buffer.clear();
+            s_rx_expected_len = 0;
+
             esp_ble_gap_start_advertising(&s_advParams);
             s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] DISCONNECTED");
             break;

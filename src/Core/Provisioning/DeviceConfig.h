@@ -25,6 +25,7 @@ namespace iotsmartsys::core::provisioning
     struct DeviceConfig
     {
         WifiCredentials wifi;
+        const char *deviceApiUrl = nullptr;
         const char *deviceApiKey = nullptr;
         const char *basicAuth = nullptr;
         ProvisioningSource source = ProvisioningSource::Unknown;

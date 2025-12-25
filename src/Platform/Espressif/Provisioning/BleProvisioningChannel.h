@@ -56,6 +56,7 @@ namespace iotsmartsys::core::provisioning
         std::string _wifiSsidStorage;
         std::string _wifiPasswordStorage;
         std::string _deviceApiKeyStorage;
+        std::string _deviceApiUrlStorage;
         std::string _basicAuthStorage;
 
         void sendStatus(ProvisioningStatus status, const char *msg);

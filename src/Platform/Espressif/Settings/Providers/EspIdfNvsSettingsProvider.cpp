@@ -187,6 +187,7 @@ namespace iotsmartsys::platform::espressif
         copyStr(dst.wifi.password, sizeof(dst.wifi.password), src.wifi.password);
 
         // api
+        copyStr(dst.api.url, sizeof(dst.api.url), src.api.url);
         copyStr(dst.api.key, sizeof(dst.api.key), src.api.key);
         copyStr(dst.api.basic_auth, sizeof(dst.api.basic_auth), src.api.basic_auth);
     }
@@ -231,6 +232,7 @@ namespace iotsmartsys::platform::espressif
         logger.debug("EspIdfNvsSettingsProvider", "Loading WiFi settings from NVS: password_len=%u", (unsigned)dst.wifi.password.size());
 
         // api
+        dst.api.url = toString(src.api.url);
         dst.api.key = toString(src.api.key);
         dst.api.basic_auth = toString(src.api.basic_auth);
         switch (src.logLevel)
