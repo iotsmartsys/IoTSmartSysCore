@@ -10,6 +10,8 @@ extern "C"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "esp_chip_info.h"
 }
 
 namespace iotsmartsys::core::provisioning
@@ -67,6 +69,48 @@ namespace iotsmartsys::core::provisioning
         .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
         .channel_map = ADV_CHNL_ALL,
         .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY};
+
+    static void build_ble_device_name(char *out, size_t out_len)
+    {
+        esp_chip_info_t chip_info;
+        esp_chip_info(&chip_info);
+
+        const char *model = "ESP";
+        switch (chip_info.model)
+        {
+        case CHIP_ESP32:
+            model = "ESP32";
+            break;
+        case CHIP_ESP32S2:
+            model = "ESP32S2";
+            break;
+        case CHIP_ESP32S3:
+            model = "ESP32S3";
+            break;
+        case CHIP_ESP32C3:
+            model = "ESP32C3";
+            break;
+        // case CHIP_ESP32C6:
+        //     model = "ESP32C6";
+        //     break;
+        case CHIP_ESP32H2:
+            model = "ESP32H2";
+            break;
+        default:
+            model = "ESP";
+            break;
+        }
+
+        uint64_t mac = 0;
+#if defined(ESP32)
+        mac = ESP.getEfuseMac();
+#else
+        mac = esp_efuse_mac_get_default();
+#endif
+
+        uint32_t suffix = (uint32_t)(mac & 0xFFFFFFULL);
+        snprintf(out, out_len, "%s-%06lX", model, (unsigned long)suffix);
+    }
 
     BleProvisioningChannel::BleProvisioningChannel() = default;
 
@@ -307,7 +351,9 @@ namespace iotsmartsys::core::provisioning
         case ESP_GATTS_REG_EVT:
         {
             s_instance->_gattsIf = gatts_if;
-            esp_ble_gap_set_device_name("IoTSmartSysSetup");
+            char dev_name[32];
+            build_ble_device_name(dev_name, sizeof(dev_name));
+            esp_ble_gap_set_device_name(dev_name);
             startAdvertising();
             esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, HRS_IDX_NB, 0);
             break;
