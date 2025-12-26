@@ -2,7 +2,6 @@
 #include "Core/Provisioning/ProvisioningManager.h"
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
 // #include "Platform/Arduino/Provisioning/BleProvisioningChannel.h"
-#include "Infra/Settings/ConfigManager.h"
 #include "Core/Providers/ServiceManager.h"
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
 #include "SmartSysApp.h"
