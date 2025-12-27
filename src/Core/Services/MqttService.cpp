@@ -490,13 +490,13 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info)
     {
         auto *self = static_cast<MqttService *>(user);
         if (!self)
             return;
         if (self->_userConnectedCb)
-            self->_userConnectedCb(self->_userConnectedUser);
+            self->_userConnectedCb(self->_userConnectedUser, info);
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>

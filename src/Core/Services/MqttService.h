@@ -80,7 +80,7 @@ namespace iotsmartsys::app
         bool enqueue(const char *topic, const void *payload, std::size_t len, bool retain);
 
         static void onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg);
-        static void onConnectedThunk(void *user);
+        static void onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info);
         static void onDisconnectedThunk(void *user);
         static void onSettingsReadyThunk(iotsmartsys::core::settings::SettingsReadyLevel level, void *ctx);
         void onSettingsReady(iotsmartsys::core::settings::SettingsReadyLevel level);

@@ -80,9 +80,9 @@ namespace iotsmartsys
 
     private:
         static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);
-        static void onMqttConnectedThunk(void *ctx);
+        static void onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info);
         void onMqttMessage(const core::MqttMessageView &msg);
-        void onMqttConnected();
+        void onMqttConnected(const core::MqttConnectedView &info);
         static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
         void onSettingsUpdated(const core::settings::Settings &newSettings);
         void applySettingsToRuntime(const core::settings::Settings &settings);
@@ -117,6 +117,5 @@ namespace iotsmartsys
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};
-
     };
 } // namespace iotsmartsys

@@ -35,29 +35,37 @@ namespace iotsmartsys::platform::espressif
         c.keepalive = cfg.keepAliveSec;
         c.disable_clean_session = cfg.cleanSession ? 0 : 1;
         _logger.debug("[MQTT DBG] Config: uri='%s' client_id='%s' username='%s' keepalive=%d clean_session=%d",
-                           c.uri ? c.uri : "(null)",
-                           c.client_id ? c.client_id : "(null)",
-                           c.username ? c.username : "(null)",
-                           c.keepalive,
-                           c.disable_clean_session);
+                      c.uri ? c.uri : "(null)",
+                      c.client_id ? c.client_id : "(null)",
+                      c.username ? c.username : "(null)",
+                      c.keepalive,
+                      c.disable_clean_session);
 
         _logger.info("[MQTT DBG] esp_mqtt_client_init()...");
         _client = esp_mqtt_client_init(&c);
-        if (!_client) {
+        if (!_client)
+        {
             _logger.error("[MQTT DBG] esp_mqtt_client_init() returned NULL");
             return false;
         }
 
         _logger.info("[MQTT DBG] esp_mqtt_client_register_event()...");
         esp_err_t r = esp_mqtt_client_register_event(_client, MQTT_EVENT_ANY,
-                       (esp_event_handler_t)&EspIdfMqttClient::eventHandlerBridge,
-                       this);
-        if (r != ESP_OK) {
+                                                     (esp_event_handler_t)&EspIdfMqttClient::eventHandlerBridge,
+                                                     this);
+        if (r != ESP_OK)
+        {
             _logger.error("[MQTT DBG] register_event failed: %d\n", (int)r);
             // continue but warn
-        } else {
+        }
+        else
+        {
             _logger.info("[MQTT DBG] register_event OK");
         }
+
+        _clientIdStr = cfg.clientId ? cfg.clientId : "";
+        _brokerStr = cfg.uri ? cfg.uri : "";
+        _keepAliveSec = cfg.keepAliveSec;
 
         return true;
     }
@@ -140,7 +148,13 @@ namespace iotsmartsys::platform::espressif
         case MQTT_EVENT_CONNECTED:
             _connected = true;
             if (_onConnected)
-                _onConnected(_onConnectedUser);
+            {
+                iotsmartsys::core::MqttConnectedView info{};
+                info.clientId = _clientIdStr.empty() ? nullptr : _clientIdStr.c_str();
+                info.broker = _brokerStr.empty() ? nullptr : _brokerStr.c_str();
+                info.keepAliveSec = _keepAliveSec;
+                _onConnected(_onConnectedUser, info);
+            }
             break;
         case MQTT_EVENT_DISCONNECTED:
             _connected = false;

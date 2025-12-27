@@ -13,8 +13,15 @@ namespace iotsmartsys::core
         bool retain;
     };
 
+    struct MqttConnectedView
+    {
+        const char *clientId;
+        const char *broker;
+        uint16_t keepAliveSec;
+    };
+
     using MqttOnMessageFn = void (*)(void *user, const MqttMessageView &msg);
-    using MqttOnConnectedFn = void (*)(void *user);
+    using MqttOnConnectedFn = void (*)(void *user, const MqttConnectedView &info);
     using MqttOnDisconnectedFn = void (*)(void *user);
 
     struct MqttConfig

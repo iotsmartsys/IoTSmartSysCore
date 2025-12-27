@@ -73,4 +73,14 @@ namespace iotsmartsys::core
             items[i]->setup();
         }
     }
+
+    std::vector<iotsmartsys::core::ICapability> CapabilityManager::getAllCapabilities() const
+    {
+        std::vector<iotsmartsys::core::ICapability> caps;
+        for (size_t i = 0; i < count; ++i)
+        {
+            caps.push_back(*items[i]);
+        }
+        return caps;
+    }
 }

@@ -84,7 +84,11 @@ namespace iotsmartsys::core
                 _state = State::Connected;
                 _connectedAtMs = now;
                 _attempt = 0;
-                _log.info("WIFI", "Connected. IP=%s", WiFi.localIP().toString().c_str());
+                _ssid = WiFi.SSID().c_str();
+                _macAddress = WiFi.macAddress().c_str();
+                _ipAddress = WiFi.localIP().toString().c_str();
+                _signalStrength = String(WiFi.RSSI()).c_str();
+                _log.info("WIFI", "Connected. IP=%s", _ipAddress);
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
             {
@@ -132,7 +136,7 @@ namespace iotsmartsys::core
 
         // timeout “soft”: se passar, entra em retry (sem bloquear)
         const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
-        _nextActionAtMs = now + 15000; // 15s
+        _nextActionAtMs = now + 5000; // 5s
 
         _log.info("WIFI", "Connecting to SSID=%s (attempt=%lu)", _cfg.ssid, (unsigned long)(_attempt + 1));
 
@@ -155,10 +159,8 @@ namespace iotsmartsys::core
 
     uint32_t WiFiManager::computeBackoffMs() const
     {
-        // backoff exponencial com teto + jitter
         uint32_t base = _cfg.initialBackoffMs;
 
-        // até maxFastRetries cresce rápido; depois estabiliza no maxBackoffMs
         uint8_t exp = (_attempt <= _cfg.maxFastRetries) ? _attempt : _cfg.maxFastRetries;
         for (uint8_t i = 0; i < exp; ++i)
         {
@@ -175,7 +177,6 @@ namespace iotsmartsys::core
         uint32_t jitter = 0;
         if (_cfg.jitterMs)
         {
-            // jitter simples (não críptico): ok pra backoff
             jitter = (uint32_t)(esp_random() % (_cfg.jitterMs + 1));
         }
 
@@ -190,26 +191,22 @@ namespace iotsmartsys::core
         switch (event)
         {
         case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-            // Wi-Fi associado (ainda pode não ter IP)
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
             break;
 
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             _gotIp = true;
-            // Wi-Fi + IP prontos
+
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                          iotsmartsys::core::ConnectivityGate::IP_READY);
-            // o handle() consolida estado e loga
             break;
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
             _gotIp = false;
-            // Ao desconectar, invalida rede e MQTT
+
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                            iotsmartsys::core::ConnectivityGate::IP_READY |
                            iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
-            // não reconecta aqui direto (pra não reconectar em ISR/event flood)
-            // o handle() vai perceber e aplicar retry/backoff
             break;
 
         default:
@@ -237,6 +234,26 @@ namespace iotsmartsys::core
         WiFi.scanDelete(); // limpa resultados do scan
 
         return ssids;
+    }
+
+    const char *WiFiManager::getSsid() const
+    {
+        return _ssid;
+    }
+
+    const char *WiFiManager::getIpAddress() const
+    {
+        return _ipAddress;
+    }
+
+    const char *WiFiManager::getMacAddress() const
+    {
+        return _macAddress;
+    }
+
+    const char *WiFiManager::getSignalStrength() const
+    {
+        return _signalStrength;
     }
 
 } // namespace iotsmartsys::app

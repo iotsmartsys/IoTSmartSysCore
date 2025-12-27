@@ -1,4 +1,6 @@
 #include "SmartSysApp.h"
+#include "App/Builders/Builders/AnnouncePayloadBuilder.h"
+#include "Infra/Settings/VersionInfo.h"
 
 #include <cstdio>
 
@@ -31,9 +33,40 @@ namespace iotsmartsys
         return;
     }
 
-    void SmartSysApp::onMqttConnected()
+    void SmartSysApp::onMqttConnected(const core::MqttConnectedView &info)
     {
         logger_.info("MQTT connected.");
+        logger_.info("Client ID: %s", info.clientId);
+        logger_.info("Broker: %s", info.broker);
+        logger_.info("Keep Alive: %d", info.keepAliveSec);
+
+        app::AnnouncePayloadBuilder builder(
+            capabilityManager_->getAllCapabilities(), logger_);
+        logger_.info("line 45 SmartSysApp::onMqttConnected after builder");
+        builder.withDeviceId(info.clientId)
+            .withBroker(info.broker)
+            .withVersion(IOTSMARTSYSCORE_VERSION)
+            .withBuild(getBuildIdentifier())
+            .withProperty(Property("wifi_ssid", wifi_.getSsid()))
+            .withProperty(Property("wifi_signal", wifi_.getSignalStrength()))
+            .withIpAddress(wifi_.getIpAddress())
+            .withMacAddress(wifi_.getMacAddress());
+
+        logger_.info("line 55 SmartSysApp::onMqttConnected after builder");
+        std::string payload = builder.build();
+        logger_.info("Publishing MQTT message: %s", payload.c_str());
+        if (mqtt_.publish(
+                "device/announce",
+                payload.c_str(),
+                payload.length(),
+                false))
+        {
+            logger_.info("MQTT message published successfully.");
+        }
+        else
+        {
+            logger_.error("Failed to publish MQTT message.");
+        }
     }
 
     void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
@@ -227,13 +260,13 @@ namespace iotsmartsys
         static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
     }
 
-    void SmartSysApp::onMqttConnectedThunk(void *ctx)
+    void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info)
     {
         if (!ctx)
         {
             return;
         }
-        static_cast<SmartSysApp *>(ctx)->onMqttConnected();
+        static_cast<SmartSysApp *>(ctx)->onMqttConnected(info);
     }
 
     void SmartSysApp::onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx)

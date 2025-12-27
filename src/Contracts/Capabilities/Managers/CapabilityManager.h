@@ -33,6 +33,7 @@ namespace iotsmartsys::core
         void setup();
         void handle();
         iotsmartsys::core::ICommandCapability *getCommandCapabilityByName(const char *name) const;
+        std::vector<iotsmartsys::core::ICapability> getAllCapabilities() const;
     };
 
 }

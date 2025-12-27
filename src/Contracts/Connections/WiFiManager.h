@@ -55,6 +55,10 @@ namespace iotsmartsys::core
         bool isConnected() const;
         const char *stateName() const;
         std::vector<std::string> getAvailableSSIDs();
+        const char *getIpAddress() const;
+        const char *getMacAddress() const;
+        const char *getSsid() const;
+        const char *getSignalStrength() const;
 
     private:
         enum class State : uint8_t
@@ -79,6 +83,10 @@ namespace iotsmartsys::core
         WiFiConfig _cfg{};
 
         State _state{State::Idle};
+        const char *_ipAddress;
+        const char *_macAddress;
+        const char *_ssid;
+        const char *_signalStrength;
 
         uint32_t _attempt{0}; 
         uint32_t _nextActionAtMs{0};

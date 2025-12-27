@@ -4,6 +4,7 @@
 #include "Contracts/Transports/IMqttClient.h"
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Logging/Log.h"
+#include <string>
 
 extern "C"
 {
@@ -49,6 +50,9 @@ namespace iotsmartsys::platform::espressif
         void *_onConnectedUser{nullptr};
         iotsmartsys::core::MqttOnDisconnectedFn _onDisconnected{nullptr};
         void *_onDisconnectedUser{nullptr};
+        std::string _clientIdStr;
+        std::string _brokerStr;
+        uint16_t _keepAliveSec{0};
 
         // buffers para evitar alocações internas do mqtt_event (topic/payload não são null-terminated)
         // (opcional: pode processar direto via len)

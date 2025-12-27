@@ -1,9 +1,13 @@
 #pragma once
-#include <Arduino.h>
 
-class Property {
-public:
-    String property_name;
-    String value;
-    Property(const String &name, const String &val) : property_name(name), value(val) {}
-};
+namespace iotsmartsys::core
+{
+
+    class Property
+    {
+    public:
+        const char *property_name;
+        const char *value;
+        Property(const char *name, const char *val) : property_name(name), value(val) {}
+    };
+}
