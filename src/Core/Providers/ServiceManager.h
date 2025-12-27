@@ -18,6 +18,7 @@ namespace iotsmartsys::core
     {
     public:
         static ServiceManager &init();
+        static ServiceManager &instance();
 
         ILogger &logger();
         ITimeProvider &timeProvider();

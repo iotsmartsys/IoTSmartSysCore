@@ -41,6 +41,10 @@
 #include "Core/Settings/SettingsGateImpl.h"
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
 
+#include "Core/Provisioning/ProvisioningManager.h"
+#include "Platform/Espressif/Provisioning/BleProvisioningChannel.h"
+#include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
+
 namespace iotsmartsys
 {
     class SmartSysApp
@@ -106,5 +110,11 @@ namespace iotsmartsys
         app::MqttService<12, 16, 256> mqtt_;
 
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
+        iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
+        iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
+
+        void setupProvisioningConfiguration();
+        bool inConfigMode_{false};
+
     };
 } // namespace iotsmartsys

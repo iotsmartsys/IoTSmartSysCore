@@ -20,7 +20,7 @@ namespace iotsmartsys::core::provisioning
         startHighestPriorityChannels();
     }
 
-    void ProvisioningManager::loop()
+    void ProvisioningManager::handle()
     {
         if (_isProvisioned)
         {

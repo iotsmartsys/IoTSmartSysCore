@@ -8,6 +8,12 @@ namespace iotsmartsys::core
         return instance;
     }
 
+    ServiceManager &ServiceManager::instance()
+    {
+        static ServiceManager instance;
+        return instance;
+    }
+
     ServiceManager::ServiceManager()
         : logger_(Serial),
           timeProvider_(),

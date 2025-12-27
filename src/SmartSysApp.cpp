@@ -100,7 +100,7 @@ namespace iotsmartsys
         {
             if (settingsManager_.copyCurrent(settings_))
             {
-                serviceManager_.setLogLevel(settings_.logLevel);
+                // serviceManager_.setLogLevel(settings_.logLevel);
                 logger_.info("[SettingsManager] Loaded settings from NVS cache.");
                 logger_.debug("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
                 logger_.debug("WiFi Password='%s'", settings_.wifi.password.c_str());
@@ -111,7 +111,7 @@ namespace iotsmartsys
                 logger_.debug("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
                 logger_.warn("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
 
-                if (settings_.isValidWifiConfig())
+                if (settings_.isValidWifiConfig() && !settings_.in_config_mode)
                 {
                     logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
                     iotsmartsys::core::WiFiConfig cfg;
@@ -121,28 +121,18 @@ namespace iotsmartsys
                 }
                 else
                 {
+                    logger_.warn("[SettingsManager] Cached WiFi settings are invalid. Skipping entrando no modo de configuração.");
 
-                    const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
-                    settingsManager_.saveWiFiOnly(cfgWifi);
-                    iotsmartsys::core::WiFiConfig cfg;
-                    cfg.ssid = cfgWifi.ssid.c_str();
-                    cfg.password = cfgWifi.password.c_str();
-                    wifi_.begin(cfg);
-
-                    logger_.warn("[SettingsManager] Cached WiFi settings from NVS are invalid. Skipping WiFi apply.");
+                    setupProvisioningConfiguration();
+                    return;
                 }
             }
         }
         else
         {
-            logger_.warn("[SettingsManager] No cached settings found (or load failed). Using compile-time defaults until API refresh.");
-
-            const iotsmartsys::core::settings::WifiConfig cfgWifi{WIFI_SSID, WIFI_PASSWORD};
-            settingsManager_.saveWiFiOnly(cfgWifi);
-            iotsmartsys::core::WiFiConfig cfg;
-            cfg.ssid = cfgWifi.ssid.c_str();
-            cfg.password = cfgWifi.password.c_str();
-            wifi_.begin(cfg);
+            logger_.warn("[SettingsManager] No cached settings found (or load failed). Entering provisioning mode.");
+            setupProvisioningConfiguration();
+            return;
         }
 
         logger_.info("ClientId do Device: %s", settings_.clientId);
@@ -167,6 +157,12 @@ namespace iotsmartsys
 
     void SmartSysApp::handle()
     {
+        if (inConfigMode_ && provManager)
+        {
+            provManager->handle();
+            return;
+        }
+
         if (capabilityManager_)
         {
             capabilityManager_->handle();
@@ -175,6 +171,38 @@ namespace iotsmartsys
         wifi_.handle();
         mqtt_.handle();
         settingsManager_.handle();
+    }
+
+    void SmartSysApp::setupProvisioningConfiguration()
+    {
+        provManager = new core::provisioning::ProvisioningManager();
+
+        bleChannel = new core::provisioning::BleProvisioningChannel(logger_, wifi_);
+        provManager->registerChannel(*bleChannel);
+        provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
+                                             {
+            auto &sp_ = iotsmartsys::core::ServiceManager::instance();
+            auto &logger = sp_.logger();
+            logger.info("Provisioning completed callback invoked.");
+
+            iotsmartsys::core::settings::Settings newSettings;
+            
+            newSettings.in_config_mode = false;
+            newSettings.wifi.ssid = cfg.wifi.ssid ? cfg.wifi.ssid : "";
+            newSettings.wifi.password = cfg.wifi.password ? cfg.wifi.password : "";
+            newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
+            newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
+            newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
+            logger.info("New WiFi SSID='%s'", newSettings.wifi.ssid.c_str());
+            logger.info("New WiFi Password='%s'", newSettings.wifi.password.c_str());
+            logger.info("New API URL='%s'", newSettings.api.url.c_str());
+            logger.info("New API Key='%s'", newSettings.api.key.c_str());
+            logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
+            logger.info("Saving new settings via SettingsManager.");
+            sp_.settingsManager().save(newSettings); });
+
+        provManager->begin();
+        inConfigMode_ = true;
     }
 
     void SmartSysApp::onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg)

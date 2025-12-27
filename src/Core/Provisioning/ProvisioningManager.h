@@ -22,7 +22,7 @@ namespace iotsmartsys::core::provisioning
         void begin();
 
         /// @brief Executa o ciclo de processamento de todos os canais ativos.
-        void loop();
+        void handle();
 
         /// @brief Interrompe todos os canais de provisionamento.
         void stop();
