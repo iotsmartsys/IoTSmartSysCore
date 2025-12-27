@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include "Contracts/Common/StateResult.h"
 
 #include "Contracts/Settings/Settings.h"
@@ -101,6 +102,8 @@ namespace iotsmartsys::core::settings
         void *_updated_ctx{nullptr};
 
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;
+        // Keep last sync URL alive while the async fetcher is running.
+        std::string _syncUrlBuffer{};
 
         void syncFromApi();
     };

@@ -18,7 +18,7 @@ namespace iotsmartsys::core
         : logger_(Serial),
           timeProvider_(),
           serviceProvider_(ServiceProvider::init(&logger_)),
-          settingsFetcher_(),
+          settingsFetcher_(logger_),
           settingsParser_(),
           settingsProvider_(),
           settingsGate_(),

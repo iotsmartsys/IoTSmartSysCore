@@ -52,17 +52,17 @@ namespace iotsmartsys::core::settings
                 logLevel = other.logLevel;
                 _is_changed = true;
             }
-            if (api.hasChanged(other.api))
+            if (api.hasChanged(other.api) && other.api.isValid())
             {
                 api = other.api;
                 _is_changed = true;
             }
-            if (firmware.hasChanged(other.firmware))
+            if (firmware.hasChanged(other.firmware) && other.firmware.isValid())
             {
                 firmware = other.firmware;
                 _is_changed = true;
             }
-            if (mqtt.hasChanged(other.mqtt))
+            if (mqtt.hasChanged(other.mqtt) && other.mqtt.isValid())
             {
                 mqtt = other.mqtt;
                 _is_changed = true;
@@ -72,8 +72,6 @@ namespace iotsmartsys::core::settings
                 wifi = other.wifi;
                 _is_changed = true;
             }
-
-            
         }
 
         bool hasChanges() const
@@ -84,6 +82,11 @@ namespace iotsmartsys::core::settings
         bool isValidWifiConfig() const
         {
             return (wifi.ssid.empty() == false && wifi.password.empty() == false);
+        }
+
+        bool isValidApiConfig() const
+        {
+            return api.isValid();
         }
     };
 } // namespace iotsmartsys::core::settings

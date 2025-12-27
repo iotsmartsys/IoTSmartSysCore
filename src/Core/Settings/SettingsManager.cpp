@@ -377,13 +377,28 @@ namespace iotsmartsys::core::settings
         _logger->debug("SettingsManager", "syncFromApi() starting");
         // 2) API is source of truth: refresh asynchronously (does not block firmware)
         SettingsFetchRequest req;
-        req.url = SETTINGS_API_URL; // define this macro in your env/build_flags
+        // replace <device_id> from url with actual clientId
+        if (_has_current == false)
+        {
+            _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
+        }
+        _syncUrlBuffer = _current.api.url;
+        const auto deviceIdPlaceholder = std::string("<device_id>");
+        const auto placeholderPos = _syncUrlBuffer.find(deviceIdPlaceholder);
+        if (placeholderPos != std::string::npos && _current.clientId != nullptr)
+        {
+            _syncUrlBuffer.replace(placeholderPos, deviceIdPlaceholder.length(), _current.clientId);
+        }
+        _logger->debug("[SettingsManager] syncFromApi() requesting URL: %s", _syncUrlBuffer.c_str());
+
+        // Keep pointer valid while the async fetcher runs.
+        req.url = _syncUrlBuffer.c_str();
 
         // Optional headers (example). If you don't need them, leave empty.
         static HttpHeader headers[] = {
-            {"x-api-key", API_KEY},
-            {"client_id", CLIENT_ID},
-            {"Authorization", API_BASIC_AUTH},
+            {"x-api-key", _current.api.key.c_str()},
+            {"client_id", _current.clientId},
+            {"Authorization", _current.api.basic_auth.c_str()},
         };
         req.headers = headers;
         req.headers_count = sizeof(headers) / sizeof(headers[0]);

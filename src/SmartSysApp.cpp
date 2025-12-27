@@ -83,8 +83,6 @@ namespace iotsmartsys
         Serial.begin(115200);
         delay(5000);
 
-        Serial.println("Pode me ver");
-
         serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
 
@@ -100,19 +98,22 @@ namespace iotsmartsys
         {
             if (settingsManager_.copyCurrent(settings_))
             {
-                // serviceManager_.setLogLevel(settings_.logLevel);
+                serviceManager_.setLogLevel(settings_.logLevel);
                 logger_.info("[SettingsManager] Loaded settings from NVS cache.");
-                logger_.debug("In Config Mode=%s", settings_.in_config_mode ? "true" : "false");
-                logger_.debug("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
-                logger_.debug("WiFi Password='%s'", settings_.wifi.password.c_str());
-                logger_.debug("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
-                logger_.debug("MQtt Broker Port=%d", settings_.mqtt.primary.port);
-                logger_.debug("MQtt Broker User='%s'", settings_.mqtt.primary.user.c_str());
-                logger_.debug("MQtt Broker Password='%s'", settings_.mqtt.primary.password.c_str());
-                logger_.debug("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
-                logger_.warn("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
+                logger_.error("In Config Mode=%s", settings_.in_config_mode ? "true" : "false");
+                logger_.error("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
+                logger_.error("WiFi Password='%s'", settings_.wifi.password.c_str());
+                logger_.error("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
+                logger_.error("MQtt Broker Port=%d", settings_.mqtt.primary.port);
+                logger_.error("MQtt Broker User='%s'", settings_.mqtt.primary.user.c_str());
+                logger_.error("MQtt Broker Password='%s'", settings_.mqtt.primary.password.c_str());
+                logger_.error("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
+                logger_.error("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
+                logger_.error("API URL: %s", settings_.api.url.c_str());
+                logger_.error("API Token: %s", settings_.api.key.c_str());
+                logger_.error("API auth: %s", settings_.api.basic_auth.c_str());
 
-                if (settings_.isValidWifiConfig() && !settings_.in_config_mode)
+                if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
                     logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
                     iotsmartsys::core::WiFiConfig cfg;
@@ -204,8 +205,7 @@ namespace iotsmartsys
                                                  logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
                                                  logger.info("Saving new settings via SettingsManager.");
                                                  sp_.settingsManager().save(newSettings);
-                                                 ESP.restart();
-                                             });
+                                                 ESP.restart(); });
 
         provManager->begin();
         inConfigMode_ = true;

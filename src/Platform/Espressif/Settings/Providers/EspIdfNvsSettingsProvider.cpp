@@ -110,6 +110,12 @@ namespace iotsmartsys::platform::espressif
         dst[n] = '\0';
     }
 
+    void EspIdfNvsSettingsProvider::copyStrIfNotEmpty(char *dst, std::size_t dstSize, const std::string &src)
+    {
+        if (!src.empty())
+            copyStr(dst, dstSize, src);
+    }
+
     std::string EspIdfNvsSettingsProvider::toString(const char *src)
     {
         return (src && *src) ? std::string(src) : std::string();
@@ -147,49 +153,64 @@ namespace iotsmartsys::platform::espressif
         }
     }
 
-    void EspIdfNvsSettingsProvider::toStored(const core::settings::Settings &src, StoredSettings &dst)
+    void EspIdfNvsSettingsProvider::toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing)
     {
-        std::memset(&dst, 0, sizeof(dst));
+        if (existing)
+        {
+            dst = *existing;
+        }
+        else
+        {
+            std::memset(&dst, 0, sizeof(dst));
+        }
+
         dst.version = STORAGE_VERSION;
         dst.in_config_mode = src.in_config_mode ? 1 : 0;
-
         dst.logLevel = static_cast<int>(src.logLevel);
 
-        // MQTT primary
-        copyStr(dst.mqtt.primary.host, sizeof(dst.mqtt.primary.host), src.mqtt.primary.host);
-        dst.mqtt.primary.port = src.mqtt.primary.port;
-        copyStr(dst.mqtt.primary.user, sizeof(dst.mqtt.primary.user), src.mqtt.primary.user);
-        copyStr(dst.mqtt.primary.password, sizeof(dst.mqtt.primary.password), src.mqtt.primary.password);
-        copyStr(dst.mqtt.primary.protocol, sizeof(dst.mqtt.primary.protocol), src.mqtt.primary.protocol);
-        dst.mqtt.primary.ttl = src.mqtt.primary.ttl;
+        auto applyMqttConfig = [&](const core::settings::MqttConfig &srcCfg, StoredMqttConfig &dstCfg) {
+            if (!srcCfg.host.empty())
+            {
+                copyStr(dstCfg.host, sizeof(dstCfg.host), srcCfg.host);
+                dstCfg.port = srcCfg.port;
+                copyStrIfNotEmpty(dstCfg.user, sizeof(dstCfg.user), srcCfg.user);
+                copyStrIfNotEmpty(dstCfg.password, sizeof(dstCfg.password), srcCfg.password);
+                copyStrIfNotEmpty(dstCfg.protocol, sizeof(dstCfg.protocol), srcCfg.protocol);
+                dstCfg.ttl = srcCfg.ttl;
+            }
+        };
 
-        // MQTT secondary
-        copyStr(dst.mqtt.secondary.host, sizeof(dst.mqtt.secondary.host), src.mqtt.secondary.host);
-        dst.mqtt.secondary.port = src.mqtt.secondary.port;
-        copyStr(dst.mqtt.secondary.user, sizeof(dst.mqtt.secondary.user), src.mqtt.secondary.user);
-        copyStr(dst.mqtt.secondary.password, sizeof(dst.mqtt.secondary.password), src.mqtt.secondary.password);
-        copyStr(dst.mqtt.secondary.protocol, sizeof(dst.mqtt.secondary.protocol), src.mqtt.secondary.protocol);
-        dst.mqtt.secondary.ttl = src.mqtt.secondary.ttl;
+        applyMqttConfig(src.mqtt.primary, dst.mqtt.primary);
+        applyMqttConfig(src.mqtt.secondary, dst.mqtt.secondary);
 
         // topics
-        copyStr(dst.mqtt.announce_topic, sizeof(dst.mqtt.announce_topic), src.mqtt.announce_topic);
-        copyStr(dst.mqtt.command_topic, sizeof(dst.mqtt.command_topic), src.mqtt.command_topic);
-        copyStr(dst.mqtt.notify_topic, sizeof(dst.mqtt.notify_topic), src.mqtt.notify_topic);
+        copyStrIfNotEmpty(dst.mqtt.announce_topic, sizeof(dst.mqtt.announce_topic), src.mqtt.announce_topic);
+        copyStrIfNotEmpty(dst.mqtt.command_topic, sizeof(dst.mqtt.command_topic), src.mqtt.command_topic);
+        copyStrIfNotEmpty(dst.mqtt.notify_topic, sizeof(dst.mqtt.notify_topic), src.mqtt.notify_topic);
 
         // firmware
-        copyStr(dst.firmware.url, sizeof(dst.firmware.url), src.firmware.url);
-        copyStr(dst.firmware.manifest, sizeof(dst.firmware.manifest), src.firmware.manifest);
-        dst.firmware.verify_sha256 = src.firmware.verify_sha256 ? 1 : 0;
-        dst.firmware.update = toUpdateU8(src.firmware.update);
+        if (src.firmware.isValid())
+        {
+            copyStr(dst.firmware.url, sizeof(dst.firmware.url), src.firmware.url);
+            copyStr(dst.firmware.manifest, sizeof(dst.firmware.manifest), src.firmware.manifest);
+            dst.firmware.verify_sha256 = src.firmware.verify_sha256 ? 1 : 0;
+            dst.firmware.update = toUpdateU8(src.firmware.update);
+        }
 
-        // wifi
-        copyStr(dst.wifi.ssid, sizeof(dst.wifi.ssid), src.wifi.ssid);
-        copyStr(dst.wifi.password, sizeof(dst.wifi.password), src.wifi.password);
+        // wifi (only apply when we have both fields)
+        if (!src.wifi.ssid.empty() && !src.wifi.password.empty())
+        {
+            copyStr(dst.wifi.ssid, sizeof(dst.wifi.ssid), src.wifi.ssid);
+            copyStr(dst.wifi.password, sizeof(dst.wifi.password), src.wifi.password);
+        }
 
         // api
-        copyStr(dst.api.url, sizeof(dst.api.url), src.api.url);
-        copyStr(dst.api.key, sizeof(dst.api.key), src.api.key);
-        copyStr(dst.api.basic_auth, sizeof(dst.api.basic_auth), src.api.basic_auth);
+        if (src.api.isValid())
+        {
+            copyStr(dst.api.url, sizeof(dst.api.url), src.api.url);
+            copyStr(dst.api.key, sizeof(dst.api.key), src.api.key);
+            copyStr(dst.api.basic_auth, sizeof(dst.api.basic_auth), src.api.basic_auth);
+        }
     }
 
     void EspIdfNvsSettingsProvider::fromStored(const StoredSettings &src, core::settings::Settings &dst)
@@ -345,16 +366,7 @@ namespace iotsmartsys::platform::espressif
         }
 
         StoredSettings *stored = new StoredSettings();
-        std::memset(stored, 0, sizeof(*stored));
-        toStored(settings, *stored);
-
-        // Preserve WiFi if caller did not provide it (common when settings come from API without WiFi fields)
-        const bool incomingWifiEmpty = (stored->wifi.ssid[0] == '\0' && stored->wifi.password[0] == '\0');
-        if (hasExisting && incomingWifiEmpty)
-        {
-            std::memcpy(&stored->wifi, &existing->wifi, sizeof(stored->wifi));
-            _logger->debug("EspIdfNvsSettingsProvider", "Preserving WiFi from existing NVS blob (incoming settings had empty WiFi)");
-        }
+        toStored(settings, *stored, hasExisting ? existing : nullptr);
 
         err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
         if (err != ESP_OK)
@@ -384,6 +396,12 @@ namespace iotsmartsys::platform::espressif
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::saveWiFiOnly(const core::settings::WifiConfig &wifi)
     {
         _logger->debug("EspIdfNvsSettingsProvider", "saveWiFiOnly() called");
+        if (wifi.ssid.empty() || wifi.password.empty())
+        {
+            _logger->warn("EspIdfNvsSettingsProvider", "saveWiFiOnly: ignoring empty WiFi config (ssid/password not provided)");
+            return StateResult::InvalidArg;
+        }
+
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
         {

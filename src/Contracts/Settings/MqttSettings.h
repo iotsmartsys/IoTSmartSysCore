@@ -29,6 +29,11 @@ namespace iotsmartsys::core::settings
             }
             return topic;
         }
+        
+        bool isValid() const
+        {
+            return primary.isValid();
+        }
 
         bool hasChanged(const MqttSettings &other) const
         {

@@ -86,11 +86,12 @@ namespace iotsmartsys::platform::espressif
         };
 
         // conversões
-        static void toStored(const core::settings::Settings &src, StoredSettings &dst);
+        static void toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing = nullptr);
         static void fromStored(const StoredSettings &src, core::settings::Settings &dst);
 
         // helpers
         static void copyStr(char *dst, std::size_t dstSize, const std::string &src);
+        static void copyStrIfNotEmpty(char *dst, std::size_t dstSize, const std::string &src);
         static std::string toString(const char *src);
 
         static esp_err_t ensureNvsInit();

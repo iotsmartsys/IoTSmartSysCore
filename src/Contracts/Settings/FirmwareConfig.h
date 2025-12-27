@@ -39,6 +39,11 @@ namespace iotsmartsys::core::settings
             }
         }
 
+        bool isValid() const
+        {
+            return (!url.empty() && !manifest.empty());
+        }
+
         static FirmwareUpdateMethod firmwareUpdateMethodFromCString(const char *value)
         {
             if (value == nullptr)

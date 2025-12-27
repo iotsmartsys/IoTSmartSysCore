@@ -37,7 +37,8 @@ namespace iotsmartsys::platform::espressif
         }
     }
 
-    EspIdfSettingsFetcher::EspIdfSettingsFetcher()
+    EspIdfSettingsFetcher::EspIdfSettingsFetcher(iotsmartsys::core::ILogger &logger)
+        : _logger(logger)
     {
         _mutex = xSemaphoreCreateMutex();
     }
@@ -83,8 +84,8 @@ namespace iotsmartsys::platform::espressif
     }
 
     iotsmartsys::core::common::StateResult EspIdfSettingsFetcher::start(const SettingsFetchRequest &req,
-                                                                  SettingsFetchCallback cb,
-                                                                  void *user_ctx)
+                                                                        SettingsFetchCallback cb,
+                                                                        void *user_ctx)
     {
         if (!cb || !req.url || req.url[0] == '\0')
             return StateResult::InvalidArg;
@@ -346,6 +347,9 @@ namespace iotsmartsys::platform::espressif
         r.cancelled = cancelled;
         r.body = _body;
         r.body_len = _body_len;
+
+        // write raw response text complete to log
+        _logger.info("EspIdfSettingsFetcher", "HTTP Response: %s", r.body);
 
         // callback SEMPRE, para o chamador decidir fallback
         if (_cb)
