@@ -80,7 +80,9 @@ namespace iotsmartsys
 
     private:
         static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);
+        static void onMqttConnectedThunk(void *ctx);
         void onMqttMessage(const core::MqttMessageView &msg);
+        void onMqttConnected();
         static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
         void onSettingsUpdated(const core::settings::Settings &newSettings);
         void applySettingsToRuntime(const core::settings::Settings &settings);

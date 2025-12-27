@@ -29,6 +29,8 @@ namespace iotsmartsys::platform::espressif
         bool subscribe(const char *topic) override;
 
         void setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user) override;
+        void setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user) override;
+        void setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user) override;
 
     private:
         static esp_err_t eventHandlerThunk(esp_mqtt_event_handle_t event);
@@ -43,6 +45,10 @@ namespace iotsmartsys::platform::espressif
 
         iotsmartsys::core::MqttOnMessageFn _onMsg{nullptr};
         void *_onMsgUser{nullptr};
+        iotsmartsys::core::MqttOnConnectedFn _onConnected{nullptr};
+        void *_onConnectedUser{nullptr};
+        iotsmartsys::core::MqttOnDisconnectedFn _onDisconnected{nullptr};
+        void *_onDisconnectedUser{nullptr};
 
         // buffers para evitar alocações internas do mqtt_event (topic/payload não são null-terminated)
         // (opcional: pode processar direto via len)

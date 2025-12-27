@@ -74,6 +74,8 @@ namespace iotsmartsys::app
         const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
         _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
         _client.setOnMessage(&MqttService::onMessageThunk, this);
+        _client.setOnConnected(&MqttService::onConnectedThunk, this);
+        _client.setOnDisconnected(&MqttService::onDisconnectedThunk, this);
         _logger.info("MQTT", "MQTT client initialized.");
         _client.begin(_cfg);
 
@@ -262,6 +264,20 @@ namespace iotsmartsys::app
     {
         _userMsgCb = cb;
         _userMsgUser = user;
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user)
+    {
+        _userConnectedCb = cb;
+        _userConnectedUser = user;
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user)
+    {
+        _userDisconnectedCb = cb;
+        _userDisconnectedUser = user;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -471,6 +487,26 @@ namespace iotsmartsys::app
             return;
         if (self->_userMsgCb)
             self->_userMsgCb(self->_userMsgUser, msg);
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user)
+    {
+        auto *self = static_cast<MqttService *>(user);
+        if (!self)
+            return;
+        if (self->_userConnectedCb)
+            self->_userConnectedCb(self->_userConnectedUser);
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onDisconnectedThunk(void *user)
+    {
+        auto *self = static_cast<MqttService *>(user);
+        if (!self)
+            return;
+        if (self->_userDisconnectedCb)
+            self->_userDisconnectedCb(self->_userDisconnectedUser);
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>

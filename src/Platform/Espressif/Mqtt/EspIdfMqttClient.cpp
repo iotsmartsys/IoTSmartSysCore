@@ -102,6 +102,17 @@ namespace iotsmartsys::platform::espressif
         _onMsg = cb;
         _onMsgUser = user;
     }
+    void EspIdfMqttClient::setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user)
+    {
+        _onConnected = cb;
+        _onConnectedUser = user;
+    }
+
+    void EspIdfMqttClient::setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user)
+    {
+        _onDisconnected = cb;
+        _onDisconnectedUser = user;
+    }
 
     esp_err_t EspIdfMqttClient::eventHandlerThunk(esp_mqtt_event_handle_t event)
     {
@@ -128,9 +139,13 @@ namespace iotsmartsys::platform::espressif
         {
         case MQTT_EVENT_CONNECTED:
             _connected = true;
+            if (_onConnected)
+                _onConnected(_onConnectedUser);
             break;
         case MQTT_EVENT_DISCONNECTED:
             _connected = false;
+            if (_onDisconnected)
+                _onDisconnected(_onDisconnectedUser);
             break;
         case MQTT_EVENT_DATA:
         {

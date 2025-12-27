@@ -14,6 +14,8 @@ namespace iotsmartsys::core
     };
 
     using MqttOnMessageFn = void (*)(void *user, const MqttMessageView &msg);
+    using MqttOnConnectedFn = void (*)(void *user);
+    using MqttOnDisconnectedFn = void (*)(void *user);
 
     struct MqttConfig
     {
@@ -44,6 +46,8 @@ namespace iotsmartsys::core
         virtual bool subscribe(const char *topic) = 0; // QoS 0
 
         virtual void setOnMessage(MqttOnMessageFn cb, void *user) = 0;
+        virtual void setOnConnected(MqttOnConnectedFn cb, void *user) = 0;
+        virtual void setOnDisconnected(MqttOnDisconnectedFn cb, void *user) = 0;
 
     protected:
     };

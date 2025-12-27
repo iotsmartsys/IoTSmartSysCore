@@ -31,6 +31,11 @@ namespace iotsmartsys
         return;
     }
 
+    void SmartSysApp::onMqttConnected()
+    {
+        logger_.info("MQTT connected.");
+    }
+
     void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
     {
         logger_.info("=== MQTT Message Received ===");
@@ -148,6 +153,8 @@ namespace iotsmartsys
         logger_.info("MAIND -- snprintf to topic: %s", topic);
         mqtt_.subscribe(topic);
         mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
+        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
+
         logger_.info("MQTT onMessage callback set.");
 
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
@@ -218,6 +225,15 @@ namespace iotsmartsys
             return;
         }
         static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
+    }
+
+    void SmartSysApp::onMqttConnectedThunk(void *ctx)
+    {
+        if (!ctx)
+        {
+            return;
+        }
+        static_cast<SmartSysApp *>(ctx)->onMqttConnected();
     }
 
     void SmartSysApp::onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx)

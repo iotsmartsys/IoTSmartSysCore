@@ -43,6 +43,8 @@ namespace iotsmartsys::app
 
         // callback opcional para entregar mensagens à sua camada de roteamento
         void setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user);
+        void setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user);
+        void setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user);
 
         bool isOnline() const;
 
@@ -78,6 +80,8 @@ namespace iotsmartsys::app
         bool enqueue(const char *topic, const void *payload, std::size_t len, bool retain);
 
         static void onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg);
+        static void onConnectedThunk(void *user);
+        static void onDisconnectedThunk(void *user);
         static void onSettingsReadyThunk(iotsmartsys::core::settings::SettingsReadyLevel level, void *ctx);
         void onSettingsReady(iotsmartsys::core::settings::SettingsReadyLevel level);
 
@@ -114,6 +118,10 @@ namespace iotsmartsys::app
         // user callback
         iotsmartsys::core::MqttOnMessageFn _userMsgCb{nullptr};
         void *_userMsgUser{nullptr};
+        iotsmartsys::core::MqttOnConnectedFn _userConnectedCb{nullptr};
+        void *_userConnectedUser{nullptr};
+        iotsmartsys::core::MqttOnDisconnectedFn _userDisconnectedCb{nullptr};
+        void *_userDisconnectedUser{nullptr};
     };
 
 } // namespace iotsmartsys::app
