@@ -4,16 +4,21 @@
 namespace iotsmartsys::core
 {
 
-    MqttSink::MqttSink(IMqttClient &mqttClient)
-        : mqttClient(mqttClient)
+    MqttSink::MqttSink(IMqttClient &mqttClient, IReadOnlySettingsProvider &settingsProvider)
+        : mqttClient(mqttClient), settingsProvider(settingsProvider)
     {
     }
 
     void MqttSink::onStateChanged(const CapabilityStateChanged &ev)
     {
-        
-        std::string topic = "iotsmartsys/state/alive";
-        std::string payload = "{ \"device_id\":\"" + ev.device_id + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"}";
+        Settings currentSettings;
+        if(!settingsProvider.copyCurrent(currentSettings))
+        {
+            return;
+        }
+
+        std::string topic = currentSettings.mqtt.notify_topic;
+        std::string payload = "{ \"device_id\":\"" + std::string(currentSettings.clientId) + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"}";
 
         mqttClient.publish(topic.c_str(),
                            payload.c_str(),

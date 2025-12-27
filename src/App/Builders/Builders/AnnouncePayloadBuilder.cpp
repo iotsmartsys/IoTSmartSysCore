@@ -73,46 +73,46 @@ namespace iotsmartsys::app
     std::string AnnouncePayloadBuilder::buildDeviceInfoJson()
     {
         std::string deviceInfoJson = "";
-        deviceInfoJson += "\"device_id\":\"" + deviceId + "\",";
-        deviceInfoJson += "\"ip_address\":\"" + std::string(ipAddress) + "\",";
-        deviceInfoJson += "\"mac_address\":\"" + std::string(macAddress) + "\"";
+        deviceInfoJson += "\"device_id\":\"" + deviceId_ + "\",";
+        deviceInfoJson += "\"ip_address\":\"" + ipAddress_ + "\",";
+        deviceInfoJson += "\"mac_address\":\"" + macAddress_ + "\"";
         return deviceInfoJson;
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withIpAddress(const char *ipAddress)
     {
-        this->ipAddress = std::string(ipAddress);
+        this->ipAddress_ = std::string(ipAddress);
         return *this;
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withMacAddress(const char *macAddress)
     {
-        this->macAddress = std::string(macAddress);
+        this->macAddress_ = std::string(macAddress);
         return *this;
     }
 
-    AnnouncePayloadBuilder &AnnouncePayloadBuilder::withBroker(const char *borker)
+    AnnouncePayloadBuilder &AnnouncePayloadBuilder::withBroker(const char *broker)
     {
-        this->borker = std::string(borker);
-        return *this;
+        return withProperty(Property("broker", broker));
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withDeviceId(const char *deviceId)
     {
-        this->deviceId = std::string(deviceId);
+        this->deviceId_ = std::string(deviceId);
         return *this;
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withVersion(const char *version)
     {
-        this->version = std::string(version);
-        return *this;
+        this->version_ = std::string(version);
+        
+        return withProperty(Property("version", version));
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withBuild(const char *build)
     {
         this->build_ = std::string(build);
-        return *this;
+        return withProperty(Property("build", build));
     }
 
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withProperty(const Property &property)

@@ -12,7 +12,7 @@ namespace iotsmartsys
           settingsManager_(serviceManager_.settingsManager()),
           settingsGate_(serviceManager_.settingsGate()),
           mqttClient_(logger_),
-          mqttSink_(mqttClient_),
+          mqttSink_(mqttClient_, settingsManager_),
           builder_(hwFactory_,
                    mqttSink_,
                    capSlots_,
@@ -35,14 +35,14 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttConnected(const core::MqttConnectedView &info)
     {
-        logger_.info("MQTT connected.");
-        logger_.info("Client ID: %s", info.clientId);
-        logger_.info("Broker: %s", info.broker);
-        logger_.info("Keep Alive: %d", info.keepAliveSec);
+        logger_.debug("MQTT connected.");
+        logger_.debug("Client ID: %s", info.clientId);
+        logger_.debug("Broker: %s", info.broker);
+        logger_.debug("Keep Alive: %d", info.keepAliveSec);
 
         app::AnnouncePayloadBuilder builder(
             capabilityManager_->getAllCapabilities(), logger_);
-        logger_.info("line 45 SmartSysApp::onMqttConnected after builder");
+
         builder.withDeviceId(info.clientId)
             .withBroker(info.broker)
             .withVersion(IOTSMARTSYSCORE_VERSION)
@@ -52,16 +52,24 @@ namespace iotsmartsys
             .withIpAddress(wifi_.getIpAddress())
             .withMacAddress(wifi_.getMacAddress());
 
-        logger_.info("line 55 SmartSysApp::onMqttConnected after builder");
         std::string payload = builder.build();
         logger_.info("Publishing MQTT message: %s", payload.c_str());
+
+        core::settings::Settings currentSettings;
+        if (!settingsManager_.copyCurrent(currentSettings))
+        {
+            logger_.error("Failed to copy current settings for MQTT publish.");
+            return;
+        }
+
+        std::string topic = currentSettings.mqtt.announce_topic;
         if (mqtt_.publish(
-                "device/announce",
+                topic.c_str(),
                 payload.c_str(),
                 payload.length(),
                 false))
         {
-            logger_.info("MQTT message published successfully.");
+            logger_.info("MQTT message published successfully in topic: %s", topic.c_str());
         }
         else
         {

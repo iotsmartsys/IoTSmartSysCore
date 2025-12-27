@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
@@ -83,10 +84,10 @@ namespace iotsmartsys::core
         WiFiConfig _cfg{};
 
         State _state{State::Idle};
-        const char *_ipAddress;
-        const char *_macAddress;
-        const char *_ssid;
-        const char *_signalStrength;
+        std::string _ipAddress;
+        std::string _macAddress;
+        std::string _ssid;
+        std::string _signalStrength;
 
         uint32_t _attempt{0}; 
         uint32_t _nextActionAtMs{0};

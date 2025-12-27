@@ -238,22 +238,22 @@ namespace iotsmartsys::core
 
     const char *WiFiManager::getSsid() const
     {
-        return _ssid;
+        return _ssid.c_str();
     }
 
     const char *WiFiManager::getIpAddress() const
     {
-        return _ipAddress;
+        return _ipAddress.c_str();
     }
 
     const char *WiFiManager::getMacAddress() const
     {
-        return _macAddress;
+        return _macAddress.c_str();
     }
 
     const char *WiFiManager::getSignalStrength() const
     {
-        return _signalStrength;
+        return _signalStrength.c_str();
     }
 
 } // namespace iotsmartsys::app

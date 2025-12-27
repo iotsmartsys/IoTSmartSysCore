@@ -38,11 +38,11 @@ namespace iotsmartsys::app
         std::vector<Property> properties;
         ILogger &_logger;
         
-        std::string ipAddress;
-        std::string macAddress;
-        std::string deviceId;
-        std::string borker;
-        std::string version;
+        std::string ipAddress_;
+        std::string macAddress_;
+        std::string deviceId_;
+        std::string borker_;
+        std::string version_;
         std::string build_;
     };
 }
