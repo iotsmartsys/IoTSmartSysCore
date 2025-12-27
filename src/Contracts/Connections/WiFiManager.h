@@ -80,7 +80,7 @@ namespace iotsmartsys::core
 
         State _state{State::Idle};
 
-        uint32_t _attempt{0};
+        uint32_t _attempt{0}; 
         uint32_t _nextActionAtMs{0};
 
         uint32_t _connectedAtMs{0};

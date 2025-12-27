@@ -10,7 +10,8 @@ namespace iotsmartsys::core::settings
 {
     struct Settings
     {
-        bool in_config_mode{true};
+        // Dispositivo inicia assumindo modo normal; modo de configuração só é habilitado se vier do cache/API.
+        bool in_config_mode{false};
 
         const char *clientId;
         LogLevel logLevel{LogLevel::Error};
@@ -41,7 +42,11 @@ namespace iotsmartsys::core::settings
 
         void applyChanges(const Settings &other)
         {
-            in_config_mode = other.in_config_mode;
+            if (in_config_mode != other.in_config_mode)
+            {
+                in_config_mode = other.in_config_mode;
+                _is_changed = true;
+            }
             if (logLevel != other.logLevel)
             {
                 logLevel = other.logLevel;

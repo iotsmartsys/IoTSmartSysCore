@@ -24,7 +24,6 @@ namespace iotsmartsys::app
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
-
         }
     }
 
@@ -35,6 +34,7 @@ namespace iotsmartsys::app
         _logger.info("MQTT", "MqttService::begin()");
 
         _time = &iotsmartsys::core::Time::get();
+        _logger.info("MQTT", "Time provider set.");
         if (!_time)
         {
             _logger.warn("MQTT", "Time provider is not set yet");
@@ -50,11 +50,15 @@ namespace iotsmartsys::app
         // Ensure MQTT_CONNECTED bit is clear at start
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+            _logger.debug("MQTT", "Clearing MQTT_CONNECTED bit");
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+            _logger.debug("MQTT", "MQTT_CONNECTED bit cleared");
         }
         _settingsReady = false;
         _lastSettingsReady = false;
         _lastStatusLogAtMs = 0;
+        _logger.debug("MQTT", "Subscribing to SettingsGate for SettingsReady events...");
+
         const auto gateSubErr = _settingsGate.runWhenReady(
             iotsmartsys::core::settings::SettingsReadyLevel::Available,
             &MqttService::onSettingsReadyThunk,
@@ -67,7 +71,8 @@ namespace iotsmartsys::app
         // _subCount = 0;
         _qHead = _qTail = _qCount = 0;
 
-        _logger.info("MQTT", "Initializing MQTT client uri='%s'", cfg.uri);
+        const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
+        _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
         _client.setOnMessage(&MqttService::onMessageThunk, this);
         _logger.info("MQTT", "MQTT client initialized.");
         _client.begin(_cfg);
@@ -126,7 +131,7 @@ namespace iotsmartsys::app
             _lastNetworkReady = networkReady;
         }
 
-        auto *settingsGate = iotsmartsys::core::ServiceProvider::instance().getSettingsGate();
+        auto *settingsGate = &_settingsGate;
         _settingsReady = settingsGate->level() >= iotsmartsys::core::settings::SettingsReadyLevel::Available;
 
         // Logs claros de transição de settings (evento latched)
@@ -296,7 +301,13 @@ namespace iotsmartsys::app
         }
 
         iotsmartsys::core::settings::Settings settings;
-        _settingsProvider.copyCurrent(settings);
+        if (!_settingsProvider.copyCurrent(settings))
+        {
+            _logger.warn("MQTT", "startConnect aborted: settings not available yet.");
+            _state = State::Idle;
+            _nextActionAtMs = 0;
+            return;
+        }
 
         // Build persistent strings inside the service so we don't point to
         // temporaries owned by the local 'settings' object (that would dangle
@@ -312,6 +323,14 @@ namespace iotsmartsys::app
         else
         {
             _uriStr.clear();
+        }
+
+        if (_uriStr.empty())
+        {
+            _logger.warn("MQTT", "startConnect aborted: MQTT host/uri not configured.");
+            _state = State::Idle;
+            _nextActionAtMs = 0;
+            return;
         }
 
         _usernameStr = settings.mqtt.primary.user;

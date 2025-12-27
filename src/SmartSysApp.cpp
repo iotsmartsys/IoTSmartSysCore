@@ -102,6 +102,7 @@ namespace iotsmartsys
             {
                 // serviceManager_.setLogLevel(settings_.logLevel);
                 logger_.info("[SettingsManager] Loaded settings from NVS cache.");
+                logger_.debug("In Config Mode=%s", settings_.in_config_mode ? "true" : "false");
                 logger_.debug("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
                 logger_.debug("WiFi Password='%s'", settings_.wifi.password.c_str());
                 logger_.debug("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
@@ -175,31 +176,36 @@ namespace iotsmartsys
 
     void SmartSysApp::setupProvisioningConfiguration()
     {
+        logger_.info("--------------------------------------------------------");
+        logger_.info("Entering in Config Mode - Starting Provisioning Manager");
+        logger_.info("--------------------------------------------------------");
         provManager = new core::provisioning::ProvisioningManager();
 
         bleChannel = new core::provisioning::BleProvisioningChannel(logger_, wifi_);
         provManager->registerChannel(*bleChannel);
         provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
                                              {
-            auto &sp_ = iotsmartsys::core::ServiceManager::instance();
-            auto &logger = sp_.logger();
-            logger.info("Provisioning completed callback invoked.");
+                                                 auto &sp_ = iotsmartsys::core::ServiceManager::instance();
+                                                 auto &logger = sp_.logger();
+                                                 logger.info("Provisioning completed callback invoked.");
 
-            iotsmartsys::core::settings::Settings newSettings;
-            
-            newSettings.in_config_mode = false;
-            newSettings.wifi.ssid = cfg.wifi.ssid ? cfg.wifi.ssid : "";
-            newSettings.wifi.password = cfg.wifi.password ? cfg.wifi.password : "";
-            newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
-            newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
-            newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
-            logger.info("New WiFi SSID='%s'", newSettings.wifi.ssid.c_str());
-            logger.info("New WiFi Password='%s'", newSettings.wifi.password.c_str());
-            logger.info("New API URL='%s'", newSettings.api.url.c_str());
-            logger.info("New API Key='%s'", newSettings.api.key.c_str());
-            logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
-            logger.info("Saving new settings via SettingsManager.");
-            sp_.settingsManager().save(newSettings); });
+                                                 iotsmartsys::core::settings::Settings newSettings;
+
+                                                 newSettings.in_config_mode = false;
+                                                 newSettings.wifi.ssid = cfg.wifi.ssid ? cfg.wifi.ssid : "";
+                                                 newSettings.wifi.password = cfg.wifi.password ? cfg.wifi.password : "";
+                                                 newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
+                                                 newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
+                                                 newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
+                                                 logger.info("New WiFi SSID='%s'", newSettings.wifi.ssid.c_str());
+                                                 logger.info("New WiFi Password='%s'", newSettings.wifi.password.c_str());
+                                                 logger.info("New API URL='%s'", newSettings.api.url.c_str());
+                                                 logger.info("New API Key='%s'", newSettings.api.key.c_str());
+                                                 logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
+                                                 logger.info("Saving new settings via SettingsManager.");
+                                                 sp_.settingsManager().save(newSettings);
+                                                 ESP.restart();
+                                             });
 
         provManager->begin();
         inConfigMode_ = true;
