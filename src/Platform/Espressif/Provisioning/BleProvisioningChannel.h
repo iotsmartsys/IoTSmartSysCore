@@ -4,6 +4,7 @@
 #include "Core/Provisioning/IProvisioningChannel.h"
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Logging/Log.h"
+#include "Contracts/Connections/WiFiManager.h"
 
 extern "C"
 {
@@ -19,7 +20,7 @@ namespace iotsmartsys::core::provisioning
     {
     public:
         /// @brief Cria uma instância do canal BLE.
-        BleProvisioningChannel(core::ILogger &logger);
+        BleProvisioningChannel(core::ILogger &logger, core::WiFiManager &wifiManager);
 
         /// @brief Inicializa o stack BLE e inicia advertising.
         void begin() override;
@@ -52,6 +53,7 @@ namespace iotsmartsys::core::provisioning
         ConfigCallback _configCb = nullptr;
         StatusCallback _statusCb = nullptr;
         iotsmartsys::core::ILogger &_logger;
+        iotsmartsys::core::WiFiManager &_wifiManager;
 
         std::string _wifiSsidStorage;
         std::string _wifiPasswordStorage;
@@ -60,6 +62,7 @@ namespace iotsmartsys::core::provisioning
         std::string _basicAuthStorage;
 
         void sendStatus(ProvisioningStatus status, const char *msg);
+        // void sendAvailableSsids();
         void onConfigWrite(const uint8_t *data, uint16_t len);
         void parseAndStore(const char *payload);
 
@@ -70,6 +73,9 @@ namespace iotsmartsys::core::provisioning
 
         static void initBleStack();
         static void startAdvertising();
+
+        bool _ssidListPending = false;
+        bool _ssidListSent = false;
     };
 
 } // namespace iotsmartsys::core::provisioning

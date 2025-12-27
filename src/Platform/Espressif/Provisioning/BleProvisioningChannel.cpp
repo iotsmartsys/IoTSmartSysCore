@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <string>
+#include <vector>
 
 extern "C"
 {
@@ -80,6 +81,12 @@ namespace iotsmartsys::core::provisioning
     static size_t s_rx_expected_len = 0;
     static bool s_rx_in_progress = false;
 
+    // Wi‑Fi SSID list TX state (sent to the app via the status characteristic)
+    static bool s_send_ssids_requested = false;
+    static bool s_sending_ssids = false;
+    static std::vector<std::string> s_pending_ssids;
+    static size_t s_pending_ssid_index = 0;
+
     static void build_ble_device_name(char *out, size_t out_len)
     {
         esp_chip_info_t chip_info;
@@ -135,8 +142,8 @@ namespace iotsmartsys::core::provisioning
         return true;
     }
 
-    BleProvisioningChannel::BleProvisioningChannel(core::ILogger &logger)
-        : _logger(logger)
+    BleProvisioningChannel::BleProvisioningChannel(core::ILogger &logger, core::WiFiManager &wifiManager)
+        : _logger(logger), _wifiManager(wifiManager)
     {
     }
 
@@ -164,6 +171,56 @@ namespace iotsmartsys::core::provisioning
 
     void BleProvisioningChannel::loop()
     {
+        if (!_active)
+        {
+            return;
+        }
+
+        // Start sending the SSID list only after the app connects AND enables notifications.
+        if (s_send_ssids_requested && _connId != 0xFFFF && _notifyEnabled)
+        {
+            s_send_ssids_requested = false;
+
+            // Uses WifiManager::getAvailableSSIDs() (per your requirement)
+            s_pending_ssids = _wifiManager.getAvailableSSIDs();
+            s_pending_ssid_index = 0;
+            s_sending_ssids = true;
+
+            char msg[96];
+            snprintf(msg, sizeof(msg), "[BLE] WIFI_LIST_BEGIN|%u", (unsigned)s_pending_ssids.size());
+            sendStatus(ProvisioningStatus::WaitingUserInput, msg);
+        }
+
+        // Send one SSID per loop tick to avoid spamming BLE in a single callback.
+        if (s_sending_ssids && _connId != 0xFFFF && _notifyEnabled)
+        {
+            if (s_pending_ssid_index < s_pending_ssids.size())
+            {
+                std::string ssid = s_pending_ssids[s_pending_ssid_index];
+
+                // Sanitize delimiters/newlines so the app parser doesn't break.
+                for (char &c : ssid)
+                {
+                    if (c == '|')
+                        c = '/';
+                    if (c == '\n' || c == '\r')
+                        c = ' ';
+                }
+
+                char msg[96];
+                snprintf(msg, sizeof(msg), "[BLE] WIFI_SSID|%u|%s", (unsigned)s_pending_ssid_index, ssid.c_str());
+                sendStatus(ProvisioningStatus::WaitingUserInput, msg);
+
+                s_pending_ssid_index++;
+            }
+            else
+            {
+                sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] WIFI_LIST_END");
+                s_pending_ssids.clear();
+                s_pending_ssid_index = 0;
+                s_sending_ssids = false;
+            }
+        }
     }
 
     void BleProvisioningChannel::stop()
@@ -521,6 +578,7 @@ namespace iotsmartsys::core::provisioning
         case ESP_GATTS_CONNECT_EVT:
         {
             s_instance->_connId = param->connect.conn_id;
+            s_send_ssids_requested = true;
             s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] CONNECTED");
             break;
         }
@@ -533,6 +591,11 @@ namespace iotsmartsys::core::provisioning
             s_rx_in_progress = false;
             s_rx_buffer.clear();
             s_rx_expected_len = 0;
+
+            s_send_ssids_requested = false;
+            s_sending_ssids = false;
+            s_pending_ssids.clear();
+            s_pending_ssid_index = 0;
 
             esp_ble_gap_start_advertising(&s_advParams);
             s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] DISCONNECTED");
@@ -551,6 +614,10 @@ namespace iotsmartsys::core::provisioning
             {
                 uint16_t v = (uint16_t)(w.value[1] << 8) | (uint16_t)(w.value[0]);
                 s_instance->_notifyEnabled = (v == 0x0001);
+                if (s_instance->_notifyEnabled)
+                {
+                    s_send_ssids_requested = true;
+                }
             }
             break;
         }
