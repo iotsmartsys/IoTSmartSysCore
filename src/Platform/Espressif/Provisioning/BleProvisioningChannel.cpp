@@ -22,9 +22,22 @@ namespace iotsmartsys::core::provisioning
 
     static const char *TAG = "BleProv";
 
-    static constexpr uint16_t WIFI_SERVICE_UUID = 0xABCD;
-    static constexpr uint16_t WIFI_CONFIG_CHAR_UUID = 0xABCE;
-    static constexpr uint16_t WIFI_STATUS_CHAR_UUID = 0xABCF;
+
+    // 128-bit UUIDs (BLE uses little-endian byte order for UUIDs)
+    // Service UUID: 581DD1C9-0D5F-4174-921E-65AE482C6DE6
+    static const uint8_t WIFI_SERVICE_UUID128[16] = {
+        0xE6, 0x6D, 0x2C, 0x48, 0xAE, 0x65, 0x1E, 0x92,
+        0x74, 0x41, 0x5F, 0x0D, 0xC9, 0xD1, 0x1D, 0x58};
+
+    // Config Characteristic UUID: 581DD1C9-0D5F-4174-921E-65AE482C6DE7
+    static const uint8_t WIFI_CONFIG_CHAR_UUID128[16] = {
+        0xE7, 0x6D, 0x2C, 0x48, 0xAE, 0x65, 0x1E, 0x92,
+        0x74, 0x41, 0x5F, 0x0D, 0xC9, 0xD1, 0x1D, 0x58};
+
+    // Status Characteristic UUID: 581DD1C9-0D5F-4174-921E-65AE482C6DE8
+    static const uint8_t WIFI_STATUS_CHAR_UUID128[16] = {
+        0xE8, 0x6D, 0x2C, 0x48, 0xAE, 0x65, 0x1E, 0x92,
+        0x74, 0x41, 0x5F, 0x0D, 0xC9, 0xD1, 0x1D, 0x58};
 
     static constexpr uint16_t GATTS_APP_ID = 0x55;
 
@@ -54,11 +67,11 @@ namespace iotsmartsys::core::provisioning
     static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] = {
         [IDX_SVC] = {
             {ESP_GATT_AUTO_RSP},
-            {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(uint16_t), (uint8_t *)&WIFI_SERVICE_UUID}},
+            {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ, ESP_UUID_LEN_128, ESP_UUID_LEN_128, (uint8_t *)WIFI_SERVICE_UUID128}},
         [IDX_CHAR_CONFIG] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ, sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_read_write}},
-        [IDX_CHAR_VAL_CONFIG] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&WIFI_CONFIG_CHAR_UUID, ESP_GATT_PERM_WRITE, 96, 0, nullptr}},
+        [IDX_CHAR_VAL_CONFIG] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *)WIFI_CONFIG_CHAR_UUID128, ESP_GATT_PERM_WRITE, 96, 0, nullptr}},
         [IDX_CHAR_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ, sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_notify_read}},
-        [IDX_CHAR_VAL_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&WIFI_STATUS_CHAR_UUID, ESP_GATT_PERM_READ, sizeof(s_status_value), (uint16_t)strlen((const char *)s_status_value), (uint8_t *)s_status_value}},
+        [IDX_CHAR_VAL_STATUS] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *)WIFI_STATUS_CHAR_UUID128, ESP_GATT_PERM_READ, sizeof(s_status_value), (uint16_t)strlen((const char *)s_status_value), (uint8_t *)s_status_value}},
         [IDX_CHAR_CFG_STATUS] = {
             {ESP_GATT_AUTO_RSP},
             {ESP_UUID_LEN_16, (uint8_t *)&client_characteristic_cfg_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, sizeof(uint16_t), sizeof(uint16_t), (uint8_t *)&s_ccc_default},
@@ -476,9 +489,12 @@ namespace iotsmartsys::core::provisioning
         s_adv_cfg_done = false;
         s_scan_rsp_cfg_done = false;
 
+        // Flags + Complete List of 128-bit Service UUIDs (AD type 0x07)
         const uint8_t adv_raw[] = {
             0x02, 0x01, 0x06,
-            0x03, 0x03, 0xCD, 0xAB};
+            0x11, 0x07,
+            0xE6, 0x6D, 0x2C, 0x48, 0xAE, 0x65, 0x1E, 0x92,
+            0x74, 0x41, 0x5F, 0x0D, 0xC9, 0xD1, 0x1D, 0x58};
 
         esp_err_t err1 = esp_ble_gap_config_adv_data_raw((uint8_t *)adv_raw, sizeof(adv_raw));
         if (err1 != ESP_OK)
