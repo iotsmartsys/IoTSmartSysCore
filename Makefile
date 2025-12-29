@@ -1,5 +1,6 @@
-MAJOR ?= 0
-MINOR ?= 2
+MAJOR ?= 1
+MINOR ?= 0
+PATCH ?= 0
 
 tag:
 	@MAJOR="$(MAJOR)"; MINOR="$(MINOR)"; PATCH="$(PATCH)"; \
@@ -17,15 +18,15 @@ tag:
 	echo "Using version $$VERSION (MAJOR=$$MAJOR MINOR=$$MINOR PATCH=$$PATCH)"; \
 	echo "Updating library.json version to $$VERSION..."; \
 	NEW_VERSION="$$VERSION" python -c 'import json, pathlib, os; p = pathlib.Path("library.json"); d = json.loads(p.read_text()); d["version"] = os.environ["NEW_VERSION"]; p.write_text(json.dumps(d, indent=4, ensure_ascii=False) + "\n")'; \
-	echo "Generating src/Settings/IoTSmartSysCoreVersion.h..."; \
+	echo "Generating src/Version/IoTSmartSysCoreVersion.h..."; \
 	mkdir -p src/Settings; \
 	printf '%s\n' '#pragma once' '' \
 	"#define IOTSMARTSYSCORE_VERSION           \"$$VERSION\"" \
 	"#define IOTSMARTSYSCORE_VERSION_MAJOR     $$MAJOR" \
 	"#define IOTSMARTSYSCORE_VERSION_MINOR     $$MINOR" \
 	"#define IOTSMARTSYSCORE_VERSION_PATCH     $$PATCH" \
-	> src/Settings/IoTSmartSysCoreVersion.h; \
-	git add library.json src/Settings/IoTSmartSysCoreVersion.h; \
+	> src/Version/IoTSmartSysCoreVersion.h; \
+	git add library.json src/Version/IoTSmartSysCoreVersion.h; \
 	git commit -m "Bump IoTSmartSysCore version to v$$VERSION"; \
 	BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
 	echo "Pushing to $$BRANCH..."; \
