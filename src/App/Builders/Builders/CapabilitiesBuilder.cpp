@@ -773,7 +773,7 @@ namespace iotsmartsys::app
 
         auto *cap = new (memcap) iotsmartsys::core::TemperatureSensorCapability(
             *static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
-            &_eventSink);
+            &_eventSink, cfg.readIntervalMs);
 
         auto dtor = [](void *p)
         {

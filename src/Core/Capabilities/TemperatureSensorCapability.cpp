@@ -1,4 +1,7 @@
 #include "Contracts/Capabilities/TemperatureSensorCapability.h"
+#include <cmath>
+#include <iomanip>
+#include <sstream>
 
 namespace iotsmartsys::core
 {
@@ -22,20 +25,22 @@ namespace iotsmartsys::core
         unsigned long currentTime = timeProvider.nowMs();
         if (currentTime - lastReadTime < readIntervalMs && temperature > 0)
         {
-            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Skipping read, interval not reached.");
+            logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Skipping read, interval not reached. Next read in %lu ms", readIntervalMs - (currentTime - lastReadTime));
             return;
         }
 
         lastReadTime = currentTime;
         float temp = sensor.readTemperatureCelsius();
-        std::string tempStr = std::to_string(temp);
-        logger.info("TemperatureSensorCapability", "TemperatureSensorCapability: Read temperature: %s °C", tempStr.c_str());
+        float roundedTemp = std::round(temp * 100.0f) / 100.0f;
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(2) << roundedTemp;
+        std::string tempStr = oss.str();
 
         if (isValidTemperature(temp))
         {
-            logger.info("TemperatureSensorCapability", "TemperatureSensorCapability: Valid temperature: %s °C", tempStr.c_str());
-            temperature = temp;
-            updateState(std::to_string(temperature));
+            logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Valid temperature: %s °C", tempStr.c_str());
+            temperature = roundedTemp;
+            updateState(tempStr);
         }
         else
         {

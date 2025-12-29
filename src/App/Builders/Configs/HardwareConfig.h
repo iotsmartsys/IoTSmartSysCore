@@ -79,12 +79,14 @@ namespace iotsmartsys::app
     {
     public:
         iotsmartsys::core::ITemperatureSensor *sensor{nullptr};
+        long readIntervalMs = 60000;
     };
 
     class HumiditySensorConfig : public HardwareConfig
     {
     public:
         iotsmartsys::core::IHumiditySensor *sensor{nullptr};
+        long readIntervalMs = 60000;
     };
 
 } // namespace iotsmartsys::app

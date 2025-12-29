@@ -6,10 +6,10 @@
 
 namespace iotsmartsys::platform::arduino
 {
-    class DHTTemperatureSensor : public core::ITemperatureSensor, public core::IHumiditySensor
+    class DHTSensor : public core::ITemperatureSensor, public core::IHumiditySensor
     {
     public:
-        DHTTemperatureSensor(int pin);
+        DHTSensor(int pin);
         void setup() override;
         float readTemperatureCelsius() override;
         float getHumidityPercentage() override;
