@@ -4,18 +4,16 @@
 // #include "Platform/Arduino/Provisioning/BleProvisioningChannel.h"
 #include "Core/Providers/ServiceManager.h"
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
-#include "SmartSysApp.h"
+#include "Contracts/Connections/WiFiManager.h"
 
 using namespace iotsmartsys::core::provisioning;
 using namespace iotsmartsys::core;
 
-ProvisioningManager provManager;
-WebPortalProvisioningChannel portalChannel;
-
-static iotsmartsys::SmartSysApp app;
-// BleProvisioningChannel bleChannel;
-
 static iotsmartsys::platform::arduino::ArduinoSerialLogger logger_(Serial);
+static iotsmartsys::core::WiFiManager wifi_(logger_);
+
+ProvisioningManager provManager;
+WebPortalProvisioningChannel portalChannel(wifi_, logger_);
 auto &sp_ = iotsmartsys::core::ServiceManager::init();
 
 void setup()

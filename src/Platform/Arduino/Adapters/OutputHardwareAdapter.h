@@ -48,8 +48,6 @@ namespace iotsmartsys::platform::arduino
             }
             else
             {
-                Serial.print("Comando inválido recebido: ");
-                Serial.println(command.command.c_str());
                 return false; // Comando inválido
             }
 
@@ -81,8 +79,6 @@ namespace iotsmartsys::platform::arduino
             }
             else
             {
-                Serial.print("Comando inválido recebido: ");
-                Serial.println(value);
                 return false; // Comando inválido
             }
 
@@ -105,7 +101,6 @@ namespace iotsmartsys::platform::arduino
 
         void updateHardware()
         {
-            Serial.print("Atualizando estado do relé no pino ");
             digitalWrite(pin, pinState);
         }
     };

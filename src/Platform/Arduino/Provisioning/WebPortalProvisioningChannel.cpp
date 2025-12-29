@@ -9,8 +9,8 @@ namespace iotsmartsys::core::provisioning
 
     constexpr uint8_t DNS_PORT = 53;
 
-    WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager)
-        : _wifiManager(wifiManager), _server(80)
+    WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger)
+        : _wifiManager(wifiManager), _logger(logger), _server(80)
     {
     }
 
@@ -36,11 +36,9 @@ namespace iotsmartsys::core::provisioning
         WiFi.softAP(apName.c_str());
 
         IPAddress ip = WiFi.softAPIP();
-        Serial.println(F("[PortalConfig] Modo de configuracao iniciado."));
-        Serial.print(F("[PortalConfig] SSID do AP: "));
-        Serial.println(apName);
-        Serial.print(F("[PortalConfig] Acesse em: http://"));
-        Serial.println(ip);
+        _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
+        _logger.info("[PortalConfig]", "SSID do AP: %s", apName.c_str());
+        _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
 
         _dnsServer.start(DNS_PORT, "*", ip);
 
@@ -61,7 +59,7 @@ namespace iotsmartsys::core::provisioning
                            { handleNotFound(); });
 
         _server.begin();
-        Serial.println(F("[PortalConfig] Servidor HTTP iniciado na porta 80."));
+        _logger.info("[PortalConfig]", "Servidor HTTP iniciado na porta 80.");
 
         _active = true;
         sendStatus(ProvisioningStatus::WaitingUserInput, "Portal em execucao; aguardando configuracao do usuario");
@@ -91,7 +89,7 @@ namespace iotsmartsys::core::provisioning
 
         _active = false;
 
-        Serial.println(F("[PortalConfig] Portal de configuracao finalizado."));
+        _logger.info("[PortalConfig]", "Portal de configuracao finalizado.");
         sendStatus(ProvisioningStatus::Idle, "Portal parado");
     }
 
@@ -103,7 +101,7 @@ namespace iotsmartsys::core::provisioning
         }
         if (msg)
         {
-            Serial.println(msg);
+            _logger.info("[PortalConfig]", "%s", msg);
         }
     }
 
