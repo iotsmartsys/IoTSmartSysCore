@@ -28,7 +28,7 @@ namespace iotsmartsys
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
           ota_(logger_),
-          otaManager_(settingsManager_, logger_, manifestParser_, ota_)
+          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_)
     {
     }
 
@@ -162,6 +162,9 @@ namespace iotsmartsys
                 logger_.error("API URL: %s", settings_.api.url.c_str());
                 logger_.error("API Token: %s", settings_.api.key.c_str());
                 logger_.error("API auth: %s", settings_.api.basic_auth.c_str());
+                logger_.error("Firmware URL: %s", settings_.firmware.url.c_str());
+                logger_.error("Firmware Manifest: %s", settings_.firmware.manifest.c_str());
+                logger_.error("Firmware Update Method: %d", (int)settings_.firmware.update);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {

@@ -40,6 +40,12 @@ namespace iotsmartsys::ota
     {
         ManifestInfo info;
 
+        _logger.debug("FW-OTA", "fetchManifest(): _manifestUrl='%s' _baseUrl='%s' useHttps=%d verifySha256=%d",
+                      _manifestUrl.c_str(),
+                      _baseUrl.c_str(),
+                      _useHttps ? 1 : 0,
+                      _verifySha256 ? 1 : 0);
+
         if (WiFi.status() != WL_CONNECTED)
         {
             _logger.warn("[FW-OTA] WiFi não conectado, pulando fetch do manifest.");
@@ -52,7 +58,35 @@ namespace iotsmartsys::ota
             return info;
         }
 
-        _logger.info("FW-OTA", "Baixando manifest em: ", _manifestUrl.c_str());
+        // Se a URL do manifest for relativa, prefixa com baseUrl
+        std::string manifestUrl = _manifestUrl;
+        const bool manifestIsAbsolute = isHttpsUrl(manifestUrl) || manifestUrl.rfind("http://", 0) == 0;
+        if (!manifestIsAbsolute)
+        {
+            if (_baseUrl.empty())
+            {
+                _logger.error("FW-OTA", "Manifest URL é relativa e Base URL está vazia. Abortando.");
+                return info;
+            }
+
+            const bool baseHasSlash = !_baseUrl.empty() && _baseUrl.back() == '/';
+            const bool manifestHasSlash = !manifestUrl.empty() && manifestUrl.front() == '/';
+
+            if (baseHasSlash && manifestHasSlash)
+            {
+                manifestUrl = _baseUrl + manifestUrl.substr(1);
+            }
+            else if (!baseHasSlash && !manifestHasSlash)
+            {
+                manifestUrl = _baseUrl + "/" + manifestUrl;
+            }
+            else
+            {
+                manifestUrl = _baseUrl + manifestUrl;
+            }
+        }
+
+        _logger.info("FW-OTA", "Baixando manifest em: %s", manifestUrl.c_str());
 
         std::string payload;
 
@@ -64,14 +98,14 @@ namespace iotsmartsys::ota
             WiFiClientSecure httpsClient;
             WiFiClient httpClient;
 
-            bool useHttps = isHttpsUrl(_manifestUrl) || _useHttps;
+            bool useHttps = isHttpsUrl(manifestUrl) || _useHttps;
 
             if (useHttps)
             {
                 _logger.info("FW-OTA", "Usando HTTPS para baixar o manifest.");
                 httpsClient.setInsecure();
 
-                if (!http.begin(httpsClient, String(_manifestUrl.c_str())))
+                if (!http.begin(httpsClient, String(manifestUrl.c_str())))
                 {
                     _logger.error("FW-OTA", "Falha em iniciar HTTPClient (HTTPS).");
                     http.end();
@@ -95,7 +129,7 @@ namespace iotsmartsys::ota
             {
                 _logger.info("FW-OTA", "Usando HTTP para baixar o manifest.");
 
-                if (!http.begin(httpClient, String(_manifestUrl.c_str())))
+                if (!http.begin(httpClient, String(manifestUrl.c_str())))
                 {
                     _logger.error("FW-OTA", "Falha em iniciar HTTPClient (HTTP).");
                     http.end();
@@ -129,8 +163,8 @@ namespace iotsmartsys::ota
             return info;
         }
 
-        _logger.info("FW-OTA", "Manifest recebido:");
-        _logger.info("FW-OTA", payload);
+        _logger.info("FW-OTA", "Manifest recebido (%u bytes):", (unsigned)payload.size());
+        _logger.info("FW-OTA", "%s", payload.c_str());
 
         _manifestParser.parseManifest(payload.c_str(), payload.length(), info);
 
@@ -160,18 +194,22 @@ namespace iotsmartsys::ota
                                     bool verifySha256)
     {
         _logger.info("FW-OTA", "Configurando FirmwareUpdater...");
+        _logger.debug("FW-OTA", "configure(): manifestUrl(in)='%s' baseUrl(in)='%s' verifySha256=%d",
+                      manifestUrl.c_str(),
+                      baseUrl.c_str(),
+                      verifySha256 ? 1 : 0);
 
         if (manifestUrl.length())
             _manifestUrl = manifestUrl;
-        _logger.info("FW-OTA", "Manifest URL: ", _manifestUrl.c_str());
+        _logger.info("FW-OTA", "Manifest URL: %s", _manifestUrl.c_str());
         if (baseUrl.length())
             _baseUrl = baseUrl;
-        _logger.info("FW-OTA", "Base URL: ", _baseUrl.c_str());
+        _logger.info("FW-OTA", "Base URL: %s", _baseUrl.c_str());
 
         // Decide HTTPS com base tanto na baseUrl quanto na manifestUrl.
         _useHttps = isHttpsUrl(_baseUrl) || isHttpsUrl(_manifestUrl);
 
-        _logger.info("FW-OTA", "Usando HTTPS: ", _useHttps ? "true" : "false");
+        _logger.info("FW-OTA", "Usando HTTPS: %s", _useHttps ? "true" : "false");
         _verifySha256 = verifySha256;
     }
 
@@ -400,6 +438,10 @@ namespace iotsmartsys::ota
         configure(currentSettings.manifest,
                   currentSettings.url,
                   currentSettings.verify_sha256);
+        _logger.debug("FW-OTA", "after configure: _manifestUrl='%s' _baseUrl='%s' verifySha256=%d",
+                      _manifestUrl.c_str(),
+                      _baseUrl.c_str(),
+                      _verifySha256 ? 1 : 0);
 
         _logger.info("FW-OTA", "Verificando atualização de firmware...");
 
