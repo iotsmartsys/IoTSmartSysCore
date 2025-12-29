@@ -33,3 +33,8 @@ tag:
 	echo "Creating tag v$$VERSION..."; \
 	git tag -a "v$$VERSION" -m "Release IoTSmartSysCore v$$VERSION"; \
 	git push origin "v$$VERSION"
+
+utest:
+	clear
+	clear
+	pio test -e esp32s3_test --filter test_temperature

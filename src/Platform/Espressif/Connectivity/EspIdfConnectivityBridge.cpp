@@ -1,0 +1,101 @@
+#include "EspIdfConnectivityBridge.h"
+
+#include "esp_wifi.h"
+#include "esp_log.h"
+#include "esp_netif.h"
+
+using iotsmartsys::core::ConnectivityGate;
+
+namespace iotsmartsys::platform::espressif
+{
+
+    static const char *TAG = "EspIdfConnBridge";
+    bool EspIdfConnectivityBridge::_started = false;
+
+    esp_err_t EspIdfConnectivityBridge::start()
+    {
+        if (_started)
+            return ESP_OK;
+
+        // garante loop default
+        esp_err_t err = esp_event_loop_create_default();
+        if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+        {
+            return err;
+        }
+
+        ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &EspIdfConnectivityBridge::wifiHandler, nullptr));
+        ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &EspIdfConnectivityBridge::ipHandler, nullptr));
+
+        _started = true;
+        ESP_LOGI(TAG, "Connectivity bridge started");
+        return ESP_OK;
+    }
+
+    esp_err_t EspIdfConnectivityBridge::stop()
+    {
+        if (!_started)
+            return ESP_OK;
+
+        ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &EspIdfConnectivityBridge::wifiHandler));
+        ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &EspIdfConnectivityBridge::ipHandler));
+
+        _started = false;
+        ESP_LOGI(TAG, "Connectivity bridge stopped");
+        return ESP_OK;
+    }
+
+    void EspIdfConnectivityBridge::wifiHandler(void *, esp_event_base_t base, int32_t id, void *)
+    {
+        auto &gate = ConnectivityGate::instance();
+
+        if (base != WIFI_EVENT)
+            return;
+
+        switch (id)
+        {
+        case WIFI_EVENT_STA_CONNECTED:
+            gate.setBits(ConnectivityGate::WIFI_CONNECTED);
+            ESP_LOGI(TAG, "WIFI_CONNECTED set");
+            break;
+
+        case WIFI_EVENT_STA_DISCONNECTED:
+            // caiu Wi-Fi => rede não está pronta, e MQTT também cai (regra simples/robusta)
+            gate.clearBits(ConnectivityGate::WIFI_CONNECTED |
+                           ConnectivityGate::IP_READY |
+                           ConnectivityGate::MQTT_CONNECTED);
+            ESP_LOGW(TAG, "WIFI/IP/MQTT bits cleared (disconnected)");
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void EspIdfConnectivityBridge::ipHandler(void *, esp_event_base_t base, int32_t id, void *)
+    {
+        auto &gate = ConnectivityGate::instance();
+
+        if (base != IP_EVENT)
+            return;
+
+        switch (id)
+        {
+        case IP_EVENT_STA_GOT_IP:
+            gate.setBits(ConnectivityGate::IP_READY);
+            ESP_LOGI(TAG, "IP_READY set");
+            break;
+
+        case IP_EVENT_STA_LOST_IP:
+            gate.clearBits(ConnectivityGate::IP_READY);
+            // opcional: se perdeu IP, MQTT também provavelmente deve cair
+            gate.clearBits(ConnectivityGate::MQTT_CONNECTED);
+            ESP_LOGW(TAG, "IP_READY (and MQTT) cleared (lost ip)");
+            break;
+
+        default:
+            break;
+        }
+    }
+
+} // namespace iotsmartsys::platform::espressif

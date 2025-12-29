@@ -1,0 +1,22 @@
+#pragma once
+
+#include "ICapability.h"
+#include "Contracts/Sensors/IWaterLevelSensor.h"
+
+namespace iotsmartsys::core
+{
+    class WaterLevelPercentCapability : public ICapability
+    {
+    public:
+        WaterLevelPercentCapability(IWaterLevelSensor &sensor, ICapabilityEventSink *event_sink);
+
+        void setup() override;
+        void handle() override;
+        float getLevelPercent() const;
+
+    private:
+        IWaterLevelSensor &sensor;
+        float lastPercent{0.0f};
+    };
+
+} // namespace iotsmartsys::core
