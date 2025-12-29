@@ -131,7 +131,7 @@ namespace iotsmartsys
     void SmartSysApp::setup()
     {
         Serial.begin(115200);
-        
+
         serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
 
@@ -207,7 +207,6 @@ namespace iotsmartsys
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
-
     }
 
     void SmartSysApp::handle()
@@ -399,6 +398,12 @@ namespace iotsmartsys
     iotsmartsys::core::WaterLevelPercentCapability *SmartSysApp::addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
     {
         return builder_.addWaterLevelPercent(cfg);
+    }
+
+    /// @brief Adds a new luminosity sensor capability to the application.
+    iotsmartsys::core::LuminosityCapability *SmartSysApp::addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg)
+    {
+        return builder_.addLuminosityCapability(cfg);
     }
 
 } // namespace iotsmartsys

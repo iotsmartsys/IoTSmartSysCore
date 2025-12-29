@@ -13,18 +13,21 @@ namespace iotsmartsys::core
                              ILuminositySensor &sensor,
                              ICapabilityEventSink *event_sink,
                              float variationTolerance,
-                             float readIntervalSeconds);
+                             float readIntervalMs);
+
+        LuminosityCapability(ILuminositySensor &sensor,
+                             ICapabilityEventSink *event_sink,
+                             float variationTolerance,
+                             float readIntervalMs);
 
         void setup() override;
         void handle() override;
         float getLux();
 
-    
     protected:
-
     private:
         ILuminositySensor &_sensor;
-        
+
         float _lastLux{0.0f};
         float _variationTolerance{0.0f};
         unsigned long _lastReadMs{0};

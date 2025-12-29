@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <string>
+#include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 // -----------------------------------------------------------------------------
 //  Contracts / Core abstractions
@@ -81,6 +82,7 @@ namespace iotsmartsys
         iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg);
         iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
         iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+        iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
 
     private:
         static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);

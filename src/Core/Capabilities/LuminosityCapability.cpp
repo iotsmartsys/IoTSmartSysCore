@@ -3,19 +3,32 @@
 namespace iotsmartsys::core
 {
     LuminosityCapability::LuminosityCapability(const std::string &name,
-                                               ILuminositySensor &sensor, 
+                                               ILuminositySensor &sensor,
                                                ICapabilityEventSink *event_sink,
                                                float variationTolerance,
-                                               float readIntervalSeconds)
+                                               float readIntervalMs)
         : ICapability(event_sink, LIGHT_SENSOR_TYPE, "-1"),
           _sensor(sensor),
           _variationTolerance(variationTolerance),
-          _readIntervalMs(static_cast<unsigned long>(readIntervalSeconds * 1000.0f))
+          _readIntervalMs(static_cast<unsigned long>(readIntervalMs))
+    {
+    }
+
+    LuminosityCapability::LuminosityCapability(ILuminositySensor &sensor,
+                                               ICapabilityEventSink *event_sink,
+                                               float variationTolerance,
+                                               float readIntervalMs)
+        : ICapability(event_sink, LIGHT_SENSOR_TYPE, "-1"),
+          _sensor(sensor),
+          _variationTolerance(variationTolerance),
+          _readIntervalMs(static_cast<unsigned long>(readIntervalMs))
     {
     }
 
     void LuminosityCapability::setup()
     {
+        ICapability::setup();
+        _sensor.setup();
     }
 
     void LuminosityCapability::handle()
