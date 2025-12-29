@@ -1,23 +1,22 @@
 MAJOR ?= 1
 MINOR ?= 0
-PATCH ?= 0
+PYTHON ?= python3
 
 tag:
-	@MAJOR="$(MAJOR)"; MINOR="$(MINOR)"; PATCH="$(PATCH)"; \
+	@set -e; \
+	MAJOR="$(MAJOR)"; MINOR="$(MINOR)"; PATCH="$(PATCH)"; \
+	OLD_VERSION_VARS=$$($(PYTHON) -c "import json, pathlib; p = pathlib.Path('library.json'); v = json.loads(p.read_text()).get('version','0.0.0'); parts = v.split('.'); parts += ['0'] * (3 - len(parts)); print(f'OLD_MAJOR={parts[0]} OLD_MINOR={parts[1]} OLD_PATCH={parts[2]}')"); \
+	eval "$$OLD_VERSION_VARS"; \
+	[ -n "$$MAJOR" ] || MAJOR="$$OLD_MAJOR"; \
+	[ -n "$$MINOR" ] || MINOR="$$OLD_MINOR"; \
 	if [ -z "$$PATCH" ]; then \
 		echo "PATCH not provided; auto-incrementing based on library.json..."; \
-		OLD_VERSION=$$(python -c 'import json, pathlib; p = pathlib.Path("library.json"); d = json.loads(p.read_text()); print(d.get("version", "0.0.0"))'); \
-		OLD_MAJOR=$$(echo "$$OLD_VERSION" | cut -d. -f1); \
-		OLD_MINOR=$$(echo "$$OLD_VERSION" | cut -d. -f2); \
-		OLD_PATCH=$$(echo "$$OLD_VERSION" | cut -d. -f3); \
-		MAJOR="$$OLD_MAJOR"; \
-		MINOR="$$OLD_MINOR"; \
 		PATCH=$$((OLD_PATCH + 1)); \
 	fi; \
 	VERSION="$$MAJOR.$$MINOR.$$PATCH"; \
 	echo "Using version $$VERSION (MAJOR=$$MAJOR MINOR=$$MINOR PATCH=$$PATCH)"; \
 	echo "Updating library.json version to $$VERSION..."; \
-	NEW_VERSION="$$VERSION" python -c 'import json, pathlib, os; p = pathlib.Path("library.json"); d = json.loads(p.read_text()); d["version"] = os.environ["NEW_VERSION"]; p.write_text(json.dumps(d, indent=4, ensure_ascii=False) + "\n")'; \
+	NEW_VERSION="$$VERSION" $(PYTHON) -c 'import json, pathlib, os; p = pathlib.Path("library.json"); d = json.loads(p.read_text()); d["version"] = os.environ["NEW_VERSION"]; p.write_text(json.dumps(d, indent=4, ensure_ascii=False) + "\n")'; \
 	echo "Generating src/Version/IoTSmartSysCoreVersion.h..."; \
 	mkdir -p src/Settings; \
 	printf '%s\n' '#pragma once' '' \
