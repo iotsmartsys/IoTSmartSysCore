@@ -110,5 +110,4 @@ void OTAManager::update(FirmwareConfig firmwareSettings)
     bool verifySha = firmwareSettings.verify_sha256;
 
     _firmwareUpdater.checkAndUpdate(firmwareSettings);
-    delay(60000);
 }

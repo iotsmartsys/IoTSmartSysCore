@@ -131,8 +131,7 @@ namespace iotsmartsys
     void SmartSysApp::setup()
     {
         Serial.begin(115200);
-        delay(5000);
-
+        
         serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
 
@@ -209,7 +208,6 @@ namespace iotsmartsys
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
 
-        delay(1000);
     }
 
     void SmartSysApp::handle()

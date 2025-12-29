@@ -427,7 +427,7 @@ namespace iotsmartsys::ota
 
         _logger.info("FW-OTA", "OTA concluída com sucesso! Reiniciando...");
         http.end();
-        delay(1000);
+        
         _updateHasChecked = true;
         ESP.restart();
         return true;

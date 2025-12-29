@@ -21,7 +21,7 @@ auto &sp_ = iotsmartsys::core::ServiceManager::init();
 void setup()
 {
     Serial.begin(115200);
-    delay(5000);
+    
     sp_.setLogLevel(iotsmartsys::core::LogLevel::Debug);
     provManager.registerChannel(portalChannel);
     // provManager.registerChannel(bleChannel);
