@@ -1,6 +1,6 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
-#include "Infra/Settings/VersionInfo.h"
+#include "Version/VersionInfo.h"
 
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;

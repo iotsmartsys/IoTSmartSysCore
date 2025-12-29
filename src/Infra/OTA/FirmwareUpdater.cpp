@@ -10,7 +10,7 @@
 #include <Updater.h>
 #include <BearSSLHelpers.h>
 #endif
-#include "Infra/Settings/VersionInfo.h"
+#include "Version/VersionInfo.h"
 #include <algorithm>
 #include <cctype>
 #include <cstring>
