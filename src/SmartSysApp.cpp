@@ -3,6 +3,7 @@
 #include "Infra/Settings/VersionInfo.h"
 
 #include <cstdio>
+using namespace iotsmartsys::platform::espressif::ota;
 
 namespace iotsmartsys
 {
@@ -24,7 +25,10 @@ namespace iotsmartsys
                    arena_,
                    sizeof(arena_)),
           wifi_(logger_),
-          mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_)
+          mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
+          manifestParser_(),
+          ota_(logger_),
+          otaManager_(settingsManager_, logger_, manifestParser_, ota_)
     {
     }
 
@@ -212,6 +216,8 @@ namespace iotsmartsys
             provManager->handle();
             return;
         }
+
+        otaManager_.handle();
 
         if (capabilityManager_)
         {

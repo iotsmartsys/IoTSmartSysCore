@@ -45,6 +45,9 @@
 #include "Platform/Espressif/Provisioning/BleProvisioningChannel.h"
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
 
+#include "Infra/OTA/OTAManager.h"
+#include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
+
 namespace iotsmartsys
 {
     class SmartSysApp
@@ -110,6 +113,9 @@ namespace iotsmartsys
 
         core::WiFiManager wifi_;
         app::MqttService<12, 16, 256> mqtt_;
+        iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
+        ota::OTA ota_;
+        ota::OTAManager otaManager_;
 
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
         iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
