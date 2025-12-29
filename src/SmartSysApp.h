@@ -47,6 +47,7 @@
 
 #include "Infra/OTA/OTAManager.h"
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
+#include "Infra/Factories/SensorFactory.h"
 
 namespace iotsmartsys
 {

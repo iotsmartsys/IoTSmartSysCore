@@ -11,6 +11,7 @@ namespace iotsmartsys::core
         HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink);
         HumiditySensorCapability(std::string capability_name, IHumiditySensor &sensor, ICapabilityEventSink *event_sink);
 
+        void setup() override;
         void handle() override;
         float getHumidity() const;
 

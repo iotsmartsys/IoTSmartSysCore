@@ -11,19 +11,35 @@ namespace iotsmartsys::core
     {
     }
 
+    void TemperatureSensorCapability::setup()
+    {
+        ICapability::setup();
+        sensor.setup();
+    }
+
     void TemperatureSensorCapability::handle()
     {
         unsigned long currentTime = timeProvider.nowMs();
         if (currentTime - lastReadTime < readIntervalMs && temperature > 0)
+        {
+            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Skipping read, interval not reached.");
             return;
+        }
 
         lastReadTime = currentTime;
         float temp = sensor.readTemperatureCelsius();
+        std::string tempStr = std::to_string(temp);
+        logger.info("TemperatureSensorCapability", "TemperatureSensorCapability: Read temperature: %s °C", tempStr.c_str());
 
         if (isValidTemperature(temp))
         {
+            logger.info("TemperatureSensorCapability", "TemperatureSensorCapability: Valid temperature: %s °C", tempStr.c_str());
             temperature = temp;
             updateState(std::to_string(temperature));
+        }
+        else
+        {
+            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Invalid temperature reading: %s °C", tempStr.c_str());
         }
     }
 

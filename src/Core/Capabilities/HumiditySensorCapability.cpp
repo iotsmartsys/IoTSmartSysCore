@@ -13,13 +13,19 @@ namespace iotsmartsys::core
     }
 
         HumiditySensorCapability::HumiditySensorCapability(std::string capability_name, IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
-                : ICapability(event_sink, capability_name, HUMIDITY_SENSOR_TYPE, "0"),
-                    sensor(sensor),
-                    humidity(0.0f),
-                    lastReadTime(0),
-                    readIntervalMs(60000) // default to 1 minute
+        : ICapability(event_sink, capability_name, HUMIDITY_SENSOR_TYPE, "0"),
+            sensor(sensor),
+            humidity(0.0f),
+            lastReadTime(0),
+            readIntervalMs(60000) // default to 1 minute
         {
         }
+
+    void HumiditySensorCapability::setup()
+    {
+        ICapability::setup();
+        sensor.setup();
+    }
 
     void HumiditySensorCapability::handle()
     {

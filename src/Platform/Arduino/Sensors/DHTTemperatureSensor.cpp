@@ -6,7 +6,8 @@ namespace iotsmartsys::platform::arduino
 {
     DHTTemperatureSensor::DHTTemperatureSensor(int pin) : pin(pin)
     {
-        dht = new DHT(pin, DHT22);
+        // Default to DHT11; using the wrong sensor type causes NaN reads.
+        dht = new DHT(pin, DHT11);
     }
 
     void DHTTemperatureSensor::setup()

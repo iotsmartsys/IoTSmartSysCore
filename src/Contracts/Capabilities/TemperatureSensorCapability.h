@@ -9,6 +9,7 @@ namespace iotsmartsys::core
         TemperatureSensorCapability(ITemperatureSensor &sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs = 60000);
         TemperatureSensorCapability(std::string capability_name, ITemperatureSensor &sensor, ICapabilityEventSink *event_sink, unsigned long readIntervalMs = 60000);
 
+        void setup() override;
         void handle() override;
         float getTemperature() const;
 
