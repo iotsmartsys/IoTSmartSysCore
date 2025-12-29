@@ -2,6 +2,7 @@
 
 #include "Contracts/Sensors/ISensorFactory.h"
 #include "Platform/Arduino/Sensors/DHTSensor.h"
+#include "Platform/Arduino/Sensors/DHTSensor.h"
 
 namespace iotsmartsys::infra::factories
 {

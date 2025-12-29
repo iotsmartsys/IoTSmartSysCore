@@ -97,5 +97,4 @@ namespace iotsmartsys::app
         long readIntervalMs = 60000;
         float variationTolerance = 2.0f; // in lux
     };
-
 } // namespace iotsmartsys::app
