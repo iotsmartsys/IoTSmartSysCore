@@ -108,7 +108,7 @@ namespace iotsmartsys::platform::arduino
     {
         // return level percent as string with 3 decimals
         char buf[32];
-        snprintf(buf, sizeof(buf), "%.3f", levelPercent);
+        snprintf(buf, sizeof(buf), "%.2f", levelPercent);
         return std::string(buf);
     }
 
