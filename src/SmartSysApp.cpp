@@ -1,6 +1,8 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
+#include "Contracts/Commands/ICommandProcessor.h"
+#include "Contracts/Commands/CommandTypes.h"
 
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
@@ -83,33 +85,23 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
     {
-        logger_.info("=== MQTT Message Received ===");
 
         iotsmartsys::core::DeviceCommand cmd;
-        commandParser_.parseCommand(msg.payload, msg.payloadLen, cmd);
-        logger_.info("Capability: %s", cmd.capability_name);
-        logger_.info("Value: %s", cmd.value);
-        logger_.info("device_id: %s", cmd.device_id);
-        logger_.info("=== End MQTT Message ===");
-        if (capabilityManager_)
+        if (!commandParser_.parseCommand(msg.payload, msg.payloadLen, cmd))
         {
-            auto *cap = capabilityManager_->getCommandCapabilityByName(cmd.capability_name);
-            if (cap)
-            {
-                logger_.info("Found capability: %s", cmd.capability_name);
-                iotsmartsys::core::CapabilityCommand capabilityCmd;
-                capabilityCmd.capability_name = cmd.capability_name;
-                capabilityCmd.value = cmd.value;
-                cap->applyCommand(capabilityCmd);
-            }
-            else
-            {
-                logger_.error("Capability not found: %s", cmd.capability_name);
-            }
+            logger_.error("Failed to parse MQTT message payload.");
+            return;
+        }
+
+        ICommandProcessor *processor = commandProcessorFactory_->createProcessor(cmd.getCommandType());
+        if (processor)
+        {
+            logger_.warn("[SmartSysApp]", "Created command processor for capability: %s", cmd.getCommandType());
+            processor->process(cmd);
         }
         else
         {
-            logger_.error("CapabilityManager is null. Cannot apply command.");
+            logger_.error("No command processor available for command type.");
         }
     }
 
@@ -207,6 +199,7 @@ namespace iotsmartsys
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
+        commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
     }
 
     void SmartSysApp::handle()

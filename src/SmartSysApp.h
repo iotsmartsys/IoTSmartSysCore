@@ -49,6 +49,7 @@
 #include "Infra/OTA/OTAManager.h"
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
 #include "Infra/Factories/SensorFactory.h"
+#include "Core/Commands/CommandProcessorFactory.h"
 
 namespace iotsmartsys
 {
@@ -123,6 +124,7 @@ namespace iotsmartsys
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
         iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
         iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
+        iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};
