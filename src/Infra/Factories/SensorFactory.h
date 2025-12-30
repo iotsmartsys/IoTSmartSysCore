@@ -26,6 +26,15 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created luminosity sensor.
         std::unique_ptr<iotsmartsys::core::ILuminositySensor> createLuminositySensor(const int gpioSDA, const int gpioSCL) override;
 
+        /// @brief Creates a water level sensor.
+        /// @param triggerPin The GPIO pin for the trigger.
+        /// @param echoPin The GPIO pin for the echo.
+        /// @param minDistance The minimum distance for the sensor.
+        /// @param maxDistance The maximum distance for the sensor.
+        /// @param recipentType The type of recipient for the water level sensor.
+        /// @return A unique pointer to the created water level sensor.
+        std::unique_ptr<iotsmartsys::core::IWaterLevelSensor> createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, core::WaterLevelRecipentType recipentType) override;
+
     private:
     };
 
