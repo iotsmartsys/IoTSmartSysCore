@@ -2,6 +2,7 @@
 #include "Platform/Arduino/Sensors/DS18B20TemperatureSensor.h"
 #include "Platform/Arduino/Sensors/Bh1750LuminositySensor.h"
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
+#include "Platform/Arduino/Sensors/ArduinoGlpSensor.h"
 #include <memory>
 
 namespace iotsmartsys::infra::factories
@@ -10,6 +11,10 @@ namespace iotsmartsys::infra::factories
     using namespace iotsmartsys::core;
     using iotsmartsys::platform::arduino::DHTSensor;
     using iotsmartsys::platform::arduino::DS18B20TemperatureSensor;
+
+    SensorFactory::SensorFactory(ILogger &logger) : _logger(logger)
+    {
+    }
 
     std::unique_ptr<core::ITemperatureSensor> SensorFactory::createTemperatureSensor(const int gpio, core::TemperatureSensorModel model)
     {
@@ -37,6 +42,11 @@ namespace iotsmartsys::infra::factories
     std::unique_ptr<iotsmartsys::core::IWaterLevelSensor> SensorFactory::createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, WaterLevelRecipentType recipentType)
     {
         return std::unique_ptr<ArduinoUltrassonicWaterLevelSensor>(new ArduinoUltrassonicWaterLevelSensor(new SensorUltrassonicHCSR04(triggerPin, echoPin, minDistance, maxDistance), recipentType));
+    }
+
+    std::unique_ptr<core::IGlpSensor> SensorFactory::createGlpSensor(int pinAO, int pinDO)
+    {
+        return std::unique_ptr<ArduinoGlpSensor>(new ArduinoGlpSensor(pinAO, pinDO, _logger));
     }
 
 } // namespace iotsmartsys::infra::factories

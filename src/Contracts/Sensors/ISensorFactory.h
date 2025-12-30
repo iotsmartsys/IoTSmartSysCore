@@ -19,6 +19,7 @@ namespace iotsmartsys::core
 
         virtual std::unique_ptr<ILuminositySensor> createLuminositySensor(const int gpioSDA, const int gpioSCL) = 0;
         virtual std::unique_ptr<IWaterLevelSensor> createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, WaterLevelRecipentType recipentType) = 0;
+        virtual std::unique_ptr<IGlpSensor> createGlpSensor(int pinAO, int pinDO) = 0;
     };
 
 } // namespace iotsmartsys::core

@@ -3,12 +3,16 @@
 #include "Contracts/Sensors/ISensorFactory.h"
 #include "Platform/Arduino/Sensors/DHTSensor.h"
 #include "Platform/Arduino/Sensors/DHTSensor.h"
+#include "Contracts/Logging/ILogger.h"
 
 namespace iotsmartsys::infra::factories
 {
+    using namespace iotsmartsys::core;
+
     class SensorFactory : public core::ISensorFactory
     {
     public:
+        SensorFactory(ILogger &logger);
         ~SensorFactory() override = default;
 
         /// @brief Creates a temperature sensor.
@@ -35,7 +39,14 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created water level sensor.
         std::unique_ptr<iotsmartsys::core::IWaterLevelSensor> createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, core::WaterLevelRecipentType recipentType) override;
 
+        /// @brief Creates a GLP sensor.
+        /// @param pinAO The analog output pin.
+        /// @param pinDO The digital output pin.
+        /// @return A unique pointer to the created GLP sensor.
+        std::unique_ptr<core::IGlpSensor> createGlpSensor(int pinAO, int pinDO) override;
+
     private:
+        ILogger &_logger;
     };
 
 } // namespace iotsmartsys::infra::factories
