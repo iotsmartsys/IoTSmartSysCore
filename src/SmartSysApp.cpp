@@ -30,7 +30,8 @@ namespace iotsmartsys
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
           ota_(logger_),
-          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_)
+          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
+          commandParser_(logger_)
     {
     }
 
@@ -85,23 +86,24 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
     {
-
-        iotsmartsys::core::DeviceCommand cmd;
-        if (!commandParser_.parseCommand(msg.payload, msg.payloadLen, cmd))
+        iotsmartsys::core::DeviceCommand *cmd = commandParser_.parseCommand(msg.payload, msg.payloadLen);
+        if (!cmd)
         {
             logger_.error("Failed to parse MQTT message payload.");
             return;
         }
 
-        ICommandProcessor *processor = commandProcessorFactory_->createProcessor(cmd.getCommandType());
+        iotsmartsys::core::DeviceCommand command = *cmd;
+        delete cmd;
+
+        ICommandProcessor *processor = commandProcessorFactory_->createProcessor(command.getCommandType());
         if (processor)
         {
-            logger_.warn("[SmartSysApp]", "Created command processor for capability: %s", cmd.getCommandType());
-            processor->process(cmd);
+            processor->process(command);
         }
         else
         {
-            logger_.error("No command processor available for command type.");
+            logger_.warn("No command processor available for command type.");
         }
     }
 
@@ -122,40 +124,18 @@ namespace iotsmartsys
 
     void SmartSysApp::setup()
     {
-        Serial.begin(115200);
-
         serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
 
-        logger_.info("Starting IoT SmartSys Core example...");
-
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
-        logger_.info("SettingsManager callback for updates set.");
 
         const auto cacheErr = settingsManager_.init();
-        logger_.info("SettingsManager init() completed with result %d", (int)cacheErr);
 
         if (cacheErr == iotsmartsys::core::common::StateResult::Ok)
         {
             if (settingsManager_.copyCurrent(settings_))
             {
                 serviceManager_.setLogLevel(settings_.logLevel);
-                logger_.info("[SettingsManager] Loaded settings from NVS cache.");
-                logger_.error("In Config Mode=%s", settings_.in_config_mode ? "true" : "false");
-                logger_.error("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
-                logger_.error("WiFi Password='%s'", settings_.wifi.password.c_str());
-                logger_.error("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
-                logger_.error("MQtt Broker Port=%d", settings_.mqtt.primary.port);
-                logger_.error("MQtt Broker User='%s'", settings_.mqtt.primary.user.c_str());
-                logger_.error("MQtt Broker Password='%s'", settings_.mqtt.primary.password.c_str());
-                logger_.error("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
-                logger_.error("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
-                logger_.error("API URL: %s", settings_.api.url.c_str());
-                logger_.error("API Token: %s", settings_.api.key.c_str());
-                logger_.error("API auth: %s", settings_.api.basic_auth.c_str());
-                logger_.error("Firmware URL: %s", settings_.firmware.url.c_str());
-                logger_.error("Firmware Manifest: %s", settings_.firmware.manifest.c_str());
-                logger_.error("Firmware Update Method: %d", (int)settings_.firmware.update);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
@@ -181,20 +161,15 @@ namespace iotsmartsys
             return;
         }
 
-        logger_.info("ClientId do Device: %s", settings_.clientId);
-
         iotsmartsys::core::ConnectivityGate::init(latch_);
-        logger_.info("ConnectivityGate initialized.");
 
         char topic[128];
         snprintf(topic, sizeof(topic), "device/%s/command",
                  settings_.clientId ? settings_.clientId : "");
-        logger_.info("MAIND -- snprintf to topic: %s", topic);
+
         mqtt_.subscribe(topic);
         mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
         mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
-
-        logger_.info("MQTT onMessage callback set.");
 
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
@@ -245,12 +220,6 @@ namespace iotsmartsys
                                                  newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
                                                  newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
                                                  newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
-                                                 logger.info("New WiFi SSID='%s'", newSettings.wifi.ssid.c_str());
-                                                 logger.info("New WiFi Password='%s'", newSettings.wifi.password.c_str());
-                                                 logger.info("New API URL='%s'", newSettings.api.url.c_str());
-                                                 logger.info("New API Key='%s'", newSettings.api.key.c_str());
-                                                 logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
-                                                 logger.info("Saving new settings via SettingsManager.");
                                                  sp_.settingsManager().save(newSettings);
                                                  ESP.restart(); });
 

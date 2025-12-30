@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cctype>
 #include "Contracts/Commands/CommandTypes.h"
 
 namespace iotsmartsys::core
@@ -8,22 +9,27 @@ namespace iotsmartsys::core
     class DeviceCommand
     {
     public:
-        const char *capability_name;
-        const char *device_id;
-        const char *value;
-        const char *command_type;
+        std::string capability_name;
+        std::string device_id;
+        std::string value;
+        std::string command_type;
 
         const CommandTypes getCommandType() const
         {
-            return CommandTypes::CAPABILITY;
-            if (command_type == nullptr)
+            if (command_type.empty())
                 return CommandTypes::CAPABILITY;
 
-            if (std::string(command_type) == "CAPABILITY")
+            std::string normalizedType = command_type;
+            for (auto &ch : normalizedType)
+            {
+                ch = std::toupper(static_cast<unsigned char>(ch));
+            }
+
+            if (normalizedType == "CAPABILITY")
             {
                 return CommandTypes::CAPABILITY;
             }
-            else if (std::string(command_type) == "SYSTEM")
+            else if (normalizedType == "SYSTEM")
             {
                 return CommandTypes::SYSTEM;
             }

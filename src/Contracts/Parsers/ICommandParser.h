@@ -7,7 +7,7 @@ namespace iotsmartsys::core
     class ICommandParser
     {
     public:
-    virtual bool parseCommand(const char *jsonPayload, size_t payloadLen, DeviceCommand &outCmd) = 0;
+        virtual iotsmartsys::core::DeviceCommand *parseCommand(const char *jsonPayload, size_t payloadLen) = 0;
     };
 
 }
