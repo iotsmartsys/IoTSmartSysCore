@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     CommandProcessorFactory::CommandProcessorFactory(ILogger &logger, CapabilityManager &capabilityManager)
-        : _logger(logger), _capabilityManager(capabilityManager), _capabilityCommandProcessor(nullptr)
+        : _logger(logger), _capabilityManager(capabilityManager), _capabilityCommandProcessor(logger, capabilityManager), _systemCommandProcessor(logger)
     {
     }
 
@@ -12,14 +12,9 @@ namespace iotsmartsys::core
         switch (type)
         {
         case CommandTypes::CAPABILITY:
-            if (_capabilityCommandProcessor == nullptr)
-            {
-                _capabilityCommandProcessor = new CapabilityCommandProcessor(_logger, _capabilityManager);
-            }
-            return _capabilityCommandProcessor;
+            return &_capabilityCommandProcessor;
         case CommandTypes::SYSTEM:
-            _logger.error("SYSTEM command processor not implemented yet.");
-            return nullptr;
+            return &_systemCommandProcessor;
         default:
             _logger.error("Unknown command type.");
             return nullptr;

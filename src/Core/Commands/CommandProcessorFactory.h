@@ -4,6 +4,7 @@
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
 #include "Core/Commands/CapabilityCommandProcessor.h"
+#include "Core/Commands/SystemCommandProcessor.h"
 
 namespace iotsmartsys::core
 {
@@ -16,6 +17,7 @@ namespace iotsmartsys::core
     private:
         ILogger &_logger;
         CapabilityManager &_capabilityManager;
-        CapabilityCommandProcessor *_capabilityCommandProcessor;
+        CapabilityCommandProcessor _capabilityCommandProcessor;
+        SystemCommandProcessor _systemCommandProcessor;
     };
 }

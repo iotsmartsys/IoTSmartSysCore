@@ -9,6 +9,13 @@ namespace iotsmartsys::core
         SYSTEM,
     };
 
+    struct CommandTypeStrings
+    {
+        static constexpr const char *UNKNOWN_STR = "UNKNOWN";
+        static constexpr const char *CAPABILITY_STR = "CAPABILITY";
+        static constexpr const char *SYSTEM_STR = "SYSTEM";
+    };
+
     struct CommandTypeUtils
     {
         static CommandTypes fromString(const char *typeStr)
@@ -24,11 +31,11 @@ namespace iotsmartsys::core
                 ch = std::toupper(static_cast<unsigned char>(ch));
             }
 
-            if (normalizedType == "CAPABILITY")
+            if (normalizedType == CommandTypeStrings::CAPABILITY_STR)
             {
                 return CommandTypes::CAPABILITY;
             }
-            else if (normalizedType == "SYSTEM")
+            else if (normalizedType == CommandTypeStrings::SYSTEM_STR)
             {
                 return CommandTypes::SYSTEM;
             }
@@ -43,19 +50,13 @@ namespace iotsmartsys::core
             switch (type)
             {
             case CommandTypes::CAPABILITY:
-                return "CAPABILITY";
+                return CommandTypeStrings::CAPABILITY_STR;
             case CommandTypes::SYSTEM:
-                return "SYSTEM";
+                return CommandTypeStrings::SYSTEM_STR;
             default:
-                return "UNKNOWN";
+                return CommandTypeStrings::UNKNOWN_STR;
             }
         }
-    };
-
-    struct CommandTypeStrings
-    {
-        static constexpr const char *CAPABILITY_STR = "CAPABILITY";
-        static constexpr const char *SYSTEM_STR = "SYSTEM";
     };
 
 } // namespace iotsmartsys::core

@@ -3,6 +3,7 @@
 #include <string>
 #include <cctype>
 #include "Contracts/Commands/CommandTypes.h"
+#include "Contracts/Commands/SystemCommands.h"
 
 namespace iotsmartsys::core
 {
@@ -17,26 +18,17 @@ namespace iotsmartsys::core
         const CommandTypes getCommandType() const
         {
             if (command_type.empty())
-                return CommandTypes::CAPABILITY;
+                return CommandTypes::UNKNOWN;
 
-            std::string normalizedType = command_type;
-            for (auto &ch : normalizedType)
-            {
-                ch = std::toupper(static_cast<unsigned char>(ch));
-            }
+            return CommandTypeUtils::fromString(command_type.c_str());
+        }
 
-            if (normalizedType == "CAPABILITY")
-            {
-                return CommandTypes::CAPABILITY;
-            }
-            else if (normalizedType == "SYSTEM")
-            {
-                return CommandTypes::SYSTEM;
-            }
-            else
-            {
-                return CommandTypes::CAPABILITY;
-            }
+        const SystemCommands getSystemCommand() const
+        {
+            if (value.empty())
+                return SystemCommands::UNKNOWN;
+
+            return SystemCommandUtils::fromString(value.c_str());
         }
     };
 
