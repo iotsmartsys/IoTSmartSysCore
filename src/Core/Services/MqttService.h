@@ -8,7 +8,7 @@
 #include "Contracts/Settings/SettingsGate.h"
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
-#include "Contracts/Transports/IMqttClient.h"
+#include "Contracts/Transports/ITransportChannel.h"
 #include "Contracts/Settings/IReadOnlySettingsProvider.h"
 
 namespace iotsmartsys::app
@@ -26,12 +26,12 @@ namespace iotsmartsys::app
     class MqttService
     {
     public:
-        explicit MqttService(iotsmartsys::core::IMqttClient &client,
+        explicit MqttService(iotsmartsys::core::ITransportChannel &client,
                              iotsmartsys::core::ILogger &log,
                              iotsmartsys::core::settings::ISettingsGate &settingsGate,
                              iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider);
 
-        void begin(const iotsmartsys::core::MqttConfig &cfg,
+        void begin(const iotsmartsys::core::TransportConfig &cfg,
                    const RetryPolicy &policy = RetryPolicy{});
 
         void handle();
@@ -42,9 +42,9 @@ namespace iotsmartsys::app
         bool subscribe(const char *topic);
 
         // callback opcional para entregar mensagens à sua camada de roteamento
-        void setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user);
-        void setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user);
-        void setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user);
+        void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user);
+        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user);
+        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user);
 
         bool isOnline() const;
 
@@ -79,19 +79,19 @@ namespace iotsmartsys::app
         void drainQueue();
         bool enqueue(const char *topic, const void *payload, std::size_t len, bool retain);
 
-        static void onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg);
-        static void onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info);
+        static void onMessageThunk(void *user, const iotsmartsys::core::TransportMessageView &msg);
+        static void onConnectedThunk(void *user, const iotsmartsys::core::TransportConnectedView &info);
         static void onDisconnectedThunk(void *user);
         static void onSettingsReadyThunk(iotsmartsys::core::settings::SettingsReadyLevel level, void *ctx);
         void onSettingsReady(iotsmartsys::core::settings::SettingsReadyLevel level);
 
     private:
         iotsmartsys::core::settings::IReadOnlySettingsProvider &_settingsProvider;
-        iotsmartsys::core::IMqttClient &_client;
+        iotsmartsys::core::ITransportChannel &_client;
         iotsmartsys::core::ILogger &_logger;
         iotsmartsys::core::ITimeProvider *_time;
 
-        iotsmartsys::core::MqttConfig _cfg{};
+        iotsmartsys::core::TransportConfig _cfg{};
         // persistent storage for strings referenced by _cfg (avoid dangling pointers)
         std::string _uriStr;
         std::string _usernameStr;
@@ -116,11 +116,11 @@ namespace iotsmartsys::app
         std::size_t _qHead{0}, _qTail{0}, _qCount{0};
 
         // user callback
-        iotsmartsys::core::MqttOnMessageFn _userMsgCb{nullptr};
+        iotsmartsys::core::TransportOnMessageFn _userMsgCb{nullptr};
         void *_userMsgUser{nullptr};
-        iotsmartsys::core::MqttOnConnectedFn _userConnectedCb{nullptr};
+        iotsmartsys::core::TransportOnConnectedFn _userConnectedCb{nullptr};
         void *_userConnectedUser{nullptr};
-        iotsmartsys::core::MqttOnDisconnectedFn _userDisconnectedCb{nullptr};
+        iotsmartsys::core::TransportOnDisconnectedFn _userDisconnectedCb{nullptr};
         void *_userDisconnectedUser{nullptr};
     };
 

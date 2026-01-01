@@ -9,7 +9,7 @@
 // -----------------------------------------------------------------------------
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
-#include "Contracts/Transports/IMqttClient.h"
+#include "Contracts/Transports/ITransportChannel.h"
 
 #include "Contracts/Settings/ISettingsFetcher.h"
 #include "Contracts/Settings/ISettingsParser.h"
@@ -86,10 +86,10 @@ namespace iotsmartsys
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
 
     private:
-        static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);
-        static void onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info);
-        void onMqttMessage(const core::MqttMessageView &msg);
-        void onMqttConnected(const core::MqttConnectedView &info);
+        static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);
+        static void onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info);
+        void onMqttMessage(const core::TransportMessageView &msg);
+        void onMqttConnected(const core::TransportConnectedView &info);
         static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
         void onSettingsUpdated(const core::settings::Settings &newSettings);
         void applySettingsToRuntime(const core::settings::Settings &settings);

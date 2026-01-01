@@ -12,17 +12,14 @@ namespace iotsmartsys::platform::arduino
 
     void Bh1750LuminositySensor::setup()
     {
-        Serial.println("Initializing BH1750 sensor...");
         Wire.begin(_gpioSDA, _gpioSCL);
         // Configure in continuous high-res mode; capture success to avoid "not configured" errors.
         _initialized = _driver.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire);
         if (_initialized)
         {
-            Serial.println("BH1750 sensor initialized.");
         }
         else
         {
-            Serial.println("[BH1750] ERROR: failed to initialize sensor");
         }
     }
 
@@ -30,7 +27,6 @@ namespace iotsmartsys::platform::arduino
     {
         if (!_initialized)
         {
-            Serial.println("[BH1750] Device not configured; attempting re-init...");
             _initialized = _driver.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
             if (!_initialized)
             {

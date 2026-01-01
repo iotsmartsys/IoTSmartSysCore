@@ -4,7 +4,7 @@
 namespace iotsmartsys::core
 {
 
-    MqttSink::MqttSink(IMqttClient &mqttClient, IReadOnlySettingsProvider &settingsProvider)
+    MqttSink::MqttSink(ITransportChannel &mqttClient, IReadOnlySettingsProvider &settingsProvider)
         : mqttClient(mqttClient), settingsProvider(settingsProvider)
     {
     }

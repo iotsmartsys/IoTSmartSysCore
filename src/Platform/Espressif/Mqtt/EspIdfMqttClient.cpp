@@ -19,7 +19,7 @@ namespace iotsmartsys::platform::espressif
         }
     }
 
-    bool EspIdfMqttClient::begin(const iotsmartsys::core::MqttConfig &cfg)
+    bool EspIdfMqttClient::begin(const iotsmartsys::core::TransportConfig &cfg)
     {
         _logger.info("[MQTT DBG] EspIdfMqttClient::begin()...");
         if (_client)
@@ -105,18 +105,18 @@ namespace iotsmartsys::platform::espressif
         return msg_id >= 0;
     }
 
-    void EspIdfMqttClient::setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user)
+    void EspIdfMqttClient::setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user)
     {
         _onMsg = cb;
         _onMsgUser = user;
     }
-    void EspIdfMqttClient::setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user)
+    void EspIdfMqttClient::setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user)
     {
         _onConnected = cb;
         _onConnectedUser = user;
     }
 
-    void EspIdfMqttClient::setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user)
+    void EspIdfMqttClient::setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user)
     {
         _onDisconnected = cb;
         _onDisconnectedUser = user;
@@ -149,7 +149,7 @@ namespace iotsmartsys::platform::espressif
             _connected = true;
             if (_onConnected)
             {
-                iotsmartsys::core::MqttConnectedView info{};
+                iotsmartsys::core::TransportConnectedView info{};
                 info.clientId = _clientIdStr.empty() ? nullptr : _clientIdStr.c_str();
                 info.broker = _brokerStr.empty() ? nullptr : _brokerStr.c_str();
                 info.keepAliveSec = _keepAliveSec;
@@ -167,7 +167,7 @@ namespace iotsmartsys::platform::espressif
             {
                 // topic/payload não são null-terminated!
                 // você pode passar como view (len) e deixar o Router interpretar.
-                iotsmartsys::core::MqttMessageView mv{};
+                iotsmartsys::core::TransportMessageView mv{};
                 mv.topic = event->topic; // cuidado: não é NUL-terminated, mas dá pra usar com len se quiser copiar
                 mv.payload = event->data;
                 mv.payloadLen = (std::size_t)event->data_len;

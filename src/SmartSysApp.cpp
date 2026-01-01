@@ -40,7 +40,7 @@ namespace iotsmartsys
         return;
     }
 
-    void SmartSysApp::onMqttConnected(const core::MqttConnectedView &info)
+    void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
     {
         logger_.debug("MQTT connected.");
         logger_.debug("Client ID: %s", info.clientId);
@@ -84,7 +84,7 @@ namespace iotsmartsys
         }
     }
 
-    void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
+    void SmartSysApp::onMqttMessage(const core::TransportMessageView &msg)
     {
         iotsmartsys::core::DeviceCommand *cmd = commandParser_.parseCommand(msg.payload, msg.payloadLen);
         if (!cmd)
@@ -227,7 +227,7 @@ namespace iotsmartsys
         inConfigMode_ = true;
     }
 
-    void SmartSysApp::onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg)
+    void SmartSysApp::onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg)
     {
         if (!ctx)
         {
@@ -236,7 +236,7 @@ namespace iotsmartsys
         static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
     }
 
-    void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info)
+    void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)
     {
         if (!ctx)
         {

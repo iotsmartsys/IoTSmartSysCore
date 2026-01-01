@@ -14,7 +14,7 @@ namespace iotsmartsys::app
 {
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::IMqttClient &client,
+    MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::ITransportChannel &client,
                                                               iotsmartsys::core::ILogger &log,
                                                               iotsmartsys::core::settings::ISettingsGate &settingsGate,
                                                               iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider)
@@ -28,7 +28,7 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::MqttConfig &cfg,
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg,
                                                              const RetryPolicy &policy)
     {
         _logger.info("MQTT", "MqttService::begin()");
@@ -260,21 +260,21 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user)
     {
         _userMsgCb = cb;
         _userMsgUser = user;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user)
     {
         _userConnectedCb = cb;
         _userConnectedUser = user;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user)
     {
         _userDisconnectedCb = cb;
         _userDisconnectedUser = user;
@@ -480,7 +480,7 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onMessageThunk(void *user, const iotsmartsys::core::TransportMessageView &msg)
     {
         auto *self = static_cast<MqttService *>(user);
         if (!self)
@@ -490,7 +490,7 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user, const iotsmartsys::core::TransportConnectedView &info)
     {
         auto *self = static_cast<MqttService *>(user);
         if (!self)
