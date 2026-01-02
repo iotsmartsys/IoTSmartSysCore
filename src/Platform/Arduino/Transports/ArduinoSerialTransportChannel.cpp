@@ -6,7 +6,6 @@ namespace iotsmartsys::core
     SerialTransportChannel::SerialTransportChannel(HardwareSerial &port, uint32_t baud, int8_t rxPin, int8_t txPin)
         : port_(port), baud_(baud), rxPin_(rxPin), txPin_(txPin)
     {
-        forwardRawMessages_ = true;
         std::memset(&cfg_, 0, sizeof(cfg_));
         std::memset(&connected_, 0, sizeof(connected_));
     }
@@ -364,7 +363,8 @@ namespace iotsmartsys::core
         raw_[p++] = FRAME_VER;
         raw_[p++] = (uint8_t)msg.kind;
         raw_[p++] = (uint8_t)(msg.retain ? 0x01 : 0x00);
-        raw_[p++] = msg.origin;
+        const uint8_t originByte = (msg.origin && msg.origin[0]) ? static_cast<uint8_t>(msg.origin[0]) : 0;
+        raw_[p++] = originByte;
         raw_[p++] = msg.hops;
 
         write_u32_le(&raw_[p], msg.id);
@@ -408,7 +408,6 @@ namespace iotsmartsys::core
             return false;
         }
 
-        // Copy into raw_ so payload pointer stays valid and we can optionally null-terminate
         if (len >= sizeof(raw_))
         {
             // Too large: drop
@@ -416,9 +415,8 @@ namespace iotsmartsys::core
         }
 
         std::memcpy(raw_, frame, len);
-        raw_[len] = 0; // safe terminator (payloadLen still controls the true size)
-
-        // Provide a fixed topic for line-based UART input (keeps compatibility with existing app logic)
+        raw_[len] = 0;
+        
         static const char *kTopic = "uart/raw";
         std::strncpy(topicTmp_, kTopic, MAX_TOPIC);
         topicTmp_[MAX_TOPIC] = '\0';
@@ -430,7 +428,7 @@ namespace iotsmartsys::core
         msg.retain = false;
         msg.kind = TransportKind::Raw;
         msg.id = nextId_++;
-        msg.origin = 0;
+        msg.origin = getName();
         msg.hops = 0;
 
         if (onMsg_)

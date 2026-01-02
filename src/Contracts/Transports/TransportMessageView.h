@@ -24,7 +24,7 @@ namespace iotsmartsys::core
         TransportKind kind{TransportKind::Raw};
 
         uint32_t id{0};
-        uint8_t origin{0};
+        const char *origin{nullptr};
         uint8_t hops{0};
     };
 

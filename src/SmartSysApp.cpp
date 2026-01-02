@@ -169,19 +169,20 @@ namespace iotsmartsys
 
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
-        char topic[128];
-        snprintf(topic, sizeof(topic), "device/%s/command",
-                 settings_.clientId ? settings_.clientId : "");
-
-        mqtt_.subscribe(topic);
-        mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
-        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
-
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
         commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
         commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
+
+        // char topic[128];
+        // snprintf(topic, sizeof(topic), "device/%s/command",
+        //          settings_.clientId ? settings_.clientId : "");
+
+        // mqtt_.subscribe(topic);
+        mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
+        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
+        mqtt_.setForwardRawMessages(true);
 
         Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
 
@@ -190,7 +191,9 @@ namespace iotsmartsys
         cfg.clientId = "esp32-uart-bridge";
         cfg.keepAliveSec = 30;
         uart_.begin(cfg);
+        // uart_.setForwardRawMessages(true);
         transportHub_.addChannel("uart", &uart_);
+        transportHub_.addChannel("mqtt", &mqtt_);
         transportHub_.addDispatcher(*commandDispatcher_);
         // Opcional
 
@@ -212,9 +215,9 @@ namespace iotsmartsys
             capabilityManager_->handle();
         }
 
-        // wifi_.handle();
+        wifi_.handle();
         // mqtt_.handle();
-        // settingsManager_.handle();
+        settingsManager_.handle();
         transportHub_.handle();
     }
 

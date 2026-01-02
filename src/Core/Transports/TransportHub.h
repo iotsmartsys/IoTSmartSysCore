@@ -22,7 +22,6 @@ namespace iotsmartsys::core
         virtual void handle() override;
 
         virtual void addDispatcher(ITransportDispatcher &dispatcher) override;
-        
 
     private:
         ILogger &logger_;
@@ -38,7 +37,7 @@ namespace iotsmartsys::core
         void onMessageReceived(void *, const TransportMessageView &msg);
         void onConnected(void *, const TransportConnectedView &info);
         void onDisconnected(void *);
-        ITransportChannel *getChannelEnabledForForwarding(TransportKind kind);
+        std::vector<ITransportChannel *> getChannelsEnabledForForwarding(TransportKind kind);
     };
 
 }

@@ -25,7 +25,7 @@ namespace iotsmartsys::core
     public:
         virtual ~ITransportChannel() = default;
 
-        virtual bool begin(const TransportConfig &cfg) = 0;
+        virtual bool begin (const TransportConfig &cfg) = 0;
         virtual void start() = 0;
         virtual void stop() = 0;
         virtual void handle() = 0;
@@ -46,6 +46,7 @@ namespace iotsmartsys::core
 
     public:
         bool forwardRawMessages() const { return forwardRawMessages_; }
+        void setForwardRawMessages(bool value) { forwardRawMessages_ = value; }
 
     protected:
         bool forwardRawMessages_{false};

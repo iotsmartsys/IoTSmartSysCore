@@ -10,6 +10,7 @@
 #include "Contracts/Providers/Time.h"
 #include "Contracts/Transports/ITransportChannel.h"
 #include "Contracts/Settings/IReadOnlySettingsProvider.h"
+#include "IMqttClient.h"
 
 namespace iotsmartsys::app
 {
@@ -23,30 +24,35 @@ namespace iotsmartsys::app
     };
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    class MqttService
+    class MqttService : public iotsmartsys::core::ITransportChannel
     {
     public:
-        explicit MqttService(iotsmartsys::core::ITransportChannel &client,
+        explicit MqttService(iotsmartsys::core::IMqttClient &client,
                              iotsmartsys::core::ILogger &log,
                              iotsmartsys::core::settings::ISettingsGate &settingsGate,
                              iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider);
 
-        void begin(const iotsmartsys::core::TransportConfig &cfg,
-                   const RetryPolicy &policy = RetryPolicy{});
+        bool begin(const iotsmartsys::core::TransportConfig &cfg) override;
+        bool begin(const iotsmartsys::core::TransportConfig &cfg,
+                   const RetryPolicy &policy);
+        void start() override {}
+        void stop() override {}
 
-        void handle();
+        void handle() override;
 
         // QoS0: se offline -> enfileira (se tiver espaço)
-        bool publish(const char *topic, const void *payload, std::size_t len, bool retain = false);
+        bool publish(const char *topic, const void *payload, std::size_t len, bool retain = false) override;
 
-        bool subscribe(const char *topic);
+        bool subscribe(const char *topic) override;
 
         // callback opcional para entregar mensagens à sua camada de roteamento
-        void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user);
-        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user);
-        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user);
+        void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user) override;
+        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user) override;
+        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user) override;
 
+        bool isConnected() const override;
         bool isOnline() const;
+        const char *getName() const override { return _client.getName(); }
 
     private:
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;

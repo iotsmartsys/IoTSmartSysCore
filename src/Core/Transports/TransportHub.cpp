@@ -104,12 +104,17 @@ namespace iotsmartsys::core
             else
             {
                 logger_.warn("TransportHub", "Message dispatch failed");
-                ITransportChannel *forwardChannel = getChannelEnabledForForwarding(msg.kind);
-                if (forwardChannel)
+                auto forwardChannels = getChannelsEnabledForForwarding(msg.kind);
+                for (const auto &forwardChannel : forwardChannels)
                 {
-                    // if (forwardChannel->getName() != msg.)
+                    logger_.info("TransportHub", "Message origin: %s", msg.origin ? msg.origin : "null");
+                    if (forwardChannel->getName() == msg.origin)
+                    {
+                        logger_.warn("TransportHub", "Not forwarding message to its origin channel: %s", forwardChannel->getName());
+                        return;
+                    }
 
-                    if (forwardChannel->publish(msg.topic, msg.payload, msg.payloadLen, msg.retain))
+                    if (forwardChannel->publish("iotsmartsys/zigbee/events", msg.payload, msg.payloadLen, msg.retain))
                     {
                         logger_.info("TransportHub", "Message forwarded successfully to channel name: %s", forwardChannel->getName());
                     }
@@ -139,17 +144,17 @@ namespace iotsmartsys::core
         dispatchers_.push_back(&dispatcher);
     }
 
-    ITransportChannel *TransportHub::getChannelEnabledForForwarding(TransportKind kind)
+    std::vector<ITransportChannel *> TransportHub::getChannelsEnabledForForwarding(TransportKind kind)
     {
+        std::vector<ITransportChannel *> enabledChannels;
         for (const auto &entry : channels_)
         {
             if (entry->channel->forwardRawMessages() && kind == TransportKind::Raw)
             {
-                return entry->channel;
+                enabledChannels.push_back(entry->channel);
             }
-            // Adicionar outras verificações de tipo de transporte, se necessário
         }
-        return nullptr;
+        return enabledChannels;
     }
 
-}
+} // namespace iotsmartsys::core

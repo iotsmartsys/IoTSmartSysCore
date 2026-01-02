@@ -1,5 +1,6 @@
 #include "Core/Services/MqttService.h"
 #include "Contracts/Providers/ServiceProvider.h"
+#include "IMqttClient.h"
 
 #include <cstdint>
 #include <cstddef>
@@ -14,7 +15,7 @@ namespace iotsmartsys::app
 {
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::ITransportChannel &client,
+    MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::IMqttClient &client,
                                                               iotsmartsys::core::ILogger &log,
                                                               iotsmartsys::core::settings::ISettingsGate &settingsGate,
                                                               iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider)
@@ -28,7 +29,13 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg,
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg)
+    {
+        return begin(cfg, RetryPolicy{});
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg,
                                                              const RetryPolicy &policy)
     {
         _logger.info("MQTT", "MqttService::begin()");
@@ -77,13 +84,14 @@ namespace iotsmartsys::app
         _client.setOnConnected(&MqttService::onConnectedThunk, this);
         _client.setOnDisconnected(&MqttService::onDisconnectedThunk, this);
         _logger.info("MQTT", "MQTT client initialized.");
-        _client.begin(_cfg);
+        const bool clientInitOk = _client.begin(_cfg);
 
         _logger.info("MQTT", "Scheduling initial connection...");
         // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
         _nextActionAtMs = now; // connect on first handle()
+        return clientInitOk;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -284,6 +292,12 @@ namespace iotsmartsys::app
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::isOnline() const
     {
         return _state == State::Online && _client.isConnected();
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::isConnected() const
+    {
+        return _client.isConnected();
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>

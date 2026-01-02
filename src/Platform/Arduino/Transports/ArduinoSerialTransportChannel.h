@@ -22,7 +22,7 @@ namespace iotsmartsys::core
                                int8_t rxPin = -1,
                                int8_t txPin = -1);
 
-        bool begin(const TransportConfig &cfg) override;
+        bool begin(const TransportConfig &cfg);
         void start() override;
         void stop() override;
         void handle() override;
