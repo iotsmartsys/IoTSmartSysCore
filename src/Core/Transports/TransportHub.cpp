@@ -126,7 +126,6 @@ namespace iotsmartsys::core
             }
         }
 
-        // Implementar lógica de roteamento de mensagens entre canais, se necessário
     }
 
     void TransportHub::onConnected(void *, const TransportConnectedView &info)

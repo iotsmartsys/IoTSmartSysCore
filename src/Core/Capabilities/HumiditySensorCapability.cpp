@@ -6,20 +6,14 @@ namespace iotsmartsys::core
 {
 
     HumiditySensorCapability::HumiditySensorCapability(IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
-        : ICapability(event_sink, HUMIDITY_SENSOR_TYPE, "0"),
-          sensor(sensor),
-          humidity(0.0f),
-          lastReadTime(0),
-          readIntervalMs(60000) // default to 1 minute
+        : PollingFloatCapability(event_sink, "", HUMIDITY_SENSOR_TYPE, "0", 60000, 0.0f, 2),
+          sensor(sensor)
     {
     }
 
     HumiditySensorCapability::HumiditySensorCapability(std::string capability_name, IHumiditySensor &sensor, ICapabilityEventSink *event_sink)
-        : ICapability(event_sink, capability_name, HUMIDITY_SENSOR_TYPE, "0"),
-          sensor(sensor),
-          humidity(0.0f),
-          lastReadTime(0),
-          readIntervalMs(60000) // default to 1 minute
+        : PollingFloatCapability(event_sink, capability_name.c_str(), HUMIDITY_SENSOR_TYPE, "0", 60000, 0.0f, 2),
+          sensor(sensor)
     {
     }
 
@@ -32,10 +26,9 @@ namespace iotsmartsys::core
     void HumiditySensorCapability::handle()
     {
         unsigned long currentTime = timeProvider.nowMs();
-        if (currentTime - lastReadTime < readIntervalMs && humidity > 0)
+        if (!shouldRead(currentTime) && lastValue() > 0.0f)
             return;
 
-        lastReadTime = currentTime;
         float newHumidity = sensor.getHumidityPercentage();
         float roundedHumidity = std::round(newHumidity * 100.0f) / 100.0f;
         std::ostringstream oss;
@@ -44,14 +37,17 @@ namespace iotsmartsys::core
 
         if (isValidHumidity(newHumidity))
         {
-            humidity = roundedHumidity;
-            updateState(humidityStr);
+            publishIfChanged(roundedHumidity);
+        }
+        else
+        {
+            forceNextReadAt(currentTime);
         }
     }
 
     float HumiditySensorCapability::getHumidity() const
     {
-        return humidity;
+        return lastValue();
     }
 
     bool HumiditySensorCapability::isValidHumidity(float hum) const

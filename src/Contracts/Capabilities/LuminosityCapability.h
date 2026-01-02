@@ -1,12 +1,12 @@
 // Core/LuminosityCapability.h
 #pragma once
 
-#include "ICapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 #include "Contracts/Sensors/ILuminositySensor.h"
 
 namespace iotsmartsys::core
 {
-    class LuminosityCapability : public ICapability
+    class LuminosityCapability : public PollingFloatCapability
     {
     public:
         LuminosityCapability(const std::string &name,
@@ -27,11 +27,6 @@ namespace iotsmartsys::core
     protected:
     private:
         ILuminositySensor &_sensor;
-
-        float _lastLux{0.0f};
-        float _variationTolerance{0.0f};
-        unsigned long _lastReadMs{0};
-        unsigned long _readIntervalMs{0};
     };
 
 } // namespace iotsmartsys::core
