@@ -10,7 +10,7 @@ namespace iotsmartsys::core
     public:
         SystemCommandProcessor(ILogger &logger);
 
-        void process(const DeviceCommand &command) override;
+        bool process(const DeviceCommand &command) override;
 
     private:
         ILogger &_logger;

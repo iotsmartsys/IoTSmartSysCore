@@ -11,7 +11,7 @@ namespace iotsmartsys::core
     {
     }
 
-    void SystemCommandProcessor::process(const DeviceCommand &command)
+    bool SystemCommandProcessor::process(const DeviceCommand &command)
     {
         _logger.warn("SystemCommandProcessor: Processing system command.");
         switch (command.getSystemCommand())
@@ -20,17 +20,21 @@ namespace iotsmartsys::core
             _logger.warn("SystemCommandProcessor: Executing REBOOT command.");
             delay(1000); // Pequeno atraso para garantir que o log seja enviado
             full_soft_powercycle_restart();
+            return true;
             break;
         case SystemCommands::FACTORY_RESET:
             _logger.info("SystemCommandProcessor: Executing FACTORY_RESET command.");
             /* code for factory reset */
+            return true;
             break;
         case SystemCommands::UPDATE_FIRMWARE:
             _logger.info("SystemCommandProcessor: Executing UPDATE_FIRMWARE command.");
             /* code for update firmware */
+            return true;
             break;
         default:
             _logger.warn("SystemCommandProcessor: Unknown system command received.");
+            return false;
             break;
         }
     }

@@ -6,6 +6,7 @@ namespace iotsmartsys::core
     SerialTransportChannel::SerialTransportChannel(HardwareSerial &port, uint32_t baud, int8_t rxPin, int8_t txPin)
         : port_(port), baud_(baud), rxPin_(rxPin), txPin_(txPin)
     {
+        forwardRawMessages_ = true;
         std::memset(&cfg_, 0, sizeof(cfg_));
         std::memset(&connected_, 0, sizeof(connected_));
     }
@@ -438,5 +439,10 @@ namespace iotsmartsys::core
         }
 
         return true;
+    }
+
+    void SerialTransportChannel::handle()
+    {
+        pump();
     }
 } // namespace iotsmartsys::core

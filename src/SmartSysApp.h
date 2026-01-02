@@ -51,6 +51,10 @@
 #include "Infra/Factories/SensorFactory.h"
 #include "Core/Commands/CommandProcessorFactory.h"
 
+#include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
+#include "Core/Transports/TransportHub.h"
+#include "Core/Commands/CapabilityCommandTransportDispatcher.h"
+
 namespace iotsmartsys
 {
     class SmartSysApp
@@ -125,6 +129,9 @@ namespace iotsmartsys
         iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
         iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
         iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
+        CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
+        TransportHub transportHub_;
+        SerialTransportChannel uart_;
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};

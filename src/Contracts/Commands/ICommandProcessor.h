@@ -9,6 +9,6 @@ namespace iotsmartsys::core
     public:
         virtual ~ICommandProcessor() = default;
 
-        virtual void process(const DeviceCommand &command) = 0;
+        virtual bool process(const DeviceCommand &command) = 0;
     };
 }

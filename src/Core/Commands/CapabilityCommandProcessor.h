@@ -11,7 +11,7 @@ namespace iotsmartsys::core
     public:
         CapabilityCommandProcessor(ILogger &logger, CapabilityManager &capabilityManager);
 
-        void process(const DeviceCommand &command) override;
+        bool process(const DeviceCommand &command) override;
 
     private:
         ILogger &_logger;

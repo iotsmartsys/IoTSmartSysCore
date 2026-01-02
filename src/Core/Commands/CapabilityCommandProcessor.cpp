@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     {
     }
 
-    void CapabilityCommandProcessor::process(const DeviceCommand &command)
+    bool CapabilityCommandProcessor::process(const DeviceCommand &command)
     {
         _logger.debug("CapabilityCommandProcessor: Processing command...");
         _logger.warn("Processing capability command for capability: %s", command.capability_name.c_str());
@@ -22,10 +22,12 @@ namespace iotsmartsys::core
             capabilityCmd.capability_name = command.capability_name.c_str();
             capabilityCmd.value = command.value.c_str();
             cap->applyCommand(capabilityCmd);
+            return true;
         }
         else
         {
             _logger.error("Capability not found: %s", command.capability_name.c_str());
+            return false;
         }
     }
 }

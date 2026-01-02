@@ -25,6 +25,7 @@ namespace iotsmartsys::core
         bool begin(const TransportConfig &cfg) override;
         void start() override;
         void stop() override;
+        void handle() override;
 
         bool isConnected() const override;
 
@@ -44,6 +45,8 @@ namespace iotsmartsys::core
 
         /// @brief Opcional: envia uma mensagem completa (kind/id/origin/hops).
         bool publishEx(const TransportMessageView &msg);
+
+        const char *getName() const override { return "ArduinoSerialTransportChannel"; }
 
     private:
         HardwareSerial &port_;

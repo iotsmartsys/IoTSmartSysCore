@@ -7,6 +7,10 @@
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
 
+static constexpr int UART_RX_PIN = ESP32S3_UART0_RX; // GPIO que recebe do TX do ESP32-C6
+static constexpr int UART_TX_PIN = ESP32S3_UART0_TX; // GPIO que envia para o RX do ESP32-C6 (opcional)
+static constexpr uint32_t UART_BAUD = 115200;
+
 namespace iotsmartsys
 {
     SmartSysApp::SmartSysApp()
@@ -31,7 +35,9 @@ namespace iotsmartsys
           manifestParser_(),
           ota_(logger_),
           otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
-          commandParser_(logger_)
+          commandParser_(logger_),
+          transportHub_(logger_),
+          uart_(Serial1, UART_BAUD, UART_RX_PIN, UART_TX_PIN)
     {
     }
 
@@ -175,6 +181,20 @@ namespace iotsmartsys
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
         commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
+        commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
+
+        Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
+
+        TransportConfig cfg{};
+        cfg.uri = "serial://uart2";
+        cfg.clientId = "esp32-uart-bridge";
+        cfg.keepAliveSec = 30;
+        uart_.begin(cfg);
+        transportHub_.addChannel("uart", &uart_);
+        transportHub_.addDispatcher(*commandDispatcher_);
+        // Opcional
+
+        transportHub_.start();
     }
 
     void SmartSysApp::handle()
@@ -185,16 +205,17 @@ namespace iotsmartsys
             return;
         }
 
-        otaManager_.handle();
-
+        // otaManager_.handle();
+        //
         if (capabilityManager_)
         {
             capabilityManager_->handle();
         }
 
-        wifi_.handle();
-        mqtt_.handle();
-        settingsManager_.handle();
+        // wifi_.handle();
+        // mqtt_.handle();
+        // settingsManager_.handle();
+        transportHub_.handle();
     }
 
     void SmartSysApp::setupProvisioningConfiguration()

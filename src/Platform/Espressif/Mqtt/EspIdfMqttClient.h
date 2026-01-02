@@ -23,6 +23,7 @@ namespace iotsmartsys::platform::espressif
         bool begin(const iotsmartsys::core::TransportConfig &cfg) override;
         void start() override;
         void stop() override;
+        void handle() override {}
 
         bool isConnected() const override;
 
@@ -32,6 +33,7 @@ namespace iotsmartsys::platform::espressif
         void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user) override;
         void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user) override;
         void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user) override;
+        const char *getName() const override { return _clientIdStr.c_str(); }
 
     private:
         static esp_err_t eventHandlerThunk(esp_mqtt_event_handle_t event);
