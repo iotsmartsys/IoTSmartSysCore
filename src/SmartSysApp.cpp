@@ -7,10 +7,6 @@
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
 
-static constexpr int UART_RX_PIN = ESP32S3_UART0_RX; // GPIO que recebe do TX do ESP32-C6
-static constexpr int UART_TX_PIN = ESP32S3_UART0_TX; // GPIO que envia para o RX do ESP32-C6 (opcional)
-static constexpr uint32_t UART_BAUD = 115200;
-
 namespace iotsmartsys
 {
     SmartSysApp::SmartSysApp()
@@ -36,9 +32,25 @@ namespace iotsmartsys
           ota_(logger_),
           otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
           commandParser_(logger_),
-          transportHub_(logger_),
-          uart_(Serial1, UART_BAUD, UART_RX_PIN, UART_TX_PIN)
+          transportHub_(logger_)
     {
+    }
+
+    void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
+    {
+        if (uart_)
+        {
+            delete uart_;
+            uart_ = nullptr;
+        }
+        uart_ = new SerialTransportChannel(serial, baudRate, rxPin, txPin);
+        TransportConfig cfg{};
+        cfg.uri = "serial://uart2";
+        cfg.clientId = "esp32-uart-bridge";
+        cfg.keepAliveSec = 30;
+        uart_->begin(cfg);
+        uart_->setForwardRawMessages(true);
+        transportHub_.addChannel("uart", uart_);
     }
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
@@ -87,29 +99,6 @@ namespace iotsmartsys
         else
         {
             logger_.error("Failed to publish MQTT message.");
-        }
-    }
-
-    void SmartSysApp::onMqttMessage(const core::TransportMessageView &msg)
-    {
-        iotsmartsys::core::DeviceCommand *cmd = commandParser_.parseCommand(msg.payload, msg.payloadLen);
-        if (!cmd)
-        {
-            logger_.error("Failed to parse MQTT message payload.");
-            return;
-        }
-
-        iotsmartsys::core::DeviceCommand command = *cmd;
-        delete cmd;
-
-        ICommandProcessor *processor = commandProcessorFactory_->createProcessor(command.getCommandType());
-        if (processor)
-        {
-            processor->process(command);
-        }
-        else
-        {
-            logger_.warn("No command processor available for command type.");
         }
     }
 
@@ -175,24 +164,23 @@ namespace iotsmartsys
         commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
         commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
 
-        // char topic[128];
-        // snprintf(topic, sizeof(topic), "device/%s/command",
-        //          settings_.clientId ? settings_.clientId : "");
+        char topic[128];
+        snprintf(topic, sizeof(topic), "device/%s/command",
+                 settings_.clientId ? settings_.clientId : "");
 
-        // mqtt_.subscribe(topic);
-        mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
+        mqtt_.subscribe(topic);
         mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
         mqtt_.setForwardRawMessages(true);
 
-        Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
+        // Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
 
-        TransportConfig cfg{};
-        cfg.uri = "serial://uart2";
-        cfg.clientId = "esp32-uart-bridge";
-        cfg.keepAliveSec = 30;
-        uart_.begin(cfg);
-        // uart_.setForwardRawMessages(true);
-        transportHub_.addChannel("uart", &uart_);
+        // TransportConfig cfg{};
+        // cfg.uri = "serial://uart2";
+        // cfg.clientId = "esp32-uart-bridge";
+        // cfg.keepAliveSec = 30;
+        // uart_.begin(cfg);
+        // // uart_.setForwardRawMessages(true);
+        // transportHub_.addChannel("uart", &uart_);
         transportHub_.addChannel("mqtt", &mqtt_);
         transportHub_.addDispatcher(*commandDispatcher_);
         // Opcional
@@ -249,15 +237,6 @@ namespace iotsmartsys
 
         provManager->begin();
         inConfigMode_ = true;
-    }
-
-    void SmartSysApp::onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg)
-    {
-        if (!ctx)
-        {
-            return;
-        }
-        static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
     }
 
     void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)

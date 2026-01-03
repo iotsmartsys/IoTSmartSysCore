@@ -239,6 +239,15 @@ namespace iotsmartsys::app
         }
         return enqueue(topic, payload, len, retain);
     }
+    
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::republish(const iotsmartsys::core::TransportMessageView &msg)
+    {
+        if (_client.isConnected())
+        {
+            return _client.republish(msg);
+        }
+    }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::subscribe(const char *topic)

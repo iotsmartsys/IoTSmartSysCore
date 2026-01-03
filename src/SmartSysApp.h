@@ -68,6 +68,9 @@ namespace iotsmartsys
         /// @brief Main application loop to be called repeatedly.
         void handle();
 
+        /// @brief Configure SerialTransportChannel UART pins and baud rate.
+        void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
+
         /* Capabilities */
         iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig cfg);
         iotsmartsys::core::DoorSensorCapability *addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg);
@@ -131,7 +134,7 @@ namespace iotsmartsys
         iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
         CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
         TransportHub transportHub_;
-        SerialTransportChannel uart_;
+        SerialTransportChannel *uart_;
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};

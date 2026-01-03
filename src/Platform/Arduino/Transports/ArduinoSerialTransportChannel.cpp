@@ -111,6 +111,11 @@ namespace iotsmartsys::core
         return true;
     }
 
+    bool SerialTransportChannel::republish(const TransportMessageView &msg)
+    {
+        return publishEx(msg);
+    }
+
     bool SerialTransportChannel::publishEx(const TransportMessageView &msg)
     {
         if (!started_)
@@ -150,7 +155,7 @@ namespace iotsmartsys::core
         msg.retain = false;
         msg.kind = TransportKind::Command;
         msg.id = nextId_++;
-        msg.origin = 0;
+        msg.origin = getName();
         msg.hops = 0;
 
         return sendFrame(msg);
@@ -416,7 +421,7 @@ namespace iotsmartsys::core
 
         std::memcpy(raw_, frame, len);
         raw_[len] = 0;
-        
+
         static const char *kTopic = "uart/raw";
         std::strncpy(topicTmp_, kTopic, MAX_TOPIC);
         topicTmp_[MAX_TOPIC] = '\0';

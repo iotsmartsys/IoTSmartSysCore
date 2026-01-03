@@ -36,6 +36,8 @@ namespace iotsmartsys::core
                              const void *payload,
                              std::size_t len,
                              bool retain) = 0; // QoS 0
+        
+        virtual bool republish(const TransportMessageView &msg) = 0; // QoS 0
 
         virtual bool subscribe(const char *topic) = 0; // QoS 0
 

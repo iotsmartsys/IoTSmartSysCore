@@ -43,6 +43,8 @@ namespace iotsmartsys::app
         // QoS0: se offline -> enfileira (se tiver espaço)
         bool publish(const char *topic, const void *payload, std::size_t len, bool retain = false) override;
 
+        bool republish(const iotsmartsys::core::TransportMessageView &msg) override;
+
         bool subscribe(const char *topic) override;
 
         // callback opcional para entregar mensagens à sua camada de roteamento
@@ -93,7 +95,7 @@ namespace iotsmartsys::app
 
     private:
         iotsmartsys::core::settings::IReadOnlySettingsProvider &_settingsProvider;
-        iotsmartsys::core::ITransportChannel &_client;
+        iotsmartsys::core::IMqttClient &_client;
         iotsmartsys::core::ILogger &_logger;
         iotsmartsys::core::ITimeProvider *_time;
 

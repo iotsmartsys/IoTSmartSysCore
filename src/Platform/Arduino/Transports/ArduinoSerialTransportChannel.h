@@ -34,6 +34,8 @@ namespace iotsmartsys::core
                      std::size_t len,
                      bool retain) override;
 
+        bool republish(const TransportMessageView &msg) override;
+
         bool subscribe(const char *topic) override;
 
         void setOnMessage(TransportOnMessageFn cb, void *user) override;

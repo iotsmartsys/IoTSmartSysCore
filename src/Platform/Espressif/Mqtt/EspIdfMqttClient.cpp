@@ -97,6 +97,15 @@ namespace iotsmartsys::platform::espressif
         return msg_id >= 0;
     }
 
+    bool EspIdfMqttClient::republish(const iotsmartsys::core::TransportMessageView &msg)
+    {
+        if (!_client)
+            return false;
+        // qos=0
+        int msg_id = esp_mqtt_client_publish(_client, msg.topic, (const char *)msg.payload, (int)msg.payloadLen, 0, msg.retain ? 1 : 0);
+        return msg_id >= 0;
+    }
+
     bool EspIdfMqttClient::subscribe(const char *topic)
     {
         if (!_client)
@@ -172,6 +181,7 @@ namespace iotsmartsys::platform::espressif
                 mv.payload = event->data;
                 mv.payloadLen = (std::size_t)event->data_len;
                 mv.retain = event->retain;
+                mv.origin = getName();
                 _onMsg(_onMsgUser, mv);
             }
             break;

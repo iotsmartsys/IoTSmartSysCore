@@ -29,6 +29,7 @@ namespace iotsmartsys::platform::espressif
         bool isConnected() const override;
 
         bool publish(const char *topic, const void *payload, std::size_t len, bool retain) override;
+        bool republish(const iotsmartsys::core::TransportMessageView &msg) override;
         bool subscribe(const char *topic) override;
 
         void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user) override;
