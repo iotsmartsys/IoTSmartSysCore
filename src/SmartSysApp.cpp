@@ -32,7 +32,7 @@ namespace iotsmartsys
           ota_(logger_),
           otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
           commandParser_(logger_),
-          transportHub_(logger_)
+          transportHub_(logger_, settingsManager_)
     {
     }
 

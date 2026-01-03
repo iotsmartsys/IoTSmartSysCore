@@ -4,7 +4,10 @@
 namespace iotsmartsys::core
 {
 
-    TransportHub::TransportHub(ILogger &logger) : logger_(logger) {}
+    TransportHub::TransportHub(ILogger &logger, IReadOnlySettingsProvider &settingsProvider)
+        : logger_(logger), _settingsProvider(settingsProvider)
+    {
+    }
 
     TransportHub::~TransportHub()
     {
@@ -95,6 +98,8 @@ namespace iotsmartsys::core
         logger_.info("TransportHub", "Message received on channel payload: %.*s",
                      (int)msg.payloadLen, msg.payload);
 
+        auto &settings = _settingsProvider.getSettings();
+
         for (auto &dispatcher : dispatchers_)
         {
             if (dispatcher->dispatchMessage(msg))
@@ -111,10 +116,10 @@ namespace iotsmartsys::core
                     if (forwardChannel->getName() == msg.origin)
                     {
                         logger_.warn("TransportHub", "Not forwarding message to its origin channel: %s", forwardChannel->getName());
-                        return;
+                        continue;
                     }
 
-                    if (forwardChannel->publish("iotsmartsys/zigbee/events", msg.payload, msg.payloadLen, msg.retain))
+                    if (forwardChannel->publish(settings.mqtt.notify_topic.c_str(), msg.payload, msg.payloadLen, msg.retain))
                     {
                         logger_.info("TransportHub", "Message forwarded successfully to channel name: %s", forwardChannel->getName());
                     }
@@ -125,7 +130,6 @@ namespace iotsmartsys::core
                 }
             }
         }
-
     }
 
     void TransportHub::onConnected(void *, const TransportConnectedView &info)

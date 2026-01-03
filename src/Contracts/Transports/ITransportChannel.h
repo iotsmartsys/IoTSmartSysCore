@@ -16,6 +16,8 @@ namespace iotsmartsys::core
         const char *clientId;
         const char *username;
         const char *password;
+        const char *subscribeTopic;
+        const char *publishTopic;
         uint16_t keepAliveSec{30};
         bool cleanSession{true};
     };

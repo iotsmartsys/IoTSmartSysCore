@@ -2,15 +2,16 @@
 
 #include "Contracts/Transports/ITransportHub.h"
 #include "Contracts/Logging/ILogger.h"
+#include "Contracts/Settings/IReadOnlySettingsProvider.h"
 #include "vector"
 
 namespace iotsmartsys::core
 {
-
+    using namespace iotsmartsys::core::settings;
     class TransportHub : public ITransportHub
     {
     public:
-        TransportHub(ILogger &logger);
+        TransportHub(ILogger &logger, IReadOnlySettingsProvider &settingsProvider);
         virtual ~TransportHub() override;
 
         virtual bool addChannel(const char *name, ITransportChannel *channel) override;
@@ -33,6 +34,7 @@ namespace iotsmartsys::core
 
         std::vector<ChannelEntry *> channels_;
         std::vector<ITransportDispatcher *> dispatchers_;
+        IReadOnlySettingsProvider &_settingsProvider;
 
         void onMessageReceived(void *, const TransportMessageView &msg);
         void onConnected(void *, const TransportConnectedView &info);

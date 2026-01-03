@@ -114,7 +114,8 @@ namespace iotsmartsys::app
         uint32_t _lastStatusLogAtMs{0};
         uint32_t _statusLogEveryMs{5000};
 
-        // subscribe list (sem heap): guarde só tópicos "const char*"
+        
+        const char *_publishTopic{nullptr};
         // const char *_subs[MaxTopics]{};
         std::string _subs[MaxTopics];
         std::size_t _subCount{0};

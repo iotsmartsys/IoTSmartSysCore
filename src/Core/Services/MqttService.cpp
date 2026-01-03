@@ -77,6 +77,7 @@ namespace iotsmartsys::app
 
         // _subCount = 0;
         _qHead = _qTail = _qCount = 0;
+        subscribe(cfg.subscribeTopic);
 
         const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
         _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
@@ -239,7 +240,7 @@ namespace iotsmartsys::app
         }
         return enqueue(topic, payload, len, retain);
     }
-    
+
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::republish(const iotsmartsys::core::TransportMessageView &msg)
     {
@@ -247,12 +248,29 @@ namespace iotsmartsys::app
         {
             return _client.republish(msg);
         }
+        return enqueue(msg.topic, msg.payload, msg.payloadLen, msg.retain);
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::subscribe(const char *topic)
     {
+        if (!topic || std::strlen(topic) == 0)
+        {
+            _logger.debug("MQTT", "Empty topic in subscribe()");
+            return false;
+        }
+        
         // guarda para resubscribe
+        // deve evitar que tópicos duplicados sejam adicionados
+        for (std::size_t i = 0; i < _subCount; ++i)
+        {
+            if (_subs[i] == topic)
+            {
+                _logger.debug("MQTT", "Topic already in subscribe list; topic=%s", topic);
+                return true;
+            }
+        }
+
         if (_subCount < MaxTopics)
         {
             _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
