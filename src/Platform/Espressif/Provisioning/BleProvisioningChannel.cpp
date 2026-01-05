@@ -8,11 +8,13 @@ extern "C"
 {
 #include "nvs_flash.h"
 #include "esp_bt.h"
+#include "esp32-hal-bt.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_chip_info.h"
+#include "soc/soc_caps.h"
 }
 
 namespace iotsmartsys::core::provisioning
@@ -21,7 +23,6 @@ namespace iotsmartsys::core::provisioning
     BleProvisioningChannel *BleProvisioningChannel::s_instance = nullptr;
 
     static const char *TAG = "BleProv";
-
 
     // 128-bit UUIDs (BLE uses little-endian byte order for UUIDs)
     // Service UUID: 581DD1C9-0D5F-4174-921E-65AE482C6DE6
@@ -89,6 +90,7 @@ namespace iotsmartsys::core::provisioning
     static bool s_adv_cfg_done = false;
     static bool s_scan_rsp_cfg_done = false;
     static char s_adv_name[32] = "IoTSmartSysSetup";
+    static bool s_pending_adv_start_log = true;
 
     static std::string s_rx_buffer;
     static size_t s_rx_expected_len = 0;
@@ -173,11 +175,22 @@ namespace iotsmartsys::core::provisioning
         _connId = 0xFFFF;
         _gattsIf = ESP_GATT_IF_NONE;
 
-        initBleStack();
+        if (!initBleStack())
+        {
+            _active = false;
+            s_instance = nullptr;
+            sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:INIT_BLE");
+            return;
+        }
 
-        esp_ble_gap_register_callback(&BleProvisioningChannel::gapEventHandler);
-        esp_ble_gatts_register_callback(&BleProvisioningChannel::gattsEventHandler);
-        esp_ble_gatts_app_register(GATTS_APP_ID);
+        esp_err_t rc_gap_cb = esp_ble_gap_register_callback(&BleProvisioningChannel::gapEventHandler);
+        _logger.info(TAG, "begin: esp_ble_gap_register_callback -> %s", esp_err_to_name(rc_gap_cb));
+
+        esp_err_t rc_gatts_cb = esp_ble_gatts_register_callback(&BleProvisioningChannel::gattsEventHandler);
+        _logger.info(TAG, "begin: esp_ble_gatts_register_callback -> %s", esp_err_to_name(rc_gatts_cb));
+
+        esp_err_t rc_app = esp_ble_gatts_app_register(GATTS_APP_ID);
+        _logger.info(TAG, "begin: esp_ble_gatts_app_register -> %s", esp_err_to_name(rc_app));
 
         sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] Aguardando configuracao via BLE...");
     }
@@ -262,8 +275,6 @@ namespace iotsmartsys::core::provisioning
         }
 
         _logger.info(TAG, "%s", msg);
-
-        ESP_LOGI(TAG, "%s", msg);
 
         if (_gattsIf == ESP_GATT_IF_NONE)
         {
@@ -447,41 +458,264 @@ namespace iotsmartsys::core::provisioning
         _basicAuthStorage = nextPart(p, pos);
     }
 
-    void BleProvisioningChannel::initBleStack()
+    bool BleProvisioningChannel::initBleStack()
     {
+        auto *logger = s_instance ? &s_instance->_logger : nullptr;
+
         esp_err_t ret = nvs_flash_init();
+        if (logger)
+        {
+            logger->info(TAG, "initBleStack: nvs_flash_init -> %s", esp_err_to_name(ret));
+        }
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
             nvs_flash_erase();
             nvs_flash_init();
         }
 
-        esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
-
-        esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-        ret = esp_bt_controller_init(&bt_cfg);
-        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+    #if SOC_BT_CLASSIC_SUPPORTED
+        // Free Classic BT memory when only using BLE.
+        esp_err_t rel = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+        if (logger)
         {
-            ESP_LOGE(TAG, "bt_controller_init failed: %s", esp_err_to_name(ret));
+            logger->info(TAG, "initBleStack: mem_release(CLASSIC_BT) -> %s", esp_err_to_name(rel));
+        }
+    #endif
+
+        esp_bt_controller_status_t ctl_status = esp_bt_controller_get_status();
+        if (logger)
+        {
+            logger->info(TAG, "initBleStack: controller_status=%d", (int)ctl_status);
         }
 
-        ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+        if (ctl_status == ESP_BT_CONTROLLER_STATUS_ENABLED)
         {
-            ESP_LOGE(TAG, "bt_controller_enable failed: %s", esp_err_to_name(ret));
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: controller enabled, disabling for reinit");
+            }
+            esp_bt_controller_disable();
+            ctl_status = esp_bt_controller_get_status();
         }
 
-        ret = esp_bluedroid_init();
-        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+        if (ctl_status == ESP_BT_CONTROLLER_STATUS_INITED)
         {
-            ESP_LOGE(TAG, "bluedroid_init failed: %s", esp_err_to_name(ret));
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: controller inited, deinit to reset");
+            }
+            esp_bt_controller_deinit();
+            ctl_status = esp_bt_controller_get_status();
         }
 
-        ret = esp_bluedroid_enable();
-        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+        if (ctl_status == ESP_BT_CONTROLLER_STATUS_IDLE)
         {
-            ESP_LOGE(TAG, "bluedroid_enable failed: %s", esp_err_to_name(ret));
+            esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+            ret = esp_bt_controller_init(&bt_cfg);
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bt_controller_init -> %s", esp_err_to_name(ret));
+            }
+            if (ret == ESP_ERR_INVALID_STATE)
+            {
+                // Try full release/deinit and retry once
+                esp_bt_controller_disable();
+                esp_bt_controller_deinit();
+                esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
+                ret = esp_bt_controller_init(&bt_cfg);
+                if (logger)
+                {
+                    logger->info(TAG, "initBleStack: bt_controller_init retry -> %s", esp_err_to_name(ret));
+                }
+            }
+            if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+            {
+                if (logger)
+                {
+                    logger->error(TAG, "bt_controller_init failed: %s", esp_err_to_name(ret));
+                }
+                // Continue even if invalid state; do not return
+            }
         }
+
+        ctl_status = esp_bt_controller_get_status();
+        if (logger)
+        {
+            logger->info(TAG, "initBleStack: controller_status(after init)=%d", (int)ctl_status);
+        }
+
+        if (ctl_status != ESP_BT_CONTROLLER_STATUS_ENABLED)
+        {
+            ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bt_controller_enable(BLE) -> %s", esp_err_to_name(ret));
+            }
+            if (ret == ESP_ERR_INVALID_ARG)
+            {
+                ret = esp_bt_controller_enable(ESP_BT_MODE_BTDM);
+                if (logger)
+                {
+                    logger->info(TAG, "initBleStack: bt_controller_enable(BTDM fallback) -> %s", esp_err_to_name(ret));
+                }
+            }
+            if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+            {
+                if (logger)
+                {
+                    logger->error(TAG, "bt_controller_enable failed: %s", esp_err_to_name(ret));
+                }
+                return false;
+            }
+        }
+        else if (logger)
+        {
+            logger->info(TAG, "initBleStack: controller already enabled");
+        }
+
+        esp_bluedroid_status_t bd_status = esp_bluedroid_get_status();
+        if (logger)
+        {
+            logger->info(TAG, "initBleStack: bluedroid_status=%d", (int)bd_status);
+        }
+
+        if (bd_status == ESP_BLUEDROID_STATUS_ENABLED)
+        {
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bluedroid enabled, disabling for reinit");
+            }
+            esp_bluedroid_disable();
+            bd_status = esp_bluedroid_get_status();
+        }
+
+        if (bd_status == ESP_BLUEDROID_STATUS_INITIALIZED)
+        {
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bluedroid initialized, deinit to reset");
+            }
+            esp_bluedroid_deinit();
+            bd_status = esp_bluedroid_get_status();
+        }
+
+        if (bd_status == ESP_BLUEDROID_STATUS_UNINITIALIZED)
+        {
+            ret = esp_bluedroid_init();
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bluedroid_init -> %s", esp_err_to_name(ret));
+            }
+            if (ret == ESP_ERR_INVALID_STATE)
+            {
+                esp_bluedroid_disable();
+                esp_bluedroid_deinit();
+                ret = esp_bluedroid_init();
+                if (logger)
+                {
+                    logger->info(TAG, "initBleStack: bluedroid_init retry -> %s", esp_err_to_name(ret));
+                }
+            }
+            if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+            {
+                if (logger)
+                {
+                    logger->error(TAG, "bluedroid_init failed: %s", esp_err_to_name(ret));
+                }
+                return false;
+            }
+            bd_status = esp_bluedroid_get_status();
+        }
+
+        if (bd_status != ESP_BLUEDROID_STATUS_ENABLED)
+        {
+            ret = esp_bluedroid_enable();
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: bluedroid_enable -> %s", esp_err_to_name(ret));
+            }
+            if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE)
+            {
+                if (logger)
+                {
+                    logger->error(TAG, "bluedroid_enable failed: %s", esp_err_to_name(ret));
+                }
+                return false;
+            }
+        }
+        else if (logger)
+        {
+            logger->info(TAG, "initBleStack: bluedroid already enabled");
+        }
+
+        ret = esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
+        if (ret != ESP_OK)
+        {
+            if (logger)
+            {
+                logger->warn(TAG, "tx_power_set(ADV) failed: %s", esp_err_to_name(ret));
+            }
+        }
+
+        ret = esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
+        if (ret != ESP_OK)
+        {
+            if (logger)
+            {
+                logger->warn(TAG, "tx_power_set(DEFAULT) failed: %s", esp_err_to_name(ret));
+            }
+        }
+
+        esp_bt_controller_status_t final_ctl = esp_bt_controller_get_status();
+        esp_bluedroid_status_t final_bd = esp_bluedroid_get_status();
+        if (logger)
+        {
+            logger->info(TAG, "initBleStack: final controller_status=%d bluedroid_status=%d", (int)final_ctl, (int)final_bd);
+        }
+
+        if (final_ctl != ESP_BT_CONTROLLER_STATUS_ENABLED || final_bd != ESP_BLUEDROID_STATUS_ENABLED)
+        {
+            if (logger)
+            {
+                logger->warn(TAG, "initBleStack: BLE stack not fully enabled, trying Arduino btStart()");
+            }
+            if (btStarted())
+            {
+                btStop();
+            }
+            bool bt_ok = btStart();
+            final_ctl = esp_bt_controller_get_status();
+            final_bd = esp_bluedroid_get_status();
+            if (final_bd == ESP_BLUEDROID_STATUS_UNINITIALIZED)
+            {
+                ret = esp_bluedroid_init();
+                if (logger)
+                {
+                    logger->info(TAG, "initBleStack: bluedroid_init after btStart -> %s", esp_err_to_name(ret));
+                }
+                if (ret == ESP_OK || ret == ESP_ERR_INVALID_STATE)
+                {
+                    ret = esp_bluedroid_enable();
+                    if (logger)
+                    {
+                        logger->info(TAG, "initBleStack: bluedroid_enable after btStart -> %s", esp_err_to_name(ret));
+                    }
+                }
+                final_bd = esp_bluedroid_get_status();
+            }
+            if (logger)
+            {
+                logger->info(TAG, "initBleStack: btStart result=%d controller_status=%d bluedroid_status=%d", bt_ok ? 1 : 0, (int)final_ctl, (int)final_bd);
+            }
+        }
+
+        const bool ready = (final_ctl == ESP_BT_CONTROLLER_STATUS_ENABLED) && (final_bd == ESP_BLUEDROID_STATUS_ENABLED);
+        if (!ready && logger)
+        {
+            logger->error(TAG, "initBleStack: BLE stack not ready");
+        }
+
+        return ready;
     }
 
     void BleProvisioningChannel::startAdvertising()
@@ -489,7 +723,6 @@ namespace iotsmartsys::core::provisioning
         s_adv_cfg_done = false;
         s_scan_rsp_cfg_done = false;
 
-        // Flags + Complete List of 128-bit Service UUIDs (AD type 0x07)
         const uint8_t adv_raw[] = {
             0x02, 0x01, 0x06,
             0x11, 0x07,
@@ -497,26 +730,53 @@ namespace iotsmartsys::core::provisioning
             0x74, 0x41, 0x5F, 0x0D, 0xC9, 0xD1, 0x1D, 0x58};
 
         esp_err_t err1 = esp_ble_gap_config_adv_data_raw((uint8_t *)adv_raw, sizeof(adv_raw));
-        if (err1 != ESP_OK)
+        if (err1 == ESP_OK)
+        {
+            // OK: vai vir o evento ADV_DATA_RAW_SET_COMPLETE
+        }
+        else if (err1 == ESP_ERR_INVALID_STATE)
+        {
+            ESP_LOGW(TAG, "ADV raw already configured (INVALID_STATE). Marking done.");
+            s_adv_cfg_done = true;
+        }
+        else
         {
             ESP_LOGE(TAG, "esp_ble_gap_config_adv_data_raw failed: %s", esp_err_to_name(err1));
+            if (s_instance)
+                s_instance->sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:ADV_DATA_CFG");
         }
 
         uint8_t scan_rsp_raw[2 + sizeof(s_adv_name)] = {0};
         size_t name_len = strnlen(s_adv_name, sizeof(s_adv_name) - 1);
         if (name_len > 29)
-        {
             name_len = 29;
-        }
 
         scan_rsp_raw[0] = (uint8_t)(name_len + 1);
         scan_rsp_raw[1] = 0x09;
         memcpy(&scan_rsp_raw[2], s_adv_name, name_len);
 
         esp_err_t err2 = esp_ble_gap_config_scan_rsp_data_raw(scan_rsp_raw, (uint16_t)(name_len + 2));
-        if (err2 != ESP_OK)
+        if (err2 == ESP_OK)
+        {
+            // OK: vai vir o evento SCAN_RSP_DATA_RAW_SET_COMPLETE
+        }
+        else if (err2 == ESP_ERR_INVALID_STATE)
+        {
+            ESP_LOGW(TAG, "SCAN_RSP raw already configured (INVALID_STATE). Marking done.");
+            s_scan_rsp_cfg_done = true;
+        }
+        else
         {
             ESP_LOGE(TAG, "esp_ble_gap_config_scan_rsp_data_raw failed: %s", esp_err_to_name(err2));
+            if (s_instance)
+                s_instance->sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:SCAN_RSP_CFG");
+        }
+
+        // Se ambos já estavam “prontos”, inicia advertising sem depender dos eventos.
+        if (s_adv_cfg_done && s_scan_rsp_cfg_done)
+        {
+            esp_err_t st = esp_ble_gap_start_advertising(&s_advParams);
+            ESP_LOGI(TAG, "esp_ble_gap_start_advertising => %s", esp_err_to_name(st));
         }
     }
 
@@ -531,22 +791,33 @@ namespace iotsmartsys::core::provisioning
         {
         case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
             s_adv_cfg_done = true;
-            if (s_adv_cfg_done && s_scan_rsp_cfg_done)
-            {
-                esp_ble_gap_start_advertising(&s_advParams);
-            }
+            s_instance->_logger.info(TAG, "GAP: ADV_DATA_RAW_SET_COMPLETE status=%u", param->adv_data_cmpl.status);
+            tryStartAdvertising();
+            break;
+        case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
+            s_adv_cfg_done = true;
+            s_instance->_logger.info(TAG, "GAP: ADV_DATA_SET_COMPLETE status=%u", param->adv_data_cmpl.status);
+            tryStartAdvertising();
             break;
         case ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT:
             s_scan_rsp_cfg_done = true;
-            if (s_adv_cfg_done && s_scan_rsp_cfg_done)
-            {
-                esp_ble_gap_start_advertising(&s_advParams);
-            }
+            s_instance->_logger.info(TAG, "GAP: SCAN_RSP_DATA_RAW_SET_COMPLETE status=%u", param->scan_rsp_data_cmpl.status);
+            tryStartAdvertising();
+            break;
+        case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
+            s_scan_rsp_cfg_done = true;
+            s_instance->_logger.info(TAG, "GAP: SCAN_RSP_DATA_SET_COMPLETE status=%u", param->scan_rsp_data_cmpl.status);
+            tryStartAdvertising();
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
             if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS)
             {
                 s_instance->sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:ADV_START_FAILED");
+            }
+            else
+            {
+                s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] ADVERTISING");
+                s_instance->_logger.info(TAG, "GAP: advertising started (interval=%u-%u units)", s_advParams.adv_int_min, s_advParams.adv_int_max);
             }
             break;
         default:
@@ -570,9 +841,12 @@ namespace iotsmartsys::core::provisioning
             build_ble_device_name(dev_name, sizeof(dev_name));
             strncpy(s_adv_name, dev_name, sizeof(s_adv_name) - 1);
             s_adv_name[sizeof(s_adv_name) - 1] = '\0';
-            esp_ble_gap_set_device_name(s_adv_name);
+            s_instance->_logger.info(TAG, "GATTS: REG_EVT gatts_if=%u dev_name=%s", (unsigned)gatts_if, s_adv_name);
+            esp_err_t rc_name = esp_ble_gap_set_device_name(s_adv_name);
+            s_instance->_logger.info(TAG, "GATTS: set_device_name -> %s", esp_err_to_name(rc_name));
             startAdvertising();
-            esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, HRS_IDX_NB, 0);
+            esp_err_t rc_attr = esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, HRS_IDX_NB, 0);
+            s_instance->_logger.info(TAG, "GATTS: create_attr_tab -> %s", esp_err_to_name(rc_attr));
             break;
         }
 
@@ -583,10 +857,12 @@ namespace iotsmartsys::core::provisioning
                 memcpy(s_handleTable, param->add_attr_tab.handles, sizeof(s_handleTable));
                 esp_ble_gatts_start_service(s_handleTable[IDX_SVC]);
                 s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] READY");
+                s_instance->_logger.info(TAG, "GATTS: attribute table created and service started");
             }
             else
             {
                 s_instance->sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:ATTR_TAB");
+                s_instance->_logger.error(TAG, "GATTS: create attr table failed status=%d num_handle=%d", param->add_attr_tab.status, param->add_attr_tab.num_handle);
             }
             break;
         }
@@ -595,6 +871,7 @@ namespace iotsmartsys::core::provisioning
         {
             s_instance->_connId = param->connect.conn_id;
             s_send_ssids_requested = true;
+            s_instance->_logger.info(TAG, "GATTS: CONNECT conn_id=%u", (unsigned)param->connect.conn_id);
             s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] CONNECTED");
             break;
         }
@@ -613,6 +890,7 @@ namespace iotsmartsys::core::provisioning
             s_pending_ssids.clear();
             s_pending_ssid_index = 0;
 
+            s_instance->_logger.info(TAG, "GATTS: DISCONNECT reason=%u", (unsigned)param->disconnect.reason);
             esp_ble_gap_start_advertising(&s_advParams);
             s_instance->sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] DISCONNECTED");
             break;
@@ -624,12 +902,14 @@ namespace iotsmartsys::core::provisioning
 
             if (w.handle == s_handleTable[IDX_CHAR_VAL_CONFIG])
             {
+                s_instance->_logger.info(TAG, "GATTS: WRITE config len=%u", (unsigned)w.len);
                 s_instance->onConfigWrite(w.value, w.len);
             }
             else if (w.handle == s_handleTable[IDX_CHAR_CFG_STATUS] && w.len == 2)
             {
                 uint16_t v = (uint16_t)(w.value[1] << 8) | (uint16_t)(w.value[0]);
                 s_instance->_notifyEnabled = (v == 0x0001);
+                s_instance->_logger.info(TAG, "GATTS: CCCD write value=0x%04X notifyEnabled=%d", v, s_instance->_notifyEnabled ? 1 : 0);
                 if (s_instance->_notifyEnabled)
                 {
                     s_send_ssids_requested = true;
@@ -640,6 +920,36 @@ namespace iotsmartsys::core::provisioning
 
         default:
             break;
+        }
+    }
+
+    void BleProvisioningChannel::tryStartAdvertising()
+    {
+        if (!s_adv_cfg_done || !s_scan_rsp_cfg_done)
+        {
+            if (s_pending_adv_start_log)
+            {
+                if (s_instance)
+                {
+                    s_instance->_logger.info(TAG, "tryStartAdvertising: waiting adv_cfg_done=%d scan_rsp_cfg_done=%d", s_adv_cfg_done, s_scan_rsp_cfg_done);
+                }
+                s_pending_adv_start_log = false;
+            }
+            return;
+        }
+
+        if (s_instance)
+        {
+            s_instance->_logger.info(TAG, "tryStartAdvertising: attempting start (adv_cfg_done=%d scan_rsp_cfg_done=%d)", s_adv_cfg_done, s_scan_rsp_cfg_done);
+        }
+        esp_err_t start_err = esp_ble_gap_start_advertising(&s_advParams);
+        if (start_err != ESP_OK && start_err != ESP_ERR_INVALID_STATE)
+        {
+            if (s_instance)
+            {
+                s_instance->_logger.error(TAG, "esp_ble_gap_start_advertising failed: %s", esp_err_to_name(start_err));
+                s_instance->sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:ADV_START_FAILED");
+            }
         }
     }
 

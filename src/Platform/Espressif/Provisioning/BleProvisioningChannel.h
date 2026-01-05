@@ -71,8 +71,9 @@ namespace iotsmartsys::core::provisioning
 
         static BleProvisioningChannel *s_instance;
 
-        static void initBleStack();
+        static bool initBleStack();
         static void startAdvertising();
+        static void tryStartAdvertising();
 
         bool _ssidListPending = false;
         bool _ssidListSent = false;

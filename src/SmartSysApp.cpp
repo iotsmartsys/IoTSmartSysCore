@@ -196,15 +196,14 @@ namespace iotsmartsys
             return;
         }
 
-        // otaManager_.handle();
-        //
+        otaManager_.handle();
+
         if (capabilityManager_)
         {
             capabilityManager_->handle();
         }
 
         wifi_.handle();
-        // mqtt_.handle();
         settingsManager_.handle();
         transportHub_.handle();
     }
