@@ -1,3 +1,4 @@
+#ifdef HX711_ENABLED
 #include "ArduinoGlpMeter.h"
 
 namespace iotsmartsys::platform::arduino
@@ -133,3 +134,4 @@ namespace iotsmartsys::platform::arduino
     }
 
 } // namespace iotsmartsys::platform::arduino
+#endif

@@ -1,4 +1,4 @@
-
+#ifdef BH1750_ENABLED
 #include <Arduino.h>
 #include <Wire.h>
 #include <BH1750.h>
@@ -37,3 +37,4 @@ namespace iotsmartsys::platform::arduino
         return _driver.readLightLevel();
     }
 } // namespace iotsmartsys::platform::arduino
+#endif

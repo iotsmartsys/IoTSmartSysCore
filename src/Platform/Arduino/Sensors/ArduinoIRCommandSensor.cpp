@@ -1,3 +1,4 @@
+#ifdef IR_REMOTE_ESP8266
 #include "ArduinoIRCommandSensor.h"
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
@@ -67,4 +68,5 @@ namespace iotsmartsys::platform::arduino
         lastCommand.triggered = false;
     }
 
-} // namespace iotsmartsys::core
+} // namespace iotsmartsys::platform::arduino
+#endif

@@ -3,13 +3,17 @@
 
 #include "Contracts/Sensors/IGlpMeter.h"
 #include "Contracts/Logging/ILogger.h"
+
+#ifdef HX711_ENABLED
 #include "HX711.h"
+#endif
 
 namespace iotsmartsys::platform::arduino
 {
     using namespace iotsmartsys::core;
     using namespace iotsmartsys::core;
 
+#ifdef HX711_ENABLED
     class ArduinoGlpMeter : public IGlpMeter
     {
     public:
@@ -36,4 +40,17 @@ namespace iotsmartsys::platform::arduino
         float weight_capacity_kg;
         std::string levelString;
     };
+#else
+    // Stub when HX711 is disabled at build time.
+    class ArduinoGlpMeter : public IGlpMeter
+    {
+    public:
+        ArduinoGlpMeter(int, ILogger &) {}
+        void setup() override {}
+        void handle() override {}
+        float getKg() const override { return 0.0f; }
+        float getPercent() const override { return 0.0f; }
+        std::string getLevelString() const override { return "0"; }
+    };
+#endif
 } // namespace iotsmartsys::platform::arduino

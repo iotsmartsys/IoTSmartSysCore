@@ -5,10 +5,14 @@
 #include <Arduino.h>
 #endif
 #include "Contracts/Sensors/IIRCommandSensor.h"
+
+#ifdef IR_REMOTE_ESP8266
 #include <IRrecv.h>
+#endif
 
 namespace iotsmartsys::platform::arduino
 {
+#ifdef IR_REMOTE_ESP8266
     class ArduinoIRCommandSensor : public iotsmartsys::core::IIRCommandSensor
     {
     public:
@@ -30,5 +34,17 @@ namespace iotsmartsys::platform::arduino
         uint64_t lastState;
         long lastSendEvent;
     };
+#else
+    // Stub implementation to keep builds working when IR support is disabled.
+    class ArduinoIRCommandSensor : public iotsmartsys::core::IIRCommandSensor
+    {
+    public:
+        explicit ArduinoIRCommandSensor(int) {}
+        void setup() override {}
+        void handle() override {}
+        iotsmartsys::core::IRCommand readCommand() const override { return iotsmartsys::core::IRCommand{false, 0, ""}; }
+        void readed() override {}
+    };
+#endif
 
-} // namespace iotsmartsys::core
+} // namespace iotsmartsys::platform::arduino
