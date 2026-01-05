@@ -25,7 +25,8 @@
 #include "Contracts/Capabilities/HumiditySensorCapability.h"
 #include "Contracts/Capabilities/HeightWaterLevelCapability.h"
 #include "Contracts/Capabilities/GlpSensorCapability.h"
-#include "Contracts/Capabilities/GlpMeterCapability.h"
+#include "Contracts/Capabilities/GlpMeterKgCapability.h"
+#include "Contracts/Capabilities/GlpMeterPercentCapability.h"
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
 #include <stdexcept>
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
@@ -78,7 +79,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::HumiditySensorCapability *addHumiditySensor(const HumiditySensorConfig &cfg);
         iotsmartsys::core::HeightWaterLevelCapability *addWaterHeight(const WaterLevelSensorConfig &cfg);
         iotsmartsys::core::GlpSensorCapability *addGlpSensor(const GlpSensorConfig &cfg);
-        iotsmartsys::core::GlpMeterCapability *addGlpMeter(const GlpMeterConfig &cfg);
+        iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercent(const GlpMeterConfig &cfg);
+        iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKg(const GlpMeterConfig &cfg);
         iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensor(const OperationalColorSensorConfig &cfg);
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
 

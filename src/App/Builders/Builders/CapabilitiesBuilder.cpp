@@ -876,35 +876,6 @@ namespace iotsmartsys::app
         return cap;
     }
 
-    // --------------------------- addGlpMeter ---------------------------
-    iotsmartsys::core::GlpMeterCapability *CapabilitiesBuilder::addGlpMeter(const GlpMeterConfig &cfg)
-    {
-        if (_count >= _capsMax)
-            return nullptr;
-
-        void *memcap = allocateAligned(sizeof(iotsmartsys::core::GlpMeterCapability),
-                                       alignof(iotsmartsys::core::GlpMeterCapability));
-        if (!memcap)
-            return nullptr;
-
-        auto *cap = new (memcap) iotsmartsys::core::GlpMeterCapability(
-            *static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
-            &_eventSink);
-
-        auto dtor = [](void *p)
-        {
-            static_cast<iotsmartsys::core::GlpMeterCapability *>(p)->~GlpMeterCapability();
-        };
-
-        if (!registerCapability(cap, dtor))
-        {
-            cap->~GlpMeterCapability();
-            return nullptr;
-        }
-
-        return cap;
-    }
-
     // --------------------------- addOperationalColorSensor ---------------------------
     iotsmartsys::core::OperationalColorSensorCapability *CapabilitiesBuilder::addOperationalColorSensor(const OperationalColorSensorConfig &cfg)
     {
@@ -959,6 +930,59 @@ namespace iotsmartsys::app
             return nullptr;
         }
 
+        return cap;
+    }
+
+    // --------------------------- addGlpMeter ---------------------------
+    iotsmartsys::core::GlpMeterPercentCapability *CapabilitiesBuilder::addGlpMeterPercent(const GlpMeterConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::GlpMeterPercentCapability),
+                                       alignof(iotsmartsys::core::GlpMeterPercentCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::GlpMeterPercentCapability(
+            *static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
+            &_eventSink);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::GlpMeterPercentCapability *>(p)->~GlpMeterPercentCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~GlpMeterPercentCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    // --------------------------- addGlpMeterKg ---------------------------
+    iotsmartsys::core::GlpMeterKgCapability *CapabilitiesBuilder::addGlpMeterKg(const GlpMeterConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::GlpMeterKgCapability),
+                                       alignof(iotsmartsys::core::GlpMeterKgCapability));
+        if (!memcap)
+            return nullptr;
+        auto *cap = new (memcap) iotsmartsys::core::GlpMeterKgCapability(
+            *static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
+            &_eventSink);
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::GlpMeterKgCapability *>(p)->~GlpMeterKgCapability();
+        };
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~GlpMeterKgCapability();
+            return nullptr;
+        }
         return cap;
     }
 

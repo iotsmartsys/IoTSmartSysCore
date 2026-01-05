@@ -286,10 +286,16 @@ namespace iotsmartsys
         return builder_.addGlpSensor(cfg);
     }
 
-    /// @brief Adds a new GLP meter capability to the application.
-    iotsmartsys::core::GlpMeterCapability *SmartSysApp::addGlpMeterCapability(iotsmartsys::app::GlpMeterConfig cfg)
+    /// @brief Adds a new GLP meter Percent capability to the application.
+    iotsmartsys::core::GlpMeterPercentCapability *SmartSysApp::addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig cfg)
     {
-        return builder_.addGlpMeter(cfg);
+        return builder_.addGlpMeterPercent(cfg);
+    }
+
+    /// @brief Adds a new GLP meter Kg capability to the application.
+    iotsmartsys::core::GlpMeterKgCapability *SmartSysApp::addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig cfg)
+    {
+        return builder_.addGlpMeterKg(cfg);
     }
 
     /// @brief Adds a new humidity sensor capability to the application.

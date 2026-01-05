@@ -3,6 +3,7 @@
 #include "Platform/Arduino/Sensors/Bh1750LuminositySensor.h"
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
 #include "Platform/Arduino/Sensors/ArduinoGlpSensor.h"
+#include "Platform/Arduino/Sensors/ArduinoGlpMeter.h"
 #include <memory>
 
 namespace iotsmartsys::infra::factories
@@ -47,6 +48,11 @@ namespace iotsmartsys::infra::factories
     std::unique_ptr<core::IGlpSensor> SensorFactory::createGlpSensor(int pinAO, int pinDO)
     {
         return std::unique_ptr<ArduinoGlpSensor>(new ArduinoGlpSensor(pinAO, pinDO, _logger));
+    }
+
+    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int pinAO)
+    {
+        return std::unique_ptr<ArduinoGlpMeter>(new ArduinoGlpMeter(pinAO, _logger));
     }
 
 } // namespace iotsmartsys::infra::factories

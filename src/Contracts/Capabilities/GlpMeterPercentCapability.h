@@ -6,20 +6,18 @@
 
 namespace iotsmartsys::core
 {
-    class GlpMeterCapability : public ICapability
+    class GlpMeterPercentCapability : public ICapability
     {
     public:
-        explicit GlpMeterCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink);
+        explicit GlpMeterPercentCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;
 
-        float getKg() const;
         float getPercent() const;
 
     private:
         IGlpMeter &meter;
-        float lastKg{0.0f};
         float lastPercent{0.0f};
         std::string lastState;
         unsigned long lastCheckMillis{0};

@@ -45,6 +45,11 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created GLP sensor.
         std::unique_ptr<core::IGlpSensor> createGlpSensor(int pinAO, int pinDO) override;
 
+        /// @brief Creates a GLP meter.
+        /// @param pinAO The analog output pin.
+        /// @return A unique pointer to the created GLP meter.
+        std::unique_ptr<core::IGlpMeter> createGlpMeter(int pinAO) override;
+
     private:
         ILogger &_logger;
     };

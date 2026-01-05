@@ -1,20 +1,20 @@
-#include "Contracts/Capabilities/GlpMeterCapability.h"
+#include "Contracts/Capabilities/GlpMeterPercentCapability.h"
 #include "Contracts/Providers/Time.h"
 #include <string>
 
 using namespace iotsmartsys::core;
 
-GlpMeterCapability::GlpMeterCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink)
-    : ICapability(event_sink, GLP_METER_TYPE, "glp_meter", "0"), meter(meter)
+GlpMeterPercentCapability::GlpMeterPercentCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink)
+    : ICapability(event_sink, "", GLP_METER_TYPE, "0"), meter(meter)
 {
 }
 
-void GlpMeterCapability::setup()
+void GlpMeterPercentCapability::setup()
 {
     meter.setup();
 }
 
-void GlpMeterCapability::handle()
+void GlpMeterPercentCapability::handle()
 {
     meter.handle();
 
@@ -35,19 +35,13 @@ void GlpMeterCapability::handle()
         if (state != lastState)
         {
             lastState = state;
-            lastKg = kg;
             lastPercent = percent;
             updateState(state);
         }
     }
 }
 
-float GlpMeterCapability::getKg() const
-{
-    return lastKg;
-}
-
-float GlpMeterCapability::getPercent() const
+float GlpMeterPercentCapability::getPercent() const
 {
     return lastPercent;
 }
