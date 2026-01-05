@@ -1,7 +1,8 @@
 #pragma once
 #ifdef ESP32
 
-#include "Contracts/Transports/IMqttClient.h"
+#include "Contracts/Transports/ITransportChannel.h"
+#include "Core/Services/IMqttClient.h"
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Logging/Log.h"
 #include <string>
@@ -20,18 +21,21 @@ namespace iotsmartsys::platform::espressif
         EspIdfMqttClient(iotsmartsys::core::ILogger &log);
         ~EspIdfMqttClient() override;
 
-        bool begin(const iotsmartsys::core::MqttConfig &cfg) override;
+        bool begin(const iotsmartsys::core::TransportConfig &cfg) override;
         void start() override;
         void stop() override;
+        void handle() override {}
 
         bool isConnected() const override;
 
         bool publish(const char *topic, const void *payload, std::size_t len, bool retain) override;
+        bool republish(const iotsmartsys::core::TransportMessageView &msg) override;
         bool subscribe(const char *topic) override;
 
-        void setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user) override;
-        void setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user) override;
-        void setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user) override;
+        void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user) override;
+        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user) override;
+        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user) override;
+        const char *getName() const override { return _clientIdStr.c_str(); }
 
     private:
         static esp_err_t eventHandlerThunk(esp_mqtt_event_handle_t event);
@@ -40,20 +44,6 @@ namespace iotsmartsys::platform::espressif
         esp_err_t onEvent(esp_mqtt_event_handle_t event);
 
     private:
-        iotsmartsys::core::ILogger &_logger;
-        esp_mqtt_client_handle_t _client{nullptr};
-        bool _connected{false};
-
-        iotsmartsys::core::MqttOnMessageFn _onMsg{nullptr};
-        void *_onMsgUser{nullptr};
-        iotsmartsys::core::MqttOnConnectedFn _onConnected{nullptr};
-        void *_onConnectedUser{nullptr};
-        iotsmartsys::core::MqttOnDisconnectedFn _onDisconnected{nullptr};
-        void *_onDisconnectedUser{nullptr};
-        std::string _clientIdStr;
-        std::string _brokerStr;
-        uint16_t _keepAliveSec{0};
-
         // buffers para evitar alocações internas do mqtt_event (topic/payload não são null-terminated)
         // (opcional: pode processar direto via len)
     };

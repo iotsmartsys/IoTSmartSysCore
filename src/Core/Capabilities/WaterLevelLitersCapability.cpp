@@ -1,4 +1,6 @@
 #include "Contracts/Capabilities/WaterLevelLitersCapability.h"
+#include <sstream>
+#include <iomanip>
 
 namespace iotsmartsys::core
 {
@@ -7,22 +9,29 @@ namespace iotsmartsys::core
     {
     }
 
+    void WaterLevelLitersCapability::setup()
+    {
+        sensor.setup();
+    }
+
     void WaterLevelLitersCapability::handle()
     {
         unsigned long now = timeProvider.nowMs();
-        // Check every second
         if (now - lastCheckMillis >= 1000 || lastLevelLiters == 0.0)
         {
+            sensor.handle();
+            // Check every second
             lastCheckMillis = now;
 
-            sensor.handle();
-
             float actualLevel = sensor.getLevelLiters();
-            if (lastLevelLiters != actualLevel)
+
+            if (lastLevelLiters != actualLevel && actualLevel >= 0.0)
             {
                 lastLevelLiters = actualLevel;
                 levelLiters = actualLevel;
-                updateState(std::to_string(levelLiters));
+                std::ostringstream ss;
+                ss << std::fixed << std::setprecision(2) << levelLiters;
+                updateState(ss.str());
                 lastCheckMillis = now;
             }
         }

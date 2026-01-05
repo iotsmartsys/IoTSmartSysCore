@@ -1,4 +1,4 @@
-// Platform/Arduino/Bh1750LuminositySensor.h
+#pragma once
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -10,24 +10,17 @@ namespace iotsmartsys::platform::arduino
     class Bh1750LuminositySensor : public core::ILuminositySensor
     {
     public:
-        explicit Bh1750LuminositySensor(BH1750 &driver)
-            : _driver(driver)
-        {
-        }
+        Bh1750LuminositySensor(const int gpioSDA, const int gpioSCL);
 
-        void begin()
-        {
-            Wire.begin();
-            _driver.begin();
-        }
+        void setup();
 
-        float readLux() override
-        {
-            return _driver.readLightLevel();
-        }
+        float readLux() override;
 
     private:
-        BH1750 &_driver;
+        BH1750 _driver;
+        int _gpioSDA;
+        int _gpioSCL;
+        bool _initialized{false};
     };
 
 } // namespace iotsmartsys::platform::arduino

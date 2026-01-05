@@ -45,6 +45,7 @@ namespace iotsmartsys::core
         // virtual std::size_t colorSensorAdapterAlign() const = 0;
         // virtual IColorSensor *createColorSensor(void *mem, std::uint8_t pin) = 0;
         // virtual AdapterDestructor colorSensorAdapterDestructor() const = 0;
+
     };
 
 } // namespace iotsmartsys::core

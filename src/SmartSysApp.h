@@ -2,13 +2,14 @@
 
 #include <Arduino.h>
 #include <string>
+#include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 // -----------------------------------------------------------------------------
 //  Contracts / Core abstractions
 // -----------------------------------------------------------------------------
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
-#include "Contracts/Transports/IMqttClient.h"
+#include "Contracts/Transports/ITransportChannel.h"
 
 #include "Contracts/Settings/ISettingsFetcher.h"
 #include "Contracts/Settings/ISettingsParser.h"
@@ -47,6 +48,12 @@
 
 #include "Infra/OTA/OTAManager.h"
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
+#include "Infra/Factories/SensorFactory.h"
+#include "Core/Commands/CommandProcessorFactory.h"
+
+#include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
+#include "Core/Transports/TransportHub.h"
+#include "Core/Commands/CapabilityCommandTransportDispatcher.h"
 
 namespace iotsmartsys
 {
@@ -60,6 +67,9 @@ namespace iotsmartsys
 
         /// @brief Main application loop to be called repeatedly.
         void handle();
+
+        /// @brief Configure SerialTransportChannel UART pins and baud rate.
+        void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
 
         /* Capabilities */
         iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig cfg);
@@ -80,12 +90,13 @@ namespace iotsmartsys
         iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg);
         iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
         iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+        iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
 
     private:
-        static void onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg);
-        static void onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info);
-        void onMqttMessage(const core::MqttMessageView &msg);
-        void onMqttConnected(const core::MqttConnectedView &info);
+        static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);
+        static void onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info);
+        void onMqttMessage(const core::TransportMessageView &msg);
+        void onMqttConnected(const core::TransportConnectedView &info);
         static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
         void onSettingsUpdated(const core::settings::Settings &newSettings);
         void applySettingsToRuntime(const core::settings::Settings &settings);
@@ -120,6 +131,10 @@ namespace iotsmartsys
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
         iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
         iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
+        iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
+        CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
+        TransportHub transportHub_;
+        SerialTransportChannel *uart_;
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};

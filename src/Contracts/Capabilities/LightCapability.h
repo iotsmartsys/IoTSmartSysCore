@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "ICommandCapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 
 namespace iotsmartsys::core
 {
-    class LightCapability : public ICommandCapability
+    class LightCapability : public BinaryCommandCapability
     {
     public:
         LightCapability(const char *name,
@@ -17,9 +17,5 @@ namespace iotsmartsys::core
         void turnOn();
         void turnOff();
         bool isOn() const;
-
-    private:
-        void power(const char *state);
-        void power(const std::string &state) { power(state.c_str()); }
     };
 }

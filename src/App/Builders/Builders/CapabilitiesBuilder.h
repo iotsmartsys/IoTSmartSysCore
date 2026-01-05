@@ -29,6 +29,7 @@
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
 #include <stdexcept>
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
+#include "Contracts/Capabilities/LuminosityCapability.h"
 
 namespace iotsmartsys::app
 {
@@ -79,6 +80,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::GlpSensorCapability *addGlpSensor(const GlpSensorConfig &cfg);
         iotsmartsys::core::GlpMeterCapability *addGlpMeter(const GlpMeterConfig &cfg);
         iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensor(const OperationalColorSensorConfig &cfg);
+        iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
 
     private:
         void *allocateAligned(size_t sizeBytes, size_t alignment);

@@ -8,8 +8,9 @@
 #include "Contracts/Settings/SettingsGate.h"
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
-#include "Contracts/Transports/IMqttClient.h"
+#include "Contracts/Transports/ITransportChannel.h"
 #include "Contracts/Settings/IReadOnlySettingsProvider.h"
+#include "IMqttClient.h"
 
 namespace iotsmartsys::app
 {
@@ -23,7 +24,7 @@ namespace iotsmartsys::app
     };
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    class MqttService
+    class MqttService : public iotsmartsys::core::ITransportChannel
     {
     public:
         explicit MqttService(iotsmartsys::core::IMqttClient &client,
@@ -31,22 +32,29 @@ namespace iotsmartsys::app
                              iotsmartsys::core::settings::ISettingsGate &settingsGate,
                              iotsmartsys::core::settings::IReadOnlySettingsProvider &settingsProvider);
 
-        void begin(const iotsmartsys::core::MqttConfig &cfg,
-                   const RetryPolicy &policy = RetryPolicy{});
+        bool begin(const iotsmartsys::core::TransportConfig &cfg) override;
+        bool begin(const iotsmartsys::core::TransportConfig &cfg,
+                   const RetryPolicy &policy);
+        void start() override {}
+        void stop() override {}
 
-        void handle();
+        void handle() override;
 
         // QoS0: se offline -> enfileira (se tiver espaço)
-        bool publish(const char *topic, const void *payload, std::size_t len, bool retain = false);
+        bool publish(const char *topic, const void *payload, std::size_t len, bool retain = false) override;
 
-        bool subscribe(const char *topic);
+        bool republish(const iotsmartsys::core::TransportMessageView &msg) override;
+
+        bool subscribe(const char *topic) override;
 
         // callback opcional para entregar mensagens à sua camada de roteamento
-        void setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user);
-        void setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user);
-        void setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user);
+        void setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user) override;
+        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user) override;
+        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user) override;
 
+        bool isConnected() const override;
         bool isOnline() const;
+        const char *getName() const override { return _client.getName(); }
 
     private:
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;
@@ -79,8 +87,8 @@ namespace iotsmartsys::app
         void drainQueue();
         bool enqueue(const char *topic, const void *payload, std::size_t len, bool retain);
 
-        static void onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg);
-        static void onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info);
+        static void onMessageThunk(void *user, const iotsmartsys::core::TransportMessageView &msg);
+        static void onConnectedThunk(void *user, const iotsmartsys::core::TransportConnectedView &info);
         static void onDisconnectedThunk(void *user);
         static void onSettingsReadyThunk(iotsmartsys::core::settings::SettingsReadyLevel level, void *ctx);
         void onSettingsReady(iotsmartsys::core::settings::SettingsReadyLevel level);
@@ -91,7 +99,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::ILogger &_logger;
         iotsmartsys::core::ITimeProvider *_time;
 
-        iotsmartsys::core::MqttConfig _cfg{};
+        iotsmartsys::core::TransportConfig _cfg{};
         // persistent storage for strings referenced by _cfg (avoid dangling pointers)
         std::string _uriStr;
         std::string _usernameStr;
@@ -106,7 +114,8 @@ namespace iotsmartsys::app
         uint32_t _lastStatusLogAtMs{0};
         uint32_t _statusLogEveryMs{5000};
 
-        // subscribe list (sem heap): guarde só tópicos "const char*"
+        
+        const char *_publishTopic{nullptr};
         // const char *_subs[MaxTopics]{};
         std::string _subs[MaxTopics];
         std::size_t _subCount{0};
@@ -116,11 +125,11 @@ namespace iotsmartsys::app
         std::size_t _qHead{0}, _qTail{0}, _qCount{0};
 
         // user callback
-        iotsmartsys::core::MqttOnMessageFn _userMsgCb{nullptr};
+        iotsmartsys::core::TransportOnMessageFn _userMsgCb{nullptr};
         void *_userMsgUser{nullptr};
-        iotsmartsys::core::MqttOnConnectedFn _userConnectedCb{nullptr};
+        iotsmartsys::core::TransportOnConnectedFn _userConnectedCb{nullptr};
         void *_userConnectedUser{nullptr};
-        iotsmartsys::core::MqttOnDisconnectedFn _userDisconnectedCb{nullptr};
+        iotsmartsys::core::TransportOnDisconnectedFn _userDisconnectedCb{nullptr};
         void *_userDisconnectedUser{nullptr};
     };
 

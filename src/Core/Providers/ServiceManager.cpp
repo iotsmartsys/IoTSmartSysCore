@@ -25,6 +25,7 @@ namespace iotsmartsys::core
           settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
           wifiManager_(logger_)
     {
+        Serial.begin(115200);
         registerServices();
     }
 

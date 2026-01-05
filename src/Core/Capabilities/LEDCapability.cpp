@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     LEDCapability::LEDCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF),
+        : BinaryCommandCapability(hardwareAdapter, event_sink, capability_name, LED_ACTUATOR_TYPE, LED_STATE_OFF, LED_STATE_ON),
           blinkInterval(0), lastToggleTs(0), blinking(false)
     {
     }
@@ -24,33 +24,11 @@ namespace iotsmartsys::core
         }
     }
 
-    void LEDCapability::toggle()
-    {
-        if (isOn())
-            turnOff();
-        else
-            turnOn();
-    }
-
-    void LEDCapability::turnOn()
-    {
-        applyCommand(CapabilityCommand{type.c_str(), LED_STATE_ON});
-    }
-
-    void LEDCapability::turnOff()
-    {
-        applyCommand(CapabilityCommand{type.c_str(), LED_STATE_OFF});
-    }
-
-    bool LEDCapability::isOn() const
-    {
-        return value == LED_STATE_ON;
-    }
-
-    void LEDCapability::executeCommand(const char *state)
-    {
-        power(state);
-    }
+    void LEDCapability::toggle() { BinaryCommandCapability::toggle(); }
+    void LEDCapability::turnOn() { BinaryCommandCapability::turnOn(); }
+    void LEDCapability::turnOff() { BinaryCommandCapability::turnOff(); }
+    bool LEDCapability::isOn() const { return BinaryCommandCapability::isOn(); }
+    void LEDCapability::executeCommand(const char *state) { power(state); }
 
     void LEDCapability::blink(unsigned long intervalMs)
     {

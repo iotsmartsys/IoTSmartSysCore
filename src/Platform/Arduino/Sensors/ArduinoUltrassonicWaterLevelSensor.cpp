@@ -39,7 +39,9 @@ namespace iotsmartsys::platform::arduino
         float distanceCm = sr04Sensor->getDistanceCm();
 
         if (distanceCm < distanceToSensorCM)
-            return;
+            {
+                return;
+            }
 
         if (lastDistanceCm > 0)
         {
@@ -57,7 +59,9 @@ namespace iotsmartsys::platform::arduino
         float actualLevelLiters = calcularVolumeAgua(actualRealHeight);
 
         if (actualLevelLiters == levelLiters)
+        {
             return;
+        }
 
         if (actualLevelLiters < levelLiters)
         {
@@ -67,16 +71,14 @@ namespace iotsmartsys::platform::arduino
                 return;
             }
         }
-
-        actualHeightCM = actualRealHeight;
-        levelLiters = actualLevelLiters;
-        levelPercent = (actualRealHeight / heightCM) * 100;
+        actualHeightCM = std::round(actualHeightCM * 100.0f) / 100.0f;
+        levelLiters = std::round(actualLevelLiters * 100.0f) / 100.0f;
+        levelPercent = std::round((actualRealHeight / heightCM) * 100.0f * 100.0f) / 100.0f;
     }
 
     float ArduinoUltrassonicWaterLevelSensor::getLevelPercent()
     {
         return levelPercent;
-        return 0.0f;
     }
 
     float ArduinoUltrassonicWaterLevelSensor::getLevelLiters()
@@ -106,7 +108,7 @@ namespace iotsmartsys::platform::arduino
     {
         // return level percent as string with 3 decimals
         char buf[32];
-        snprintf(buf, sizeof(buf), "%.3f", levelPercent);
+        snprintf(buf, sizeof(buf), "%.2f", levelPercent);
         return std::string(buf);
     }
 

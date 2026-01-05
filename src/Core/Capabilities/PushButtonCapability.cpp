@@ -3,45 +3,24 @@
 namespace iotsmartsys::core
 {
     PushButtonCapability::PushButtonCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
-        : IInputCapability(input_hardware_adapter, event_sink, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
-          toleranceTimeMs(toleranceTimeMs),
-          lastState(false),
-          lastChangeTs(0)
+        : DebouncedDigitalCapability(input_hardware_adapter, event_sink, "", PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED, toleranceTimeMs)
     {
     }
 
     PushButtonCapability::PushButtonCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs)
-        : IInputCapability(input_hardware_adapter, event_sink, capability_name, PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED),
-          toleranceTimeMs(toleranceTimeMs),
-          lastState(false),
-          lastChangeTs(0)
+        : DebouncedDigitalCapability(input_hardware_adapter, event_sink, capability_name.c_str(), PUSH_BUTTON_TYPE, PUSH_BUTTON_NO_PRESSED, toleranceTimeMs)
     {
     }
 
     void PushButtonCapability::handle()
     {
         logger.debug("PushButton", "Handling state...");
-        bool current = inputHardwareAdapter.digitalActive();
-        auto now = timeProvider.nowMs();
-        if (current != lastState)
-        {
-            // debounce: require stable state for toleranceTimeMs
-            if (now - lastChangeTs >= toleranceTimeMs)
-            {
-                lastState = current;
-                lastChangeTs = now;
-                updateState(current ? BUTTON_PRESSED : PUSH_BUTTON_NO_PRESSED);
-            }
-        }
-        else
-        {
-            lastChangeTs = now;
-        }
+        updateDebounced(inputHardwareAdapter.digitalActive(), BUTTON_PRESSED, PUSH_BUTTON_NO_PRESSED);
     }
 
     bool PushButtonCapability::isPressed() const
     {
-        return lastState;
+        return lastState();
     }
 
 } // namespace iotsmartsys::core

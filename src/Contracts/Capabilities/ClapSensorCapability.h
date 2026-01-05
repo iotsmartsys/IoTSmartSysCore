@@ -1,11 +1,11 @@
 #pragma once
 
-#include "IInputCapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 #include "Contracts/Adapters/IInputHardwareAdapter.h"
 
 namespace iotsmartsys::core
 {
-    class ClapSensorCapability : public IInputCapability
+    class ClapSensorCapability : public LatchedTriggerCapability
     {
     public:
         ClapSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds);
@@ -16,13 +16,7 @@ namespace iotsmartsys::core
         bool isClapDetected() const;
 
     private:
-        long lastTimeClapDetected;
-        bool clapDetected;
-        bool lastState;
-        int timeTolerance; // milliseconds
-
         bool isTriggered() const;
-        long getTimeSinceLastClapDetected() const;
     };
 
 } // namespace iotsmartsys::core
