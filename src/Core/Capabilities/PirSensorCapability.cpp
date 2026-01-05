@@ -3,36 +3,21 @@
 namespace iotsmartsys::core
 {
     PirSensorCapability::PirSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
-        : IInputCapability(input_hardware_adapter, event_sink, PIR_SENSOR_TYPE, PIR_NO_DETECTED),
-          lastTimePresenceDetected(0), presenceDetected(false), lastState(false), timeTolerance(timeTolerance)
+        : LatchedTriggerCapability(input_hardware_adapter, event_sink, "", PIR_SENSOR_TYPE, PIR_NO_DETECTED, timeTolerance)
     {
     }
 
     PirSensorCapability::PirSensorCapability(std::string capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int timeTolerance)
-        : IInputCapability(input_hardware_adapter, event_sink, capability_name, PIR_SENSOR_TYPE, PIR_NO_DETECTED), lastTimePresenceDetected(0), presenceDetected(false), lastState(false), timeTolerance(timeTolerance)
+        : LatchedTriggerCapability(input_hardware_adapter, event_sink, capability_name.c_str(), PIR_SENSOR_TYPE, PIR_NO_DETECTED, timeTolerance)
     {
     }
 
     void PirSensorCapability::handle()
     {
-        if (isTriggered())
+        const bool changed = updateLatched(isTriggered(), PIR_DETECTED, PIR_NO_DETECTED);
+        if (changed)
         {
-
-            logger.debug("PIR", "Last State: ", lastState);
-            logger.debug("PIR", "PIR Sensor triggered");
-            presenceDetected = true;
-            lastTimePresenceDetected = timeProvider.nowMs();
-        }
-        else if (getTimeSinceLastPresenceDetected() > timeTolerance)
-        {
-            logger.debug("PIR Sensor no longer triggered");
-            presenceDetected = false;
-        }
-        if (lastState != presenceDetected)
-        {
-            logger.debug("Presence state changed to: ", presenceDetected);
-            updateState(presenceDetected ? PIR_DETECTED : PIR_NO_DETECTED);
-            lastState = presenceDetected;
+            logger.debug("PIR", "Presence state changed to: ", latched());
         }
     }
 
@@ -43,12 +28,7 @@ namespace iotsmartsys::core
 
     bool PirSensorCapability::isPresenceDetected() const
     {
-        return pirState;
-    }
-
-    long PirSensorCapability::getTimeSinceLastPresenceDetected() const
-    {
-        return timeProvider.nowMs() - lastTimePresenceDetected;
+        return latched();
     }
     
 } // namespace iotsmartsys::core

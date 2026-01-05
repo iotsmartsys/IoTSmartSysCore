@@ -4,7 +4,7 @@ namespace iotsmartsys::core
 {
     LightCapability::LightCapability(const char *name,
                                      ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(hardwareAdapter, event_sink, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF)
+        : BinaryCommandCapability(hardwareAdapter, event_sink, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF, SWITCH_STATE_ON)
     {
     }
 
@@ -23,22 +23,16 @@ namespace iotsmartsys::core
     void LightCapability::turnOn()
     {
         logger.debug("LightCapability", "Turning ON");
-        power(SWITCH_STATE_ON);
+        BinaryCommandCapability::turnOn();
     }
 
     void LightCapability::turnOff()
     {
-        power(SWITCH_STATE_OFF);
+        BinaryCommandCapability::turnOff();
     }
 
     bool LightCapability::isOn() const
     {
-        return value == SWITCH_STATE_ON;
-    }
-
-    void LightCapability::power(const char *state)
-    {
-        logger.debug("LightCapability", "Setting power state to %s", state);
-        ICommandCapability::applyCommand(CapabilityCommand{type.c_str(), state});
+        return BinaryCommandCapability::isOn();
     }
 } // namespace iotsmartsys::core

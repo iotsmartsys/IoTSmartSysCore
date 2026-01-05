@@ -77,6 +77,7 @@ namespace iotsmartsys::core::settings
         void saveWiFiOnly(const WifiConfig &wifi);
         bool save(const Settings &settings);
         void handle();
+        const Settings getSettings() const override { return _current; };
 
     private:
         iotsmartsys::core::ILogger *_logger;

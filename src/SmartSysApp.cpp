@@ -1,6 +1,8 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
+#include "Contracts/Commands/ICommandProcessor.h"
+#include "Contracts/Commands/CommandTypes.h"
 
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
@@ -28,8 +30,27 @@ namespace iotsmartsys
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
           ota_(logger_),
-          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_)
+          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
+          commandParser_(logger_),
+          transportHub_(logger_, settingsManager_)
     {
+    }
+
+    void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
+    {
+        if (uart_)
+        {
+            delete uart_;
+            uart_ = nullptr;
+        }
+        uart_ = new SerialTransportChannel(serial, baudRate, rxPin, txPin);
+        TransportConfig cfg{};
+        cfg.uri = "serial://uart2";
+        cfg.clientId = "esp32-uart-bridge";
+        cfg.keepAliveSec = 30;
+        uart_->begin(cfg);
+        uart_->setForwardRawMessages(true);
+        transportHub_.addChannel("uart", uart_);
     }
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
@@ -37,7 +58,7 @@ namespace iotsmartsys
         return;
     }
 
-    void SmartSysApp::onMqttConnected(const core::MqttConnectedView &info)
+    void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
     {
         logger_.debug("MQTT connected.");
         logger_.debug("Client ID: %s", info.clientId);
@@ -81,38 +102,6 @@ namespace iotsmartsys
         }
     }
 
-    void SmartSysApp::onMqttMessage(const core::MqttMessageView &msg)
-    {
-        logger_.info("=== MQTT Message Received ===");
-
-        iotsmartsys::core::DeviceCommand cmd;
-        commandParser_.parseCommand(msg.payload, msg.payloadLen, cmd);
-        logger_.info("Capability: %s", cmd.capability_name);
-        logger_.info("Value: %s", cmd.value);
-        logger_.info("device_id: %s", cmd.device_id);
-        logger_.info("=== End MQTT Message ===");
-        if (capabilityManager_)
-        {
-            auto *cap = capabilityManager_->getCommandCapabilityByName(cmd.capability_name);
-            if (cap)
-            {
-                logger_.info("Found capability: %s", cmd.capability_name);
-                iotsmartsys::core::CapabilityCommand capabilityCmd;
-                capabilityCmd.capability_name = cmd.capability_name;
-                capabilityCmd.value = cmd.value;
-                cap->applyCommand(capabilityCmd);
-            }
-            else
-            {
-                logger_.error("Capability not found: %s", cmd.capability_name);
-            }
-        }
-        else
-        {
-            logger_.error("CapabilityManager is null. Cannot apply command.");
-        }
-    }
-
     void SmartSysApp::onSettingsUpdated(const iotsmartsys::core::settings::Settings &newSettings)
     {
         logger_.warn("[SettingsManager] Settings updated from API. Re-applying runtime config...");
@@ -130,40 +119,18 @@ namespace iotsmartsys
 
     void SmartSysApp::setup()
     {
-        Serial.begin(115200);
-        
         serviceManager_.setLogLevel(core::LogLevel::Debug);
         core::Log::setLogger(&logger_);
 
-        logger_.info("Starting IoT SmartSys Core example...");
-
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
-        logger_.info("SettingsManager callback for updates set.");
 
         const auto cacheErr = settingsManager_.init();
-        logger_.info("SettingsManager init() completed with result %d", (int)cacheErr);
 
         if (cacheErr == iotsmartsys::core::common::StateResult::Ok)
         {
             if (settingsManager_.copyCurrent(settings_))
             {
                 serviceManager_.setLogLevel(settings_.logLevel);
-                logger_.info("[SettingsManager] Loaded settings from NVS cache.");
-                logger_.error("In Config Mode=%s", settings_.in_config_mode ? "true" : "false");
-                logger_.error("WiFi SSID='%s'", settings_.wifi.ssid.c_str());
-                logger_.error("WiFi Password='%s'", settings_.wifi.password.c_str());
-                logger_.error("MQtt Broker Host='%s'", settings_.mqtt.primary.host.c_str());
-                logger_.error("MQtt Broker Port=%d", settings_.mqtt.primary.port);
-                logger_.error("MQtt Broker User='%s'", settings_.mqtt.primary.user.c_str());
-                logger_.error("MQtt Broker Password='%s'", settings_.mqtt.primary.password.c_str());
-                logger_.error("MQtt Broker TTL=%d", settings_.mqtt.primary.ttl);
-                logger_.error("NIVEL DE LOG ATUAL: %s", settings_.logLevelStr());
-                logger_.error("API URL: %s", settings_.api.url.c_str());
-                logger_.error("API Token: %s", settings_.api.key.c_str());
-                logger_.error("API auth: %s", settings_.api.basic_auth.c_str());
-                logger_.error("Firmware URL: %s", settings_.firmware.url.c_str());
-                logger_.error("Firmware Manifest: %s", settings_.firmware.manifest.c_str());
-                logger_.error("Firmware Update Method: %d", (int)settings_.firmware.update);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
@@ -189,25 +156,36 @@ namespace iotsmartsys
             return;
         }
 
-        logger_.info("ClientId do Device: %s", settings_.clientId);
-
         iotsmartsys::core::ConnectivityGate::init(latch_);
-        logger_.info("ConnectivityGate initialized.");
-
-        char topic[128];
-        snprintf(topic, sizeof(topic), "device/%s/command",
-                 settings_.clientId ? settings_.clientId : "");
-        logger_.info("MAIND -- snprintf to topic: %s", topic);
-        mqtt_.subscribe(topic);
-        mqtt_.setOnMessage(&SmartSysApp::onMqttMessageThunk, this);
-        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
-
-        logger_.info("MQTT onMessage callback set.");
 
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
+        commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
+        commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
 
+        char topic[128];
+        snprintf(topic, sizeof(topic), "device/%s/command",
+                 settings_.clientId ? settings_.clientId : "");
+
+        mqtt_.subscribe(topic);
+        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
+        mqtt_.setForwardRawMessages(true);
+
+        // Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
+
+        // TransportConfig cfg{};
+        // cfg.uri = "serial://uart2";
+        // cfg.clientId = "esp32-uart-bridge";
+        // cfg.keepAliveSec = 30;
+        // uart_.begin(cfg);
+        // // uart_.setForwardRawMessages(true);
+        // transportHub_.addChannel("uart", &uart_);
+        transportHub_.addChannel("mqtt", &mqtt_);
+        transportHub_.addDispatcher(*commandDispatcher_);
+        // Opcional
+
+        transportHub_.start();
     }
 
     void SmartSysApp::handle()
@@ -218,16 +196,17 @@ namespace iotsmartsys
             return;
         }
 
-        otaManager_.handle();
-
+        // otaManager_.handle();
+        //
         if (capabilityManager_)
         {
             capabilityManager_->handle();
         }
 
         wifi_.handle();
-        mqtt_.handle();
+        // mqtt_.handle();
         settingsManager_.handle();
+        transportHub_.handle();
     }
 
     void SmartSysApp::setupProvisioningConfiguration()
@@ -253,12 +232,6 @@ namespace iotsmartsys
                                                  newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
                                                  newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
                                                  newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
-                                                 logger.info("New WiFi SSID='%s'", newSettings.wifi.ssid.c_str());
-                                                 logger.info("New WiFi Password='%s'", newSettings.wifi.password.c_str());
-                                                 logger.info("New API URL='%s'", newSettings.api.url.c_str());
-                                                 logger.info("New API Key='%s'", newSettings.api.key.c_str());
-                                                 logger.info("New API Basic Auth='%s'", newSettings.api.basic_auth.c_str());
-                                                 logger.info("Saving new settings via SettingsManager.");
                                                  sp_.settingsManager().save(newSettings);
                                                  ESP.restart(); });
 
@@ -266,16 +239,7 @@ namespace iotsmartsys
         inConfigMode_ = true;
     }
 
-    void SmartSysApp::onMqttMessageThunk(void *ctx, const core::MqttMessageView &msg)
-    {
-        if (!ctx)
-        {
-            return;
-        }
-        static_cast<SmartSysApp *>(ctx)->onMqttMessage(msg);
-    }
-
-    void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::MqttConnectedView &info)
+    void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)
     {
         if (!ctx)
         {
@@ -399,6 +363,12 @@ namespace iotsmartsys
     iotsmartsys::core::WaterLevelPercentCapability *SmartSysApp::addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
     {
         return builder_.addWaterLevelPercent(cfg);
+    }
+
+    /// @brief Adds a new luminosity sensor capability to the application.
+    iotsmartsys::core::LuminosityCapability *SmartSysApp::addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg)
+    {
+        return builder_.addLuminosityCapability(cfg);
     }
 
 } // namespace iotsmartsys

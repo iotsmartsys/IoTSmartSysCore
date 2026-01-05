@@ -1,5 +1,6 @@
 #include "Core/Services/MqttService.h"
 #include "Contracts/Providers/ServiceProvider.h"
+#include "IMqttClient.h"
 
 #include <cstdint>
 #include <cstddef>
@@ -28,7 +29,13 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::MqttConfig &cfg,
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg)
+    {
+        return begin(cfg, RetryPolicy{});
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg,
                                                              const RetryPolicy &policy)
     {
         _logger.info("MQTT", "MqttService::begin()");
@@ -37,7 +44,7 @@ namespace iotsmartsys::app
         _logger.info("MQTT", "Time provider set.");
         if (!_time)
         {
-            _logger.warn("MQTT", "Time provider is not set yet");
+            _logger.debug("MQTT", "Time provider is not set yet");
         }
         _cfg = cfg;
         _policy = policy;
@@ -70,6 +77,7 @@ namespace iotsmartsys::app
 
         // _subCount = 0;
         _qHead = _qTail = _qCount = 0;
+        subscribe(cfg.subscribeTopic);
 
         const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
         _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
@@ -77,13 +85,14 @@ namespace iotsmartsys::app
         _client.setOnConnected(&MqttService::onConnectedThunk, this);
         _client.setOnDisconnected(&MqttService::onDisconnectedThunk, this);
         _logger.info("MQTT", "MQTT client initialized.");
-        _client.begin(_cfg);
+        const bool clientInitOk = _client.begin(_cfg);
 
         _logger.info("MQTT", "Scheduling initial connection...");
         // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
         _nextActionAtMs = now; // connect on first handle()
+        return clientInitOk;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -128,7 +137,7 @@ namespace iotsmartsys::app
             }
             else
             {
-                _logger.warn("MQTT", "NetworkReady=FALSE (Wi-Fi/IP). Pausando MQTT.");
+                _logger.debug("MQTT", "NetworkReady=FALSE (Wi-Fi/IP). Pausando MQTT.");
             }
             _lastNetworkReady = networkReady;
         }
@@ -141,11 +150,11 @@ namespace iotsmartsys::app
         {
             if (_settingsReady)
             {
-                _logger.info("MQTT", "SettingsReady=TRUE (cache OK). MQTT pode conectar quando NetworkReady=TRUE.");
+                _logger.debug("MQTT", "SettingsReady=TRUE (cache OK). MQTT pode conectar quando NetworkReady=TRUE.");
             }
             else
             {
-                _logger.warn("MQTT", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando MQTT.");
+                _logger.debug("MQTT", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando MQTT.");
             }
             _lastSettingsReady = _settingsReady;
         }
@@ -154,13 +163,13 @@ namespace iotsmartsys::app
         if (!canConnect)
         {
             if (!networkReady)
-                _logger.warn("MQTT", "Blocking MQTT: NetworkReady=FALSE (Wi-Fi/IP).");
+                _logger.debug("MQTT", "Blocking MQTT: NetworkReady=FALSE (Wi-Fi/IP).");
             else
-                _logger.warn("MQTT", "Blocking MQTT: SettingsReady=FALSE (cache ainda não carregou).");
+                _logger.debug("MQTT", "Blocking MQTT: SettingsReady=FALSE (cache ainda não carregou).");
 
             if (_state == State::Connecting || _state == State::Online)
             {
-                _logger.warn("MQTT", "Stopping MQTT due to canConnect=FALSE");
+                _logger.debug("MQTT", "Stopping MQTT due to canConnect=FALSE");
                 _client.stop();
             }
 
@@ -193,7 +202,7 @@ namespace iotsmartsys::app
             }
             else if (_nextActionAtMs && now >= _nextActionAtMs)
             {
-                _logger.warn("MQTT", "Connect timeout (soft-timeout). Scheduling retry.");
+                _logger.debug("MQTT", "Connect timeout (soft-timeout). Scheduling retry.");
                 scheduleRetry();
             }
             break;
@@ -233,9 +242,35 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::republish(const iotsmartsys::core::TransportMessageView &msg)
+    {
+        if (_client.isConnected())
+        {
+            return _client.republish(msg);
+        }
+        return enqueue(msg.topic, msg.payload, msg.payloadLen, msg.retain);
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::subscribe(const char *topic)
     {
+        if (!topic || std::strlen(topic) == 0)
+        {
+            _logger.debug("MQTT", "Empty topic in subscribe()");
+            return false;
+        }
+        
         // guarda para resubscribe
+        // deve evitar que tópicos duplicados sejam adicionados
+        for (std::size_t i = 0; i < _subCount; ++i)
+        {
+            if (_subs[i] == topic)
+            {
+                _logger.debug("MQTT", "Topic already in subscribe list; topic=%s", topic);
+                return true;
+            }
+        }
+
         if (_subCount < MaxTopics)
         {
             _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
@@ -243,7 +278,7 @@ namespace iotsmartsys::app
         }
         else
         {
-            _logger.warn("MQTT", "Subscribe list full; topic=%s", topic);
+            _logger.debug("MQTT", "Subscribe list full; topic=%s", topic);
             return false;
         }
 
@@ -260,21 +295,21 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnMessage(iotsmartsys::core::MqttOnMessageFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnMessage(iotsmartsys::core::TransportOnMessageFn cb, void *user)
     {
         _userMsgCb = cb;
         _userMsgUser = user;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnConnected(iotsmartsys::core::MqttOnConnectedFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnConnected(iotsmartsys::core::TransportOnConnectedFn cb, void *user)
     {
         _userConnectedCb = cb;
         _userConnectedUser = user;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnDisconnected(iotsmartsys::core::MqttOnDisconnectedFn cb, void *user)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn cb, void *user)
     {
         _userDisconnectedCb = cb;
         _userDisconnectedUser = user;
@@ -284,6 +319,12 @@ namespace iotsmartsys::app
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::isOnline() const
     {
         return _state == State::Online && _client.isConnected();
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    bool MqttService<MaxTopics, QueueLen, MaxPayload>::isConnected() const
+    {
+        return _client.isConnected();
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -310,7 +351,7 @@ namespace iotsmartsys::app
         // Gate redundante (segurança): nunca tenta MQTT antes de settings estar pronto
         if (!_settingsReady)
         {
-            _logger.warn("MQTT", "startConnect blocked: SettingsReady=FALSE (cache ainda não carregou). state=%s", stateToStr(_state));
+            _logger.debug("MQTT", "startConnect blocked: SettingsReady=FALSE (cache ainda não carregou). state=%s", stateToStr(_state));
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -319,7 +360,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::settings::Settings settings;
         if (!_settingsProvider.copyCurrent(settings))
         {
-            _logger.warn("MQTT", "startConnect aborted: settings not available yet.");
+            _logger.debug("MQTT", "startConnect aborted: settings not available yet.");
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -343,7 +384,7 @@ namespace iotsmartsys::app
 
         if (_uriStr.empty())
         {
-            _logger.warn("MQTT", "startConnect aborted: MQTT host/uri not configured.");
+            _logger.debug("MQTT", "startConnect aborted: MQTT host/uri not configured.");
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -368,7 +409,7 @@ namespace iotsmartsys::app
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             if (!gate.isNetworkReady())
             {
-                _logger.warn("MQTT", "startConnect blocked: NetworkReady=FALSE (Wi-Fi/IP não pronto). state=%s", stateToStr(_state));
+                _logger.debug("MQTT", "startConnect blocked: NetworkReady=FALSE (Wi-Fi/IP não pronto). state=%s", stateToStr(_state));
                 _state = State::BackoffWaiting;
                 _nextActionAtMs = _time ? _time->nowMs() + 1000 : 1000;
                 return;
@@ -397,8 +438,8 @@ namespace iotsmartsys::app
         _state = State::BackoffWaiting;
         _nextActionAtMs = now + backoff;
 
-        _logger.warn("MQTT", "Retry in %lu ms (attempt=%lu)",
-                     (unsigned long)backoff, (unsigned long)_attempt);
+        _logger.debug("MQTT", "Retry in %lu ms (attempt=%lu)",
+                      (unsigned long)backoff, (unsigned long)_attempt);
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -480,7 +521,7 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::onMessageThunk(void *user, const iotsmartsys::core::MqttMessageView &msg)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onMessageThunk(void *user, const iotsmartsys::core::TransportMessageView &msg)
     {
         auto *self = static_cast<MqttService *>(user);
         if (!self)
@@ -490,7 +531,7 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
-    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user, const iotsmartsys::core::MqttConnectedView &info)
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::onConnectedThunk(void *user, const iotsmartsys::core::TransportConnectedView &info)
     {
         auto *self = static_cast<MqttService *>(user);
         if (!self)

@@ -1,15 +1,16 @@
 #include <Arduino.h>
 
-#include "DHTTemperatureSensor.h"
+#include "DHTSensor.h"
 
 namespace iotsmartsys::platform::arduino
 {
-    DHTTemperatureSensor::DHTTemperatureSensor(int pin) : pin(pin)
+    DHTSensor::DHTSensor(int pin) : pin(pin)
     {
-        dht = new DHT(pin, DHT22);
+        // Default to DHT11; using the wrong sensor type causes NaN reads.
+        dht = new DHT(pin, DHT11);
     }
 
-    void DHTTemperatureSensor::setup()
+    void DHTSensor::setup()
     {
         if (dht)
         {
@@ -17,7 +18,7 @@ namespace iotsmartsys::platform::arduino
         }
     }
 
-    float DHTTemperatureSensor::readTemperatureCelsius()
+    float DHTSensor::readTemperatureCelsius()
     {
         if (dht)
         {
@@ -26,7 +27,7 @@ namespace iotsmartsys::platform::arduino
         return -180.0f;
     }
 
-    float DHTTemperatureSensor::getHumidityPercentage()
+    float DHTSensor::getHumidityPercentage()
     {
         if (dht)
         {

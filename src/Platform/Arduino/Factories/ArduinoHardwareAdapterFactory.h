@@ -38,6 +38,7 @@ namespace iotsmartsys::platform::arduino
         // std::size_t colorSensorAdapterAlign() const override;
         // iotsmartsys::core::IColorSensor *createColorSensor(void *mem, std::uint8_t pin) override;
         // AdapterDestructor colorSensorAdapterDestructor() const override;
+
     };
 
 } // namespace iotsmartsys::platform::arduino

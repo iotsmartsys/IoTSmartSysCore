@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     GlpSensorCapability::GlpSensorCapability(IGlpSensor &sensor, ICapabilityEventSink *event_sink)
-        : ICapability(event_sink, GLP_SENSOR_TYPE, GLP_SENSOR_LEVEL_NONE), sensor(sensor), levelPercent(0.0f), lastLevel(), lastCheckMillis(0)
+        : ICapability(event_sink, GLP_SENSOR_TYPE, GlpSensorLevelStrings::UNDETECTED), sensor(sensor), levelPercent(0.0f), lastLevel(), lastCheckMillis(0)
     {
     }
 
@@ -19,7 +19,7 @@ namespace iotsmartsys::core
         if (now - lastCheckMillis >= 1000 || lastLevel.empty())
         {
             lastCheckMillis = now;
-            sensor.handleSensor();
+            sensor.handle();
 
             float percent = sensor.getLevelPercent();
             std::string levelState = sensor.getLevelString();

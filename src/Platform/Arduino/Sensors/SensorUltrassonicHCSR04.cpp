@@ -49,6 +49,7 @@ namespace iotsmartsys::platform::arduino
         digitalWrite(trigPin, LOW);
         duration = pulseIn(echoPin, HIGH, SENSORULTRASSONIC_HC_SR04_TIMEOUT);
         float distanceCmCurrentRead = duration * SENSORULTRASSONIC_HC_SR04_SOUND_SPEED / 2;
+
         if (distanceCmCurrentRead <= 30)
         {
             if (currentTime - lastRejectedSmallerTime < MIN_INTERVAL_BETWEEN_SMALLER_READINGS)

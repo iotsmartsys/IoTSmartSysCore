@@ -3,46 +3,45 @@
 namespace iotsmartsys::core
 {
     LuminosityCapability::LuminosityCapability(const std::string &name,
-                                               ILuminositySensor &sensor, 
+                                               ILuminositySensor &sensor,
                                                ICapabilityEventSink *event_sink,
                                                float variationTolerance,
-                                               float readIntervalSeconds)
-        : ICapability(event_sink, LIGHT_SENSOR_TYPE, "-1"),
-          _sensor(sensor),
-          _variationTolerance(variationTolerance),
-          _readIntervalMs(static_cast<unsigned long>(readIntervalSeconds * 1000.0f))
+                                               float readIntervalMs)
+        : PollingFloatCapability(event_sink, name.c_str(), LIGHT_SENSOR_TYPE, "-1", static_cast<unsigned long>(readIntervalMs), variationTolerance, 2),
+          _sensor(sensor)
+    {
+    }
+
+    LuminosityCapability::LuminosityCapability(ILuminositySensor &sensor,
+                                               ICapabilityEventSink *event_sink,
+                                               float variationTolerance,
+                                               float readIntervalMs)
+        : PollingFloatCapability(event_sink, "", LIGHT_SENSOR_TYPE, "-1", static_cast<unsigned long>(readIntervalMs), variationTolerance, 2),
+          _sensor(sensor)
     {
     }
 
     void LuminosityCapability::setup()
     {
+        ICapability::setup();
+        _sensor.setup();
     }
 
     void LuminosityCapability::handle()
     {
         unsigned long currentTime = static_cast<unsigned long>(timeProvider.nowMs());
-        if (currentTime - _lastReadMs < _readIntervalMs)
+        if (!shouldRead(currentTime))
         {
             return;
         }
 
-        _lastReadMs = currentTime;
-
-        float lux = _sensor.readLux();
-
-        if (_lastLux != lux)
-        {
-            if (abs(_lastLux - lux) > _variationTolerance)
-            {
-                _lastLux = lux;
-                updateState(std::to_string(_lastLux));
-            }
-        }
+        const float lux = _sensor.readLux();
+        publishIfChanged(lux);
     }
 
     float LuminosityCapability::getLux()
     {
-        return _lastLux;
+        return lastValue();
     }
 
 } // namespace iotsmartsys::core

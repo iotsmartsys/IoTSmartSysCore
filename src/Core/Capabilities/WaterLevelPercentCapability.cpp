@@ -22,7 +22,7 @@ namespace iotsmartsys::core
         {
             lastPercent = current;
             std::ostringstream ss;
-            ss << std::fixed << std::setprecision(3) << current;
+            ss << std::fixed << std::setprecision(2) << current;
             updateState(ss.str());
         }
     }

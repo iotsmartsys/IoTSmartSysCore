@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IInputCapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 
 namespace iotsmartsys::core
 {
-    class PushButtonCapability : public IInputCapability
+    class PushButtonCapability : public DebouncedDigitalCapability
     {
     public:
         // toleranceTime in milliseconds for debouncing / event grouping
@@ -14,11 +14,6 @@ namespace iotsmartsys::core
         void handle() override;
 
         bool isPressed() const;
-
-    private:
-        unsigned long toleranceTimeMs;
-        bool lastState{false};
-        unsigned long lastChangeTs{0};
     };
 
 } // namespace iotsmartsys::core

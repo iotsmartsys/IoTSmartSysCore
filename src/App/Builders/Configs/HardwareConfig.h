@@ -8,6 +8,7 @@
 #include "Contracts/Sensors/IGlpSensor.h"
 #include "Contracts/Sensors/IGlpMeter.h"
 #include "Contracts/Sensors/IColorSensor.h"
+#include "Contracts/Sensors/ILuminositySensor.h"
 
 namespace iotsmartsys::app
 {
@@ -79,12 +80,21 @@ namespace iotsmartsys::app
     {
     public:
         iotsmartsys::core::ITemperatureSensor *sensor{nullptr};
+        long readIntervalMs = 60000;
     };
 
     class HumiditySensorConfig : public HardwareConfig
     {
     public:
         iotsmartsys::core::IHumiditySensor *sensor{nullptr};
+        long readIntervalMs = 60000;
     };
 
+    class LuminositySensorConfig : public HardwareConfig
+    {
+    public:
+        iotsmartsys::core::ILuminositySensor *sensor{nullptr};
+        long readIntervalMs = 60000;
+        float variationTolerance = 2.0f; // in lux
+    };
 } // namespace iotsmartsys::app

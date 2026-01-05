@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ICommandCapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 
 namespace iotsmartsys::core
 {
-    class ValveCapability : public ICommandCapability
+    class ValveCapability : public BinaryCommandCapability
     {
     public:
         ValveCapability(const char *capability_name, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
@@ -16,10 +16,10 @@ namespace iotsmartsys::core
         void turnOpen();
         void turnClosed();
         bool isOpen() const;
-
-    private:
-        void power(const char *state);
-        void power(const std::string &state) { power(state.c_str()); }
+        using BinaryCommandCapability::toggle;
+        using BinaryCommandCapability::turnOff;
+        using BinaryCommandCapability::turnOn;
+        using BinaryCommandCapability::isOn;
     };
 
 } // namespace iotsmartsys::core

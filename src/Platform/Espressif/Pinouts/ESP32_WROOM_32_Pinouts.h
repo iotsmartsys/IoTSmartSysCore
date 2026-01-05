@@ -19,6 +19,10 @@
 #define ESP32_WROOM_32_SAFE_GPIO26 26
 #define ESP32_WROOM_32_SAFE_GPIO27 27
 
+// RX2 and TX2 are generally safe for use
+#define ESP32_WROOM_32_UART2_RX 16
+#define ESP32_WROOM_32_UART2_TX 17
+
 // LED pin definition (if applicable)
 #define ESP32_WROOM_32_LED_PIN 2 // On-board LED is usually on GPIO2
 

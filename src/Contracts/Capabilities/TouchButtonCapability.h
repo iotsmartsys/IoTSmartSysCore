@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IInputCapability.h"
+#include "Core/Capabilities/CapabilityHelpers.h"
 
 namespace iotsmartsys::core
 {
-    class TouchButtonCapability : public IInputCapability
+    class TouchButtonCapability : public DebouncedDigitalCapability
     {
     public:
     TouchButtonCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, unsigned long toleranceTimeMs = 50);
@@ -14,10 +14,6 @@ namespace iotsmartsys::core
 
         bool isTouched() const;
 
-    private:
-        unsigned long toleranceTimeMs;
-        bool lastState{false};
-        unsigned long lastChangeTs{0};
     };
 
 } // namespace iotsmartsys::core

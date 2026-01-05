@@ -773,7 +773,7 @@ namespace iotsmartsys::app
 
         auto *cap = new (memcap) iotsmartsys::core::TemperatureSensorCapability(
             *static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
-            &_eventSink);
+            &_eventSink, cfg.readIntervalMs);
 
         auto dtor = [](void *p)
         {
@@ -927,6 +927,35 @@ namespace iotsmartsys::app
         if (!registerCapability(cap, dtor))
         {
             cap->~OperationalColorSensorCapability();
+            return nullptr;
+        }
+
+        return cap;
+    }
+
+    /* addLuminosityCapability */
+    iotsmartsys::core::LuminosityCapability *CapabilitiesBuilder::addLuminosityCapability(const LuminositySensorConfig &cfg)
+    {
+        if (_count >= _capsMax)
+            return nullptr;
+
+        void *memcap = allocateAligned(sizeof(iotsmartsys::core::LuminosityCapability),
+                                       alignof(iotsmartsys::core::LuminosityCapability));
+        if (!memcap)
+            return nullptr;
+
+        auto *cap = new (memcap) iotsmartsys::core::LuminosityCapability(
+            *static_cast<iotsmartsys::core::ILuminositySensor *>(cfg.sensor),
+            &_eventSink, cfg.variationTolerance, cfg.readIntervalMs);
+
+        auto dtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::LuminosityCapability *>(p)->~LuminosityCapability();
+        };
+
+        if (!registerCapability(cap, dtor))
+        {
+            cap->~LuminosityCapability();
             return nullptr;
         }
 
