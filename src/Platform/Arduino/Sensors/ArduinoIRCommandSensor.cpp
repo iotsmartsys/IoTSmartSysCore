@@ -1,4 +1,6 @@
 #ifdef IR_REMOTE_ESP8266
+#include <Arduino.h>
+
 #include "ArduinoIRCommandSensor.h"
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
@@ -8,7 +10,7 @@
 namespace iotsmartsys::platform::arduino
 {
     ArduinoIRCommandSensor::ArduinoIRCommandSensor(int pin)
-        : lastCommand(*(new iotsmartsys::core::IRCommand{false, 0, ""})), irPin(pin)
+        : lastCommand(*(new iotsmartsys::core::IRCommand{false, 0, ""})), irPin(pin), lastState(0), lastSendEvent(0), lastStateReadMillis_(0)
     {
         irrecv = new IRrecv(irPin);
     }
@@ -51,8 +53,13 @@ namespace iotsmartsys::platform::arduino
 
             core::Log::get().debug("resultToHumanReadableBasic: ", resultToHumanReadableBasic(&results));
 
+            bool stateChanged = (currentValue != lastCommand.code) || !lastCommand.triggered;
             lastCommand.triggered = true;
             lastCommand.code = currentValue;
+            if (stateChanged)
+            {
+                lastStateReadMillis_ = millis();
+            }
 
             irrecv->resume();
         }
@@ -66,6 +73,11 @@ namespace iotsmartsys::platform::arduino
     void ArduinoIRCommandSensor::readed()
     {
         lastCommand.triggered = false;
+    }
+
+    long ArduinoIRCommandSensor::lastStateReadMillis() const
+    {
+        return lastStateReadMillis_;
     }
 
 } // namespace iotsmartsys::platform::arduino

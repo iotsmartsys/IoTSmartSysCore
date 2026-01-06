@@ -11,8 +11,9 @@ namespace iotsmartsys::core
     public:
         virtual ~ICommandHardwareAdapter() = default;
         virtual void setup() = 0;
+        virtual void handle() = 0;
         virtual bool applyCommand(const IHardwareCommand &command) = 0;
-    virtual bool applyCommand(const char *value) = 0;
-    virtual std::string getState() = 0;
+        virtual bool applyCommand(const char *value) = 0;
+        virtual std::string getState() = 0;
     };
 } // namespace iotsmartsys::core

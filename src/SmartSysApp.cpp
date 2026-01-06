@@ -36,6 +36,23 @@ namespace iotsmartsys
     {
     }
 
+    void SmartSysApp::configureFactoryResetButton(int pin, bool activeLow)
+    {
+        if (factoryResetButton_)
+        {
+            hwFactory_.outputAdapterDestructor()(factoryResetButton_);
+            factoryResetButton_ = nullptr;
+        }
+        void *mem = malloc(hwFactory_.outputAdapterSize());
+        if (!mem)
+        {
+            logger_.error("Failed to allocate memory for factory reset button adapter.");
+            return;
+        }
+        factoryResetButton_ = hwFactory_.createOutput(mem, static_cast<std::uint8_t>(pin), !activeLow);
+        factoryResetButton_->setup();
+    }
+
     void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
     {
         if (uart_)
@@ -130,7 +147,25 @@ namespace iotsmartsys
         {
             if (settingsManager_.copyCurrent(settings_))
             {
-                serviceManager_.setLogLevel(settings_.logLevel);
+                logger_.info("[SettingsManager] Cached settings loaded successfully.");
+                logger_.info("[SettingsManager] Applying cached settings...");
+                logger_.info("[SettingsManager] Log Level: %s", settings_.logLevelStr());
+                logger_.info("[SettingsManager] WiFi SSID: %s", settings_.wifi.ssid.c_str());
+                logger_.info("[SettingsManager] WiFi Password: %s", settings_.wifi.password.c_str());
+                logger_.info("[SettingsManager] API Key: %s", settings_.api.key.c_str());
+                logger_.info("[SettingsManager] API URL: %s", settings_.api.url.c_str());
+                logger_.info("[SettingsManager] Api Basic Auth: %s", settings_.api.basic_auth.c_str());
+
+                logger_.info("[SettingsManager] Device Name: %s", settings_.clientId);
+                logger_.info("[SettingsManager] MQTT Topic: %s", settings_.mqtt.announce_topic.c_str());
+                logger_.info("[SettingsManager] MQTT Broker: %s", settings_.mqtt.primary.host.c_str());
+                logger_.info("[SettingsManager] MQTT User: %s", settings_.mqtt.primary.user.c_str());
+                logger_.info("[SettingsManager] MQTT Port: %d", settings_.mqtt.primary.port);
+                logger_.info("[SettingsManager] In Config Mode: %s", settings_.in_config_mode ? "Yes" : "No");
+
+                serviceManager_.setLogLevel(LogLevel::Info);
+
+                delay(6000);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
@@ -196,14 +231,26 @@ namespace iotsmartsys
             return;
         }
 
-        otaManager_.handle();
+        if (factoryResetButton_)
+        {
+            factoryResetButton_->handle();
+            if (factoryResetButton_->getState() == SWITCH_STATE_ON && factoryResetButton_->lastStateReadMillis() > 5000)
+            {
+                logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
+                settingsManager_.clear();
+                delay(2000);
+                ESP.restart();
+            }
+        }
 
+        
         if (capabilityManager_)
         {
             capabilityManager_->handle();
         }
-
+        
         wifi_.handle();
+        otaManager_.handle();
         settingsManager_.handle();
         transportHub_.handle();
     }

@@ -24,6 +24,7 @@ namespace iotsmartsys::platform::arduino
 
         iotsmartsys::core::IRCommand readCommand() const override;
         void readed() override;
+        long lastStateReadMillis() const override;
 
     private:
         iotsmartsys::core::IRCommand &lastCommand;
@@ -33,6 +34,7 @@ namespace iotsmartsys::platform::arduino
         int irPin;
         uint64_t lastState;
         long lastSendEvent;
+        long lastStateReadMillis_{0};
     };
 #else
     // Stub implementation to keep builds working when IR support is disabled.
@@ -44,6 +46,7 @@ namespace iotsmartsys::platform::arduino
         void handle() override {}
         iotsmartsys::core::IRCommand readCommand() const override { return iotsmartsys::core::IRCommand{false, 0, ""}; }
         void readed() override {}
+        long lastStateReadMillis() const override { return 0; }
     };
 #endif
 

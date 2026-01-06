@@ -1,4 +1,6 @@
 #ifdef HX711_ENABLED
+#include <cmath>
+
 #include "ArduinoGlpMeter.h"
 
 namespace iotsmartsys::platform::arduino
@@ -115,6 +117,7 @@ namespace iotsmartsys::platform::arduino
         {
             lastKg = actualKg;
             lastPercent = actualPercent;
+            lastStateReadMillis_ = millis();
         }
     }
 
@@ -131,6 +134,11 @@ namespace iotsmartsys::platform::arduino
     std::string ArduinoGlpMeter::getLevelString() const
     {
         return std::to_string(actualPercent);
+    }
+
+    long ArduinoGlpMeter::lastStateReadMillis() const
+    {
+        return lastStateReadMillis_;
     }
 
 } // namespace iotsmartsys::platform::arduino

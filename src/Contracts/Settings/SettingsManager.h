@@ -78,6 +78,7 @@ namespace iotsmartsys::core::settings
         bool save(const Settings &settings);
         void handle();
         const Settings getSettings() const override { return _current; };
+        void clear();
 
     private:
         iotsmartsys::core::ILogger *_logger;

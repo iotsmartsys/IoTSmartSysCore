@@ -335,8 +335,9 @@ namespace iotsmartsys::platform::espressif
 
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
     {
+        _logger->info("EspIdfNvsSettingsProvider", "port mqtt: %d", settings.mqtt.primary.port);
 
-        _logger->debug("EspIdfNvsSettingsProvider", "save() called");
+        _logger->info("EspIdfNvsSettingsProvider", "save() called");
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
         {
@@ -377,7 +378,7 @@ namespace iotsmartsys::platform::espressif
             nvs_close(h);
             return map_esp_err(err);
         }
-        _logger->debug("EspIdfNvsSettingsProvider", "nvs set_blob succeeded, committing...");
+        _logger->info("EspIdfNvsSettingsProvider", "nvs set_blob succeeded, committing...");
         err = nvs_commit(h);
         if (err != ESP_OK)
         {
@@ -385,7 +386,7 @@ namespace iotsmartsys::platform::espressif
         }
         else
         {
-            _logger->debug("EspIdfNvsSettingsProvider", "nvs commit succeeded");
+            _logger->info("EspIdfNvsSettingsProvider", "nvs commit succeeded");
         }
         delete existing;
         delete stored;

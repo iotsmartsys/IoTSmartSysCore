@@ -12,11 +12,16 @@ namespace iotsmartsys::platform::arduino
     public:
         DS18B20TemperatureSensor(int pin);
         void setup() override;
+        void handle() override;
         float readTemperatureCelsius() override;
+        long lastStateReadMillis() const override;
 
     private:
         int pin;
         OneWire *oneWire = nullptr;
         DallasTemperature *sensors = nullptr;
+        float lastTemperatureC_{0.0f};
+        long lastStateReadMillis_{0};
+        bool hasReading_{false};
     };
 } // namespace iotsmartsys::platform::arduino

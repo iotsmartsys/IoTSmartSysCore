@@ -18,6 +18,7 @@ namespace iotsmartsys::platform::arduino
         float getLevelPercent() override;
         bool isDetected() override;
         std::string getLevelString() override;
+        long lastStateReadMillis() const override;
 
     private:
         ILogger &_logger;
@@ -30,6 +31,9 @@ namespace iotsmartsys::platform::arduino
         const int NUM_SAMPLES = 20;
         int cleanAirBase = 0;
         bool calibrated = false;
+        float lastReportedPercent = -1.0f;
+        bool lastReportedDetected = false;
+        long lastStateReadMillis_{0};
 
         int readAnalogAverage();
     };

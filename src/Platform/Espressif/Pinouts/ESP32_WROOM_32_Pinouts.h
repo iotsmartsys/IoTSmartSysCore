@@ -1,6 +1,9 @@
 
 #pragma once
 
+// Pin boot for ESP32-WROOM-32 module nodemcu
+#define ESP32_WROOM_32_BOOT_PIN 0
+
 // Safe GPIO pins for ESP32-WROOM-32 module
 
 #define ESP32_WROOM_32_SAFE_GPIO4 4

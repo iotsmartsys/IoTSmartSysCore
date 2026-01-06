@@ -1,5 +1,6 @@
 #include "ArduinoUltrassonicWaterLevelSensor.h"
 #include "SensorModel.h"
+#include <cmath>
 
 namespace iotsmartsys::platform::arduino
 {
@@ -7,7 +8,7 @@ namespace iotsmartsys::platform::arduino
     {
         this->sr04Sensor = sr04Sensor;
         this->recipentType = recipentType;
-        this->readIntervalMs = intervalMs;
+        setReadIntervalMs(intervalMs);
 
         switch (recipentType)
         {
@@ -31,6 +32,29 @@ namespace iotsmartsys::platform::arduino
     void ArduinoUltrassonicWaterLevelSensor::setup()
     {
         sr04Sensor->setup();
+    }
+
+    void ArduinoUltrassonicWaterLevelSensor::handle()
+    {
+        unsigned long currentTime = core::Time::get().nowMs();
+        if (readIntervalMs > 0 && currentTime - lastReadTime < readIntervalMs)
+        {
+            return;
+        }
+
+        lastReadTime = currentTime;
+
+        float previousLiters = levelLiters;
+        float previousPercent = levelPercent;
+
+        handleSensor();
+
+        if ((lastReportedLevelLiters < 0.0f && levelLiters >= 0.0f) || fabs(levelLiters - previousLiters) > 0.01f || fabs(levelPercent - previousPercent) > 0.01f)
+        {
+            lastReportedLevelLiters = levelLiters;
+            lastReportedLevelPercent = levelPercent;
+            lastStateReadMillis_ = currentTime;
+        }
     }
 
     void ArduinoUltrassonicWaterLevelSensor::handleSensor()
@@ -110,6 +134,11 @@ namespace iotsmartsys::platform::arduino
         char buf[32];
         snprintf(buf, sizeof(buf), "%.2f", levelPercent);
         return std::string(buf);
+    }
+
+    long ArduinoUltrassonicWaterLevelSensor::lastStateReadMillis() const
+    {
+        return lastStateReadMillis_;
     }
 
     float ArduinoUltrassonicWaterLevelSensor::calcularVolumeAgua(float alturaAtualCm)

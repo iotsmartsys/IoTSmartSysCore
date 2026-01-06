@@ -212,7 +212,7 @@ namespace iotsmartsys::platform::espressif
         cfg.event_handler = &EspIdfSettingsFetcher::httpEventHandler;
         cfg.user_data = this;
         cfg.disable_auto_redirect = false;
-
+        _logger.info("EspIdfSettingsFetcher", "Performing HTTP %s to %s", is_https ? "HTTPS" : "HTTP", _req.url);
         if (_client)
         {
             esp_http_client_cleanup(_client);

@@ -71,6 +71,9 @@ namespace iotsmartsys
         /// @brief Configure SerialTransportChannel UART pins and baud rate.
         void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
 
+        /// @brief Configura botão de reset de fábrica (provisionamento).
+        void configureFactoryResetButton(int pin, bool activeLow = true);
+
         /* Capabilities */
         iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig cfg);
         iotsmartsys::core::DoorSensorCapability *addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg);
@@ -136,6 +139,7 @@ namespace iotsmartsys
         CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
         TransportHub transportHub_;
         SerialTransportChannel *uart_;
+        ICommandHardwareAdapter *factoryResetButton_{nullptr};
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};

@@ -94,7 +94,23 @@ namespace iotsmartsys::platform::arduino
             return (digitalRead(pin) == ((logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
         }
 
+        long lastStateReadMillis() const override
+        {
+            return lastStateReadMillis_;
+        }
+
+        void handle() override
+        {
+            if (digitalRead(pin) != lastState_)
+            {
+                lastState_ = digitalRead(pin);
+                lastStateReadMillis_ = millis();
+            }
+        }
+
     private:
+        long lastStateReadMillis_{0};
+        int lastState_{-1};
         int pin;
         int pinState;
         HardwareDigitalLogic logic;

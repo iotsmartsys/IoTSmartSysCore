@@ -123,7 +123,7 @@ namespace iotsmartsys::app
         // Se os dois gates ficaram prontos enquanto está Idle, agenda conexão.
         if (canConnect && _state == State::Idle)
         {
-            _logger.info("MQTT", "Gates ready and state=Idle; scheduling connection now.");
+            _logger.debug("MQTT", "Gates ready and state=Idle; scheduling connection now.");
             _state = State::BackoffWaiting;
             _nextActionAtMs = now;
         }
@@ -133,7 +133,7 @@ namespace iotsmartsys::app
         {
             if (networkReady)
             {
-                _logger.info("MQTT", "NetworkReady=TRUE (Wi-Fi+IP). MQTT pode conectar.");
+                _logger.debug("MQTT", "NetworkReady=TRUE (Wi-Fi+IP). MQTT pode conectar.");
             }
             else
             {

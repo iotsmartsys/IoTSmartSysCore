@@ -12,11 +12,13 @@ namespace iotsmartsys::platform::arduino
         ArduinoUltrassonicWaterLevelSensor(SensorUltrassonicHCSR04 *sr04Sensor, iotsmartsys::core::WaterLevelRecipentType recipentType, unsigned long intervalMs = 0);
 
         void setup() override;
+        void handle() override;
         void handleSensor() override;
 
         float getLevelPercent() override;
         float getLevelLiters() override;
         float getHeightWaterInCm() override;
+        long lastStateReadMillis() const override;
 
     // implement IHardwareAdapter contract (sensors typically don't support commands)
     bool applyCommand(const core::IHardwareCommand &command);
@@ -34,12 +36,12 @@ namespace iotsmartsys::platform::arduino
         SensorUltrassonicHCSR04 *sr04Sensor;
         float actualHeightCM = 0;
 
-        unsigned long lastReadTime = 0;
-        unsigned long readIntervalMs = 0;
-
         float levelPercent = 0;
         float levelLiters = 0;
         float lastDistanceCm = 0;
+        float lastReportedLevelLiters = -1.0f;
+        float lastReportedLevelPercent = -1.0f;
+        long lastStateReadMillis_{0};
 
         float calcularVolumeAgua(float alturaAtualCm);
         float convertDistanceSensorToHeightVolume(float distanceCm);

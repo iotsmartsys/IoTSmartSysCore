@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "ArduinoGlpSensor.h"
 
 namespace iotsmartsys::platform::arduino
@@ -68,9 +70,28 @@ namespace iotsmartsys::platform::arduino
             levelState = GlpSensorLevelStrings::GLP_SENSOR_LEVEL_HIGH;
         }
 
+        bool stateChanged = false;
         if (lastLevel != levelState)
         {
+            stateChanged = true;
             lastLevel = levelState;
+        }
+
+        if (lastReportedPercent < 0.0f || fabs(levelPercent - lastReportedPercent) > 0.01f)
+        {
+            stateChanged = true;
+            lastReportedPercent = levelPercent;
+        }
+
+        if (lastReportedDetected != detected)
+        {
+            stateChanged = true;
+            lastReportedDetected = detected;
+        }
+
+        if (stateChanged)
+        {
+            lastStateReadMillis_ = millis();
         }
 
         // Log na serial
@@ -90,6 +111,11 @@ namespace iotsmartsys::platform::arduino
     std::string ArduinoGlpSensor::getLevelString()
     {
         return levelState;
+    }
+
+    long ArduinoGlpSensor::lastStateReadMillis() const
+    {
+        return lastStateReadMillis_;
     }
 
     int ArduinoGlpSensor::readAnalogAverage()

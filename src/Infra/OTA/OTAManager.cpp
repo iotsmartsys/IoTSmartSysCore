@@ -54,15 +54,15 @@ void OTAManager::handle()
         return;
     }
 
-    _logger.info("[OTA Manager]", "Inicializando OTA a partir das configurações...");
+    _logger.debug("[OTA Manager]", "Inicializando OTA a partir das configurações...");
     settings::FirmwareConfig firmwareSettings;
     settings::Settings currentSettings;
     if (_settingsProvider.copyCurrent(currentSettings))
     {
-        _logger.info("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
-        _logger.info("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
-        _logger.info("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
-        _logger.info("[OTA Manager]", "Firmware Update Method: %d", (int)currentSettings.firmware.update);
+        _logger.debug("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
+        _logger.debug("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
+        _logger.debug("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
+        _logger.debug("[OTA Manager]", "Firmware Update Method: %d", (int)currentSettings.firmware.update);
 
         firmwareSettings = currentSettings.firmware;
     }
@@ -75,19 +75,19 @@ void OTAManager::handle()
     switch (firmwareSettings.update)
     {
     case FirmwareUpdateMethod::NONE:
-        _logger.info("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
+        _logger.debug("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
         return;
     case FirmwareUpdateMethod::OTA:
         if (!_ota.isInitialized())
         {
-            _logger.info("[OTA Manager]", "Método de atualização definido como OTA.");
+            _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
             _ota.setup();
         }
 
         _ota.handle();
         break;
     case FirmwareUpdateMethod::AUTO:
-        _logger.info("[OTA Manager]", "Método de atualização definido como AUTO.");
+        _logger.debug("[OTA Manager]", "Método de atualização definido como AUTO.");
         update(firmwareSettings);
         break;
     default:
@@ -100,10 +100,10 @@ void OTAManager::update(FirmwareConfig firmwareSettings)
 {
     if (_firmwareUpdater.hasCheckedForUpdate())
     {
-        _logger.info("[OTA Manager]", "Verificação de atualização já realizada nesta sessão. Pulando.");
+        _logger.debug("[OTA Manager]", "Verificação de atualização já realizada nesta sessão. Pulando.");
         return;
     }
-    
+
     std::string baseUrl = firmwareSettings.url;
     std::string manifestUrl = baseUrl + firmwareSettings.manifest;
 

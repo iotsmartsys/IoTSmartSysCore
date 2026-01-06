@@ -148,14 +148,6 @@ namespace iotsmartsys::platform::espressif
         std::string url, manifest, update;
         bool verify = false;
 
-        if (!jsonGetString(fw, "url", url) || url.empty())
-            return StateResult::InvalidState;
-
-        if (!jsonGetString(fw, "manifest", manifest) || manifest.empty())
-            return StateResult::InvalidState;
-
-        (void)jsonGetBool(fw, "verifysha256", verify);
-
         // update é string no JSON: "auto" / "ota" / "none"
         if (jsonGetString(fw, "update", update))
         {
@@ -165,6 +157,15 @@ namespace iotsmartsys::platform::espressif
         {
             out.update = FirmwareUpdateMethod::OTA; // default do seu model
         }
+
+        if (out.update == FirmwareUpdateMethod::AUTO && (!jsonGetString(fw, "url", url) || url.empty()))
+            return StateResult::InvalidState;
+
+        if (out.update == FirmwareUpdateMethod::AUTO && (!jsonGetString(fw, "manifest", manifest) || manifest.empty()))
+            return StateResult::InvalidState;
+
+        (void)jsonGetBool(fw, "verifysha256", verify);
+
 
         out.url = url;
         out.manifest = manifest;

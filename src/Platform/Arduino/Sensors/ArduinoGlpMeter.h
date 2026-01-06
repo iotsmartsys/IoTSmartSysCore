@@ -25,6 +25,7 @@ namespace iotsmartsys::platform::arduino
         float getKg() const override;
         float getPercent() const override;
         std::string getLevelString() const override;
+        long lastStateReadMillis() const override;
 
     private:
         ILogger &_logger;
@@ -39,6 +40,7 @@ namespace iotsmartsys::platform::arduino
         float tare_weight_kg;
         float weight_capacity_kg;
         std::string levelString;
+        long lastStateReadMillis_{0};
     };
 #else
     // Stub when HX711 is disabled at build time.
@@ -51,6 +53,7 @@ namespace iotsmartsys::platform::arduino
         float getKg() const override { return 0.0f; }
         float getPercent() const override { return 0.0f; }
         std::string getLevelString() const override { return "0"; }
+        long lastStateReadMillis() const override { return 0; }
     };
 #endif
 } // namespace iotsmartsys::platform::arduino
