@@ -155,7 +155,7 @@ namespace iotsmartsys
             if (settingsManager_.copyCurrent(settings_))
             {
                 logger_.info("[SettingsManager] Cached settings loaded successfully.");
-                logger_.info("[SettingsManager] Applying cached settings...");
+                logger_.info("---------------------------------------------------------");
                 logger_.info("[SettingsManager]", " Firmware Update Mode: %d", (int)settings_.firmware.update);
 
                 logger_.info("[SettingsManager]", " OTA URL: %s", settings_.firmware.url.c_str());
@@ -169,22 +169,20 @@ namespace iotsmartsys
                 logger_.info("[SettingsManager] API URL: %s", settings_.api.url.c_str());
                 logger_.info("[SettingsManager] Api Basic Auth: %s", settings_.api.basic_auth.c_str());
 
-                logger_.info("[SettingsManager] Device Name: %s", settings_.clientId);
-                logger_.info("[SettingsManager] MQTT Topic: %s", settings_.mqtt.announce_topic.c_str());
-                logger_.info("[SettingsManager] MQTT Broker: %s", settings_.mqtt.primary.host.c_str());
-                logger_.info("[SettingsManager] MQTT User: %s", settings_.mqtt.primary.user.c_str());
-                logger_.info("[SettingsManager] MQTT Port: %d", settings_.mqtt.primary.port);
 
                 logger_.info("[SettingsManager] In Config Mode: %s", settings_.in_config_mode ? "Yes" : "No");
+             
+                auto running = esp_ota_get_running_partition();
+                auto bootp = esp_ota_get_boot_partition();
+                Serial.printf("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
+                Serial.printf("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
+
+                logger_.info("----------------------------------------------------------");
 
                 serviceManager_.setLogLevel(LogLevel::Info);
 
                 delay(3000);
 
-                auto running = esp_ota_get_running_partition();
-                auto bootp = esp_ota_get_boot_partition();
-                Serial.printf("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
-                Serial.printf("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
                 delay(3000);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())

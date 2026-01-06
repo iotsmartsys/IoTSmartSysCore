@@ -298,7 +298,9 @@ namespace iotsmartsys::ota
         }
 
         float sizeMb = contentLength / (1024.0f * 1024.0f);
-        _logger.info("FW-OTA", "Tamanho do firmware: ", contentLength, " bytes (", sizeMb, " MB)");
+        // _logger.info("FW-OTA", "Tamanho do firmware: ", contentLength, " bytes (", sizeMb, " MB)");
+        _logger.info("FW-OTA", "Tamanho do firmware: %.2f MB", sizeMb);
+
 
         if (!Update.begin(contentLength))
         {
@@ -357,7 +359,11 @@ namespace iotsmartsys::ota
             if (millis() - lastLog > 2000)
             {
                 lastLog = millis();
-                _logger.info("FW-OTA", "Progresso: ", (100 * totalWritten) / contentLength, "%");
+                // _logger.info("FW-OTA", "Progresso: ", (100 * totalWritten) / contentLength, "%");
+                _logger.info("FW-OTA", "Progresso: %u / %u bytes (%.2f%%)",
+                             (unsigned)totalWritten,
+                             (unsigned)contentLength,
+                             (totalWritten * 100.0f) / contentLength);
             }
         }
 
@@ -388,8 +394,8 @@ namespace iotsmartsys::ota
                            [](unsigned char c)
                            { return static_cast<char>(std::tolower(c)); });
 
-            _logger.info("FW-OTA", "SHA256 esperado: ", expectedHash);
-            _logger.info("FW-OTA", "SHA256 calculado: ", computedHash);
+            _logger.info("FW-OTA", "SHA256 esperado: %s", expectedHash.c_str());
+            _logger.info("FW-OTA", "SHA256 calculado: %s", computedHash.c_str());
 
             if (manifest.checksumType == "sha256" && expectedHash.length() == 64)
             {
