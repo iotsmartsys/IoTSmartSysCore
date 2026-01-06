@@ -41,7 +41,7 @@ namespace iotsmartsys::core::settings
 
         bool isValid() const
         {
-            return (!url.empty() && !manifest.empty());
+            return !url.empty();
         }
 
         static FirmwareUpdateMethod firmwareUpdateMethodFromCString(const char *value)
@@ -58,7 +58,7 @@ namespace iotsmartsys::core::settings
             if (strcasecmp(v.c_str(), "auto") == 0)
                 return FirmwareUpdateMethod::AUTO;
 
-            return FirmwareUpdateMethod::NONE;
+            return FirmwareUpdateMethod::AUTO;
         }
 
         bool hasChanged(const FirmwareConfig &other) const
