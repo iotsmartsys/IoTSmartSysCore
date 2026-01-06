@@ -15,7 +15,11 @@ namespace iotsmartsys::ota
     class OTAManager
     {
     public:
-        OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser, OTA &ota, iotsmartsys::core::settings::ISettingsGate &settingsGate);
+        OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser, 
+            #ifdef OTA_ENABLED
+            OTA &ota, 
+            #endif
+            iotsmartsys::core::settings::ISettingsGate &settingsGate);
 
         void handle();
 
@@ -23,7 +27,9 @@ namespace iotsmartsys::ota
         IReadOnlySettingsProvider &_settingsProvider;
         FirmwareUpdater _firmwareUpdater;
         ILogger &_logger;
+#ifdef OTA_ENABLED
         OTA &_ota;
+#endif
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;
         bool _lastNetworkReady{false};
         bool _lastSettingsReady{false};

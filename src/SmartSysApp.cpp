@@ -3,6 +3,7 @@
 #include "Version/VersionInfo.h"
 #include "Contracts/Commands/ICommandProcessor.h"
 #include "Contracts/Commands/CommandTypes.h"
+#include "esp_ota_ops.h"
 
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
@@ -29,8 +30,14 @@ namespace iotsmartsys
           wifi_(logger_),
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
+#ifdef OTA_ENABLED
           ota_(logger_),
-          otaManager_(settingsManager_, logger_, manifestParser_, ota_, settingsGate_),
+#endif
+          otaManager_(settingsManager_, logger_, manifestParser_,
+#ifdef OTA_ENABLED
+                      ota_,
+#endif
+                      settingsGate_),
           commandParser_(logger_),
           transportHub_(logger_, settingsManager_)
     {
@@ -149,6 +156,12 @@ namespace iotsmartsys
             {
                 logger_.info("[SettingsManager] Cached settings loaded successfully.");
                 logger_.info("[SettingsManager] Applying cached settings...");
+                logger_.info("[SettingsManager]", " Firmware Update Mode: %d", (int)settings_.firmware.update);
+
+                logger_.info("[SettingsManager]", " OTA URL: %s", settings_.firmware.url.c_str());
+                logger_.info("[SettingsManager]", " OTA Version: %s", getBuildIdentifier());
+                logger_.info("[SettingsManager]", "Library Version: %s", IOTSMARTSYSCORE_VERSION);
+
                 logger_.info("[SettingsManager] Log Level: %s", settings_.logLevelStr());
                 logger_.info("[SettingsManager] WiFi SSID: %s", settings_.wifi.ssid.c_str());
                 logger_.info("[SettingsManager] WiFi Password: %s", settings_.wifi.password.c_str());
@@ -161,11 +174,18 @@ namespace iotsmartsys
                 logger_.info("[SettingsManager] MQTT Broker: %s", settings_.mqtt.primary.host.c_str());
                 logger_.info("[SettingsManager] MQTT User: %s", settings_.mqtt.primary.user.c_str());
                 logger_.info("[SettingsManager] MQTT Port: %d", settings_.mqtt.primary.port);
+
                 logger_.info("[SettingsManager] In Config Mode: %s", settings_.in_config_mode ? "Yes" : "No");
 
                 serviceManager_.setLogLevel(LogLevel::Info);
 
-                delay(6000);
+                delay(3000);
+
+                auto running = esp_ota_get_running_partition();
+                auto bootp = esp_ota_get_boot_partition();
+                Serial.printf("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
+                Serial.printf("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
+                delay(3000);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
@@ -243,12 +263,11 @@ namespace iotsmartsys
             }
         }
 
-        
         if (capabilityManager_)
         {
             capabilityManager_->handle();
         }
-        
+
         wifi_.handle();
         otaManager_.handle();
         settingsManager_.handle();

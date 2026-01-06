@@ -1,3 +1,4 @@
+#ifdef OTA_ENABLED
 #pragma once
 #include "Contracts/Logging/ILogger.h"
 
@@ -19,3 +20,4 @@ namespace iotsmartsys::ota
         bool _initialized = false;
     };
 }
+#endif

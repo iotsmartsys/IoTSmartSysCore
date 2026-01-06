@@ -1,14 +1,19 @@
 #include "OTAManager.h"
-#include "Infra/OTA/OTA.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 
 using namespace iotsmartsys::ota;
 
-OTAManager::OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser, OTA &ota, iotsmartsys::core::settings::ISettingsGate &settingsGate)
+OTAManager::OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser,
+#ifdef OTA_ENABLED
+                       OTA &ota,
+#endif
+                       iotsmartsys::core::settings::ISettingsGate &settingsGate)
     : _settingsProvider(settingsProvider),
       _firmwareUpdater(logger, manifestParser),
       _logger(logger),
+#ifdef OTA_ENABLED
       _ota(ota),
+#endif
       _settingsGate(settingsGate)
 {
 }
@@ -78,6 +83,7 @@ void OTAManager::handle()
         _logger.debug("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
         return;
     case FirmwareUpdateMethod::OTA:
+#ifdef OTA_ENABLED
         if (!_ota.isInitialized())
         {
             _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
@@ -85,6 +91,7 @@ void OTAManager::handle()
         }
 
         _ota.handle();
+#endif
         break;
     case FirmwareUpdateMethod::AUTO:
         _logger.debug("[OTA Manager]", "Método de atualização definido como AUTO.");

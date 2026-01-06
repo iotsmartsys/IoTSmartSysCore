@@ -1,4 +1,4 @@
-
+#ifdef OTA_ENABLED
 #include "OTA.h"
 #include <Arduino.h>
 #include <ArduinoOTA.h>
@@ -62,3 +62,5 @@ namespace iotsmartsys::ota
         ArduinoOTA.handle();
     }
 } // namespace iotsmartsys::ota
+
+#endif

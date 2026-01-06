@@ -129,7 +129,9 @@ namespace iotsmartsys
         core::WiFiManager wifi_;
         app::MqttService<12, 16, 256> mqtt_;
         iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
+#ifdef OTA_ENABLED
         ota::OTA ota_;
+#endif
         ota::OTAManager otaManager_;
 
         iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
