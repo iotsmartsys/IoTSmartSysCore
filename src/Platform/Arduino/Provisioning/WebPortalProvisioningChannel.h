@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(WEB_PORTAL_PROVISIONING_ENABLE) && (WEB_PORTAL_PROVISIONING_ENABLE != 0)
+
 #include <functional>
 #include <string>
 #if defined(ESP32)
@@ -74,3 +76,5 @@ namespace iotsmartsys::core::provisioning
     };
 
 } // namespace iotsmartsys::core::provisioning
+
+#endif

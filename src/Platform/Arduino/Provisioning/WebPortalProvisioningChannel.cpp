@@ -1,5 +1,7 @@
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
 
+#if defined(WEB_PORTAL_PROVISIONING_ENABLE) && (WEB_PORTAL_PROVISIONING_ENABLE != 0)
+
 #include <Arduino.h>
 #include <vector>
 #include <string>
@@ -206,3 +208,5 @@ namespace iotsmartsys::core::provisioning
     }
 
 } // namespace iotsmartsys::core::provisioning
+
+#endif

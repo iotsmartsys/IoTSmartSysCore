@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
+
 #include <string>
 #include "Core/Provisioning/IProvisioningChannel.h"
 #include "Contracts/Logging/ILogger.h"
@@ -80,3 +82,5 @@ namespace iotsmartsys::core::provisioning
     };
 
 } // namespace iotsmartsys::core::provisioning
+
+#endif

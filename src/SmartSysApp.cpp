@@ -279,8 +279,10 @@ namespace iotsmartsys
         logger_.info("--------------------------------------------------------");
         provManager = new core::provisioning::ProvisioningManager();
 
+#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
         bleChannel = new core::provisioning::BleProvisioningChannel(logger_, wifi_);
         provManager->registerChannel(*bleChannel);
+#endif
         provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
                                              {
                                                  auto &sp_ = iotsmartsys::core::ServiceManager::instance();

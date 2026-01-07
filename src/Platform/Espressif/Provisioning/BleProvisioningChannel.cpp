@@ -1,5 +1,7 @@
 #include "BleProvisioningChannel.h"
 
+#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
+
 #include <cstring>
 #include <string>
 #include <vector>
@@ -954,3 +956,5 @@ namespace iotsmartsys::core::provisioning
     }
 
 } // namespace iotsmartsys::core::provisioning
+
+#endif
