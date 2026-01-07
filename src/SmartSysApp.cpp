@@ -169,21 +169,16 @@ namespace iotsmartsys
                 logger_.info("[SettingsManager] API URL: %s", settings_.api.url.c_str());
                 logger_.info("[SettingsManager] Api Basic Auth: %s", settings_.api.basic_auth.c_str());
 
-
                 logger_.info("[SettingsManager] In Config Mode: %s", settings_.in_config_mode ? "Yes" : "No");
-             
+
                 auto running = esp_ota_get_running_partition();
                 auto bootp = esp_ota_get_boot_partition();
-                Serial.printf("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
-                Serial.printf("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
+                logger_.info("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
+                logger_.info("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
 
                 logger_.info("----------------------------------------------------------");
 
-                serviceManager_.setLogLevel(LogLevel::Info);
-
-                delay(3000);
-
-                delay(3000);
+                serviceManager_.setLogLevel(settings_.logLevel);
 
                 if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
                 {
@@ -224,19 +219,6 @@ namespace iotsmartsys
         mqtt_.subscribe(topic);
         mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
         mqtt_.setForwardRawMessages(true);
-
-        // Serial1.begin(UART_BAUD, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
-
-        // TransportConfig cfg{};
-        // cfg.uri = "serial://uart2";
-        // cfg.clientId = "esp32-uart-bridge";
-        // cfg.keepAliveSec = 30;
-        // uart_.begin(cfg);
-        // // uart_.setForwardRawMessages(true);
-        // transportHub_.addChannel("uart", &uart_);
-        transportHub_.addChannel("mqtt", &mqtt_);
-        transportHub_.addDispatcher(*commandDispatcher_);
-        // Opcional
 
         transportHub_.start();
     }
@@ -282,6 +264,11 @@ namespace iotsmartsys
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
         bleChannel = new core::provisioning::BleProvisioningChannel(logger_, wifi_);
         provManager->registerChannel(*bleChannel);
+#endif
+
+#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
+        webPortalChannel = new core::provisioning::WebPortalProvisioningChannel(wifi_, logger_);
+        provManager->registerChannel(*webPortalChannel);
 #endif
         provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
                                              {

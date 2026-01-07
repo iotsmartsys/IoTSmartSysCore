@@ -1,6 +1,6 @@
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
 
-#if defined(WEB_PORTAL_PROVISIONING_ENABLE) && (WEB_PORTAL_PROVISIONING_ENABLE != 0)
+#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
 
 #include <Arduino.h>
 #include <vector>

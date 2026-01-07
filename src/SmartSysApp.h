@@ -46,7 +46,7 @@
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
 #include "Platform/Espressif/Provisioning/BleProvisioningChannel.h"
 #endif
-#if defined(WEB_PORTAL_PROVISIONING_ENABLE) && (WEB_PORTAL_PROVISIONING_ENABLE != 0)
+#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
 #endif
 
@@ -142,6 +142,9 @@ namespace iotsmartsys
         iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
         iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
+#endif
+#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
+        iotsmartsys::core::provisioning::WebPortalProvisioningChannel *webPortalChannel = nullptr;
 #endif
         iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
         CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
