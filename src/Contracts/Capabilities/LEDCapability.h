@@ -14,10 +14,6 @@ namespace iotsmartsys::core
 
         void handle() override;
 
-        void toggle();
-        void turnOn();
-        void turnOff();
-        bool isOn() const;
         void executeCommand(const char *state);
         void blink(unsigned long intervalMs);
 

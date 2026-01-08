@@ -9,18 +9,12 @@
 // -----------------------------------------------------------------------------
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
-#include "Contracts/Transports/ITransportChannel.h"
 
-#include "Contracts/Settings/ISettingsFetcher.h"
-#include "Contracts/Settings/ISettingsParser.h"
 #include "Contracts/Settings/SettingsManager.h"
-#include "Contracts/Providers/ISettingsProvider.h"
 
 // -----------------------------------------------------------------------------
 //  Platform implementations
 // -----------------------------------------------------------------------------
-#include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
-#include "Platform/Arduino/Providers/ArduinoTimeProvider.h"
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 
 // MQTT client implementation (required before declaring mqttClient)
@@ -28,9 +22,8 @@
 #include "Platform/Espressif/Parsers/EspIdfCommandParser.h"
 #include "Platform/Espressif/Arduino/Connectivity/ArduinoEventLatch.h"
 
-#include "Platform/Espressif/Settings/EspIdfSettingsFetcher.h"
-#include "Platform/Espressif/Settings/EspIdfSettingsParser.h"
-#include "Platform/Espressif/Settings/Providers/EspIdfNvsSettingsProvider.h"
+// platform-specific settings fetcher/parser/providers are implementation details
+// and not required by this header. Include them in .cpp where needed.
 
 // -----------------------------------------------------------------------------
 //  App / Core services built on top of contracts

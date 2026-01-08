@@ -24,10 +24,6 @@ namespace iotsmartsys::core
         }
     }
 
-    void LEDCapability::toggle() { BinaryCommandCapability::toggle(); }
-    void LEDCapability::turnOn() { BinaryCommandCapability::turnOn(); }
-    void LEDCapability::turnOff() { BinaryCommandCapability::turnOff(); }
-    bool LEDCapability::isOn() const { return BinaryCommandCapability::isOn(); }
     void LEDCapability::executeCommand(const char *state) { power(state); }
 
     void LEDCapability::blink(unsigned long intervalMs)

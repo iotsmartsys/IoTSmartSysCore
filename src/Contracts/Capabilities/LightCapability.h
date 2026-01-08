@@ -15,7 +15,5 @@ namespace iotsmartsys::core
 
         void toggle();
         void turnOn();
-        void turnOff();
-        bool isOn() const;
     };
 }

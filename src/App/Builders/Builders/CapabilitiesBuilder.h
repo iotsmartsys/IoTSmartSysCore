@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <new>
+#include <utility>
 
 #include "App/Builders/Configs/HardwareConfig.h"
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
@@ -28,7 +29,6 @@
 #include "Contracts/Capabilities/GlpMeterKgCapability.h"
 #include "Contracts/Capabilities/GlpMeterPercentCapability.h"
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
-#include <stdexcept>
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
 #include "Contracts/Capabilities/LuminosityCapability.h"
 
@@ -85,11 +85,38 @@ namespace iotsmartsys::app
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
 
     private:
+        template <typename TCap, typename... Args>
+        TCap *createCapability(Args &&...args)
+        {
+            if (_count >= _capsMax)
+                return nullptr;
+
+            void *memcap = allocateAligned(sizeof(TCap), alignof(TCap));
+            if (!memcap)
+                return nullptr;
+
+            auto *cap = new (memcap) TCap(std::forward<Args>(args)...);
+
+            auto dtor = [](void *p)
+            {
+                static_cast<TCap *>(p)->~TCap();
+            };
+
+            if (!registerCapability(cap, dtor))
+            {
+                cap->~TCap();
+                return nullptr;
+            }
+
+            return cap;
+        }
+
+        iotsmartsys::core::ICommandHardwareAdapter *createOutputAdapter(std::uint8_t gpio, bool highIsOn);
+        iotsmartsys::core::IInputHardwareAdapter *createInputAdapter(std::uint8_t gpio);
+
         void *allocateAligned(size_t sizeBytes, size_t alignment);
         bool registerCapability(ICapability *cap, void (*destructor)(void *));
         bool registerAdapter(void *adapter, void (*destructor)(void *));
-        iotsmartsys::core::settings::Settings *_currentSettings{nullptr};
-
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;
         iotsmartsys::core::ICapabilityEventSink &_eventSink;

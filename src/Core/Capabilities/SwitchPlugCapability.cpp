@@ -7,11 +7,4 @@ namespace iotsmartsys::core
     {
     }
 
-    void SwitchPlugCapability::handle()
-    {
-        // no periodic action required; state changes happen via commands or hardware
-        // but keep parity with legacy: update internal state from hardware if needed
-        syncFromHardware();
-    }
-
 } // namespace iotsmartsys::core

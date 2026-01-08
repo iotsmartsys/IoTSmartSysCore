@@ -25,14 +25,4 @@ namespace iotsmartsys::core
         logger.debug("LightCapability", "Turning ON");
         BinaryCommandCapability::turnOn();
     }
-
-    void LightCapability::turnOff()
-    {
-        BinaryCommandCapability::turnOff();
-    }
-
-    bool LightCapability::isOn() const
-    {
-        return BinaryCommandCapability::isOn();
-    }
 } // namespace iotsmartsys::core

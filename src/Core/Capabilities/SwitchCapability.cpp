@@ -7,9 +7,4 @@ namespace iotsmartsys::core
     {
     }
 
-    void SwitchCapability::handle()
-    {
-        syncFromHardware();
-    }
-
 } // namespace iotsmartsys::core

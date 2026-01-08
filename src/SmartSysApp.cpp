@@ -1,8 +1,7 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
-#include "Contracts/Commands/ICommandProcessor.h"
-#include "Contracts/Commands/CommandTypes.h"
+#include "esp_ota_ops.h"
 #include "esp_ota_ops.h"
 
 #include <cstdio>

@@ -23,11 +23,8 @@ namespace iotsmartsys::ota
         ArduinoOTA.setHostname(hostname);
         ArduinoOTA.onStart([]()
                            {
-        String type;
         if (ArduinoOTA.getCommand() == U_FLASH) {
-            type = "sketch";
         } else { 
-            type = "filesystem";
         }
        auto &logger = Log::get();
        logger.info("OTA","Iniciando atualização OTA"); });

@@ -111,10 +111,5 @@ void OTAManager::update(FirmwareConfig firmwareSettings)
         return;
     }
 
-    std::string baseUrl = firmwareSettings.url;
-    std::string manifestUrl = baseUrl + firmwareSettings.manifest;
-
-    bool verifySha = firmwareSettings.verify_sha256;
-
     _firmwareUpdater.checkAndUpdate(firmwareSettings);
 }
