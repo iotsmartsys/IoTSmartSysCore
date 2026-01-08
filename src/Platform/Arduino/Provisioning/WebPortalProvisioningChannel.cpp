@@ -6,6 +6,10 @@
 #include <vector>
 #include <string>
 
+#ifndef WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE
+#define WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE 0
+#endif
+
 namespace iotsmartsys::core::provisioning
 {
 
@@ -29,23 +33,42 @@ namespace iotsmartsys::core::provisioning
 
         WiFi.mode(WIFI_AP);
 
+// Build deterministic, padded last-6-hex AP name and WPA2 password
 #if defined(ESP32)
-        String apName = "ESP-Config-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+        const uint64_t mac = ESP.getEfuseMac();
+        const uint32_t last6 = (uint32_t)(mac & 0xFFFFFFULL);
+        char ssidBuf[32];
+        char passBuf[32];
+        snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
+        snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
+        String apName = String(ssidBuf);
+        String apPass = String(passBuf);
 #else
-        String apName = "ESP-Config-" + String(ESP.getChipId(), HEX);
+        const uint32_t chipId = ESP.getChipId();
+        const uint32_t last6 = (uint32_t)(chipId & 0xFFFFFFUL);
+        char ssidBuf[32];
+        char passBuf[32];
+        snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
+        snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
+        String apName = String(ssidBuf);
+        String apPass = String(passBuf);
 #endif
 
-        WiFi.softAP(apName.c_str());
+        // WPA2 password must be >= 8 chars; using setup-XXXXXX (11 chars)
+        WiFi.softAP(apName.c_str(), apPass.c_str());
 
         IPAddress ip = WiFi.softAPIP();
+        _availableSsids = _wifiManager.getAvailableSSIDs();
         _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
-        _logger.info("[PortalConfig]", "SSID do AP: %s", apName.c_str());
         _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
 
+#if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _dnsServer.start(DNS_PORT, "*", ip);
+#endif
 
         _server.on("/", HTTP_GET, [this]()
                    { handleRoot(); });
+#if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _server.on("/generate_204", HTTP_GET, [this]()
                    { handleRoot(); });
         _server.on("/hotspot-detect.html", HTTP_GET, [this]()
@@ -54,9 +77,37 @@ namespace iotsmartsys::core::provisioning
                    { handleRoot(); });
         _server.on("/connecttest.txt", HTTP_GET, [this]()
                    { handleRoot(); });
+#endif
 
         _server.on("/save", HTTP_POST, [this]()
                    { handleSave(); });
+
+        _server.on("/info", HTTP_GET, [this, apName]()
+                   {
+                       // {"device_id":"<id>", "ssid":"<ssid>"}
+                       String info = F("{\"device_id\":\"");
+                       info += apName;
+                       info += F("\", \"ssid\":\"");
+                       info += apName;
+                       info += F("\"}");
+                       _server.send(200, "application/json", info);
+                   });
+
+        _server.on("/wifi/scan", HTTP_GET, [this]()
+                   {
+                       String result = F("[");
+                       for (size_t i = 0; i < _availableSsids.size(); i++)
+                       {
+                           result += F("\"");
+                           result += String(_availableSsids[i].c_str());
+                           result += F("\"");
+                           if (i < _availableSsids.size() - 1)
+                           {
+                               result += F(",");
+                           }
+                       }
+                       result += F("]");
+                       _server.send(200, "application/json", result); });
         _server.onNotFound([this]()
                            { handleNotFound(); });
 
@@ -74,7 +125,9 @@ namespace iotsmartsys::core::provisioning
             return;
         }
 
+#if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _dnsServer.processNextRequest();
+#endif
         _server.handleClient();
     }
 
@@ -86,7 +139,9 @@ namespace iotsmartsys::core::provisioning
         }
 
         _server.stop();
+#if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _dnsServer.stop();
+#endif
         WiFi.softAPdisconnect(true);
 
         _active = false;
@@ -130,14 +185,13 @@ namespace iotsmartsys::core::provisioning
         page += F("<label for='ssid'>Nome da rede Wi-Fi (SSID)</label>");
         page += F("<select id='ssid' name='ssid' required>");
 
-        std::vector<std::string> ssids = _wifiManager.getAvailableSSIDs();
-        if (ssids.empty())
+        if (_availableSsids.empty())
         {
             page += F("<option value=''>Nenhuma rede encontrada</option>");
         }
         else
         {
-            for (const auto &s : ssids)
+            for (const auto &s : _availableSsids)
             {
                 String ssidStr(s.c_str());
                 page += F("<option value='");
@@ -204,7 +258,11 @@ namespace iotsmartsys::core::provisioning
 
     void WebPortalProvisioningChannel::handleNotFound()
     {
+#if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         handleRoot();
+#else
+        _server.send(404, "text/plain", "Not found");
+#endif
     }
 
 } // namespace iotsmartsys::core::provisioning

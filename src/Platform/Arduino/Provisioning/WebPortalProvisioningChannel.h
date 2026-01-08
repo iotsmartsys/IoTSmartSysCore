@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 #if defined(ESP32)
 #include <WebServer.h>
 #include <DNSServer.h>
@@ -65,6 +66,7 @@ namespace iotsmartsys::core::provisioning
         std::string _wifiPasswordStorage;
         std::string _deviceApiKeyStorage;
         std::string _basicAuthStorage;
+        std::vector<std::string> _availableSsids;
 
         void sendStatus(ProvisioningStatus status, const char *msg);
 
