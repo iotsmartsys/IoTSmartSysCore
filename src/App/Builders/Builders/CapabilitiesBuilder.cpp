@@ -175,8 +175,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::LightCapability>(
-            cfg.capability_name,
+            name,
             *hardwareAdapter, &_eventSink);
     }
 

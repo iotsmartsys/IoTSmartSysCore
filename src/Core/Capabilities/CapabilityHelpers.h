@@ -2,11 +2,7 @@
 
 #include "Contracts/Capabilities/IInputCapability.h"
 #include "Contracts/Capabilities/ICommandCapability.h"
-#include <cmath>
-#include <cstdint>
 #include <string>
-#include <sstream>
-#include <ios>
 
 namespace iotsmartsys::core
 {
@@ -196,10 +192,10 @@ namespace iotsmartsys::core
 
         bool publishIfChanged(float newValue)
         {
-            if (std::isnan(newValue))
+            if (newValue != newValue) // NaN check
                 return false;
 
-            if (!_hasValue || std::fabs(newValue - _lastValue) >= _minDelta)
+            if (!_hasValue || (newValue - _lastValue) >= _minDelta)
             {
                 _lastValue = newValue;
                 _hasValue = true;
@@ -213,11 +209,9 @@ namespace iotsmartsys::core
 
         std::string formatValue(float value) const
         {
-            std::ostringstream oss;
-            oss.setf(std::ios::fixed);
-            oss.precision(_precision);
-            oss << value;
-            return oss.str();
+            return std::to_string(value);
+        //    return std::to_string(static_cast<long>(std::round(value * std::pow(10, _precision)))).
+        //         insert(std::to_string(static_cast<long>(std::round(value * std::pow(10, _precision)))).length() - _precision, ".");
         }
 
         void forceNextReadAt(unsigned long now) { _lastReadTime = now; }

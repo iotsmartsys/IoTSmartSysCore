@@ -393,6 +393,12 @@ namespace iotsmartsys
         return builder_.addSwitch(cfg);
     }
 
+    /// @brief Adds a new switch plug capability to the application.
+    iotsmartsys::core::SwitchPlugCapability *SmartSysApp::addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg)
+    {
+        return builder_.addSwitchPlug(cfg);
+    }
+
     /// @brief Adds a new valve capability to the application.
     iotsmartsys::core::ValveCapability *SmartSysApp::addValveCapability(iotsmartsys::app::ValveConfig cfg)
     {
@@ -421,6 +427,12 @@ namespace iotsmartsys
     iotsmartsys::core::WaterLevelPercentCapability *SmartSysApp::addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
     {
         return builder_.addWaterLevelPercent(cfg);
+    }
+
+    /// @brief Adds a new water flow hall sensor capability to the application.
+    iotsmartsys::core::WaterFlowHallSensorCapability *SmartSysApp::addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg)
+    {
+        return builder_.addWaterFlowHallSensor(cfg);
     }
 
     /// @brief Adds a new luminosity sensor capability to the application.

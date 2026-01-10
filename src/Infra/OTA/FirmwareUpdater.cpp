@@ -359,11 +359,14 @@ namespace iotsmartsys::ota
             if (millis() - lastLog > 2000)
             {
                 lastLog = millis();
-                // _logger.info("FW-OTA", "Progresso: ", (100 * totalWritten) / contentLength, "%");
-                _logger.info("FW-OTA", "Progresso: %u / %u bytes (%.2f%%)",
-                             (unsigned)totalWritten,
-                             (unsigned)contentLength,
-                             (totalWritten * 100.0f) / contentLength);
+                float percent = (totalWritten * 100.0f) / contentLength;
+                float writtenMb = totalWritten / (1024.0f * 1024.0f);
+                float totalMb = contentLength / (1024.0f * 1024.0f);
+
+                _logger.info("FW-OTA", "Progresso: %.2f / %.2f MB (%.2f%%)",
+                             writtenMb,
+                             totalMb,
+                             percent);
             }
         }
 

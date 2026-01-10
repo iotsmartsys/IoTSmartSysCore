@@ -1,6 +1,6 @@
 #include "Contracts/Capabilities/WaterFlowHallSensorCapability.h"
-#include <sstream>
-#include <iomanip>
+// #include <sstream>
+// #include <iomanip>
 
 namespace iotsmartsys::core
 {
@@ -40,9 +40,10 @@ namespace iotsmartsys::core
             {
                 lastTotalLiters = totalLiters;
                 // format with 3 decimals
-                std::ostringstream ss;
-                ss << std::fixed << std::setprecision(3) << totalLiters;
-                updateState(ss.str());
+                // std::ostringstream ss;
+                // ss << std::fixed << std::setprecision(3) << totalLiters;
+                std::string ss = std::to_string(totalLiters);
+                updateState(ss);
             }
         }
     }
