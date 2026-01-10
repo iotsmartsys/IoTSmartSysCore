@@ -6,6 +6,10 @@
 #include <vector>
 #include <string>
 
+extern "C" {
+#include "cJSON.h"
+}
+
 #ifndef WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE
 #define WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE 0
 #endif
@@ -15,8 +19,8 @@ namespace iotsmartsys::core::provisioning
 
     constexpr uint8_t DNS_PORT = 53;
 
-    WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger)
-        : _wifiManager(wifiManager), _logger(logger), _server(80)
+    WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger, core::IDeviceIdentityProvider &deviceIdentityProvider)
+        : _wifiManager(wifiManager), _logger(logger), _server(80), _deviceIdentityProvider(deviceIdentityProvider)
     {
     }
 
@@ -31,28 +35,17 @@ namespace iotsmartsys::core::provisioning
 
         sendStatus(ProvisioningStatus::Idle, "[PortalConfig] Iniciando portal de configuracao...");
 
-        WiFi.mode(WIFI_AP);
+        // AP+STA allows scanning nearby networks while SoftAP is running
+        WiFi.mode(WIFI_AP_STA);
+        auto deviceId = _deviceIdentityProvider.getDeviceName();
 
-// Build deterministic, padded last-6-hex AP name and WPA2 password
-#if defined(ESP32)
-        const uint64_t mac = ESP.getEfuseMac();
-        const uint32_t last6 = (uint32_t)(mac & 0xFFFFFFULL);
+        const uint32_t last6 = strtoul(deviceId.substr(deviceId.length() - 6).c_str(), nullptr, 16);
         char ssidBuf[32];
         char passBuf[32];
         snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
         snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
         String apName = String(ssidBuf);
-        String apPass = String(passBuf);
-#else
-        const uint32_t chipId = ESP.getChipId();
-        const uint32_t last6 = (uint32_t)(chipId & 0xFFFFFFUL);
-        char ssidBuf[32];
-        char passBuf[32];
-        snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
-        snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
-        String apName = String(ssidBuf);
-        String apPass = String(passBuf);
-#endif
+        String apPass = "123456789"; //String(passBuf);
 
         // WPA2 password must be >= 8 chars; using setup-XXXXXX (11 chars)
         WiFi.softAP(apName.c_str(), apPass.c_str());
@@ -61,6 +54,8 @@ namespace iotsmartsys::core::provisioning
         _availableSsids = _wifiManager.getAvailableSSIDs();
         _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
         _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
+        _logger.info("[PortalConfig]", "SSID: %s", apName.c_str());
+        _logger.info("[PortalConfig]", "Senha: %s", apPass.c_str());
 
 #if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _dnsServer.start(DNS_PORT, "*", ip);
@@ -86,7 +81,7 @@ namespace iotsmartsys::core::provisioning
                    {
                        // {"device_id":"<id>", "ssid":"<ssid>"}
                        String info = F("{\"device_id\":\"");
-                       info += apName;
+                       info += _deviceIdentityProvider.getDeviceName().c_str();
                        info += F("\", \"ssid\":\"");
                        info += apName;
                        info += F("\"}");
@@ -95,6 +90,9 @@ namespace iotsmartsys::core::provisioning
 
         _server.on("/wifi/scan", HTTP_GET, [this]()
                    {
+                       // Refresh scan results on each request
+                       _availableSsids = _wifiManager.getAvailableSSIDs();
+
                        String result = F("[");
                        for (size_t i = 0; i < _availableSsids.size(); i++)
                        {
@@ -107,7 +105,8 @@ namespace iotsmartsys::core::provisioning
                            }
                        }
                        result += F("]");
-                       _server.send(200, "application/json", result); });
+                       _server.send(200, "application/json", result);
+                   });
         _server.onNotFound([this]()
                            { handleNotFound(); });
 
@@ -221,24 +220,95 @@ namespace iotsmartsys::core::provisioning
 
     void WebPortalProvisioningChannel::handleSave()
     {
-        const String ssid = _server.arg("ssid");
-        const String password = _server.arg("password");
-        const String deviceApiKey = _server.arg("device_api_key");
-        const String basicAuth = _server.arg("basic_auth");
+        _logger.info("[PortalConfig]", "Recebendo configuracao via portal...");
+        String ssid;
+        String password;
+        String deviceApiKey;
+        String basicAuth;
+        String device_api_url;
 
-        _server.send(200, "text/html",
-                     F("<!DOCTYPE html><html><head><meta charset='utf-8'>"
-                       "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-                       "<title>Configura&#231;&#227;o salva</title></head><body>"
-                       "<h1>Configura&#231;&#227;o salva!</h1>"
-                       "<p>Voc&#234; j&#225; pode fechar esta p&#225;gina. O dispositivo ir&#225; reiniciar ou tentar conectar &#224; rede configurada.</p>"
-                       "</body></html>"));
+        // If the request body is JSON (iOS app), parse it from the raw body.
+        // Otherwise, fall back to form args (HTML portal).
+        const String rawBody = _server.arg("plain");
+        const bool looksLikeJson = rawBody.length() > 0 && rawBody[0] == '{';
+
+        if (looksLikeJson)
+        {
+            cJSON *root = cJSON_Parse(rawBody.c_str());
+            if (!root)
+            {
+                _logger.warn("[PortalConfig]", "JSON parse failed in /save");
+                _server.send(400, "application/json", "{\"error\":\"invalid_json\"}");
+                return;
+            }
+
+            auto getStr = [&](const char *key, String &out)
+            {
+                cJSON *item = cJSON_GetObjectItemCaseSensitive(root, key);
+                if (cJSON_IsString(item) && item->valuestring)
+                {
+                    out = item->valuestring;
+                }
+            };
+
+            getStr("ssid", ssid);
+            getStr("password", password);
+            getStr("device_api_key", deviceApiKey);
+            getStr("basic_auth", basicAuth);
+            getStr("device_api_url", device_api_url);
+
+            _logger.info("[PortalConfig]", "ssid: %s", ssid.c_str());
+            _logger.info("[PortalConfig]", "password: %s", password.c_str());
+            _logger.info("[PortalConfig]", "device_api_key: %s", deviceApiKey.c_str());
+            _logger.info("[PortalConfig]", "basic_auth: %s", basicAuth.c_str());
+            _logger.info("[PortalConfig]", "device_api_url: %s", device_api_url.c_str());
+
+            cJSON_Delete(root);
+
+            if (ssid.isEmpty())
+            {
+                _server.send(400, "application/json", "{\"error\":\"missing_ssid\"}");
+                return;
+            }
+            // Password may be empty for open networks; accept empty.
+        }
+        else
+        {
+            // HTML form post (application/x-www-form-urlencoded)
+            ssid = _server.arg("ssid");
+            password = _server.arg("password");
+            deviceApiKey = _server.arg("device_api_key");
+            device_api_url = _server.arg("device_api_url");
+            basicAuth = _server.arg("basic_auth");
+
+            if (ssid.isEmpty())
+            {
+                _server.send(400, "text/plain", "missing ssid");
+                return;
+            }
+        }
+
+        if (looksLikeJson)
+        {
+            _server.send(200, "application/json", "{\"ok\":true}");
+        }
+        else
+        {
+            _server.send(200, "text/html",
+                         F("<!DOCTYPE html><html><head><meta charset='utf-8'>"
+                           "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                           "<title>Configura&#231;&#227;o salva</title></head><body>"
+                           "<h1>Configura&#231;&#227;o salva!</h1>"
+                           "<p>Voc&#234; j&#225; pode fechar esta p&#225;gina. O dispositivo ir&#225; reiniciar ou tentar conectar &#224; rede configurada.</p>"
+                           "</body></html>"));
+        }
 
         _configSaved = true;
 
         _wifiSsidStorage = ssid.c_str();
         _wifiPasswordStorage = password.c_str();
         _deviceApiKeyStorage = deviceApiKey.c_str();
+        _deviceApiUrlStorage = device_api_url.c_str();
         _basicAuthStorage = basicAuth.c_str();
 
         if (_configCb)
@@ -247,6 +317,7 @@ namespace iotsmartsys::core::provisioning
             cfg.wifi.ssid = _wifiSsidStorage.c_str();
             cfg.wifi.password = _wifiPasswordStorage.c_str();
             cfg.deviceApiKey = _deviceApiKeyStorage.empty() ? nullptr : _deviceApiKeyStorage.c_str();
+            cfg.deviceApiUrl = _deviceApiUrlStorage.empty() ? nullptr : _deviceApiUrlStorage.c_str();
             cfg.basicAuth = _basicAuthStorage.empty() ? nullptr : _basicAuthStorage.c_str();
             cfg.source = ProvisioningSource::WebPortal;
 

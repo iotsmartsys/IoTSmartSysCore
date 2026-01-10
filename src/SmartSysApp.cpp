@@ -218,7 +218,7 @@ namespace iotsmartsys
         mqtt_.subscribe(topic);
         mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
         mqtt_.setForwardRawMessages(true);
-
+        transportHub_.addChannel("mqtt", &mqtt_);
         transportHub_.start();
     }
 
@@ -266,7 +266,7 @@ namespace iotsmartsys
 #endif
 
 #if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-        webPortalChannel = new core::provisioning::WebPortalProvisioningChannel(wifi_, logger_);
+        webPortalChannel = new core::provisioning::WebPortalProvisioningChannel(wifi_, logger_, deviceIdentityProvider_);
         provManager->registerChannel(*webPortalChannel);
 #endif
         provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)

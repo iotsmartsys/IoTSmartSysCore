@@ -51,6 +51,7 @@
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
 #include "Core/Transports/TransportHub.h"
 #include "Core/Commands/CapabilityCommandTransportDispatcher.h"
+#include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
 namespace iotsmartsys
 {
@@ -144,6 +145,8 @@ namespace iotsmartsys
         TransportHub transportHub_;
         SerialTransportChannel *uart_;
         ICommandHardwareAdapter *factoryResetButton_{nullptr};
+        platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
+
 
         void setupProvisioningConfiguration();
         bool inConfigMode_{false};

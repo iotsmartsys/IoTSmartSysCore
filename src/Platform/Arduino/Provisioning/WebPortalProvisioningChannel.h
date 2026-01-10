@@ -18,6 +18,7 @@ using HttpServer = ESP8266WebServer;
 #include "Core/Provisioning/IProvisioningChannel.h"
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Logging/ILogger.h"
+#include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::core::provisioning
 {
@@ -27,7 +28,7 @@ namespace iotsmartsys::core::provisioning
     {
     public:
         /// @brief Cria uma nova instância do canal de portal web.
-        WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger);
+        WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger, core::IDeviceIdentityProvider &deviceIdentityProvider);
 
         /// @brief Inicia o portal de configuração em modo AP.
         void begin() override;
@@ -54,6 +55,7 @@ namespace iotsmartsys::core::provisioning
         bool _active = false;
         bool _configSaved = false;
 
+        core::IDeviceIdentityProvider &_deviceIdentityProvider;
         core::WiFiManager &_wifiManager;
         core::ILogger &_logger;
         HttpServer _server;
@@ -66,6 +68,7 @@ namespace iotsmartsys::core::provisioning
         std::string _wifiPasswordStorage;
         std::string _deviceApiKeyStorage;
         std::string _basicAuthStorage;
+        std::string _deviceApiUrlStorage;
         std::vector<std::string> _availableSsids;
 
         void sendStatus(ProvisioningStatus status, const char *msg);
