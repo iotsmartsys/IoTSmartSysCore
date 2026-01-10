@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "Core/Provisioning/ProvisioningManager.h"
 
 namespace iotsmartsys::core::provisioning
@@ -22,6 +23,12 @@ namespace iotsmartsys::core::provisioning
 
     void ProvisioningManager::handle()
     {
+        if (_restartPending &&
+            static_cast<int32_t>(millis() - _restartAtMs) >= 0)
+        {
+            ESP.restart();
+        }
+
         if (_isProvisioned)
         {
             return;
@@ -40,6 +47,13 @@ namespace iotsmartsys::core::provisioning
     {
         stopAllChannels();
         _isProvisioned = false;
+        _restartPending = false;
+    }
+
+    void ProvisioningManager::scheduleRestart(uint32_t delayMs)
+    {
+        _restartPending = true;
+        _restartAtMs = millis() + delayMs;
     }
 
     void ProvisioningManager::handleNewConfig(const DeviceConfig &cfg, IProvisioningChannel *source)

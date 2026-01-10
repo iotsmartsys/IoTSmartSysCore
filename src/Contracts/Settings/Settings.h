@@ -14,7 +14,7 @@ namespace iotsmartsys::core::settings
         bool in_config_mode{false};
 
         const char *clientId;
-        LogLevel logLevel{LogLevel::Error};
+        LogLevel logLevel{LogLevel::Info};
         const char *logLevelStr() const
         {
             switch (logLevel)

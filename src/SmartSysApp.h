@@ -149,6 +149,7 @@ namespace iotsmartsys
 
 
         void setupProvisioningConfiguration();
+        static constexpr uint32_t kProvisioningRestartDelayMs = 3000;
         bool inConfigMode_{false};
     };
 } // namespace iotsmartsys

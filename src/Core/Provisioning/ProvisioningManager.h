@@ -36,9 +36,14 @@ namespace iotsmartsys::core::provisioning
         /// @brief Define callback para notificação de mudanças de status dos canais.
         void onChannelStatus(ChannelStatusCallback cb) { _statusCb = cb; }
 
+        /// @brief Agenda um restart do dispositivo após um delay (ms).
+        void scheduleRestart(uint32_t delayMs);
+
     private:
         std::vector<IProvisioningChannel *> _channels;
         bool _isProvisioned = false;
+        bool _restartPending = false;
+        uint32_t _restartAtMs = 0;
         ProvisioningCompletedCallback _completedCb = nullptr;
         ChannelStatusCallback _statusCb = nullptr;
         ILogger *_logger = nullptr;

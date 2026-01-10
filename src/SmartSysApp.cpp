@@ -269,7 +269,7 @@ namespace iotsmartsys
         webPortalChannel = new core::provisioning::WebPortalProvisioningChannel(wifi_, logger_, deviceIdentityProvider_);
         provManager->registerChannel(*webPortalChannel);
 #endif
-        provManager->onProvisioningCompleted([](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
+        provManager->onProvisioningCompleted([this](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
                                              {
                                                  auto &sp_ = iotsmartsys::core::ServiceManager::instance();
                                                  auto &logger = sp_.logger();
@@ -284,7 +284,8 @@ namespace iotsmartsys
                                                  newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
                                                  newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
                                                  sp_.settingsManager().save(newSettings);
-                                                 ESP.restart(); });
+                                                 provManager->scheduleRestart(kProvisioningRestartDelayMs);
+                                                 logger.info("Provisioning saved. Scheduling restart in 3s."); });
 
         provManager->begin();
         inConfigMode_ = true;
