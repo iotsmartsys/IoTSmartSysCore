@@ -155,7 +155,7 @@ namespace iotsmartsys
             {
                 logger_.info("[SettingsManager] Cached settings loaded successfully.");
                 logger_.info("---------------------------------------------------------");
-                logger_.info("[SettingsManager]", " Firmware Update Mode: %d", (int)settings_.firmware.update);
+                logger_.info("[SettingsManager]", " Firmware Update Mode: %s", settings_.firmware.update.c_str());
 
                 logger_.info("[SettingsManager]", " OTA URL: %s", settings_.firmware.url.c_str());
                 logger_.info("[SettingsManager]", " OTA Version: %s", getBuildIdentifier());
@@ -218,6 +218,8 @@ namespace iotsmartsys
         mqtt_.subscribe(topic);
         mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
         mqtt_.setForwardRawMessages(true);
+
+        transportHub_.addDispatcher(*commandDispatcher_);
         transportHub_.addChannel("mqtt", &mqtt_);
         transportHub_.start();
     }

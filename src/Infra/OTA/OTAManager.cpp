@@ -67,7 +67,7 @@ void OTAManager::handle()
         _logger.debug("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
         _logger.debug("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
         _logger.debug("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
-        _logger.debug("[OTA Manager]", "Firmware Update Method: %d", (int)currentSettings.firmware.update);
+        _logger.debug("[OTA Manager]", "Firmware Update Method: %d", currentSettings.firmware.update);
 
         firmwareSettings = currentSettings.firmware;
     }
@@ -77,12 +77,14 @@ void OTAManager::handle()
         return;
     }
 
-    switch (firmwareSettings.update)
+    if (firmwareSettings.update == "none")
     {
-    case FirmwareUpdateMethod::NONE:
         _logger.debug("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
         return;
-    case FirmwareUpdateMethod::OTA:
+    }
+    if (firmwareSettings.update == "ota")
+    {
+        _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
 #ifdef OTA_ENABLED
         if (!_ota.isInitialized())
         {
@@ -92,14 +94,11 @@ void OTAManager::handle()
 
         _ota.handle();
 #endif
-        break;
-    case FirmwareUpdateMethod::AUTO:
+    }
+    if (firmwareSettings.update == "auto")
+    {
         _logger.debug("[OTA Manager]", "Método de atualização definido como AUTO.");
         update(firmwareSettings);
-        break;
-    default:
-        _logger.error("[OTA Manager]", "Método de atualização desconhecido. Abortando configuração de OTA.");
-        return;
     }
 }
 

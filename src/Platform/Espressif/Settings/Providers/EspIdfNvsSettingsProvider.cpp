@@ -121,40 +121,10 @@ namespace iotsmartsys::platform::espressif
         return (src && *src) ? std::string(src) : std::string();
     }
 
-    static std::uint8_t toUpdateU8(core::settings::FirmwareUpdateMethod m)
-    {
-        using core::settings::FirmwareUpdateMethod;
-        switch (m)
-        {
-        case FirmwareUpdateMethod::NONE:
-            return 0;
-        case FirmwareUpdateMethod::OTA:
-            return 1;
-        case FirmwareUpdateMethod::AUTO:
-            return 2;
-        default:
-            return 0;
-        }
-    }
-
-    static core::settings::FirmwareUpdateMethod fromUpdateU8(std::uint8_t v)
-    {
-        using core::settings::FirmwareUpdateMethod;
-        switch (v)
-        {
-        case 0:
-            return FirmwareUpdateMethod::NONE;
-        case 1:
-            return FirmwareUpdateMethod::OTA;
-        case 2:
-            return FirmwareUpdateMethod::AUTO;
-        default:
-            return FirmwareUpdateMethod::NONE;
-        }
-    }
-
     void EspIdfNvsSettingsProvider::toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing)
     {
+
+        auto &logger = *iotsmartsys::core::ServiceProvider::instance().logger();
         if (existing)
         {
             dst = *existing;
@@ -168,7 +138,8 @@ namespace iotsmartsys::platform::espressif
         dst.in_config_mode = src.in_config_mode ? 1 : 0;
         dst.logLevel = static_cast<int>(src.logLevel);
 
-        auto applyMqttConfig = [&](const core::settings::MqttConfig &srcCfg, StoredMqttConfig &dstCfg) {
+        auto applyMqttConfig = [&](const core::settings::MqttConfig &srcCfg, StoredMqttConfig &dstCfg)
+        {
             if (!srcCfg.host.empty())
             {
                 copyStr(dstCfg.host, sizeof(dstCfg.host), srcCfg.host);
@@ -194,8 +165,9 @@ namespace iotsmartsys::platform::espressif
             copyStr(dst.firmware.url, sizeof(dst.firmware.url), src.firmware.url);
             copyStr(dst.firmware.manifest, sizeof(dst.firmware.manifest), src.firmware.manifest);
             dst.firmware.verify_sha256 = src.firmware.verify_sha256 ? 1 : 0;
-            dst.firmware.update = toUpdateU8(src.firmware.update);
         }
+
+        copyStr(dst.firmware.update, sizeof(dst.firmware.update), src.firmware.update);
 
         // wifi (only apply when we have both fields)
         if (!src.wifi.ssid.empty() && !src.wifi.password.empty())
@@ -243,14 +215,12 @@ namespace iotsmartsys::platform::espressif
         dst.firmware.url = toString(src.firmware.url);
         dst.firmware.manifest = toString(src.firmware.manifest);
         dst.firmware.verify_sha256 = (src.firmware.verify_sha256 != 0);
-        dst.firmware.update = fromUpdateU8(src.firmware.update);
+        dst.firmware.update = toString(src.firmware.update);
+        dst.firmware.update = src.firmware.update;
 
         // wifi
         dst.wifi.ssid = toString(src.wifi.ssid);
-        logger.debug("EspIdfNvsSettingsProvider", "Loading WiFi settings from NVS: SSID='%s'", dst.wifi.ssid.c_str());
         dst.wifi.password = toString(src.wifi.password);
-        // Never log passwords. If you need diagnostics, log only length.
-        logger.debug("EspIdfNvsSettingsProvider", "Loading WiFi settings from NVS: password_len=%u", (unsigned)dst.wifi.password.size());
 
         // api
         dst.api.url = toString(src.api.url);
@@ -336,6 +306,7 @@ namespace iotsmartsys::platform::espressif
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
     {
         _logger->info("EspIdfNvsSettingsProvider", "port mqtt: %d", settings.mqtt.primary.port);
+        _logger->info("EspIdfNvsSettingsProvider", "firmware update method: %s", settings.firmware.update.c_str());
 
         _logger->info("EspIdfNvsSettingsProvider", "save() called");
         esp_err_t err = ensureNvsInit();
