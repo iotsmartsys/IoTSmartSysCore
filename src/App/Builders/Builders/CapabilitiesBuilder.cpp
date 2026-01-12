@@ -18,7 +18,8 @@ namespace iotsmartsys::app
                                              void (**adapterDestructors)(void *),
                                              size_t adapterSlotsMax,
                                              uint8_t *arena,
-                                             size_t arenaBytes)
+                                             size_t arenaBytes,
+                                             iotsmartsys::core::IDeviceIdentityProvider &deviceIdentityProvider)
         : _factory(factory),
           _eventSink(eventSink),
           _caps(capSlots),
@@ -28,7 +29,8 @@ namespace iotsmartsys::app
           _adapterDestructors(adapterDestructors),
           _adaptersMax(adapterSlotsMax),
           _arena(arena),
-          _arenaBytes(arenaBytes)
+          _arenaBytes(arenaBytes),
+          _deviceIdentityProvider(deviceIdentityProvider)
     {
         _count = 0;
         _adaptersCount = 0;
@@ -103,6 +105,12 @@ namespace iotsmartsys::app
     {
         if (_count >= _capsMax)
             return false;
+
+        if (cap->capability_name.empty())
+        {
+            auto deviceId = _deviceIdentityProvider.getDeviceName();
+            cap->capability_name = deviceId + "_" + cap->type;
+        }
 
         _caps[_count] = cap;
         _capDestructors[_count] = destructor;

@@ -29,27 +29,15 @@ namespace iotsmartsys::core
         _settingsReady = true;
         iotsmartsys::core::settings::Settings settings;
         _settingsProvider.copyCurrent(settings);
-        _logger.info("CAP_MGR", "CapabilityManager::onSettingsReady(): Settings copied.");
         _currentSettings = &settings;
-
-        _logger.info("CAP_MGR", "CapabilityManager::onSettingsReady(): Settings are now ready.");
-
-        // Aplicar o rename das capabilities aqui
-        for (size_t i = 0; i < count; ++i)
-        {
-            if (_currentSettings && items[i]->capability_name.empty())
-            {
-                items[i]->applyRenamedName(_currentSettings->clientId);
-            }
-        }
     }
 
     iotsmartsys::core::ICommandCapability *CapabilityManager::getCommandCapabilityByName(const char *name) const
     {
         for (size_t i = 0; i < count; ++i)
         {
-            _logger.info("CAP_MGR", "Checking capability %s", items[i]->capability_name.c_str());
             auto cap = items[i]->asCommandCapability();
+
             if (cap && cap->capability_name == name)
             {
                 return cap;

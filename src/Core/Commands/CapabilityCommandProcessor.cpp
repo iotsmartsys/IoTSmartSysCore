@@ -12,7 +12,6 @@ namespace iotsmartsys::core
     {
         _logger.debug("CapabilityCommandProcessor: Processing command...");
         _logger.warn("Processing capability command for capability: %s", command.capability_name.c_str());
-        _logger.warn("Setting value: %s", command.value.c_str());
 
         ICommandCapability *cap = _capabilityManager.getCommandCapabilityByName(command.capability_name.c_str());
         if (cap)

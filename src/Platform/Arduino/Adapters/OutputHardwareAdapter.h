@@ -60,29 +60,23 @@ namespace iotsmartsys::platform::arduino
         {
             if (strcmp(value, SWITCH_STATE_ON) == 0)
             {
-                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                // pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                digitalWrite(pin, (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW);
             }
             else if (strcmp(value, SWITCH_STATE_OFF) == 0)
             {
-                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                digitalWrite(pin, (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH);
             }
             else if (strcmp(value, TOGGLE_COMMAND) == 0)
             {
-                if (digitalRead(pin) == HIGH)
-                {
-                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
-                }
-                else
-                {
-                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
-                }
+                digitalWrite(pin, !digitalRead(pin));
+                pinState = digitalRead(pin);
             }
             else
             {
                 return false; // Comando inválido
             }
 
-            updateHardware();
             return true;
         }
 

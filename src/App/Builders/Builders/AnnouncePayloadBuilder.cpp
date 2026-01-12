@@ -7,13 +7,6 @@ namespace iotsmartsys::app
     AnnouncePayloadBuilder::AnnouncePayloadBuilder(std::vector<ICapability> capabilities, ILogger &logger)
         : _capabilities(std::move(capabilities)), _logger(logger)
     {
-        for (const auto &cap : _capabilities)
-        {
-            _logger.info("Capability: %s, Type: %s, Value: %s",
-                         cap.capability_name.c_str(),
-                         cap.type.c_str(),
-                         cap.value.c_str());
-        }
     }
 
     std::string AnnouncePayloadBuilder::build()
@@ -105,7 +98,7 @@ namespace iotsmartsys::app
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withVersion(const char *version)
     {
         this->version_ = std::string(version);
-        
+
         return withProperty(Property("version", version));
     }
 

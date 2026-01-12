@@ -31,6 +31,7 @@
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
 #include "Contracts/Capabilities/LuminosityCapability.h"
+#include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
 {
@@ -49,7 +50,8 @@ namespace iotsmartsys::app
                             void (**adapterDestructors)(void *),
                             size_t adapterSlotsMax,
                             uint8_t *arena,
-                            size_t arenaBytes);
+                            size_t arenaBytes,
+                            iotsmartsys::core::IDeviceIdentityProvider &deviceIdentityProvider);
 
         CapabilitiesBuilder(const CapabilitiesBuilder &) = delete;
         CapabilitiesBuilder &operator=(const CapabilitiesBuilder &) = delete;
@@ -85,6 +87,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
 
     private:
+        iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;
         template <typename TCap, typename... Args>
         TCap *createCapability(Args &&...args)
         {
