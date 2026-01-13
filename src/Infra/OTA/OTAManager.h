@@ -16,7 +16,7 @@ namespace iotsmartsys::ota
     {
     public:
         OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser, 
-            #ifdef OTA_ENABLED
+            #ifndef OTA_DISABLED
             OTA &ota, 
             #endif
             iotsmartsys::core::settings::ISettingsGate &settingsGate);
@@ -27,7 +27,7 @@ namespace iotsmartsys::ota
         IReadOnlySettingsProvider &_settingsProvider;
         FirmwareUpdater _firmwareUpdater;
         ILogger &_logger;
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
         OTA &_ota;
 #endif
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;

@@ -4,14 +4,14 @@
 using namespace iotsmartsys::ota;
 
 OTAManager::OTAManager(IReadOnlySettingsProvider &settingsProvider, ILogger &logger, IFirmwareManifestParser &manifestParser,
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
                        OTA &ota,
 #endif
                        iotsmartsys::core::settings::ISettingsGate &settingsGate)
     : _settingsProvider(settingsProvider),
       _firmwareUpdater(logger, manifestParser),
       _logger(logger),
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
       _ota(ota),
 #endif
       _settingsGate(settingsGate)
@@ -85,7 +85,7 @@ void OTAManager::handle()
     if (firmwareSettings.update == "ota")
     {
         _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
         if (!_ota.isInitialized())
         {
             _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");

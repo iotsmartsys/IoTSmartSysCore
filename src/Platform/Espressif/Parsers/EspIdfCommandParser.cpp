@@ -24,7 +24,7 @@ namespace iotsmartsys::platform::espressif
         cJSON *capabilityName = cJSON_GetObjectItem(root, "capability_name");
         cJSON *deviceId = cJSON_GetObjectItem(root, "device_id");
         cJSON *value = cJSON_GetObjectItem(root, "value");
-        cJSON *commandType = cJSON_GetObjectItem(root, "command_type");
+        cJSON *type = cJSON_GetObjectItem(root, "type");
 
         if (capabilityName && deviceId && value)
         {
@@ -32,7 +32,7 @@ namespace iotsmartsys::platform::espressif
             outCmd->capability_name = capabilityName->valuestring ? capabilityName->valuestring : "";
             outCmd->device_id = deviceId->valuestring ? deviceId->valuestring : "";
             outCmd->value = value->valuestring ? value->valuestring : "";
-            outCmd->command_type = (commandType && commandType->valuestring) ? commandType->valuestring : iotsmartsys::core::CommandTypeStrings::CAPABILITY_STR;
+            outCmd->type = (type && type->valuestring) ? type->valuestring : iotsmartsys::core::CommandTypeStrings::CAPABILITY_STR;
 
             cJSON_Delete(root);
             return outCmd;

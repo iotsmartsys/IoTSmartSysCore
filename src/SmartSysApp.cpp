@@ -30,11 +30,11 @@ namespace iotsmartsys
           wifi_(logger_),
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
           ota_(logger_),
 #endif
           otaManager_(settingsManager_, logger_, manifestParser_,
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
                       ota_,
 #endif
                       settingsGate_),

@@ -1,4 +1,4 @@
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
 #include "OTA.h"
 #include <Arduino.h>
 #include <ArduinoOTA.h>

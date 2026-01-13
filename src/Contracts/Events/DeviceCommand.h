@@ -13,14 +13,14 @@ namespace iotsmartsys::core
         std::string capability_name;
         std::string device_id;
         std::string value;
-        std::string command_type;
+        std::string type;
 
         const CommandTypes getCommandType() const
         {
-            if (command_type.empty())
+            if (type.empty())
                 return CommandTypes::UNKNOWN;
 
-            return CommandTypeUtils::fromString(command_type.c_str());
+            return CommandTypeUtils::fromString(type.c_str());
         }
 
         const SystemCommands getSystemCommand() const

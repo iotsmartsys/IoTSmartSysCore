@@ -1,4 +1,4 @@
-#ifdef OTA_ENABLED
+#ifndef OTA_DISABLED
 #pragma once
 #include "Contracts/Logging/ILogger.h"
 
