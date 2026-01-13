@@ -1,100 +1,34 @@
 #pragma once
 
-#include "CapabilityConfig.h"
+#include <stdint.h>
 #include "Core/Models/DigitalLogic.h"
-#include "Contracts/Sensors/IWaterLevelSensor.h"
-#include "Contracts/Sensors/ITemperatureSensor.h"
-#include "Contracts/Sensors/IHumiditySensor.h"
-#include "Contracts/Sensors/IGlpSensor.h"
-#include "Contracts/Sensors/IGlpMeter.h"
-#include "Contracts/Sensors/IColorSensor.h"
-#include "Contracts/Sensors/ILuminositySensor.h"
 
 namespace iotsmartsys::app
 {
-
-    class LightConfig : public HardwareConfig
-    {
-    };
-
-    class AlarmConfig : public HardwareConfig
-    {
-    };
-
-    class DoorSensorConfig : public HardwareConfig
-    {
-    };
-
-    class PirSensorConfig : public InputHardwareConfig
-    {
-    };
-
-    class SwitchConfig : public HardwareConfig
-    {
-    };
-    class ValveConfig : public HardwareConfig
-    {
-    };
-
-    class ClapSensorConfig : public InputHardwareConfig
-    {
-    };
-
-    class PushButtonConfig : public InputHardwareConfig
-    {
-    };
-
-    class TouchButtonConfig : public InputHardwareConfig
-    {
-    };
-
-    class WaterFlowHallSensorConfig : public InputHardwareConfig
-    {
-    };
-
-    class WaterLevelSensorConfig : public HardwareConfig
+    class HardwareConfig
     {
     public:
-        iotsmartsys::core::IWaterLevelSensor *sensor{nullptr};
+        uint8_t GPIO;
+        bool highIsOn = true;
+        const char *capability_name;
+
+        explicit HardwareConfig(uint8_t gpio) : GPIO(gpio) {}
+        explicit HardwareConfig(uint8_t gpio, bool highOn) : GPIO(gpio), highIsOn(highOn) {}
+        explicit HardwareConfig(uint8_t gpio, bool highOn, const char *name) : GPIO(gpio), highIsOn(highOn), capability_name(name) {}
+        HardwareConfig() = default;
     };
 
-    class GlpSensorConfig : public HardwareConfig
+    class InputHardwareConfig
     {
     public:
-        iotsmartsys::core::IGlpSensor *sensor{nullptr};
-    };
+        uint8_t GPIO;
+        bool highIsOn = true;
+        const char *capability_name;
+        long debounceTimeMs = 50;
 
-    class GlpMeterConfig : public HardwareConfig
-    {
-    public:
-        iotsmartsys::core::IGlpMeter *sensor{nullptr};
-    };
-
-    class OperationalColorSensorConfig : public InputHardwareConfig
-    {
-    public:
-        iotsmartsys::core::IColorSensor *sensor{nullptr};
-    };
-
-    class TemperatureSensorConfig : public HardwareConfig
-    {
-    public:
-        iotsmartsys::core::ITemperatureSensor *sensor{nullptr};
-        long readIntervalMs = 60000;
-    };
-
-    class HumiditySensorConfig : public HardwareConfig
-    {
-    public:
-        iotsmartsys::core::IHumiditySensor *sensor{nullptr};
-        long readIntervalMs = 60000;
-    };
-
-    class LuminositySensorConfig : public HardwareConfig
-    {
-    public:
-        iotsmartsys::core::ILuminositySensor *sensor{nullptr};
-        long readIntervalMs = 60000;
-        float variationTolerance = 2.0f; // in lux
+        explicit InputHardwareConfig(uint8_t gpio) : GPIO(gpio) {}
+        explicit InputHardwareConfig(uint8_t gpio, bool highOn) : GPIO(gpio), highIsOn(highOn) {}
+        explicit InputHardwareConfig(uint8_t gpio, bool highOn, const char *name) : GPIO(gpio), highIsOn(highOn), capability_name(name) {}
+        InputHardwareConfig() = default;
     };
 } // namespace iotsmartsys::app

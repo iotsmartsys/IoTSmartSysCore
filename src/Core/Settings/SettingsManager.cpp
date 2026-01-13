@@ -245,31 +245,60 @@ namespace iotsmartsys::core::settings
             return;
         }
 
-        // Persistir no NVS (redundância). API continua sendo fonte de verdade.
-        _current.applyChanges(parsed);
-        _has_current = true;
-        const iotsmartsys::core::common::StateResult serr = _provider.save(parsed);
-        if (serr != iotsmartsys::core::common::StateResult::Ok)
-        {
-            _logger->error("SettingsManager", "nvs save failed: %d", (int)serr);
-            // Importante: mesmo se falhar NVS, você *pode* usar o settings em memória.
-            xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
-            _stats.nvs_save_fail++;
-            _stats.last_err = serr;
-            _stats.last_http_status = res.http_status;
+        Settings currentSnapshot;
+        bool hadCurrent = false;
+        xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
+        currentSnapshot = _current;
+        hadCurrent = _has_current;
+        xSemaphoreGive((SemaphoreHandle_t)_mutex);
 
-            // _current = parsed;
-            // _has_current = true;
-            _stats.api_fetch_ok++;
-            setState(SettingsManagerState::Ready);
+        Settings candidate = currentSnapshot;
+        candidate._is_changed = false;
+        candidate.applyChanges(parsed);
+        const bool changed = candidate.hasChanges();
+
+        if (changed)
+        {
+            _logger->info("SettingsManager", "fetched settings differ from current; updating in-memory and saving to NVS");
+
+            // Atualiza in-memory sob lock
+            xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
+            _current = candidate;
+            _has_current = true;
             xSemaphoreGive((SemaphoreHandle_t)_mutex);
+
+            const iotsmartsys::core::common::StateResult serr = _provider.save(_current);
+            if (serr != iotsmartsys::core::common::StateResult::Ok)
+            {
+                _logger->error("SettingsManager", "nvs save failed: %d", (int)serr);
+                xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
+                _stats.nvs_save_fail++;
+                _stats.last_err = serr;
+                _stats.last_http_status = res.http_status;
+                _stats.api_fetch_ok++;
+                setState(SettingsManagerState::Ready);
+                xSemaphoreGive((SemaphoreHandle_t)_mutex);
+            }
+            else
+            {
+                _logger->info("SettingsManager", "nvs save OK");
+                xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
+                _stats.api_fetch_ok++;
+                _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
+                _stats.last_http_status = res.http_status;
+                setState(SettingsManagerState::Ready);
+                xSemaphoreGive((SemaphoreHandle_t)_mutex);
+            }
         }
         else
         {
-            _logger->info("SettingsManager", "nvs save OK");
+            _logger->info("SettingsManager", "fetched settings identical to current; skipping NVS save");
             xSemaphoreTake((SemaphoreHandle_t)_mutex, portMAX_DELAY);
-            // _current = parsed;
-            // _has_current = true;
+            if (!hadCurrent)
+            {
+                _current = candidate;
+                _has_current = true;
+            }
             _stats.api_fetch_ok++;
             _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
             _stats.last_http_status = res.http_status;

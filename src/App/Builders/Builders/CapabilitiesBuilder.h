@@ -5,7 +5,7 @@
 #include <new>
 #include <utility>
 
-#include "App/Builders/Configs/HardwareConfig.h"
+#include "App/Builders/Configs/CapabilityConfig.h"
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
 #include "Contracts/Capabilities/ICapability.h"
 #include "Contracts/Capabilities/LightCapability.h"

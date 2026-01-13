@@ -60,4 +60,10 @@ namespace iotsmartsys::core
 
         esp_restart();
     }
+
+    void SystemCommandProcessor::restartSafely()
+    {
+        _logger.warn("SystemCommandProcessor: Performing safe restart.");
+        full_soft_powercycle_restart();
+    }
 } // namespace iotsmartsys::core

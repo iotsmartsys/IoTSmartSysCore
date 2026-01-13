@@ -12,6 +12,7 @@ namespace iotsmartsys
     SmartSysApp::SmartSysApp()
         : serviceManager_(core::ServiceManager::init()),
           logger_(serviceManager_.logger()),
+          systemCommandProcessor_(logger_),
           settingsManager_(serviceManager_.settingsManager()),
           settingsGate_(serviceManager_.settingsGate()),
           mqttClient_(logger_),
@@ -60,6 +61,130 @@ namespace iotsmartsys
         factoryResetButton_->setup();
     }
 
+    void SmartSysApp::configureLED(iotsmartsys::app::LightConfig cfg)
+    {
+        if (statusLed_)
+        {
+            logger_.warn("Status LED already configured. Returning existing instance.");
+            return;
+        }
+
+        auto adapterMem = malloc(hwFactory_.outputAdapterSize());
+        if (!adapterMem)
+        {
+            logger_.error("Failed to allocate memory for status LED hardware adapter.");
+            return;
+        }
+
+        statusLed_ = hwFactory_.createOutput(adapterMem, static_cast<std::uint8_t>(cfg.GPIO), cfg.highIsOn);
+        statusLed_->setup();
+    }
+
+    void SmartSysApp::handleStatusLED()
+    {
+        if (statusLed_)
+        {
+            // Atualiza adapter (mantém lastStateReadMillis internamente)
+            statusLed_->handle();
+
+            const uint32_t now = millis();
+
+            // Detect desired mode
+            int desiredMode = 0; // idle
+            if (inConfigMode_ && provManager)
+            {
+                desiredMode = 1; // provisioning
+            }
+            else
+            {
+                // connecting: wifi state 'Connecting'
+                const char *sname = wifi_.stateName();
+                if (sname && strcmp(sname, "Connecting") == 0)
+                    desiredMode = 2;
+            }
+
+            // If mode changed, reset state
+            if (statusLedMode_ != desiredMode)
+            {
+                statusLedMode_ = desiredMode;
+                statusLedLastToggleMs_ = now;
+                statusLedBlinkCount_ = 0;
+                statusLedOn_ = false;
+                // Ensure LED off initially
+                statusLed_->applyCommand(SWITCH_STATE_OFF);
+            }
+
+            if (statusLedMode_ == 1)
+            {
+                // Provisioning: piscar 3 vezes (100ms on, 100ms off), pausar 1000ms
+                const uint32_t onMs = 100;
+                const uint32_t offMs = 100;
+                const uint32_t pauseMs = 1000;
+
+                if (statusLedOn_)
+                {
+                    if (now - statusLedLastToggleMs_ >= onMs)
+                    {
+                        statusLed_->applyCommand(SWITCH_STATE_OFF);
+                        statusLedOn_ = false;
+                        statusLedLastToggleMs_ = now;
+                        statusLedBlinkCount_++;
+                    }
+                }
+                else
+                {
+                    // If we've completed 3 blinks, wait pauseMs before restarting
+                    if (statusLedBlinkCount_ >= 3)
+                    {
+                        if (now - statusLedLastToggleMs_ >= pauseMs)
+                        {
+                            statusLedBlinkCount_ = 0;
+                            statusLedLastToggleMs_ = now;
+                        }
+                    }
+                    else
+                    {
+                        if (now - statusLedLastToggleMs_ >= offMs)
+                        {
+                            statusLed_->applyCommand(SWITCH_STATE_ON);
+                            statusLedOn_ = true;
+                            statusLedLastToggleMs_ = now;
+                        }
+                    }
+                }
+            }
+            else if (statusLedMode_ == 2)
+            {
+                // Connecting: piscar continuamente rápido (250ms toggle)
+                const uint32_t toggleMs = 250;
+                if (now - statusLedLastToggleMs_ >= toggleMs)
+                {
+                    // toggle
+                    if (statusLedOn_)
+                    {
+                        statusLed_->applyCommand(SWITCH_STATE_OFF);
+                        statusLedOn_ = false;
+                    }
+                    else
+                    {
+                        statusLed_->applyCommand(SWITCH_STATE_ON);
+                        statusLedOn_ = true;
+                    }
+                    statusLedLastToggleMs_ = now;
+                }
+            }
+            else
+            {
+                // Idle: keep LED off
+                if (statusLedOn_)
+                {
+                    statusLed_->applyCommand(SWITCH_STATE_OFF);
+                    statusLedOn_ = false;
+                }
+            }
+        }
+    }
+
     void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
     {
         if (uart_)
@@ -79,7 +204,7 @@ namespace iotsmartsys
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
     {
-        return;
+        systemCommandProcessor_.restartSafely();
     }
 
     void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
@@ -131,14 +256,15 @@ namespace iotsmartsys
         logger_.warn("[SettingsManager] Settings updated from API. Re-applying runtime config...");
         if (newSettings.hasChanges())
         {
+
             logger_.warn("[SettingsManager] Settings have changes. Applying...");
+            applySettingsToRuntime(newSettings);
         }
         else
         {
             logger_.warn("[SettingsManager] Settings have NO changes. Skipping apply.");
             return;
         }
-        applySettingsToRuntime(newSettings);
     }
 
     void SmartSysApp::setup()
@@ -209,7 +335,7 @@ namespace iotsmartsys
         static iotsmartsys::core::CapabilityManager capManager = builder_.build();
         capabilityManager_ = &capManager;
         capabilityManager_->setup();
-        commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_);
+        commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_, systemCommandProcessor_);
         commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
 
         char topic[128];
@@ -227,6 +353,7 @@ namespace iotsmartsys
 
     void SmartSysApp::handle()
     {
+        handleStatusLED();
         if (inConfigMode_ && provManager)
         {
             provManager->handle();
@@ -236,12 +363,12 @@ namespace iotsmartsys
         if (factoryResetButton_)
         {
             factoryResetButton_->handle();
-            if (factoryResetButton_->getState() == SWITCH_STATE_ON && factoryResetButton_->lastStateReadMillis() > 5000)
+            if (factoryResetButton_->getState() == SWITCH_STATE_ON && factoryResetButton_->lastStateReadMillis() > 15000)
             {
                 logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
                 settingsManager_.clear();
                 delay(2000);
-                ESP.restart();
+                systemCommandProcessor_.restartSafely();
             }
         }
 

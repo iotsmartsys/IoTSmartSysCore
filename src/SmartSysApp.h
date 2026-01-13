@@ -55,103 +55,113 @@
 
 namespace iotsmartsys
 {
-    class SmartSysApp
-    {
-    public:
-        SmartSysApp();
+        class SmartSysApp
+        {
+        public:
+                SmartSysApp();
 
-        /// @brief Initializes the application, including hardware and services.
-        void setup();
+                /// @brief Initializes the application, including hardware and services.
+                void setup();
 
-        /// @brief Main application loop to be called repeatedly.
-        void handle();
+                /// @brief Main application loop to be called repeatedly.
+                void handle();
 
-        /// @brief Configure SerialTransportChannel UART pins and baud rate.
-        void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
+                /// @brief Configure SerialTransportChannel UART pins and baud rate.
+                void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
 
-        /// @brief Configura botão de reset de fábrica (provisionamento).
-        void configureFactoryResetButton(int pin, bool activeLow = true);
+                /// @brief Configura botão de reset de fábrica (provisionamento).
+                void configureFactoryResetButton(int pin, bool activeLow = true);
 
-        /* Capabilities */
-        iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig cfg);
-        iotsmartsys::core::DoorSensorCapability *addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg);
-        iotsmartsys::core::ClapSensorCapability *addClapSensorCapability(iotsmartsys::app::ClapSensorConfig cfg);
-        iotsmartsys::core::LightCapability *addLightCapability(iotsmartsys::app::LightConfig cfg);
-        iotsmartsys::core::GlpSensorCapability *addGlpSensorCapability(iotsmartsys::app::GlpSensorConfig cfg);
-        iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig cfg);
-        iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig cfg);
-        iotsmartsys::core::HumiditySensorCapability *addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig cfg);
-        iotsmartsys::core::HeightWaterLevelCapability *addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
-        iotsmartsys::core::LEDCapability *addLedCapability(iotsmartsys::app::LightConfig cfg);
-        iotsmartsys::core::PirSensorCapability *addPirSensorCapability(iotsmartsys::app::PirSensorConfig cfg);
-        iotsmartsys::core::PushButtonCapability *addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg);
-        iotsmartsys::core::TouchButtonCapability *addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig cfg);
-        iotsmartsys::core::SwitchCapability *addSwitchCapability(iotsmartsys::app::SwitchConfig cfg);
-        iotsmartsys::core::SwitchPlugCapability *addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg);
-        iotsmartsys::core::ValveCapability *addValveCapability(iotsmartsys::app::ValveConfig cfg);
-        iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig cfg);
-        iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg);
-        iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
-        iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
-        iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg);
-        iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
+                void configureLED(iotsmartsys::app::LightConfig cfg);
 
-    private:
-        static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);
-        static void onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info);
-        void onMqttMessage(const core::TransportMessageView &msg);
-        void onMqttConnected(const core::TransportConnectedView &info);
-        static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
-        void onSettingsUpdated(const core::settings::Settings &newSettings);
-        void applySettingsToRuntime(const core::settings::Settings &settings);
+                /* Capabilities */
+                iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig cfg);
+                iotsmartsys::core::DoorSensorCapability *addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg);
+                iotsmartsys::core::ClapSensorCapability *addClapSensorCapability(iotsmartsys::app::ClapSensorConfig cfg);
+                iotsmartsys::core::LightCapability *addLightCapability(iotsmartsys::app::LightConfig cfg);
+                iotsmartsys::core::GlpSensorCapability *addGlpSensorCapability(iotsmartsys::app::GlpSensorConfig cfg);
+                iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig cfg);
+                iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig cfg);
+                iotsmartsys::core::HumiditySensorCapability *addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig cfg);
+                iotsmartsys::core::HeightWaterLevelCapability *addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+                iotsmartsys::core::LEDCapability *addLedCapability(iotsmartsys::app::LightConfig cfg);
+                iotsmartsys::core::PirSensorCapability *addPirSensorCapability(iotsmartsys::app::PirSensorConfig cfg);
+                iotsmartsys::core::PushButtonCapability *addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg);
+                iotsmartsys::core::TouchButtonCapability *addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig cfg);
+                iotsmartsys::core::SwitchCapability *addSwitchCapability(iotsmartsys::app::SwitchConfig cfg);
+                iotsmartsys::core::SwitchPlugCapability *addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg);
+                iotsmartsys::core::ValveCapability *addValveCapability(iotsmartsys::app::ValveConfig cfg);
+                iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig cfg);
+                iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg);
+                iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+                iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+                iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg);
+                iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
 
-        core::ServiceManager &serviceManager_;
-        core::ILogger &logger_;
-        core::settings::SettingsManager &settingsManager_;
-        core::settings::ISettingsGate &settingsGate_;
+        private:
+                static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);
+                static void onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info);
+                void onMqttMessage(const core::TransportMessageView &msg);
+                void onMqttConnected(const core::TransportConnectedView &info);
+                static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
+                void onSettingsUpdated(const core::settings::Settings &newSettings);
+                void applySettingsToRuntime(const core::settings::Settings &settings);
 
-        platform::espressif::EspIdfCommandParser commandParser_;
-        platform::espressif::EspIdfMqttClient mqttClient_;
+                core::ServiceManager &serviceManager_;
+                core::ILogger &logger_;
+                core::settings::SettingsManager &settingsManager_;
+                core::settings::ISettingsGate &settingsGate_;
 
-        iotsmartsys::core::settings::Settings settings_;
-        iotsmartsys::core::MqttSink mqttSink_;
-        iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
-        core::ICapability *capSlots_[8] = {};
-        void (*capDtors_[8])(void *) = {};
-        void *adapterSlots_[8] = {};
-        void (*adapterDtors_[8])(void *) = {};
-        uint8_t arena_[2048] = {};
+                platform::espressif::EspIdfCommandParser commandParser_;
+                platform::espressif::EspIdfMqttClient mqttClient_;
 
-        app::CapabilitiesBuilder builder_;
+                iotsmartsys::core::settings::Settings settings_;
+                iotsmartsys::core::MqttSink mqttSink_;
+                iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
+                core::ICapability *capSlots_[8] = {};
+                void (*capDtors_[8])(void *) = {};
+                void *adapterSlots_[8] = {};
+                void (*adapterDtors_[8])(void *) = {};
+                uint8_t arena_[2048] = {};
 
-        iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
+                app::CapabilitiesBuilder builder_;
 
-        core::WiFiManager wifi_;
-        app::MqttService<12, 16, 256> mqtt_;
-        iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
+                iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
+
+                core::WiFiManager wifi_;
+                app::MqttService<12, 16, 256> mqtt_;
+                iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
 #ifndef OTA_DISABLED
-        ota::OTA ota_;
+                ota::OTA ota_;
 #endif
-        ota::OTAManager otaManager_;
+                ota::OTAManager otaManager_;
 
-        iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
-        iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
+                iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
+                iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
-        iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
+                iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
 #endif
 #if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-        iotsmartsys::core::provisioning::WebPortalProvisioningChannel *webPortalChannel = nullptr;
+                iotsmartsys::core::provisioning::WebPortalProvisioningChannel *webPortalChannel = nullptr;
 #endif
-        iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
-        CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
-        TransportHub transportHub_;
-        SerialTransportChannel *uart_;
-        ICommandHardwareAdapter *factoryResetButton_{nullptr};
-        platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
+                iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;
+                iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
+                CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
+                TransportHub transportHub_;
+                SerialTransportChannel *uart_;
+                ICommandHardwareAdapter *factoryResetButton_{nullptr};
+                ICommandHardwareAdapter *statusLed_{nullptr};
+                // Status LED state machine
+                uint32_t statusLedLastToggleMs_{0};
+                int statusLedBlinkCount_{0};
+                // 0 = idle, 1 = provisioning, 2 = connecting
+                int statusLedMode_{0};
+                bool statusLedOn_{false};
+                platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
 
-
-        void setupProvisioningConfiguration();
-        static constexpr uint32_t kProvisioningRestartDelayMs = 3000;
-        bool inConfigMode_{false};
-    };
+                void setupProvisioningConfiguration();
+                static constexpr uint32_t kProvisioningRestartDelayMs = 3000;
+                bool inConfigMode_{false};
+                void handleStatusLED();
+        };
 } // namespace iotsmartsys

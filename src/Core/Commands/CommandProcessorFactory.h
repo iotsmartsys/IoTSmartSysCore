@@ -11,13 +11,13 @@ namespace iotsmartsys::core
     class CommandProcessorFactory : public ICommandProcessorFactory
     {
     public:
-        CommandProcessorFactory(ILogger &logger, CapabilityManager &capabilityManager);
+        CommandProcessorFactory(ILogger &logger, CapabilityManager &capabilityManager, SystemCommandProcessor &systemCommandProcessor);
         ICommandProcessor *createProcessor(const CommandTypes &type) override;
 
     private:
         ILogger &_logger;
         CapabilityManager &_capabilityManager;
         CapabilityCommandProcessor _capabilityCommandProcessor;
-        SystemCommandProcessor _systemCommandProcessor;
+        SystemCommandProcessor &_systemCommandProcessor;
     };
 }

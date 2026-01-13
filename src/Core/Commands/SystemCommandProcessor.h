@@ -11,8 +11,9 @@ namespace iotsmartsys::core
         SystemCommandProcessor(ILogger &logger);
 
         bool process(const DeviceCommand &command) override;
-
-    private:
+        void restartSafely();
+        
+        private:
         ILogger &_logger;
         void reset_all_gpio_safely();
         void full_soft_powercycle_restart();

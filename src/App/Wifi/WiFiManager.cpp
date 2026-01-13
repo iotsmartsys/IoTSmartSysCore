@@ -88,7 +88,7 @@ namespace iotsmartsys::core
                 _macAddress = WiFi.macAddress().c_str();
                 _ipAddress = WiFi.localIP().toString().c_str();
                 _signalStrength = String(WiFi.RSSI()).c_str();
-                _log.info("WIFI", "Connected. IP=%s", _ipAddress);
+                _log.info("WIFI", "Connected. IP=%s", _ipAddress.c_str());
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
             {

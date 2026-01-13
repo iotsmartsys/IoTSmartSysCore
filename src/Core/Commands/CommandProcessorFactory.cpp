@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    CommandProcessorFactory::CommandProcessorFactory(ILogger &logger, CapabilityManager &capabilityManager)
-        : _logger(logger), _capabilityManager(capabilityManager), _capabilityCommandProcessor(logger, capabilityManager), _systemCommandProcessor(logger)
+    CommandProcessorFactory::CommandProcessorFactory(ILogger &logger, CapabilityManager &capabilityManager, SystemCommandProcessor &systemCommandProcessor)
+        : _logger(logger), _capabilityManager(capabilityManager), _capabilityCommandProcessor(logger, capabilityManager), _systemCommandProcessor(systemCommandProcessor)
     {
     }
 
