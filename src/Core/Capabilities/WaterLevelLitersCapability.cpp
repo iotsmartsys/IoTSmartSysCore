@@ -1,6 +1,5 @@
 #include "Contracts/Capabilities/WaterLevelLitersCapability.h"
-#include <sstream>
-#include <iomanip>
+#include <cstdio>
 
 namespace iotsmartsys::core
 {
@@ -29,9 +28,9 @@ namespace iotsmartsys::core
             {
                 lastLevelLiters = actualLevel;
                 levelLiters = actualLevel;
-                std::ostringstream ss;
-                ss << std::fixed << std::setprecision(2) << levelLiters;
-                updateState(ss.str());
+                char buf[16];
+                snprintf(buf, sizeof(buf), "%.2f", levelLiters);
+                updateState(buf);
                 lastCheckMillis = now;
             }
         }

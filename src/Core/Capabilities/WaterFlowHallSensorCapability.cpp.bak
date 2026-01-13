@@ -1,7 +1,6 @@
 #include "Contracts/Capabilities/WaterFlowHallSensorCapability.h"
-// 
-#include <cstdio>
-// 
+// #include <sstream>
+// #include <iomanip>
 
 namespace iotsmartsys::core
 {

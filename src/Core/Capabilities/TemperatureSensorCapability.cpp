@@ -1,7 +1,6 @@
 #include "Contracts/Capabilities/TemperatureSensorCapability.h"
 #include <cmath>
-#include <iomanip>
-#include <sstream>
+#include <cstdio>
 
 namespace iotsmartsys::core
 {
@@ -30,19 +29,19 @@ namespace iotsmartsys::core
         }
 
         float temp = sensor.readTemperatureCelsius();
-        float roundedTemp = std::round(temp * 100.0f) / 100.0f;
-        std::ostringstream oss;
-        oss << std::fixed << std::setprecision(2) << roundedTemp;
-        std::string tempStr = oss.str();
+    float roundedTemp = std::round(temp * 100.0f) / 100.0f;
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", roundedTemp);
+    const char *tempStr = buf;
 
         if (isValidTemperature(temp))
         {
-            logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Valid temperature: %s °C", tempStr.c_str());
+            logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Valid temperature: %s °C", tempStr);
             publishIfChanged(roundedTemp);
         }
         else
         {
-            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Invalid temperature reading: %s °C", tempStr.c_str());
+            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Invalid temperature reading: %s °C", tempStr);
             forceNextReadAt(currentTime);
         }
     }

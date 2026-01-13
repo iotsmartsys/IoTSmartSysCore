@@ -1,6 +1,5 @@
 #include "Contracts/Capabilities/WaterLevelPercentCapability.h"
-#include <sstream>
-#include <iomanip>
+#include <cstdio>
 
 namespace iotsmartsys::core
 {
@@ -21,9 +20,9 @@ namespace iotsmartsys::core
         if (current != lastPercent)
         {
             lastPercent = current;
-            std::ostringstream ss;
-            ss << std::fixed << std::setprecision(2) << current;
-            updateState(ss.str());
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.2f", current);
+            updateState(buf);
         }
     }
 
