@@ -1,6 +1,6 @@
 {
     "name": "IoTSmartSysCore",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "description": "IoTSmartSysCore é a biblioteca core para dispositivos IoT da plataforma IoTSmartSys, fornecendo capabilities, integração MQTT, OTA e gerenciamento de configurações.",
     "keywords": [
         "iot",
