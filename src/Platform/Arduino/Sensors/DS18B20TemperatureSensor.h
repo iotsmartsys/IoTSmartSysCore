@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef DS18B20_SENSOR_ENABLED
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -25,3 +26,4 @@ namespace iotsmartsys::platform::arduino
         bool hasReading_{false};
     };
 } // namespace iotsmartsys::platform::arduino
+#endif // DS18B20_SENSOR_ENABLED

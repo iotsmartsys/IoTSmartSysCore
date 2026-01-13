@@ -1,3 +1,4 @@
+#ifdef DS18B20_SENSOR_ENABLED
 #include <Arduino.h>
 #include <cmath>
 
@@ -50,3 +51,4 @@ namespace iotsmartsys::platform::arduino
     }
 
 } // namespace iotsmartsys::platform::arduino
+#endif // DS18B20_SENSOR_ENABLED

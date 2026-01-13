@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef DHT_SENSOR_ENABLED
+
 #include "Contracts/Sensors/ITemperatureSensor.h"
 #include "Contracts/Sensors/IHumiditySensor.h"
 #include <DHT.h>
@@ -25,3 +27,4 @@ namespace iotsmartsys::platform::arduino
         bool hasReading_{false};
     };
 } // namespace iotsmartsys::platform::arduino
+#endif // DHT_SENSOR_ENABLED

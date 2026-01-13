@@ -21,10 +21,12 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created temperature sensor.
         std::unique_ptr<core::ITemperatureSensor> createTemperatureSensor(const int gpio, core::TemperatureSensorModel model) override;
 
+#ifdef DHT_SENSOR_ENABLED
         /// @brief Creates a DHT sensor.
         /// @param gpio The GPIO pin to which the sensor is connected.
         /// @return A unique pointer to the created DHT sensor.
         std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio);
+#endif
 
         /// @brief Creates a luminosity sensor.
         /// @return A unique pointer to the created luminosity sensor.
