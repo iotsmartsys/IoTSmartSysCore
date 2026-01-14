@@ -116,6 +116,7 @@ namespace iotsmartsys::app
 
         iotsmartsys::core::ICommandHardwareAdapter *createOutputAdapter(std::uint8_t gpio, bool highIsOn);
         iotsmartsys::core::IInputHardwareAdapter *createInputAdapter(std::uint8_t gpio);
+        iotsmartsys::core::IInputHardwareAdapter *createInputAdapter(std::uint8_t gpio, iotsmartsys::core::HardwareDigitalLogic mode, iotsmartsys::core::InputPullMode pullMode);
 
         void *allocateAligned(size_t sizeBytes, size_t alignment);
         bool registerCapability(ICapability *cap, void (*destructor)(void *));

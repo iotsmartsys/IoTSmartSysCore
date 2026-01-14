@@ -25,6 +25,7 @@ namespace iotsmartsys::platform::arduino
         std::size_t inputAdapterSize() const override;
         std::size_t inputAdapterAlign() const override;
         iotsmartsys::core::IInputHardwareAdapter *createInput(void *mem, std::uint8_t pin) override;
+        iotsmartsys::core::IInputHardwareAdapter *createInput(void *mem, std::uint8_t pin, iotsmartsys::core::HardwareDigitalLogic mode, iotsmartsys::core::InputPullMode pullMode) override;
         AdapterDestructor inputAdapterDestructor() const override;
 
         /* IWaterLevelSensor */

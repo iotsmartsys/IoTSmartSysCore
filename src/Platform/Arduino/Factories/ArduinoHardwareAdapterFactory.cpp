@@ -35,12 +35,12 @@ namespace iotsmartsys::platform::arduino
         std::uint8_t pin,
         bool highIsOn)
     {
-        const auto logic = highIsOn
-                               ? HardwareDigitalLogic::HIGH_IS_ON
-                               : HardwareDigitalLogic::LOW_IS_ON;
+    const auto logic = highIsOn
+                   ? iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON
+                   : iotsmartsys::core::HardwareDigitalLogic::LOW_IS_ON;
 
         // ✅ sem heap, sem fragmentação
-        return new (mem) OutputHardwareAdapter(pin, logic);
+    return new (mem) OutputHardwareAdapter(pin, logic);
     }
 
     /* Input */
@@ -72,6 +72,16 @@ namespace iotsmartsys::platform::arduino
     {
         // ✅ sem heap, sem fragmentação
         return new (mem) InputHardwareAdapter(pin);
+    }
+
+    iotsmartsys::core::IInputHardwareAdapter *ArduinoHardwareAdapterFactory::createInput(
+        void *mem,
+        std::uint8_t pin,
+        HardwareDigitalLogic mode,
+        InputPullMode pullMode)
+    {
+        // ✅ sem heap, sem fragmentação
+        return new (mem) InputHardwareAdapter(pin, mode, pullMode);
     }
 
     /* IWaterLevelSensor */

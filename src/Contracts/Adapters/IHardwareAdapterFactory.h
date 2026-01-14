@@ -32,6 +32,7 @@ namespace iotsmartsys::core
         virtual std::size_t inputAdapterSize() const = 0;
         virtual std::size_t inputAdapterAlign() const = 0;
         virtual IInputHardwareAdapter *createInput(void *mem, std::uint8_t pin) = 0;
+        virtual IInputHardwareAdapter *createInput(void *mem, std::uint8_t pin, HardwareDigitalLogic mode, InputPullMode pullMode) = 0;
         virtual AdapterDestructor inputAdapterDestructor() const = 0;
 
         // IWaterLevelSensor

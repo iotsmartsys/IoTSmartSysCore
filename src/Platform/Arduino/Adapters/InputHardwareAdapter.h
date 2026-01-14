@@ -6,13 +6,7 @@
 
 namespace iotsmartsys::platform::arduino
 {
-    enum class InputPullMode
-    {
-        NONE = 0,
-        UP = 1,
-        DOWN = 2
-    };
-
+    using namespace iotsmartsys::core;
     class InputHardwareAdapter : public iotsmartsys::core::IInputHardwareAdapter
     {
     public:
@@ -23,10 +17,10 @@ namespace iotsmartsys::platform::arduino
         {
             switch (pullMode)
             {
-            case InputPullMode::UP:
+            case InputPullMode::PULL_UP:
                 pinMode(pin, INPUT_PULLUP);
                 break;
-            case InputPullMode::DOWN:
+            case InputPullMode::PULL_DOWN:
                 pinMode(pin, INPUT_PULLDOWN);
                 break;
             default:
@@ -39,10 +33,10 @@ namespace iotsmartsys::platform::arduino
         {
             switch (mode)
             {
-            case InputPullMode::UP:
+            case InputPullMode::PULL_UP:
                 digitalWrite(pin, HIGH);
                 break;
-            case InputPullMode::DOWN:
+            case InputPullMode::PULL_DOWN:
                 digitalWrite(pin, LOW);
                 break;
             default:

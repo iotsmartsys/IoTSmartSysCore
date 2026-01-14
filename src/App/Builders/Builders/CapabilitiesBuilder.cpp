@@ -175,6 +175,29 @@ namespace iotsmartsys::app
         return hardwareAdapter;
     }
 
+    iotsmartsys::core::IInputHardwareAdapter *CapabilitiesBuilder::createInputAdapter(std::uint8_t gpio, iotsmartsys::core::HardwareDigitalLogic mode, iotsmartsys::core::InputPullMode pullMode)
+    {
+        if (_adaptersCount >= _adaptersMax)
+            return nullptr;
+
+        const std::size_t size = _factory.inputAdapterSize();
+        const std::size_t align = _factory.inputAdapterAlign();
+
+        void *mem = allocateAligned(size, align);
+        if (!mem)
+            return nullptr;
+
+        auto *hardwareAdapter = _factory.createInput(mem, gpio, mode, pullMode);
+        if (!hardwareAdapter)
+            return nullptr;
+
+        auto adapterDtor = _factory.inputAdapterDestructor();
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+            return nullptr;
+
+        return hardwareAdapter;
+    }
+
     // --------------------------- addLight ---------------------------
 
     iotsmartsys::core::LightCapability *CapabilitiesBuilder::addLight(const LightConfig &cfg)
@@ -270,7 +293,7 @@ namespace iotsmartsys::app
     // --------------------------- addDoorSensor ---------------------------
     iotsmartsys::core::DoorSensorCapability *CapabilitiesBuilder::addDoorSensor(const DoorSensorConfig &cfg)
     {
-        auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
+        auto *hardwareAdapter = createInputAdapter(cfg.GPIO, iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON, iotsmartsys::core::InputPullMode::PULL_UP);
         if (!hardwareAdapter)
             return nullptr;
 

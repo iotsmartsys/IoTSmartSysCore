@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <cstring>
 #include "Contracts/Adapters/ICommandHardwareAdapter.h"
-#include "HardwareDigitalLogic.h"
+#include "Contracts/Adapters/IInputHardwareAdapter.h"
 #include "Contracts/Capabilities/ICapabilityType.h"
 
 namespace iotsmartsys::platform::arduino
@@ -13,10 +13,10 @@ namespace iotsmartsys::platform::arduino
     class OutputHardwareAdapter : public core::ICommandHardwareAdapter
     {
     public:
-        OutputHardwareAdapter(int pin, HardwareDigitalLogic logic)
+        OutputHardwareAdapter(int pin, iotsmartsys::core::HardwareDigitalLogic logic)
             : pin(pin), logic(logic)
         {
-            pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+            pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
         }
 
         void setup() override
@@ -29,21 +29,21 @@ namespace iotsmartsys::platform::arduino
         {
             if (command.command == SWITCH_STATE_ON)
             {
-                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
             }
             else if (command.command == SWITCH_STATE_OFF)
             {
-                pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
             }
             else if (command.command == TOGGLE_COMMAND)
             {
                 if (digitalRead(pin) == HIGH)
                 {
-                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                    pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
                 }
                 else
                 {
-                    pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
+                    pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
                 }
             }
             else
@@ -60,12 +60,12 @@ namespace iotsmartsys::platform::arduino
         {
             if (strcmp(value, SWITCH_STATE_ON) == 0)
             {
-                // pinState = (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
-                digitalWrite(pin, (logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW);
+                // pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
+                digitalWrite(pin, (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW);
             }
             else if (strcmp(value, SWITCH_STATE_OFF) == 0)
             {
-                digitalWrite(pin, (logic == HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH);
+                digitalWrite(pin, (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH);
             }
             else if (strcmp(value, TOGGLE_COMMAND) == 0)
             {
@@ -85,7 +85,7 @@ namespace iotsmartsys::platform::arduino
 
         std::string getState() override
         {
-            return (digitalRead(pin) == ((logic == HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
+            return (digitalRead(pin) == ((logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
         }
 
         long lastStateReadMillis() const override
@@ -107,7 +107,7 @@ namespace iotsmartsys::platform::arduino
         int lastState_{-1};
         int pin;
         int pinState;
-        HardwareDigitalLogic logic;
+    iotsmartsys::core::HardwareDigitalLogic logic;
 
         void updateHardware()
         {
