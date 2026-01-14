@@ -20,6 +20,7 @@ namespace iotsmartsys::core
 
         void powerOn();
         void powerOff();
+        void applyCommand(CapabilityCommand command) override;
 
     private:
         int stateOn;
@@ -27,7 +28,7 @@ namespace iotsmartsys::core
         unsigned long lastRing;
         bool poweredOn;
         bool lastState;
-        int ringDuration = 250;
+        int ringDuration = 500;
 
         void toggle();
     };

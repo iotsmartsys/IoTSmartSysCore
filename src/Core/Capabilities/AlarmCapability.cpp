@@ -42,7 +42,7 @@ namespace iotsmartsys::core
         {
             logger.info("AlarmCapability", "Alarm ringed!");
             lastRing = timeProvider.nowMs();
-            toggle();
+            command_hardware_adapter.applyCommand(TOGGLE_COMMAND);
         }
         else
         {
@@ -57,17 +57,34 @@ namespace iotsmartsys::core
 
     void AlarmCapability::powerOn()
     {
-        command_hardware_adapter.applyCommand(POWER_ON_COMMAND);
         poweredOn = true;
-        ring();
-        updateState(ALARM_ON);
+    }
+
+    void AlarmCapability::applyCommand(CapabilityCommand command)
+    {
+        logger.info("AlarmCapability", "Applying command: %s", command.value);
+        if (command.isPowerOn())
+        {
+            powerOn();
+        }
+        else if (command.isPowerOff())
+        {
+            powerOff();
+        }
+        else if (command.isToggle())
+        {
+            toggle();
+        }
+        else
+        {
+            logger.warn("AlarmCapability", "Unknown command value: %s", command.value);
+        }
     }
 
     void AlarmCapability::powerOff()
     {
-        command_hardware_adapter.applyCommand(POWER_OFF_COMMAND);
         poweredOn = false;
-        updateState(ALARM_OFF);
+        command_hardware_adapter.applyCommand(POWER_OFF_COMMAND);
     }
 
     void AlarmCapability::toggle()

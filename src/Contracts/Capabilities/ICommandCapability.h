@@ -53,7 +53,7 @@ namespace iotsmartsys::core
             return this;
         }
 
-        void applyCommand(CapabilityCommand command)
+        virtual void applyCommand(CapabilityCommand command)
         {
             logger.info("COMMAND", "Applying command: capability=%s value=%s",
                         command.capability_name,
