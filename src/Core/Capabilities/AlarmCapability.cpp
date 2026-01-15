@@ -37,10 +37,10 @@ namespace iotsmartsys::core
 
     void AlarmCapability::ring()
     {
-        logger.info("AlarmCapability", "Ringing alarm...");
+        logger.debug("AlarmCapability", "Ringing alarm...");
         if (timeProvider.nowMs() - lastRing > ringDuration)
         {
-            logger.info("AlarmCapability", "Alarm ringed!");
+            logger.debug("AlarmCapability", "Alarm ringed!");
             lastRing = timeProvider.nowMs();
             command_hardware_adapter.applyCommand(TOGGLE_COMMAND);
         }
