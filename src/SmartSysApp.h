@@ -1,5 +1,6 @@
 #pragma once
 
+#include "pins.h"
 #include <Arduino.h>
 #include <string>
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
