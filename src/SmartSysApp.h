@@ -35,6 +35,7 @@
 #include "Core/Services/MqttService.h"
 #include "Core/Settings/SettingsGateImpl.h"
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
+#include "App/Managers/LEDStatusManager.h"
 
 #include "Core/Provisioning/ProvisioningManager.h"
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
@@ -119,6 +120,7 @@ namespace iotsmartsys
                 iotsmartsys::core::settings::Settings settings_;
                 iotsmartsys::core::MqttSink mqttSink_;
                 iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
+                app::LEDStatusManager ledStatusManager_;
                 core::ICapability *capSlots_[8] = {};
                 void (*capDtors_[8])(void *) = {};
                 void *adapterSlots_[8] = {};
@@ -151,13 +153,6 @@ namespace iotsmartsys
                 TransportHub transportHub_;
                 SerialTransportChannel *uart_;
                 ICommandHardwareAdapter *factoryResetButton_{nullptr};
-                ICommandHardwareAdapter *statusLed_{nullptr};
-                // Status LED state machine
-                uint32_t statusLedLastToggleMs_{0};
-                int statusLedBlinkCount_{0};
-                // 0 = idle, 1 = provisioning, 2 = connecting
-                int statusLedMode_{0};
-                bool statusLedOn_{false};
                 platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
 
                 void setupProvisioningConfiguration();

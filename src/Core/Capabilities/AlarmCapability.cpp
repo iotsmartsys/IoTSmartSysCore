@@ -90,6 +90,7 @@ namespace iotsmartsys::core
     void AlarmCapability::toggle()
     {
         if (poweredOn)
+        
         {
             powerOff();
         }

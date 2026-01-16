@@ -37,7 +37,7 @@ namespace iotsmartsys::core::provisioning
 
         // AP+STA allows scanning nearby networks while SoftAP is running
         WiFi.mode(WIFI_AP_STA);
-        auto deviceId = _deviceIdentityProvider.getDeviceName();
+        auto deviceId = _deviceIdentityProvider.getDeviceID();
 
         const uint32_t last6 = strtoul(deviceId.substr(deviceId.length() - 6).c_str(), nullptr, 16);
         char ssidBuf[32];
@@ -53,6 +53,7 @@ namespace iotsmartsys::core::provisioning
         IPAddress ip = WiFi.softAPIP();
         _availableSsids = _wifiManager.getAvailableSSIDs();
         _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
+        _logger.info("[PortalConfig]", "DEVICE ID: %s", deviceId.c_str());
         _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
         _logger.info("[PortalConfig]", "SSID: %s", apName.c_str());
         _logger.info("[PortalConfig]", "Senha: %s", apPass.c_str());
@@ -81,7 +82,7 @@ namespace iotsmartsys::core::provisioning
                    {
                        // {"device_id":"<id>", "ssid":"<ssid>"}
                        String info = F("{\"device_id\":\"");
-                       info += _deviceIdentityProvider.getDeviceName().c_str();
+                       info += _deviceIdentityProvider.getDeviceID().c_str();
                        info += F("\", \"ssid\":\"");
                        info += apName;
                        info += F("\"}");

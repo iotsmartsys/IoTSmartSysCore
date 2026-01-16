@@ -13,7 +13,7 @@ namespace iotsmartsys::core
 
         /// @brief Obtém o nome único do dispositivo.
         /// @return Nome do dispositivo.
-        virtual std::string getDeviceName() const = 0;
+        virtual std::string getDeviceID() const = 0;
 
         /// @brief Obtém o identificador único do dispositivo.
         /// @return Identificador único do dispositivo.

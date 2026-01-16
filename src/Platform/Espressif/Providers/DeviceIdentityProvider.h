@@ -10,7 +10,7 @@ namespace iotsmartsys::platform::espressif::providers
     public:
         /// @brief Obtém o nome único do dispositivo.
         /// @return Nome do dispositivo.
-        std::string getDeviceName() const override;
+        std::string getDeviceID() const override;
 
         /// @brief Obtém o identificador único do dispositivo.
         /// @return Identificador único do dispositivo.

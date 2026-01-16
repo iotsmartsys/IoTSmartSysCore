@@ -9,7 +9,7 @@ extern "C"
 
 namespace iotsmartsys::platform::espressif::providers
 {
-    std::string DeviceIdentityProvider::getDeviceName() const
+    std::string DeviceIdentityProvider::getDeviceID() const
     {
         esp_chip_info_t chip_info;
         esp_chip_info(&chip_info);

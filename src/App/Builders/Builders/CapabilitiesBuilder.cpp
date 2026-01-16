@@ -108,7 +108,7 @@ namespace iotsmartsys::app
 
         if (cap->capability_name.empty())
         {
-            auto deviceId = _deviceIdentityProvider.getDeviceName();
+            auto deviceId = _deviceIdentityProvider.getDeviceID();
             cap->capability_name = deviceId + "_" + cap->type;
         }
 
