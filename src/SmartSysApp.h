@@ -35,24 +35,17 @@
 #include "Core/Services/MqttService.h"
 #include "Core/Settings/SettingsGateImpl.h"
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
+#include "App/Managers/CapabilityController.h"
+#include "App/Managers/ConnectivityBootstrap.h"
 #include "App/Managers/LEDStatusManager.h"
-
-#include "Core/Provisioning/ProvisioningManager.h"
-#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
-#include "Platform/Espressif/Provisioning/BleProvisioningChannel.h"
-#endif
-#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-#include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
-#endif
+#include "App/Managers/ProvisioningController.h"
+#include "App/Managers/TransportController.h"
 
 #include "Infra/OTA/OTAManager.h"
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
 #include "Infra/Factories/SensorFactory.h"
-#include "Core/Commands/CommandProcessorFactory.h"
 
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
-#include "Core/Transports/TransportHub.h"
-#include "Core/Commands/CapabilityCommandTransportDispatcher.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
 namespace iotsmartsys
@@ -132,6 +125,7 @@ namespace iotsmartsys
                 iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
 
                 core::WiFiManager wifi_;
+                app::ConnectivityBootstrap connectivityBootstrap_;
                 app::MqttService<12, 16, 256> mqtt_;
                 iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
 #ifndef OTA_DISABLED
@@ -139,25 +133,13 @@ namespace iotsmartsys
 #endif
                 ota::OTAManager otaManager_;
 
-                iotsmartsys::core::CapabilityManager *capabilityManager_ = nullptr;
-                iotsmartsys::core::provisioning::ProvisioningManager *provManager = nullptr;
-#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
-                iotsmartsys::core::provisioning::BleProvisioningChannel *bleChannel = nullptr;
-#endif
-#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-                iotsmartsys::core::provisioning::WebPortalProvisioningChannel *webPortalChannel = nullptr;
-#endif
                 iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;
-                iotsmartsys::core::CommandProcessorFactory *commandProcessorFactory_ = nullptr;
-                CapabilityCommandTransportDispatcher *commandDispatcher_ = nullptr;
-                TransportHub transportHub_;
+                app::CapabilityController capabilityController_;
+                app::TransportController transportController_;
                 SerialTransportChannel *uart_;
                 ICommandHardwareAdapter *factoryResetButton_{nullptr};
                 platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
-
-                void setupProvisioningConfiguration();
-                static constexpr uint32_t kProvisioningRestartDelayMs = 3000;
-                bool inConfigMode_{false};
+                app::ProvisioningController provisioningController_;
                 void handleStatusLED();
         };
 } // namespace iotsmartsys

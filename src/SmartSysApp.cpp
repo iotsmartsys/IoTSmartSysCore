@@ -1,8 +1,6 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
-#include "esp_ota_ops.h"
-#include "esp_ota_ops.h"
 
 #include <cstdio>
 using namespace iotsmartsys::platform::espressif::ota;
@@ -12,11 +10,12 @@ namespace iotsmartsys
     SmartSysApp::SmartSysApp()
         : serviceManager_(core::ServiceManager::init()),
           logger_(serviceManager_.logger()),
-          systemCommandProcessor_(logger_),
           settingsManager_(serviceManager_.settingsManager()),
           settingsGate_(serviceManager_.settingsGate()),
+          commandParser_(logger_),
           mqttClient_(logger_),
           mqttSink_(mqttClient_, settingsManager_),
+          ledStatusManager_(logger_, hwFactory_),
           builder_(hwFactory_,
                    mqttSink_,
                    capSlots_,
@@ -28,8 +27,8 @@ namespace iotsmartsys
                    arena_,
                    sizeof(arena_),
                    deviceIdentityProvider_),
-          ledStatusManager_(logger_, hwFactory_),
           wifi_(logger_),
+          connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
 #ifndef OTA_DISABLED
@@ -40,8 +39,10 @@ namespace iotsmartsys
                       ota_,
 #endif
                       settingsGate_),
-          commandParser_(logger_),
-          transportHub_(logger_, settingsManager_)
+          systemCommandProcessor_(logger_),
+          capabilityController_(logger_, commandParser_, systemCommandProcessor_),
+          transportController_(logger_, settingsManager_, mqtt_),
+          provisioningController_(logger_, wifi_, deviceIdentityProvider_)
     {
     }
 
@@ -71,7 +72,7 @@ namespace iotsmartsys
     {
         const char *sname = wifi_.stateName();
         const bool isConnecting = sname && strcmp(sname, "Connecting") == 0;
-        const bool isProvisioning = inConfigMode_ && provManager;
+        const bool isProvisioning = provisioningController_.isActive();
         ledStatusManager_.update(millis(), isProvisioning, isConnecting);
     }
 
@@ -89,7 +90,7 @@ namespace iotsmartsys
         cfg.keepAliveSec = 30;
         uart_->begin(cfg);
         uart_->setForwardRawMessages(true);
-        transportHub_.addChannel("uart", uart_);
+        transportController_.addChannel("uart", uart_);
     }
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
@@ -99,8 +100,14 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
     {
+        auto *capabilityManager = capabilityController_.manager();
+        if (!capabilityManager)
+        {
+            logger_.error("CapabilityManager not initialized; skipping announce.");
+            return;
+        }
         app::AnnouncePayloadBuilder builder(
-            capabilityManager_->getAllCapabilities(), logger_);
+            capabilityManager->getAllCapabilities(), logger_);
 
         builder.withDeviceId(info.clientId)
             .withBroker(info.broker)
@@ -164,89 +171,30 @@ namespace iotsmartsys
 
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
 
-        const auto cacheErr = settingsManager_.init();
-
-        if (cacheErr == iotsmartsys::core::common::StateResult::Ok)
+        const auto path = connectivityBootstrap_.run(settings_);
+        if (path == app::ConnectivityBootstrap::BootPath::Provisioning)
         {
-            if (settingsManager_.copyCurrent(settings_))
-            {
-                logger_.info("[SettingsManager] Cached settings loaded successfully.");
-                logger_.info("---------------------------------------------------------");
-                logger_.info("[SettingsManager]", " Firmware Update Mode: %s", settings_.firmware.update.c_str());
-
-                logger_.info("[SettingsManager]", " OTA URL: %s", settings_.firmware.url.c_str());
-                logger_.info("[SettingsManager]", " OTA Version: %s", getBuildIdentifier());
-                logger_.info("[SettingsManager]", "Library Version: %s", IOTSMARTSYSCORE_VERSION);
-
-                logger_.info("[SettingsManager] Log Level: %s", settings_.logLevelStr());
-                logger_.info("[SettingsManager] WiFi SSID: %s", settings_.wifi.ssid.c_str());
-                logger_.info("[SettingsManager] WiFi Password: %s", settings_.wifi.password.c_str());
-                logger_.info("[SettingsManager] API Key: %s", settings_.api.key.c_str());
-                logger_.info("[SettingsManager] API URL: %s", settings_.api.url.c_str());
-                logger_.info("[SettingsManager] Api Basic Auth: %s", settings_.api.basic_auth.c_str());
-
-                logger_.info("[SettingsManager] In Config Mode: %s", settings_.in_config_mode ? "Yes" : "No");
-
-                auto running = esp_ota_get_running_partition();
-                auto bootp = esp_ota_get_boot_partition();
-                logger_.info("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
-                logger_.info("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
-
-                logger_.info("----------------------------------------------------------");
-
-                serviceManager_.setLogLevel(settings_.logLevel);
-
-                if (settings_.isValidWifiConfig() && !settings_.in_config_mode && settings_.isValidApiConfig())
-                {
-                    logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
-                    iotsmartsys::core::WiFiConfig cfg;
-                    cfg.loadFromSettings(settings_);
-
-                    wifi_.begin(cfg);
-                }
-                else
-                {
-                    logger_.warn("[SettingsManager] Cached WiFi settings are invalid. Skipping entrando no modo de configuração.");
-
-                    setupProvisioningConfiguration();
-                    return;
-                }
-            }
-        }
-        else
-        {
-            logger_.warn("[SettingsManager] No cached settings found (or load failed). Entering provisioning mode.");
-            setupProvisioningConfiguration();
+            provisioningController_.begin();
             return;
         }
 
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
-        static iotsmartsys::core::CapabilityManager capManager = builder_.build();
-        capabilityManager_ = &capManager;
-        capabilityManager_->setup();
-        commandProcessorFactory_ = new core::CommandProcessorFactory(logger_, *capabilityManager_, systemCommandProcessor_);
-        commandDispatcher_ = new CapabilityCommandTransportDispatcher(*commandProcessorFactory_, commandParser_, logger_);
-
-        char topic[128];
-        snprintf(topic, sizeof(topic), "device/%s/command",
-                 settings_.clientId ? settings_.clientId : "");
-
-        mqtt_.subscribe(topic);
-        mqtt_.setOnConnected(&SmartSysApp::onMqttConnectedThunk, this);
-        mqtt_.setForwardRawMessages(true);
-
-        transportHub_.addDispatcher(*commandDispatcher_);
-        transportHub_.addChannel("mqtt", &mqtt_);
-        transportHub_.start();
+        capabilityController_.setup(builder_);
+        transportController_.addDispatcher(*capabilityController_.dispatcher());
+        transportController_.configureMqtt(
+            settings_.clientId ? settings_.clientId : "",
+            &SmartSysApp::onMqttConnectedThunk,
+            this);
+        transportController_.start();
     }
 
     void SmartSysApp::handle()
     {
         handleStatusLED();
-        if (inConfigMode_ && provManager)
+        if (provisioningController_.isActive())
         {
-            provManager->handle();
+            provisioningController_.handle();
             return;
         }
 
@@ -262,53 +210,12 @@ namespace iotsmartsys
             }
         }
 
-        if (capabilityManager_)
-        {
-            capabilityManager_->handle();
-        }
+        capabilityController_.handle();
 
         wifi_.handle();
         otaManager_.handle();
         settingsManager_.handle();
-        transportHub_.handle();
-    }
-
-    void SmartSysApp::setupProvisioningConfiguration()
-    {
-        logger_.info("--------------------------------------------------------");
-        logger_.info("Entering in Config Mode - Starting Provisioning Manager");
-        logger_.info("--------------------------------------------------------");
-        provManager = new core::provisioning::ProvisioningManager();
-
-#if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
-        bleChannel = new core::provisioning::BleProvisioningChannel(logger_, wifi_);
-        provManager->registerChannel(*bleChannel);
-#endif
-
-#if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-        webPortalChannel = new core::provisioning::WebPortalProvisioningChannel(wifi_, logger_, deviceIdentityProvider_);
-        provManager->registerChannel(*webPortalChannel);
-#endif
-        provManager->onProvisioningCompleted([this](const iotsmartsys::core::provisioning::DeviceConfig &cfg)
-                                             {
-                                                 auto &sp_ = iotsmartsys::core::ServiceManager::instance();
-                                                 auto &logger = sp_.logger();
-                                                 logger.info("Provisioning completed callback invoked.");
-
-                                                 iotsmartsys::core::settings::Settings newSettings;
-
-                                                 newSettings.in_config_mode = false;
-                                                 newSettings.wifi.ssid = cfg.wifi.ssid ? cfg.wifi.ssid : "";
-                                                 newSettings.wifi.password = cfg.wifi.password ? cfg.wifi.password : "";
-                                                 newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
-                                                 newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
-                                                 newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";
-                                                 sp_.settingsManager().save(newSettings);
-                                                 provManager->scheduleRestart(kProvisioningRestartDelayMs);
-                                                 logger.info("Provisioning saved. Scheduling restart in 3s."); });
-
-        provManager->begin();
-        inConfigMode_ = true;
+        transportController_.handle();
     }
 
     void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)
