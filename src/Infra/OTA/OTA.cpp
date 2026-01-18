@@ -12,14 +12,14 @@
 
 namespace iotsmartsys::ota
 {
-    OTA::OTA(ILogger &logger)
-        : _logger(logger)
+    OTA::OTA(ILogger &logger, core::IDeviceIdentityProvider &deviceIdentityProvider)
+        : _logger(logger), _deviceIdentityProvider(deviceIdentityProvider)
     {
     }
     void OTA::setup()
     {
 
-        const char *hostname = WiFi.getHostname();
+        const char *hostname = _deviceIdentityProvider.getDeviceID().c_str();
         ArduinoOTA.setHostname(hostname);
         ArduinoOTA.onStart([]()
                            {

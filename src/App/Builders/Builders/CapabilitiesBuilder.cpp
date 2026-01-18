@@ -1,5 +1,6 @@
 #include "CapabilitiesBuilder.h"
 #include "Contracts/Providers/ServiceProvider.h"
+#include "Platform/Arduino/Interpreters/ValveHardwareCommandInterpreter.h"
 
 namespace iotsmartsys::app
 {
@@ -259,10 +260,25 @@ namespace iotsmartsys::app
             return nullptr;
 
         auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
-        return createCapability<iotsmartsys::core::ValveCapability>(
+        auto *cap = createCapability<iotsmartsys::core::ValveCapability>(
             name,
             *hardwareAdapter,
             &_eventSink);
+
+        if (!cap)
+            return nullptr;
+
+        void *interpreterMem = allocateAligned(
+            sizeof(iotsmartsys::core::ValveHardwareCommandInterpreter),
+            alignof(iotsmartsys::core::ValveHardwareCommandInterpreter));
+
+        if (!interpreterMem)
+            return cap;
+
+        auto *interpreter = new (interpreterMem) iotsmartsys::core::ValveHardwareCommandInterpreter();
+        cap->setCommandInterpreter(interpreter);
+
+        return cap;
     }
 
     // --------------------------- addLED ---------------------------

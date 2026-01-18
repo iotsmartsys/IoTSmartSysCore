@@ -32,7 +32,7 @@ namespace iotsmartsys
           mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
 #ifndef OTA_DISABLED
-          ota_(logger_),
+          ota_(logger_, deviceIdentityProvider_),
 #endif
           otaManager_(settingsManager_, logger_, manifestParser_,
 #ifndef OTA_DISABLED

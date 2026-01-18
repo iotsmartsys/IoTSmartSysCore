@@ -11,6 +11,7 @@
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Providers/Time.h"
 #include "ICapability.h"
+#include "Contracts/Interpreters/IHardwareCommandInterpreter.h"
 
 namespace iotsmartsys::core
 {
@@ -58,25 +59,39 @@ namespace iotsmartsys::core
             logger.info("COMMAND", "Applying command: capability=%s value=%s",
                         command.capability_name,
                         command.value);
+
+            if (command_interpreter)
+            {
+                IHardwareCommand hwCommand = command_interpreter->interpretCommand(command);
+                command_hardware_adapter.applyCommand(hwCommand);
+                return;
+            }
+
             command_hardware_adapter.applyCommand(command.value);
         }
 
         virtual void setup() override
         {
             command_hardware_adapter.setup();
-            updateState(command_hardware_adapter.getState());
+            updateState(command_hardware_adapter.getStateValue());
         }
 
         virtual void handle() override
         {
-            if (command_hardware_adapter.getState() != value)
+            if (command_hardware_adapter.getStateValue() != value)
             {
-                updateState(command_hardware_adapter.getState());
+                updateState(command_hardware_adapter.getStateValue());
             }
+        }
+
+        virtual void setCommandInterpreter(IHardwareCommandInterpreter *interpreter)
+        {
+            command_interpreter = interpreter;
         }
 
     protected:
         ICommandHardwareAdapter &command_hardware_adapter;
+        IHardwareCommandInterpreter *command_interpreter{nullptr};
 
     private:
     };

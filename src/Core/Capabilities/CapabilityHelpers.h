@@ -154,7 +154,17 @@ namespace iotsmartsys::core
     protected:
         void syncFromHardware()
         {
-            std::string hwState = command_hardware_adapter.getState();
+            std::string hwState;
+            if (command_interpreter)
+            {
+                IHardwareState hwStateObj = command_hardware_adapter.getState();
+                hwState = command_interpreter->interpretState(hwStateObj);
+            }
+            else
+            {
+                hwState = command_hardware_adapter.getStateValue();
+            }
+
             if (hwState != value)
             {
                 updateState(hwState);
@@ -210,8 +220,6 @@ namespace iotsmartsys::core
         std::string formatValue(float value) const
         {
             return std::to_string(value);
-        //    return std::to_string(static_cast<long>(std::round(value * std::pow(10, _precision)))).
-        //         insert(std::to_string(static_cast<long>(std::round(value * std::pow(10, _precision)))).length() - _precision, ".");
         }
 
         void forceNextReadAt(unsigned long now) { _lastReadTime = now; }

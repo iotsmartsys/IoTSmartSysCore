@@ -27,24 +27,17 @@ namespace iotsmartsys::platform::arduino
 
         bool applyCommand(const core::IHardwareCommand &command) override
         {
-            if (command.command == SWITCH_STATE_ON)
+            if (command.isEqualTo(SWITCH_STATE_ON))
             {
                 pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
             }
-            else if (command.command == SWITCH_STATE_OFF)
+            else if (command.isEqualTo(SWITCH_STATE_OFF))
             {
                 pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
             }
-            else if (command.command == TOGGLE_COMMAND)
+            else if (command.isEqualTo(TOGGLE_COMMAND))
             {
-                if (digitalRead(pin) == HIGH)
-                {
-                    pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
-                }
-                else
-                {
-                    pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
-                }
+                pinState = !digitalRead(pin);
             }
             else
             {
@@ -83,9 +76,16 @@ namespace iotsmartsys::platform::arduino
         // Backwards-compatible overload accepting std::string
         bool applyCommand(const std::string &value) { return applyCommand(value.c_str()); }
 
-        std::string getState() override
+        std::string getStateValue() override
         {
             return (digitalRead(pin) == ((logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
+        }
+
+        core::IHardwareState getState() override
+        {
+            core::IHardwareState state;
+            state.value = getStateValue();
+            return state;
         }
 
         long lastStateReadMillis() const override
@@ -107,7 +107,7 @@ namespace iotsmartsys::platform::arduino
         int lastState_{-1};
         int pin;
         int pinState;
-    iotsmartsys::core::HardwareDigitalLogic logic;
+        iotsmartsys::core::HardwareDigitalLogic logic;
 
         void updateHardware()
         {
