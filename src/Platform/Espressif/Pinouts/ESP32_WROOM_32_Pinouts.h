@@ -11,9 +11,7 @@
 
 #define ESP32_GPIO2 2
 
-#ifndef LED_BUILTIN
-#define LED_BUILTIN ESP32_GPIO2
-#endif
+#define ESP32_LED_BUILTIN ESP32_GPIO2
 
 #define ESP32_SAFE_GPIO4 4
 #define ESP32_SAFE_GPIO5 5

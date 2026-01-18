@@ -37,7 +37,8 @@
 #include "App/Builders/Builders/CapabilitiesBuilder.h"
 #include "App/Managers/CapabilityController.h"
 #include "App/Managers/ConnectivityBootstrap.h"
-#include "App/Managers/LEDStatusManager.h"
+#include "App/Managers/FactoryResetButtonController.h"
+#include "App/Managers/DeviceStateManager.h"
 #include "App/Managers/ProvisioningController.h"
 #include "App/Managers/TransportController.h"
 
@@ -65,7 +66,7 @@ namespace iotsmartsys
                 void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
 
                 /// @brief Configura botão de reset de fábrica (provisionamento).
-                void configureFactoryResetButton(int pin, bool activeLow = true);
+                void configureFactoryResetButton(iotsmartsys::app::PushButtonConfig cfg);
 
                 void configureLED(iotsmartsys::app::LightConfig cfg);
 
@@ -113,7 +114,7 @@ namespace iotsmartsys
                 iotsmartsys::core::settings::Settings settings_;
                 iotsmartsys::core::MqttSink mqttSink_;
                 iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
-                app::LEDStatusManager ledStatusManager_;
+                app::DeviceStateManager deviceStateManager_;
                 core::ICapability *capSlots_[8] = {};
                 void (*capDtors_[8])(void *) = {};
                 void *adapterSlots_[8] = {};
@@ -134,12 +135,11 @@ namespace iotsmartsys
                 ota::OTAManager otaManager_;
 
                 iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;
+                app::FactoryResetButtonController factoryResetButtonController_;
                 app::CapabilityController capabilityController_;
                 app::TransportController transportController_;
                 SerialTransportChannel *uart_;
-                ICommandHardwareAdapter *factoryResetButton_{nullptr};
                 platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
                 app::ProvisioningController provisioningController_;
-                void handleStatusLED();
         };
 } // namespace iotsmartsys

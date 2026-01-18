@@ -45,6 +45,14 @@ namespace iotsmartsys::core
         }
     };
 
+    enum class WiFiState : uint8_t
+    {
+        Idle,
+        Connecting,
+        Connected,
+        BackoffWaiting
+    };
+
     class WiFiManager
     {
     public:
@@ -54,7 +62,7 @@ namespace iotsmartsys::core
         void handle(); // chama no loop
 
         bool isConnected() const;
-        const char *stateName() const;
+        WiFiState currentState() const;
         std::vector<std::string> getAvailableSSIDs();
         const char *getIpAddress() const;
         const char *getMacAddress() const;
@@ -62,14 +70,6 @@ namespace iotsmartsys::core
         const char *getSignalStrength() const;
 
     private:
-        enum class State : uint8_t
-        {
-            Idle,
-            Connecting,
-            Connected,
-            BackoffWaiting
-        };
-
         void startConnect();
         void scheduleRetry();
         uint32_t computeBackoffMs() const;
@@ -83,13 +83,13 @@ namespace iotsmartsys::core
         iotsmartsys::core::ILogger &_log;
         WiFiConfig _cfg{};
 
-        State _state{State::Idle};
+        WiFiState _state{WiFiState::Idle};
         std::string _ipAddress;
         std::string _macAddress;
         std::string _ssid;
         std::string _signalStrength;
 
-        uint32_t _attempt{0}; 
+        uint32_t _attempt{0};
         uint32_t _nextActionAtMs{0};
 
         uint32_t _connectedAtMs{0};

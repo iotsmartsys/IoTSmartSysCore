@@ -15,7 +15,7 @@ namespace iotsmartsys
           commandParser_(logger_),
           mqttClient_(logger_),
           mqttSink_(mqttClient_, settingsManager_),
-          ledStatusManager_(logger_, hwFactory_),
+          deviceStateManager_(logger_, hwFactory_, wifi_, provisioningController_),
           builder_(hwFactory_,
                    mqttSink_,
                    capSlots_,
@@ -40,40 +40,21 @@ namespace iotsmartsys
 #endif
                       settingsGate_),
           systemCommandProcessor_(logger_),
+          factoryResetButtonController_(logger_, settingsManager_, systemCommandProcessor_, hwFactory_),
           capabilityController_(logger_, commandParser_, systemCommandProcessor_),
           transportController_(logger_, settingsManager_, mqtt_),
           provisioningController_(logger_, wifi_, deviceIdentityProvider_)
     {
     }
 
-    void SmartSysApp::configureFactoryResetButton(int pin, bool activeLow)
+    void SmartSysApp::configureFactoryResetButton(iotsmartsys::app::PushButtonConfig cfg)
     {
-        if (factoryResetButton_)
-        {
-            hwFactory_.outputAdapterDestructor()(factoryResetButton_);
-            factoryResetButton_ = nullptr;
-        }
-        void *mem = malloc(hwFactory_.outputAdapterSize());
-        if (!mem)
-        {
-            logger_.error("Failed to allocate memory for factory reset button adapter.");
-            return;
-        }
-        factoryResetButton_ = hwFactory_.createOutput(mem, static_cast<std::uint8_t>(pin), !activeLow);
-        factoryResetButton_->setup();
+        factoryResetButtonController_.configure(cfg);
     }
 
     void SmartSysApp::configureLED(iotsmartsys::app::LightConfig cfg)
     {
-        ledStatusManager_.configure(cfg);
-    }
-
-    void SmartSysApp::handleStatusLED()
-    {
-        const char *sname = wifi_.stateName();
-        const bool isConnecting = sname && strcmp(sname, "Connecting") == 0;
-        const bool isProvisioning = provisioningController_.isActive();
-        ledStatusManager_.update(millis(), isProvisioning, isConnecting);
+        deviceStateManager_.configure(cfg);
     }
 
     void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
@@ -191,24 +172,14 @@ namespace iotsmartsys
 
     void SmartSysApp::handle()
     {
-        handleStatusLED();
+        deviceStateManager_.handle();
         if (provisioningController_.isActive())
         {
             provisioningController_.handle();
             return;
         }
 
-        if (factoryResetButton_)
-        {
-            factoryResetButton_->handle();
-            if (factoryResetButton_->getState() == SWITCH_STATE_ON && factoryResetButton_->lastStateReadMillis() > 15000)
-            {
-                logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
-                settingsManager_.clear();
-                delay(2000);
-                systemCommandProcessor_.restartSafely();
-            }
-        }
+        factoryResetButtonController_.handle();
 
         capabilityController_.handle();
 
