@@ -29,6 +29,9 @@ namespace iotsmartsys::app
     {
     public:
         using HardwareConfig::HardwareConfig;
+
+        bool highIsOn = false;
+
     };
 
     class PirSensorConfig : public InputHardwareConfig
@@ -58,6 +61,7 @@ namespace iotsmartsys::app
     {
     public:
         using InputHardwareConfig::InputHardwareConfig;
+        bool highIsOn = false;
     };
 
     class TouchButtonConfig : public InputHardwareConfig

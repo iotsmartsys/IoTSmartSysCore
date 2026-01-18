@@ -16,7 +16,7 @@ namespace iotsmartsys::core
         _cfg = cfg;
         _attempt = 0;
         _gotIp = false;
-        _state = State::Idle;
+        _state = WiFiState::Idle;
         _nextActionAtMs = 0;
 
         // garante que o estado latched de conectividade começa limpo
@@ -51,21 +51,9 @@ namespace iotsmartsys::core
 #endif
     }
 
-    const char *WiFiManager::stateName() const
+    WiFiState WiFiManager::currentState() const
     {
-        switch (_state)
-        {
-        case State::Idle:
-            return "Idle";
-        case State::Connecting:
-            return "Connecting";
-        case State::Connected:
-            return "Connected";
-        case State::BackoffWaiting:
-            return "BackoffWaiting";
-        default:
-            return "?";
-        }
+        return _state;
     }
 
     void WiFiManager::handle()
@@ -74,14 +62,14 @@ namespace iotsmartsys::core
 
         switch (_state)
         {
-        case State::Idle:
+        case WiFiState::Idle:
             // nada
             break;
 
-        case State::Connecting:
+        case WiFiState::Connecting:
             if (isConnected())
             {
-                _state = State::Connected;
+                _state = WiFiState::Connected;
                 _connectedAtMs = now;
                 _attempt = 0;
                 _ssid = WiFi.SSID().c_str();
@@ -96,12 +84,12 @@ namespace iotsmartsys::core
             }
             break;
 
-        case State::BackoffWaiting:
+        case WiFiState::BackoffWaiting:
             if (now >= _nextActionAtMs)
                 startConnect();
             break;
 
-        case State::Connected:
+        case WiFiState::Connected:
             if (!isConnected())
             {
                 // evita ficar reconectando freneticamente se a rede está instável
@@ -132,7 +120,7 @@ namespace iotsmartsys::core
                            iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
         }
 
-        _state = State::Connecting;
+        _state = WiFiState::Connecting;
 
         // timeout “soft”: se passar, entra em retry (sem bloquear)
         const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
@@ -152,7 +140,7 @@ namespace iotsmartsys::core
         const uint32_t backoff = computeBackoffMs();
 
         _nextActionAtMs = now + backoff;
-        _state = State::BackoffWaiting;
+        _state = WiFiState::BackoffWaiting;
 
         _log.warn("WIFI", "Retry in %lu ms (attempt=%lu)", (unsigned long)backoff, (unsigned long)_attempt);
     }
