@@ -87,6 +87,7 @@ namespace iotsmartsys::core::settings
 
         void setState(SettingsManagerState s);
         void updateStatsFail(iotsmartsys::core::common::StateResult err, int http_status);
+        void setPendingGateUpdate(SettingsReadyLevel level, iotsmartsys::core::common::StateResult err);
 
         core::providers::ISettingsProvider &_provider;
         ISettingsFetcher &_fetcher;
@@ -108,5 +109,14 @@ namespace iotsmartsys::core::settings
         std::string _syncUrlBuffer{};
 
         void syncFromApi();
+
+        struct PendingGateUpdate
+        {
+            bool pending{false};
+            SettingsReadyLevel level{SettingsReadyLevel::None};
+            iotsmartsys::core::common::StateResult err{iotsmartsys::core::common::StateResult::Ok};
+        };
+
+        PendingGateUpdate _pendingGateUpdate{};
     };
 } // namespace iotsmartsys::core::settings

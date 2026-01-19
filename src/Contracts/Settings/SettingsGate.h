@@ -48,6 +48,11 @@ namespace iotsmartsys::core::settings
         /// </summary>
         virtual void signalError(iotsmartsys::core::common::StateResult err) = 0;
 
+        /// <summary>
+        /// Define o nível atual e o último erro (usado pelo SettingsManager).
+        /// </summary>
+        virtual void setLevel(SettingsReadyLevel level, iotsmartsys::core::common::StateResult lastErr) = 0;
+
         // Gate: executa cb quando atingir o nível desejado (ou imediatamente se já tiver atingido)
         virtual iotsmartsys::core::common::StateResult runWhenReady(
             SettingsReadyLevel want,

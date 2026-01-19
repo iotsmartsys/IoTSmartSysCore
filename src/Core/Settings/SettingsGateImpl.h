@@ -2,20 +2,14 @@
 
 #include "Contracts/Settings/SettingsGate.h"
 
-extern "C"
-{
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
-}
-
 namespace iotsmartsys::core::settings
 {
 
     class SettingsGateImpl final : public ISettingsGate
     {
     public:
-        SettingsGateImpl();
-        ~SettingsGateImpl() override;
+        SettingsGateImpl() = default;
+        ~SettingsGateImpl() override = default;
 
         SettingsReadyLevel level() const override;
 
@@ -23,6 +17,7 @@ namespace iotsmartsys::core::settings
         void signalSynced() override;
         void signalSyncing() override;
         void signalError(iotsmartsys::core::common::StateResult err) override;
+        void setLevel(SettingsReadyLevel level, iotsmartsys::core::common::StateResult lastErr) override;
 
         iotsmartsys::core::common::StateResult runWhenReady(
             SettingsReadyLevel want,
@@ -40,17 +35,12 @@ namespace iotsmartsys::core::settings
 
         static constexpr int kMaxSubs = 8;
 
-        mutable SemaphoreHandle_t _mutex = nullptr;
         SettingsReadyLevel _level = SettingsReadyLevel::None;
         iotsmartsys::core::common::StateResult _last_err = iotsmartsys::core::common::StateResult::Ok;
 
         Sub _subs[kMaxSubs];
 
         static bool isAtLeast(SettingsReadyLevel have, SettingsReadyLevel want);
-        void lock() const;
-        void unlock() const;
-
-        void setLevel(SettingsReadyLevel newLevel);
     };
 
 } // namespace iotsmartsys::core::settings
