@@ -21,6 +21,7 @@ namespace iotsmartsys::core
 
         // Log "printf-like" sem alocar memória
         virtual void logf(LogLevel level, const char *tag, const char *fmt, va_list args) = 0;
+        virtual void setMinLevel(LogLevel) {}
 
         // Conveniência: variádico
         void log(LogLevel level, const char *tag, const char *fmt, ...)

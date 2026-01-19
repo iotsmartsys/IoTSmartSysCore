@@ -1,4 +1,5 @@
 #include "Core/Providers/ServiceManager.h"
+#include "Contracts/Providers/IPlatformServiceRegistrar.h"
 
 namespace iotsmartsys::core
 {
@@ -15,39 +16,33 @@ namespace iotsmartsys::core
     }
 
     ServiceManager::ServiceManager()
-        : logger_(Serial),
-          timeProvider_(),
-          serviceProvider_(ServiceProvider::init(&logger_)),
-          settingsFetcher_(logger_),
-          settingsParser_(),
-          settingsProvider_(),
-          settingsGate_(),
-          settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
-          wifiManager_(logger_)
+        : serviceProvider_(ServiceProvider::init())
     {
-        Serial.begin(115200);
+        if (auto *registrar = platform::getPlatformServiceRegistrar())
+        {
+            registrar->registerPlatformServices(serviceProvider_);
+        }
         registerServices();
     }
 
     void ServiceManager::registerServices()
     {
-        Log::setLogger(&logger_);
-        Time::setProvider(&timeProvider_);
-
-        serviceProvider_.setLogger(&logger_);
-        serviceProvider_.setTime(&Time::get());
-        serviceProvider_.setSettings(&settingsManager_);
-        serviceProvider_.setSettingsGate(&settingsGate_);
-        serviceProvider_.setSettingsManager(&settingsManager_);
-        serviceProvider_.setWiFiManager(&wifiManager_);
+        if (auto *logger = serviceProvider_.logger())
+        {
+            Log::setLogger(logger);
+        }
+        if (auto *time = serviceProvider_.time())
+        {
+            Time::setProvider(time);
+        }
     }
 
-    ILogger &ServiceManager::logger() { return logger_; }
-    ITimeProvider &ServiceManager::timeProvider() { return timeProvider_; }
-    settings::SettingsManager &ServiceManager::settingsManager() { return settingsManager_; }
-    settings::ISettingsGate &ServiceManager::settingsGate() { return settingsGate_; }
-    settings::IReadOnlySettingsProvider &ServiceManager::settingsProvider() { return settingsManager_; }
-    core::WiFiManager &ServiceManager::wifiManager() { return wifiManager_; }
+    ILogger &ServiceManager::logger() { return *serviceProvider_.logger(); }
+    ITimeProvider &ServiceManager::timeProvider() { return *serviceProvider_.time(); }
+    settings::SettingsManager &ServiceManager::settingsManager() { return *serviceProvider_.getSettingsManager(); }
+    settings::ISettingsGate &ServiceManager::settingsGate() { return *serviceProvider_.getSettingsGate(); }
+    settings::IReadOnlySettingsProvider &ServiceManager::settingsProvider() { return *serviceProvider_.getSettingsProvider(); }
+    core::WiFiManager &ServiceManager::wifiManager() { return *serviceProvider_.getWiFiManager(); }
 
-    void ServiceManager::setLogLevel(LogLevel level) { logger_.setMinLevel(level); }
+    void ServiceManager::setLogLevel(LogLevel level) { logger().setMinLevel(level); }
 } // namespace iotsmartsys::core

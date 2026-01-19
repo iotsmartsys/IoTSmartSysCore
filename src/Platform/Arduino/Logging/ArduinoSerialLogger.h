@@ -13,7 +13,7 @@ namespace iotsmartsys::platform::arduino
         explicit ArduinoSerialLogger(Print &out, iotsmartsys::core::LogLevel minLevel = iotsmartsys::core::LogLevel::Info)
             : _out(out), _minLevel(minLevel) {}
 
-        void setMinLevel(iotsmartsys::core::LogLevel lvl) { _minLevel = lvl; }
+        void setMinLevel(iotsmartsys::core::LogLevel lvl) override { _minLevel = lvl; }
 
         void logf(iotsmartsys::core::LogLevel level, const char *tag, const char *fmt, va_list args) override;
 
