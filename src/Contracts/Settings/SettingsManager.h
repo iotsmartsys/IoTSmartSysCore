@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <atomic>
 #include "Contracts/Common/StateResult.h"
 
 #include "Contracts/Settings/Settings.h"
@@ -87,14 +88,12 @@ namespace iotsmartsys::core::settings
 
         void setState(SettingsManagerState s);
         void updateStatsFail(iotsmartsys::core::common::StateResult err, int http_status);
-        void setPendingGateUpdate(SettingsReadyLevel level, iotsmartsys::core::common::StateResult err);
 
         core::providers::ISettingsProvider &_provider;
         ISettingsFetcher &_fetcher;
         ISettingsParser &_parser;
 
         // estado atual
-        mutable void *_mutex; // SemaphoreHandle_t, mas sem incluir FreeRTOS aqui no Core
         SettingsManagerState _state{SettingsManagerState::Idle};
         bool _has_current{false};
         Settings _current{};
@@ -110,13 +109,21 @@ namespace iotsmartsys::core::settings
 
         void syncFromApi();
 
-        struct PendingGateUpdate
+        struct PendingSettingsUpdate
         {
-            bool pending{false};
-            SettingsReadyLevel level{SettingsReadyLevel::None};
-            iotsmartsys::core::common::StateResult err{iotsmartsys::core::common::StateResult::Ok};
+            bool cancelled{false};
+            iotsmartsys::core::common::StateResult fetch_err{iotsmartsys::core::common::StateResult::Ok};
+            int http_status{-1};
+            bool has_parsed{false};
+            iotsmartsys::core::common::StateResult parse_err{iotsmartsys::core::common::StateResult::Ok};
+            Settings parsed{};
         };
 
-        PendingGateUpdate _pendingGateUpdate{};
+        void setPendingUpdate(const PendingSettingsUpdate &pending);
+        void applyPendingUpdate(const PendingSettingsUpdate &pending);
+
+        PendingSettingsUpdate _pendingUpdate{};
+        std::atomic<bool> _hasPending{false};
+        std::atomic<std::uint32_t> _pendingSeq{0};
     };
 } // namespace iotsmartsys::core::settings
