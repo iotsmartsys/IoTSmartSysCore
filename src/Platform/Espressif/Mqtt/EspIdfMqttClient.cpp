@@ -5,7 +5,7 @@
 namespace iotsmartsys::platform::espressif
 {
     EspIdfMqttClient::EspIdfMqttClient(iotsmartsys::core::ILogger &log)
-        : IMqttClient(log)
+        : _logger(log)
     {
     }
 

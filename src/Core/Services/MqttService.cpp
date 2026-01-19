@@ -1,6 +1,5 @@
 #include "Core/Services/MqttService.h"
 #include "Contracts/Providers/ServiceProvider.h"
-#include "IMqttClient.h"
 
 #include <cstdint>
 #include <cstddef>

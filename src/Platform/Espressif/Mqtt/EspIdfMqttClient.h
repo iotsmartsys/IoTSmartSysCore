@@ -1,10 +1,8 @@
 #pragma once
 #ifdef ESP32
 
-#include "Contracts/Transports/ITransportChannel.h"
-#include "Core/Services/IMqttClient.h"
+#include "Contracts/Mqtt/IMqttClient.h"
 #include "Contracts/Logging/ILogger.h"
-#include "Contracts/Logging/Log.h"
 #include <string>
 
 extern "C"
@@ -44,8 +42,19 @@ namespace iotsmartsys::platform::espressif
         esp_err_t onEvent(esp_mqtt_event_handle_t event);
 
     private:
-        // buffers para evitar alocações internas do mqtt_event (topic/payload não são null-terminated)
-        // (opcional: pode processar direto via len)
+        iotsmartsys::core::ILogger &_logger;
+        esp_mqtt_client_handle_t _client{nullptr};
+        bool _connected{false};
+
+        iotsmartsys::core::TransportOnMessageFn _onMsg{nullptr};
+        void *_onMsgUser{nullptr};
+        iotsmartsys::core::TransportOnConnectedFn _onConnected{nullptr};
+        void *_onConnectedUser{nullptr};
+        iotsmartsys::core::TransportOnDisconnectedFn _onDisconnected{nullptr};
+        void *_onDisconnectedUser{nullptr};
+        std::string _clientIdStr;
+        std::string _brokerStr;
+        uint16_t _keepAliveSec{0};
     };
 
 } // namespace iotsmartsys::platform::esp32
