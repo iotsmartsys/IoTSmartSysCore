@@ -1,0 +1,37 @@
+#if defined(ESP32)
+#include "Platform/Espressif/Firmware/EspIdfFirmwareRuntimeInfo.h"
+
+#include "esp_ota_ops.h"
+
+namespace iotsmartsys::platform::espressif
+{
+    bool EspIdfFirmwareRuntimeInfo::hasOtaPartitions() const
+    {
+        return esp_ota_get_running_partition() != nullptr && esp_ota_get_boot_partition() != nullptr;
+    }
+
+    const char *EspIdfFirmwareRuntimeInfo::runningPartitionLabel() const
+    {
+        const auto *running = esp_ota_get_running_partition();
+        return running ? running->label : "n/a";
+    }
+
+    uint32_t EspIdfFirmwareRuntimeInfo::runningPartitionAddress() const
+    {
+        const auto *running = esp_ota_get_running_partition();
+        return running ? static_cast<uint32_t>(running->address) : 0U;
+    }
+
+    const char *EspIdfFirmwareRuntimeInfo::bootPartitionLabel() const
+    {
+        const auto *bootp = esp_ota_get_boot_partition();
+        return bootp ? bootp->label : "n/a";
+    }
+
+    uint32_t EspIdfFirmwareRuntimeInfo::bootPartitionAddress() const
+    {
+        const auto *bootp = esp_ota_get_boot_partition();
+        return bootp ? static_cast<uint32_t>(bootp->address) : 0U;
+    }
+} // namespace iotsmartsys::platform::espressif
+#endif

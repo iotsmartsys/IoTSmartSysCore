@@ -16,9 +16,9 @@ namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core::settings;
     using iotsmartsys::core::common::StateResult;
-    static const char *TAG = "SettingsFetcher";
+    static const char *kSettingsFetcherTag = "SettingsFetcher";
 
-    static StateResult map_esp_err(esp_err_t e)
+    static StateResult map_esp_err_fetcher(esp_err_t e)
     {
         switch (e)
         {
@@ -184,7 +184,7 @@ namespace iotsmartsys::platform::espressif
             if (!shouldRetry(err, http_status, attempt))
             {
                 // sem retry: retorna erro final
-                finishAndCallback(err == ESP_OK ? StateResult::Unknown : map_esp_err(err), http_status, false);
+                finishAndCallback(err == ESP_OK ? StateResult::Unknown : map_esp_err_fetcher(err), http_status, false);
                 return;
             }
 
@@ -212,7 +212,7 @@ namespace iotsmartsys::platform::espressif
         cfg.event_handler = &EspIdfSettingsFetcher::httpEventHandler;
         cfg.user_data = this;
         cfg.disable_auto_redirect = false;
-        _logger.info("EspIdfSettingsFetcher", "Performing HTTP %s to %s", is_https ? "HTTPS" : "HTTP", _req.url);
+        _logger.info(kSettingsFetcherTag, "Performing HTTP %s to %s", is_https ? "HTTPS" : "HTTP", _req.url);
         if (_client)
         {
             esp_http_client_cleanup(_client);

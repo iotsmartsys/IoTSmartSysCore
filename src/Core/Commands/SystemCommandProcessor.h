@@ -5,6 +5,8 @@
 
 namespace iotsmartsys::core
 {
+    class ISystemControl;
+
     class SystemCommandProcessor : public ICommandProcessor
     {
     public:
@@ -12,10 +14,9 @@ namespace iotsmartsys::core
 
         bool process(const DeviceCommand &command) override;
         void restartSafely();
-        
-        private:
+
+    private:
         ILogger &_logger;
-        void reset_all_gpio_safely();
-        void full_soft_powercycle_restart();
+        ISystemControl *_systemControl{nullptr};
     };
 }

@@ -1,0 +1,13 @@
+#if defined(ESP32)
+#include "Platform/Espressif/Providers/EspressifRandomProvider.h"
+
+#include "esp_random.h"
+
+namespace iotsmartsys::platform::espressif
+{
+    uint32_t EspressifRandomProvider::nextU32()
+    {
+        return esp_random();
+    }
+} // namespace iotsmartsys::platform::espressif
+#endif

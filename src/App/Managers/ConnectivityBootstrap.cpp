@@ -1,7 +1,7 @@
 #include "App/Managers/ConnectivityBootstrap.h"
 
 #include "Version/VersionInfo.h"
-#include "esp_ota_ops.h"
+#include "Contracts/Firmware/IFirmwareRuntimeInfo.h"
 
 namespace iotsmartsys::app
 {
@@ -65,10 +65,16 @@ namespace iotsmartsys::app
         logger_.info("[SettingsManager] Api Basic Auth: %s", settings.api.basic_auth.c_str());
         logger_.info("[SettingsManager] In Config Mode: %s", settings.in_config_mode ? "Yes" : "No");
 
-        auto running = esp_ota_get_running_partition();
-        auto bootp = esp_ota_get_boot_partition();
-        logger_.info("BOOT:    %s @ 0x%06lX\n", bootp->label, (unsigned long)bootp->address);
-        logger_.info("RUNNING: %s @ 0x%06lX\n", running->label, (unsigned long)running->address);
+        const auto *fwInfo = serviceManager_.firmwareRuntimeInfo();
+        if (fwInfo && fwInfo->hasOtaPartitions())
+        {
+            logger_.info("BOOT:    %s @ 0x%06lX\n", fwInfo->bootPartitionLabel(), (unsigned long)fwInfo->bootPartitionAddress());
+            logger_.info("RUNNING: %s @ 0x%06lX\n", fwInfo->runningPartitionLabel(), (unsigned long)fwInfo->runningPartitionAddress());
+        }
+        else
+        {
+            logger_.info("[SettingsManager] OTA partitions not available on this platform.");
+        }
         logger_.info("----------------------------------------------------------");
     }
 } // namespace iotsmartsys::app

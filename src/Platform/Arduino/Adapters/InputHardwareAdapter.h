@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "Contracts/Adapters/IInputHardwareAdapter.h"
+#include "Contracts/Logging/Log.h"
 #include "HardwareDigitalLogic.h"
 
 namespace iotsmartsys::platform::arduino
@@ -21,7 +22,12 @@ namespace iotsmartsys::platform::arduino
                 pinMode(pin, INPUT_PULLUP);
                 break;
             case InputPullMode::PULL_DOWN:
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+                pinMode(pin, INPUT);
+                iotsmartsys::core::Log::get().warn("InputHardwareAdapter", "PULL_DOWN not supported on ESP8266 GPIO; using INPUT (external pulldown required)");
+#else
                 pinMode(pin, INPUT_PULLDOWN);
+#endif
                 break;
             default:
                 pinMode(pin, INPUT);

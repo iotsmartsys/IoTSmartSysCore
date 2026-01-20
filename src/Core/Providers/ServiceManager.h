@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Contracts/Logging/Log.h"
+#include "Contracts/Firmware/IFirmwareRuntimeInfo.h"
 #include "Contracts/Providers/ServiceProvider.h"
 #include "Contracts/Providers/Time.h"
 #include "Contracts/Settings/SettingsManager.h"
@@ -19,6 +20,7 @@ namespace iotsmartsys::core
         settings::ISettingsGate &settingsGate();
         settings::IReadOnlySettingsProvider &settingsProvider();
         core::WiFiManager &wifiManager();
+        firmware::IFirmwareRuntimeInfo *firmwareRuntimeInfo();
 
         void setLogLevel(LogLevel level);
 

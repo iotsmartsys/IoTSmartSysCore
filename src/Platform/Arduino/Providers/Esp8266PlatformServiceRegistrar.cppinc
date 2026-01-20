@@ -1,0 +1,34 @@
+#if defined(ESP8266)
+#include "Platform/Arduino/Providers/Esp8266PlatformServiceRegistrar.h"
+
+#include <Arduino.h>
+
+namespace iotsmartsys::platform::arduino
+{
+    Esp8266PlatformServiceRegistrar &Esp8266PlatformServiceRegistrar::instance()
+    {
+        static Esp8266PlatformServiceRegistrar inst;
+        return inst;
+    }
+
+    Esp8266PlatformServiceRegistrar::Esp8266PlatformServiceRegistrar()
+        : logger_(Serial),
+          timeProvider_(),
+          randomProvider_(),
+          systemControl_(),
+          serviceProvider_(iotsmartsys::core::ServiceProvider::init(&logger_)),
+          wifiManager_(logger_)
+    {
+        Serial.begin(115200);
+    }
+
+    void Esp8266PlatformServiceRegistrar::registerPlatformServices(iotsmartsys::core::ServiceProvider &sp)
+    {
+        sp.setLogger(&logger_);
+        sp.setTime(&timeProvider_);
+        sp.setRandomProvider(&randomProvider_);
+        sp.setSystemControl(&systemControl_);
+        sp.setWiFiManager(&wifiManager_);
+    }
+} // namespace iotsmartsys::platform::arduino
+#endif

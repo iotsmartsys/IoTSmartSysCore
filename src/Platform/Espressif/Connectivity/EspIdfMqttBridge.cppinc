@@ -6,7 +6,7 @@ using iotsmartsys::core::ConnectivityGate;
 namespace iotsmartsys::platform::espressif
 {
 
-    static const char *TAG = "EspIdfMqttBridge";
+    static const char *kMqttBridgeTag = "EspIdfMqttBridge";
 
     esp_err_t EspIdfMqttBridge::attach(esp_mqtt_client_handle_t client)
     {
@@ -31,13 +31,13 @@ namespace iotsmartsys::platform::espressif
         {
         case MQTT_EVENT_CONNECTED:
             gate.setBits(ConnectivityGate::MQTT_CONNECTED);
-            ESP_LOGI(TAG, "MQTT_CONNECTED set");
+            ESP_LOGI(kMqttBridgeTag, "MQTT_CONNECTED set");
             break;
 
         case MQTT_EVENT_DISCONNECTED:
         case MQTT_EVENT_ERROR:
             gate.clearBits(ConnectivityGate::MQTT_CONNECTED);
-            ESP_LOGW(TAG, "MQTT_CONNECTED cleared");
+            ESP_LOGW(kMqttBridgeTag, "MQTT_CONNECTED cleared");
             break;
 
         default:

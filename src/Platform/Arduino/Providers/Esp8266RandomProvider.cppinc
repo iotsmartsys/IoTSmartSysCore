@@ -1,0 +1,19 @@
+#include "Platform/Arduino/Providers/Esp8266RandomProvider.h"
+
+#include <Arduino.h>
+
+#if defined(ESP8266)
+#include <user_interface.h>
+#endif
+
+namespace iotsmartsys::platform::arduino
+{
+    uint32_t Esp8266RandomProvider::nextU32()
+    {
+#if defined(ESP8266)
+        return os_random();
+#else
+        return static_cast<uint32_t>(random());
+#endif
+    }
+} // namespace iotsmartsys::platform::arduino

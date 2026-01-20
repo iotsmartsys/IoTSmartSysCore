@@ -8,6 +8,13 @@ namespace iotsmartsys::core
 
     class ILogger;
     class ITimeProvider;
+    class IRandomProvider;
+    class ISystemControl;
+
+    namespace firmware
+    {
+        class IFirmwareRuntimeInfo;
+    }
 
     namespace settings
     {
@@ -28,6 +35,10 @@ namespace iotsmartsys::core
 
         virtual settings::SettingsManager *getSettingsManager() const = 0;
         virtual core::WiFiManager *getWiFiManager() const = 0;
+
+        virtual firmware::IFirmwareRuntimeInfo *getFirmwareRuntimeInfo() const = 0;
+        virtual IRandomProvider *getRandomProvider() const = 0;
+        virtual ISystemControl *getSystemControl() const = 0;
     };
 
 } // namespace iotsmartsys::core

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "sdkconfig.h"
-
 #ifdef ESP8266
 
 // Safe GPIO pins for ESP8266 module

@@ -1,0 +1,29 @@
+#include "Platform/Arduino/Firmware/ArduinoFirmwareRuntimeInfo.h"
+
+namespace iotsmartsys::platform::arduino
+{
+    bool ArduinoFirmwareRuntimeInfo::hasOtaPartitions() const
+    {
+        return false;
+    }
+
+    const char *ArduinoFirmwareRuntimeInfo::runningPartitionLabel() const
+    {
+        return "n/a";
+    }
+
+    uint32_t ArduinoFirmwareRuntimeInfo::runningPartitionAddress() const
+    {
+        return 0U;
+    }
+
+    const char *ArduinoFirmwareRuntimeInfo::bootPartitionLabel() const
+    {
+        return "n/a";
+    }
+
+    uint32_t ArduinoFirmwareRuntimeInfo::bootPartitionAddress() const
+    {
+        return 0U;
+    }
+} // namespace iotsmartsys::platform::arduino

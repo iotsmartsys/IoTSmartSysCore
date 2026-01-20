@@ -43,6 +43,7 @@ namespace iotsmartsys::core
     settings::ISettingsGate &ServiceManager::settingsGate() { return *serviceProvider_.getSettingsGate(); }
     settings::IReadOnlySettingsProvider &ServiceManager::settingsProvider() { return *serviceProvider_.getSettingsProvider(); }
     core::WiFiManager &ServiceManager::wifiManager() { return *serviceProvider_.getWiFiManager(); }
+    firmware::IFirmwareRuntimeInfo *ServiceManager::firmwareRuntimeInfo() { return serviceProvider_.getFirmwareRuntimeInfo(); }
 
     void ServiceManager::setLogLevel(LogLevel level) { logger().setMinLevel(level); }
 } // namespace iotsmartsys::core

@@ -1,13 +1,12 @@
 #include "SystemCommandProcessor.h"
-#include "esp_wifi.h"
-#include "esp_system.h"
-#include "driver/gpio.h"
-#include "Arduino.h"
+#include "Contracts/Providers/ServiceProvider.h"
+#include "Contracts/System/ISystemControl.h"
 
 namespace iotsmartsys::core
 {
     SystemCommandProcessor::SystemCommandProcessor(ILogger &logger)
-        : _logger(logger)
+        : _logger(logger),
+          _systemControl(iotsmartsys::core::ServiceProvider::instance().getSystemControl())
     {
     }
 
@@ -18,8 +17,10 @@ namespace iotsmartsys::core
         {
         case SystemCommands::REBOOT:
             _logger.warn("SystemCommandProcessor: Executing REBOOT command.");
-            delay(1000); // Pequeno atraso para garantir que o log seja enviado
-            full_soft_powercycle_restart();
+            if (_systemControl)
+            {
+                _systemControl->restartSafely();
+            }
             return true;
             break;
         case SystemCommands::FACTORY_RESET:
@@ -39,31 +40,12 @@ namespace iotsmartsys::core
         }
     }
 
-    void SystemCommandProcessor::reset_all_gpio_safely()
-    {
-        // Ajuste se você quiser excluir pinos usados por USB/UART/etc.
-        for (int pin = 0; pin < GPIO_NUM_MAX; pin++)
-        {
-            // Alguns pinos podem não existir/ser inválidos em certas variantes
-            gpio_num_t g = (gpio_num_t)pin;
-            gpio_reset_pin(g);
-            gpio_set_direction(g, GPIO_MODE_DISABLE); // "hi-z" / desabilita saída
-        }
-    }
-
-    void SystemCommandProcessor::full_soft_powercycle_restart()
-    {
-        esp_wifi_stop();
-        esp_wifi_deinit();
-
-        reset_all_gpio_safely();
-
-        esp_restart();
-    }
-
     void SystemCommandProcessor::restartSafely()
     {
         _logger.warn("SystemCommandProcessor: Performing safe restart.");
-        full_soft_powercycle_restart();
+        if (_systemControl)
+        {
+            _systemControl->restartSafely();
+        }
     }
 } // namespace iotsmartsys::core

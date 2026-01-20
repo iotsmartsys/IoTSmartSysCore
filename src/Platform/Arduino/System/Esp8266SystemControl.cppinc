@@ -1,0 +1,28 @@
+#include "Platform/Arduino/System/Esp8266SystemControl.h"
+
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+
+namespace iotsmartsys::platform::arduino
+{
+    void Esp8266SystemControl::restart()
+    {
+        ESP.restart();
+    }
+
+    void Esp8266SystemControl::stopWifi(bool turnOffRadio)
+    {
+        WiFi.disconnect(true);
+        if (turnOffRadio)
+        {
+            WiFi.mode(WIFI_OFF);
+        }
+    }
+
+    void Esp8266SystemControl::restartSafely()
+    {
+        delay(1000);
+        stopWifi(true);
+        restart();
+    }
+} // namespace iotsmartsys::platform::arduino

@@ -6,9 +6,15 @@
 #include <vector>
 #include <string>
 
-extern "C" {
+#if defined(ARDUINO_ARCH_ESP32) || (defined(ESP32) && !defined(ESP8266))
+extern "C"
+{
 #include "cJSON.h"
 }
+#define IOTSMARTSYS_HAS_CJSON 1
+#else
+#define IOTSMARTSYS_HAS_CJSON 0
+#endif
 
 #ifndef WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE
 #define WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE 0
@@ -233,6 +239,7 @@ namespace iotsmartsys::core::provisioning
         const String rawBody = _server.arg("plain");
         const bool looksLikeJson = rawBody.length() > 0 && rawBody[0] == '{';
 
+#if IOTSMARTSYS_HAS_CJSON
         if (looksLikeJson)
         {
             cJSON *root = cJSON_Parse(rawBody.c_str());
@@ -273,6 +280,14 @@ namespace iotsmartsys::core::provisioning
             }
             // Password may be empty for open networks; accept empty.
         }
+#else
+        if (looksLikeJson)
+        {
+            _logger.warn("[PortalConfig]", "JSON provisioning is not supported on this platform.");
+            _server.send(415, "application/json", "{\"error\":\"json_not_supported\"}");
+            return;
+        }
+#endif
         else
         {
             // HTML form post (application/x-www-form-urlencoded)

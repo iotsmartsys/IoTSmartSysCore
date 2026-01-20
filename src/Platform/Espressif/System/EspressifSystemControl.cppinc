@@ -1,0 +1,48 @@
+#if defined(ESP32)
+#include "Platform/Espressif/System/EspressifSystemControl.h"
+
+#include "Arduino.h"
+#include "driver/gpio.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
+
+namespace iotsmartsys::platform::espressif
+{
+    void EspressifSystemControl::restart()
+    {
+        esp_restart();
+    }
+
+    void EspressifSystemControl::stopWifi(bool turnOffRadio)
+    {
+        esp_wifi_stop();
+        if (turnOffRadio)
+        {
+            esp_wifi_deinit();
+        }
+    }
+
+    void EspressifSystemControl::restartSafely()
+    {
+        delay(1000);
+        full_soft_powercycle_restart();
+    }
+
+    void EspressifSystemControl::reset_all_gpio_safely()
+    {
+        for (int pin = 0; pin < GPIO_NUM_MAX; pin++)
+        {
+            gpio_num_t g = static_cast<gpio_num_t>(pin);
+            gpio_reset_pin(g);
+            gpio_set_direction(g, GPIO_MODE_DISABLE);
+        }
+    }
+
+    void EspressifSystemControl::full_soft_powercycle_restart()
+    {
+        stopWifi(true);
+        reset_all_gpio_safely();
+        restart();
+    }
+} // namespace iotsmartsys::platform::espressif
+#endif

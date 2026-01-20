@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(ARDUINO_ARCH_ESP32) || (defined(ESP32) && !defined(ESP8266))
+
 #include "pins.h"
 #include <Arduino.h>
 #include <string>
@@ -143,3 +145,73 @@ namespace iotsmartsys
                 app::ProvisioningController provisioningController_;
         };
 } // namespace iotsmartsys
+
+#else
+
+#include <Arduino.h>
+#include "App/Builders/Configs/CapabilityConfig.h"
+
+namespace iotsmartsys
+{
+        namespace core
+        {
+                class AlarmCapability;
+                class DoorSensorCapability;
+                class ClapSensorCapability;
+                class LightCapability;
+                class GlpSensorCapability;
+                class GlpMeterPercentCapability;
+                class GlpMeterKgCapability;
+                class HumiditySensorCapability;
+                class HeightWaterLevelCapability;
+                class LEDCapability;
+                class PirSensorCapability;
+                class PushButtonCapability;
+                class TouchButtonCapability;
+                class SwitchCapability;
+                class SwitchPlugCapability;
+                class ValveCapability;
+                class OperationalColorSensorCapability;
+                class TemperatureSensorCapability;
+                class WaterLevelLitersCapability;
+                class WaterLevelPercentCapability;
+                class WaterFlowHallSensorCapability;
+                class LuminosityCapability;
+        } // namespace core
+
+        class SmartSysApp
+        {
+        public:
+                SmartSysApp() = default;
+                void setup() {}
+                void handle() {}
+                void configureSerialTransport(HardwareSerial &, uint32_t, int, int) {}
+                void configureFactoryResetButton(iotsmartsys::app::PushButtonConfig) {}
+                void configureLED(iotsmartsys::app::LightConfig) {}
+
+                iotsmartsys::core::AlarmCapability *addAlarmCapability(iotsmartsys::app::AlarmConfig) { return nullptr; }
+                iotsmartsys::core::DoorSensorCapability *addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig) { return nullptr; }
+                iotsmartsys::core::ClapSensorCapability *addClapSensorCapability(iotsmartsys::app::ClapSensorConfig) { return nullptr; }
+                iotsmartsys::core::LightCapability *addLightCapability(iotsmartsys::app::LightConfig) { return nullptr; }
+                iotsmartsys::core::GlpSensorCapability *addGlpSensorCapability(iotsmartsys::app::GlpSensorConfig) { return nullptr; }
+                iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig) { return nullptr; }
+                iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig) { return nullptr; }
+                iotsmartsys::core::HumiditySensorCapability *addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig) { return nullptr; }
+                iotsmartsys::core::HeightWaterLevelCapability *addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig) { return nullptr; }
+                iotsmartsys::core::LEDCapability *addLedCapability(iotsmartsys::app::LightConfig) { return nullptr; }
+                iotsmartsys::core::PirSensorCapability *addPirSensorCapability(iotsmartsys::app::PirSensorConfig) { return nullptr; }
+                iotsmartsys::core::PushButtonCapability *addPushButtonCapability(iotsmartsys::app::PushButtonConfig) { return nullptr; }
+                iotsmartsys::core::TouchButtonCapability *addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig) { return nullptr; }
+                iotsmartsys::core::SwitchCapability *addSwitchCapability(iotsmartsys::app::SwitchConfig) { return nullptr; }
+                iotsmartsys::core::SwitchPlugCapability *addSwitchPlugCapability(iotsmartsys::app::SwitchConfig) { return nullptr; }
+                iotsmartsys::core::ValveCapability *addValveCapability(iotsmartsys::app::ValveConfig) { return nullptr; }
+                iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig) { return nullptr; }
+                iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig) { return nullptr; }
+                iotsmartsys::core::WaterLevelLitersCapability *addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig) { return nullptr; }
+                iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig) { return nullptr; }
+                iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig) { return nullptr; }
+                iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig) { return nullptr; }
+        };
+} // namespace iotsmartsys
+
+#endif

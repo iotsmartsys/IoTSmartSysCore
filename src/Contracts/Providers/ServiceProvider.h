@@ -20,6 +20,9 @@ namespace iotsmartsys::core
         void setSettingsGate(settings::ISettingsGate *gate);
         void setSettingsManager(settings::SettingsManager *manager);
         void setWiFiManager(core::WiFiManager *wifi);
+        void setFirmwareRuntimeInfo(firmware::IFirmwareRuntimeInfo *info);
+        void setRandomProvider(IRandomProvider *random);
+        void setSystemControl(ISystemControl *systemControl);
 
         // IServiceProvider
         ILogger *logger() const override;
@@ -30,6 +33,9 @@ namespace iotsmartsys::core
 
         settings::SettingsManager *getSettingsManager() const override;
         core::WiFiManager *getWiFiManager() const override;
+        firmware::IFirmwareRuntimeInfo *getFirmwareRuntimeInfo() const override;
+        IRandomProvider *getRandomProvider() const override;
+        ISystemControl *getSystemControl() const override;
 
         // útil para debug (opcional)
         bool isReady() const;
@@ -45,6 +51,9 @@ namespace iotsmartsys::core
         settings::ISettingsGate *_settingsGate{nullptr};
         settings::SettingsManager *_settingsManager{nullptr};
         core::WiFiManager *_wifiManager{nullptr};
+        firmware::IFirmwareRuntimeInfo *_firmwareRuntimeInfo{nullptr};
+        IRandomProvider *_randomProvider{nullptr};
+        ISystemControl *_systemControl{nullptr};
     };
 
 } // namespace iotsmartsys::core

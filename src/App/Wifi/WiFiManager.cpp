@@ -1,5 +1,7 @@
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
+#include "Contracts/Providers/IRandomProvider.h"
+#include "Contracts/Providers/ServiceProvider.h"
 
 namespace iotsmartsys::core
 {
@@ -165,7 +167,10 @@ namespace iotsmartsys::core
         uint32_t jitter = 0;
         if (_cfg.jitterMs)
         {
-            jitter = (uint32_t)(esp_random() % (_cfg.jitterMs + 1));
+            if (auto *randomProvider = iotsmartsys::core::ServiceProvider::instance().getRandomProvider())
+            {
+                jitter = randomProvider->uniform(_cfg.jitterMs);
+            }
         }
 
         return base + jitter;

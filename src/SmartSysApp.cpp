@@ -1,3 +1,5 @@
+#if defined(ARDUINO_ARCH_ESP32) || (defined(ESP32) && !defined(ESP8266))
+
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
@@ -340,3 +342,5 @@ namespace iotsmartsys
     }
 
 } // namespace iotsmartsys
+
+#endif
