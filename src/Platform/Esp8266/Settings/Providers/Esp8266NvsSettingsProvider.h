@@ -1,7 +1,8 @@
 #pragma once
-
+#ifdef ESP8266
 #include "Contracts/Providers/ISettingsProvider.h"
 #include "Contracts/Logging/ILogger.h"
+#include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
 // EEPROM will be used as storage backend on ESP8266
 
@@ -21,6 +22,7 @@ namespace iotsmartsys::platform::esp8266
 
     private:
         iotsmartsys::core::ILogger *_logger;
+        platform::espressif::providers::DeviceIdentityProvider _deviceIdentityProvider;
         static constexpr const char *NVS_NAMESPACE = "iotsys";
         static constexpr const char *NVS_KEY = "settings";
 
@@ -81,12 +83,14 @@ namespace iotsmartsys::platform::esp8266
         };
 
         // conversões
-        static void toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing = nullptr);
-        static void fromStored(const StoredSettings &src, core::settings::Settings &dst);
+        void toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing = nullptr);
+        void fromStored(const StoredSettings &src, core::settings::Settings &dst);
 
         // helpers
-        static void copyStr(char *dst, std::size_t dstSize, const std::string &src);
-        static void copyStrIfNotEmpty(char *dst, std::size_t dstSize, const std::string &src);
-        static std::string toString(const char *src);
+        void copyStr(char *dst, std::size_t dstSize, const std::string &src);
+        void copyStrIfNotEmpty(char *dst, std::size_t dstSize, const std::string &src);
+        std::string toString(const char *src);
     };
 } // namespace iotsmartsys::platform::esp8266
+
+#endif // ESP8266

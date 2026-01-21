@@ -2,6 +2,7 @@
 #include "FirmwareUpdater.h"
 #if defined(ESP32)
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Update.h>
 #elif defined(ESP8266)
@@ -120,8 +121,8 @@ namespace iotsmartsys::ota
                         break;
                     }
 
-                    _logger.error("FW-OTA", "Erro ao baixar manifest (HTTPS). HTTP code: ", httpCode);
-                    _logger.error("FW-OTA", " (", http.errorToString(httpCode), ")");
+                    _logger.error("FW-OTA", "Erro ao baixar manifest (HTTPS). HTTP code: %d", httpCode);
+                    _logger.error("FW-OTA", " (%s)", http.errorToString(httpCode).c_str());
                     http.end();
                 }
             }
@@ -144,15 +145,15 @@ namespace iotsmartsys::ota
                         break;
                     }
 
-                    _logger.error("FW-OTA", "Erro ao baixar manifest (HTTP). HTTP code: ", httpCode);
-                    _logger.error("FW-OTA", " (", http.errorToString(httpCode), ")");
+                    _logger.error("FW-OTA", "Erro ao baixar manifest (HTTP). HTTP code: %d", httpCode);
+                    _logger.error("FW-OTA", " (%s)", http.errorToString(httpCode).c_str());
                     http.end();
                 }
             }
 
             if (attempt < FW_OTA_MAX_HTTP_RETRIES)
             {
-                _logger.info("FW-OTA", "Tentando novamente fetch do manifest (tentativa ", attempt + 1, ")...");
+                _logger.info("FW-OTA", "Tentando novamente fetch do manifest (tentativa %d)...", attempt + 1);
                 delay(500);
             }
         }
@@ -218,8 +219,8 @@ namespace iotsmartsys::ota
         std::string currentVersion = getBuildIdentifier();
 
         _logger.debug("FW-OTA", "Comparando versões...");
-        _logger.debug("FW-OTA", "Versão atual: ", currentVersion.c_str());
-        _logger.debug("FW-OTA", "Versão remota: ", manifest.version.c_str());
+        _logger.debug("FW-OTA", "Versão atual: %s", currentVersion.c_str());
+        _logger.debug("FW-OTA", "Versão remota: %s", manifest.version.c_str());
 
         if (manifest.compare(currentVersion) > 0)
         {
@@ -244,7 +245,7 @@ namespace iotsmartsys::ota
             return false;
         }
 
-        _logger.info("FW-OTA", "Iniciando OTA a partir de: ", manifest.fullUrl.c_str());
+        _logger.info("FW-OTA", "Iniciando OTA a partir de: %s", manifest.fullUrl.c_str());
 
         HTTPClient http;
         http.setTimeout(10000); // 10 segundos
@@ -275,8 +276,8 @@ namespace iotsmartsys::ota
         int httpCode = http.GET();
         if (httpCode != HTTP_CODE_OK)
         {
-            _logger.error("FW-OTA", "Erro HTTP ao baixar firmware. Code: ", httpCode);
-            _logger.error("FW-OTA", "Erro: ", http.errorToString(httpCode).c_str());
+            _logger.error("FW-OTA", "Erro HTTP ao baixar firmware. Code: %d", httpCode);
+            _logger.error("FW-OTA", "Erro: %s", http.errorToString(httpCode).c_str());
             http.end();
             return false;
         }
@@ -294,7 +295,7 @@ namespace iotsmartsys::ota
         // Confere com o size esperado do manifest (se > 0)
         if (manifest.size > 0 && (size_t)contentLength != manifest.size)
         {
-            _logger.warn("FW-OTA", "Aviso: tamanho do HTTP difere do manifest. HTTP=", contentLength, " / manifest=", manifest.size);
+            _logger.warn("FW-OTA", "Aviso: tamanho do HTTP difere do manifest. HTTP=%d / manifest=%d", contentLength, manifest.size);
         }
 
         float sizeMb = contentLength / (1024.0f * 1024.0f);
@@ -372,7 +373,7 @@ namespace iotsmartsys::ota
 
         if (totalWritten != (size_t)contentLength)
         {
-            _logger.error("FW-OTA", "Erro: total de bytes escritos (", totalWritten, ") difere do contentLength esperado (", contentLength, "). Abortando OTA.");
+            _logger.error("FW-OTA", "Erro: total de bytes escritos (%d) difere do contentLength esperado (%d). Abortando OTA.", totalWritten, contentLength);
             Update.end();
             http.end();
             return false;
@@ -422,7 +423,7 @@ namespace iotsmartsys::ota
 
         if (!Update.end())
         {
-            _logger.error("FW-OTA", "Update.end() falhou. Erro: ", Update.getError());
+            _logger.error("FW-OTA", "Update.end() falhou. Erro: %d", Update.getError());
             http.end();
             return false;
         }

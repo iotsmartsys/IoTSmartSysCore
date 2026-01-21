@@ -67,7 +67,7 @@ void OTAManager::handle()
         _logger.debug("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
         _logger.debug("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
         _logger.debug("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
-        _logger.debug("[OTA Manager]", "Firmware Update Method: %d", currentSettings.firmware.update);
+        _logger.debug("[OTA Manager]", "Firmware Update Method: %s", currentSettings.firmware.update.c_str());
 
         firmwareSettings = currentSettings.firmware;
     }

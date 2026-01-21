@@ -24,7 +24,7 @@ namespace iotsmartsys::platform::arduino
         cleanAirBase = readAnalogAverage();
         calibrated = true;
 
-        _logger.debug("ArduinoGlpSensor", "Valor base (cleanAirBase): " + std::to_string(cleanAirBase));
+        _logger.debug("ArduinoGlpSensor", "Valor base (cleanAirBase): %d", cleanAirBase);
     }
 
     void ArduinoGlpSensor::handle()

@@ -282,9 +282,11 @@ namespace iotsmartsys::core::settings
     {
         if (_hasPending.load(std::memory_order_acquire))
         {
+            _logger->info("SettingsManager", "handle(): applying pending update");
             PendingSettingsUpdate pending{};
             for (;;)
             {
+                _logger->info("SettingsManager", "handle(): checking pending update");
                 const auto seq1 = _pendingSeq.load(std::memory_order_acquire);
                 if (seq1 & 1U)
                     continue;
@@ -293,7 +295,9 @@ namespace iotsmartsys::core::settings
                 if (seq1 == seq2 && !(seq2 & 1U))
                     break;
             }
+            _logger->info("SettingsManager", "handle(): got pending update, applying");
             _hasPending.store(false, std::memory_order_release);
+            _logger->info("SettingsManager", "handle(): calling applyPendingUpdate()");
             applyPendingUpdate(pending);
         }
 
@@ -301,7 +305,6 @@ namespace iotsmartsys::core::settings
         const bool networkReady = gate.isNetworkReady();
         if (_settingsGate.level() == SettingsReadyLevel::Available && networkReady)
         {
-            _logger->debug("SettingsManager", "handle(): SettingsGate available, syncFromApi()");
             this->syncFromApi();
         }
     // _logger->info("SettingsManager", "_settingsGate.level() = %d e networkReady = %s (ConnectivityGate.bits=0x%08x)", (int)_settingsGate.level(), networkReady ? " conectado" : "não conectado", gate.bits());
@@ -349,10 +352,10 @@ namespace iotsmartsys::core::settings
     void SettingsManager::syncFromApi()
     {
         {
-            _logger->debug("SettingsManager", "signaling gate Syncing");
+            _logger->info("SettingsManager", "signaling gate Syncing");
             _settingsGate.setLevel(SettingsReadyLevel::Syncing, iotsmartsys::core::common::StateResult::Ok);
         }
-        _logger->debug("SettingsManager", "syncFromApi() starting");
+        _logger->info("SettingsManager", "syncFromApi() starting");
         // 2) API is source of truth: refresh asynchronously (does not block firmware)
         SettingsFetchRequest req;
         // replace <device_id> from url with actual clientId
@@ -361,13 +364,19 @@ namespace iotsmartsys::core::settings
             _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
         }
         _syncUrlBuffer = _current.api.url;
+        _logger->info("[SettingsManager]", "syncFromApi() original URL: %s", _syncUrlBuffer.c_str());
         const auto deviceIdPlaceholder = std::string("<device_id>");
+        _logger->info("[SettingsManager]", "syncFromApi() deviceIdPlaceholder: %s", deviceIdPlaceholder.c_str());
         const auto placeholderPos = _syncUrlBuffer.find(deviceIdPlaceholder);
+        _logger->info("[SettingsManager]", "syncFromApi() placeholderPos: %d", (int)placeholderPos);
         if (placeholderPos != std::string::npos && _current.clientId != nullptr)
         {
+            _logger->info("[SettingsManager]", "syncFromApi() replacing placeholder with clientId:");
+            _logger->info("[SettingsManager]", "syncFromApi() clientId: %s", _current.clientId);
             _syncUrlBuffer.replace(placeholderPos, deviceIdPlaceholder.length(), _current.clientId);
+            _logger->info("[SettingsManager]", "syncFromApi() replaced URL: %s", _syncUrlBuffer.c_str());
         }
-        _logger->debug("[SettingsManager]", "syncFromApi() requesting URL: %s", _syncUrlBuffer.c_str());
+        _logger->info("[SettingsManager]", "syncFromApi() requesting URL: %s", _syncUrlBuffer.c_str());
 
         // Keep pointer valid while the async fetcher runs.
         req.url = _syncUrlBuffer.c_str();

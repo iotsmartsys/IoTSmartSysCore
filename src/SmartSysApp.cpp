@@ -142,12 +142,9 @@ namespace iotsmartsys
 
     void SmartSysApp::setup()
     {
-        Serial.println("line 145");
         serviceManager_.setLogLevel(core::LogLevel::Debug);
-        Serial.println("line 147");
         core::Log::setLogger(&logger_);
         delay(3000);
-        Serial.println("line 150");
         logger_.info("---------------------------------------------------------");
         logger_.info("IoT SmartSys Core Version: %s", IOTSMARTSYSCORE_VERSION);
         logger_.info("Device ID: %s", deviceIdentityProvider_.getDeviceID().c_str());
@@ -165,7 +162,7 @@ namespace iotsmartsys
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
         capabilityController_.setup(builder_);
-        transportController_.addDispatcher(*capabilityController_.dispatcher());
+        // transportController_.addDispatcher(*capabilityController_.dispatcher());
         // transportController_.configureMqtt(
         //     settings_.clientId ? settings_.clientId : "",
         //     &SmartSysApp::onMqttConnectedThunk,
@@ -175,7 +172,6 @@ namespace iotsmartsys
 
     void SmartSysApp::handle()
     {
-
         // deviceStateManager_.handle();
         if (provisioningController_.isActive())
         {
@@ -190,7 +186,7 @@ namespace iotsmartsys
         wifi_.handle();
         otaManager_.handle();
         settingsManager_.handle();
-        transportController_.handle();
+        // transportController_.handle();
     }
 
     void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)

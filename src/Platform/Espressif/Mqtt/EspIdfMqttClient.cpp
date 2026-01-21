@@ -28,6 +28,20 @@ namespace iotsmartsys::platform::espressif
         _logger.info("[MQTT DBG] Preparing esp_mqtt_client_config_t...");
 
         esp_mqtt_client_config_t c{};
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+        c.broker.address.uri = cfg.uri;
+        c.credentials.client_id = cfg.clientId;
+        c.credentials.username = cfg.username;
+        c.credentials.authentication.password = cfg.password;
+        c.session.keepalive = cfg.keepAliveSec;
+        c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;
+        _logger.debug("[MQTT DBG] Config: uri='%s' client_id='%s' username='%s' keepalive=%d clean_session=%d",
+                      c.broker.address.uri ? c.broker.address.uri : "(null)",
+                      c.credentials.client_id ? c.credentials.client_id : "(null)",
+                      c.credentials.username ? c.credentials.username : "(null)",
+                      c.session.keepalive,
+                      c.session.disable_clean_session);
+#else
         c.uri = cfg.uri;
         c.client_id = cfg.clientId;
         c.username = cfg.username;
@@ -40,6 +54,7 @@ namespace iotsmartsys::platform::espressif
                       c.username ? c.username : "(null)",
                       c.keepalive,
                       c.disable_clean_session);
+#endif
 
         _logger.info("[MQTT DBG] esp_mqtt_client_init()...");
         _client = esp_mqtt_client_init(&c);
@@ -133,8 +148,13 @@ namespace iotsmartsys::platform::espressif
 
     esp_err_t EspIdfMqttClient::eventHandlerThunk(esp_mqtt_event_handle_t event)
     {
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
         auto *self = static_cast<EspIdfMqttClient *>(event->user_context);
         return self ? self->onEvent(event) : ESP_OK;
+#else
+        (void)event;
+        return ESP_OK;
+#endif
     }
 
     esp_err_t EspIdfMqttClient::eventHandlerBridge(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -144,10 +164,14 @@ namespace iotsmartsys::platform::espressif
         if (!event)
             return ESP_OK;
 
+        auto *self = static_cast<EspIdfMqttClient *>(handler_arg);
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
         // ensure user_context inside the event points to our object (handler_arg)
         event->user_context = handler_arg;
-
         return EspIdfMqttClient::eventHandlerThunk(event);
+#else
+        return self ? self->onEvent(event) : ESP_OK;
+#endif
     }
 
     esp_err_t EspIdfMqttClient::onEvent(esp_mqtt_event_handle_t event)

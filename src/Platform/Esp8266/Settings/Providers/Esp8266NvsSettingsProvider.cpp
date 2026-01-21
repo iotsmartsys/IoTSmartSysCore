@@ -1,3 +1,4 @@
+#ifdef ESP8266
 #include "Esp8266NvsSettingsProvider.h"
 
 #include "Contracts/Common/StateResult.h"
@@ -15,7 +16,8 @@ namespace iotsmartsys::platform::esp8266
     // EEPROM size will be the size of the stored settings blob.
 
     Esp8266NvsSettingsProvider::Esp8266NvsSettingsProvider()
-        : _logger(iotsmartsys::core::ServiceProvider::instance().logger())
+        : _logger(iotsmartsys::core::ServiceProvider::instance().logger()),
+          _deviceIdentityProvider()
     {
     }
 
@@ -100,6 +102,7 @@ namespace iotsmartsys::platform::esp8266
 
     void Esp8266NvsSettingsProvider::fromStored(const StoredSettings &src, core::settings::Settings &dst)
     {
+        dst.clientId = _deviceIdentityProvider.getDeviceID().c_str();
         dst.in_config_mode = (src.in_config_mode != 0);
 
         dst.mqtt.primary.host = toString(src.mqtt.primary.host);
@@ -249,3 +252,4 @@ namespace iotsmartsys::platform::esp8266
         return ok ? iotsmartsys::core::common::StateResult::Ok : iotsmartsys::core::common::StateResult::StorageWriteFail;
     }
 }
+#endif // ESP8266

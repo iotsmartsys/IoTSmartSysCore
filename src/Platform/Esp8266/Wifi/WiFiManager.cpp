@@ -1,12 +1,11 @@
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 
 namespace iotsmartsys::core
 {
 
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
     static constexpr uint32_t kDisconnectDebounceMs = 2000;
-#endif
 
     WiFiManager::WiFiManager(iotsmartsys::core::ILogger &log)
         : _log(log), _timeProvider(nullptr)
@@ -22,9 +21,7 @@ namespace iotsmartsys::core
         _gotIp = false;
         _state = WiFiState::Idle;
         _nextActionAtMs = 0;
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
         _disconnectSinceMs = 0;
-#endif
 
         // garante que o estado latched de conectividade começa limpo
         {
@@ -34,32 +31,18 @@ namespace iotsmartsys::core
                            iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
         }
 
-#ifdef ESP32
-        _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t)
-                                { this->onWiFiEvent(event); });
-#endif
-
         WiFi.mode(WIFI_STA);
-        // WiFi.persistent(_cfg.persistent);
 
-#ifdef ESP32
+        WiFi.persistent(_cfg.persistent);
         WiFi.setAutoReconnect(_cfg.autoReconnect);
-#endif
+        WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
         startConnect();
     }
 
     bool WiFiManager::isConnected() const
     {
-#ifdef ESP32
-        return _gotIp && WiFi.status() == WL_CONNECTED;
-#else
-        if (WiFi.localIP() != IPAddress(0, 0, 0, 0))
-        {
-            return true;
-        }
         return WiFi.isConnected();
-#endif
     }
 
     WiFiState WiFiManager::currentState() const
@@ -110,8 +93,7 @@ namespace iotsmartsys::core
             break;
 
         case WiFiState::Connected:
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-            if (WiFi.status() != WL_CONNECTED)
+            if (!isConnected())
             {
                 if (_disconnectSinceMs == 0)
                 {
@@ -127,10 +109,9 @@ namespace iotsmartsys::core
             {
                 _disconnectSinceMs = 0;
             }
-#endif
+
             if (!isConnected())
             {
-                // evita ficar reconectando freneticamente se a rede está instável
                 if (now - _connectedAtMs < _cfg.reconnectMinUptimeMs)
                 {
                     _log.warn("WIFI", "Flapping detected; delaying reconnect");
@@ -169,13 +150,11 @@ namespace iotsmartsys::core
 
         _state = WiFiState::Connecting;
 
-        // timeout “soft”: se passar, entra em retry (sem bloquear)
         const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
-        _nextActionAtMs = now + 5000; // 5s
+        _nextActionAtMs = now + 5000;
 
         _log.info("WIFI", "Connecting to SSID=%s (attempt=%lu)", _cfg.ssid, (unsigned long)(_attempt + 1));
 
-        WiFi.disconnect(true); // limpa estado anterior
         WiFi.begin(_cfg.ssid, _cfg.password);
     }
 
@@ -212,48 +191,11 @@ namespace iotsmartsys::core
         uint32_t jitter = 0;
         if (_cfg.jitterMs)
         {
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-            // ESP8266: use SDK random generator
             jitter = (uint32_t)(os_random() % (_cfg.jitterMs + 1));
-#else
-            jitter = (uint32_t)(esp_random() % (_cfg.jitterMs + 1));
-#endif
         }
 
         return base + jitter;
     }
-
-#ifdef ESP32
-    void WiFiManager::onWiFiEvent(WiFiEvent_t event)
-    {
-        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
-
-        switch (event)
-        {
-        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-            gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
-            break;
-
-        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-            _gotIp = true;
-
-            gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
-                         iotsmartsys::core::ConnectivityGate::IP_READY);
-            break;
-
-        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-            _gotIp = false;
-
-            gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
-                           iotsmartsys::core::ConnectivityGate::IP_READY |
-                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
-            break;
-
-        default:
-            break;
-        }
-    }
-#endif
 
     std::vector<std::string> WiFiManager::getAvailableSSIDs()
     {
@@ -271,7 +213,7 @@ namespace iotsmartsys::core
             ssids.push_back(WiFi.SSID(i).c_str());
         }
 
-        WiFi.scanDelete(); // limpa resultados do scan
+        WiFi.scanDelete();
 
         return ssids;
     }
@@ -297,3 +239,5 @@ namespace iotsmartsys::core
     }
 
 } // namespace iotsmartsys::app
+
+#endif
