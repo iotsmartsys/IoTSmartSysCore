@@ -162,12 +162,12 @@ namespace iotsmartsys
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
         capabilityController_.setup(builder_);
-        // transportController_.addDispatcher(*capabilityController_.dispatcher());
-        // transportController_.configureMqtt(
-        //     settings_.clientId ? settings_.clientId : "",
-        //     &SmartSysApp::onMqttConnectedThunk,
-        //     this);
-        // transportController_.start();
+        transportController_.addDispatcher(*capabilityController_.dispatcher());
+        transportController_.configureMqtt(
+            settings_.clientId ? settings_.clientId : "",
+            &SmartSysApp::onMqttConnectedThunk,
+            this);
+        transportController_.start();
     }
 
     void SmartSysApp::handle()
@@ -186,7 +186,7 @@ namespace iotsmartsys
         wifi_.handle();
         otaManager_.handle();
         settingsManager_.handle();
-        // transportController_.handle();
+        transportController_.handle();
     }
 
     void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)

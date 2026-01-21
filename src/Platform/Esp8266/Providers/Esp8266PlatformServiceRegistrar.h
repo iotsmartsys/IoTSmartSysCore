@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef ESP8266
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Providers/IPlatformServiceRegistrar.h"
 #include "Contracts/Providers/ServiceProvider.h"
@@ -26,11 +27,12 @@ namespace iotsmartsys::platform::esp8266
         platform::arduino::ArduinoSerialLogger logger_;
         platform::arduino::ArduinoTimeProvider timeProvider_;
         iotsmartsys::core::ServiceProvider &serviceProvider_;
-    platform::esp8266::Esp8266SettingsFetcher settingsFetcher_;
-    platform::esp8266::Esp8266NvsSettingsProvider settingsProvider_;
-    platform::espressif::EspIdfSettingsParser settingsParser_;
+        platform::esp8266::Esp8266SettingsFetcher settingsFetcher_;
+        platform::esp8266::Esp8266NvsSettingsProvider settingsProvider_;
+        platform::espressif::EspIdfSettingsParser settingsParser_;
         core::settings::SettingsGateImpl settingsGate_;
         core::settings::SettingsManager settingsManager_;
         core::WiFiManager wifiManager_;
     };
 } // namespace iotsmartsys::platform::esp8266
+#endif // ESP8266

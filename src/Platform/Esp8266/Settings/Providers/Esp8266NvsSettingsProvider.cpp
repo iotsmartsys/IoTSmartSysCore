@@ -187,26 +187,19 @@ namespace iotsmartsys::platform::esp8266
 
     iotsmartsys::core::common::StateResult Esp8266NvsSettingsProvider::save(const core::settings::Settings &settings)
     {
-        _logger->info("Esp8266NvsSettingsProvider", "save() called");
-        _logger->debug("Esp8266NvsSettingsProvider", "Beginning EEPROM begin()");
+    _logger->info("Esp8266NvsSettingsProvider", "save() called");
         EEPROM.begin(sizeof(StoredSettings));
-        _logger->debug("Esp8266NvsSettingsProvider", "EEPROM begun for size %d", sizeof(StoredSettings));
         // Read existing stored (if any) to preserve fields
         StoredSettings existing{};
         EEPROM.get(0, existing);
-        _logger->debug("Esp8266NvsSettingsProvider", "Read existing settings: version=%d", existing.version);
         bool hasExisting = (existing.version == STORAGE_VERSION);
 
         StoredSettings stored{};
-        _logger->debug("Esp8266NvsSettingsProvider", "Converting settings to stored format");
         toStored(settings, stored, hasExisting ? &existing : nullptr);
-        _logger->debug("Esp8266NvsSettingsProvider", "Writing settings to EEPROM");
         EEPROM.put(0, stored);
-        _logger->debug("Esp8266NvsSettingsProvider", "Committing changes to EEPROM");
         bool ok = EEPROM.commit();
-        _logger->debug("Esp8266NvsSettingsProvider", "EEPROM commit %s", ok ? "succeeded" : "failed");
         EEPROM.end();
-        _logger->debug("Esp8266NvsSettingsProvider", "EEPROM ended");
+        
 
         return ok ? iotsmartsys::core::common::StateResult::Ok : iotsmartsys::core::common::StateResult::StorageWriteFail;
     }

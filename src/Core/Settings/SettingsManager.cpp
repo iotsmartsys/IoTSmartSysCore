@@ -18,14 +18,12 @@ namespace iotsmartsys::core::settings
 
     SettingsManager::~SettingsManager()
     {
-        _logger->debug("SettingsManager", "destructed");
     }
 
     iotsmartsys::core::common::StateResult SettingsManager::init()
     {
         using namespace iotsmartsys::core::common;
 
-        _logger->debug("SettingsManager", "init() called");
 
         Settings loaded;
         // provider returns platform result; o provider agora retorna Error
@@ -34,7 +32,6 @@ namespace iotsmartsys::core::settings
 
         if (err == StateResult::Ok)
         {
-            _logger->debug("SettingsManager", "cache loaded OK");
             _current = loaded;
             _has_current = true;
             _stats.cache_load_ok++;
@@ -42,7 +39,7 @@ namespace iotsmartsys::core::settings
         }
         else
         {
-            _logger->debug("SettingsManager", "cache load failed (%d)", (int)perr);
+            
             _stats.cache_load_fail++;
             _stats.last_err = perr;
             // Não muda _current se não carregou; pode continuar vazio
@@ -55,40 +52,33 @@ namespace iotsmartsys::core::settings
             _settingsGate.setLevel(SettingsReadyLevel::Available, iotsmartsys::core::common::StateResult::Ok);
         }
 
-        _logger->debug("SettingsManager", "init() returning %d", (int)err);
         return err;
     }
 
     iotsmartsys::core::common::StateResult SettingsManager::refreshFromApiAsync(const SettingsFetchRequest &req)
     {
         using namespace iotsmartsys::core::common;
-
-        _logger->debug("SettingsManager", "refreshFromApiAsync() called: url=%s", req.url);
         _state = SettingsManagerState::FetchingFromApi;
 
         // fetcher já roda em task própria; aqui retorna rápido
         const StateResult r = _fetcher.start(req, &SettingsManager::onFetchCompletedStatic, this);
-        _logger->debug("SettingsManager", "fetcher.start returned %d", (int)r);
         return r;
     }
 
     void SettingsManager::cancel()
     {
-        _logger->debug("SettingsManager", "cancel() requested");
         _fetcher.cancel();
     }
 
     bool SettingsManager::hasCurrent() const
     {
         const bool v = _has_current;
-        _logger->debug("SettingsManager", "hasCurrent() => %s", v ? "true" : "false");
         return v;
     }
 
     SettingsManagerState SettingsManager::state() const
     {
         const auto s = _state;
-        _logger->debug("SettingsManager", "state() => %d", (int)s);
         return s;
     }
 
@@ -96,11 +86,9 @@ namespace iotsmartsys::core::settings
     {
         if (!_has_current)
         {
-            _logger->debug("SettingsManager", "copyCurrent() => no current settings");
             return false;
         }
         out = _current;
-        _logger->debug("SettingsManager", "copyCurrent() => success");
         return true;
     }
 
@@ -108,13 +96,11 @@ namespace iotsmartsys::core::settings
     {
         _updated_cb = cb;
         _updated_ctx = user_ctx;
-        _logger->debug("SettingsManager", "setUpdatedCallback() set");
     }
 
     SettingsManagerStats SettingsManager::stats() const
     {
         const auto s = _stats;
-        _logger->debug("SettingsManager", "stats() requested");
         return s;
     }
 
@@ -133,7 +119,6 @@ namespace iotsmartsys::core::settings
 
     void SettingsManager::updateStatsFail(iotsmartsys::core::common::StateResult err, int http_status)
     {
-        _logger->debug("SettingsManager", "updateStatsFail err=%d http=%d", (int)err, http_status);
         _stats.api_fetch_fail++;
         _stats.last_err = err;
         _stats.last_http_status = http_status;
@@ -150,7 +135,6 @@ namespace iotsmartsys::core::settings
 
     void SettingsManager::setState(SettingsManagerState s)
     {
-        _logger->debug("SettingsManager", "setState(%d)", (int)s);
         _state = s;
     }
 
@@ -313,7 +297,6 @@ namespace iotsmartsys::core::settings
 
     bool SettingsManager::save(const Settings &settings)
     {
-        _logger->debug("SettingsManager", "save() called");
 
         _current.applyChanges(settings);
         _has_current = true;
@@ -322,29 +305,24 @@ namespace iotsmartsys::core::settings
         
         if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
-            _logger->debug("SettingsManager", "save: NVS save failed: %d", (int)serr);
             _stats.nvs_save_fail++;
             _stats.last_err = serr;
             return false;
         }
-        _logger->debug("SettingsManager", "save: NVS save OK");
         _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
         return true;
     }
 
     void SettingsManager::saveWiFiOnly(const WifiConfig &wifi)
     {
-        _logger->debug("SettingsManager", "saveWiFiOnly() called");
         const auto serr = _provider.saveWiFiOnly(wifi);
         if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
-            _logger->debug("SettingsManager", "saveWiFiOnly: NVS save failed: %d", (int)serr);
             _stats.nvs_save_fail++;
             _stats.last_err = serr;
         }
         else
         {
-            _logger->debug("SettingsManager", "saveWiFiOnly: NVS save OK");
             _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
         }
     }
@@ -404,7 +382,6 @@ namespace iotsmartsys::core::settings
 
     void SettingsManager::clear()
     {
-        _logger->debug("SettingsManager", "eraseCache() called");
         const auto err = _provider.erase();
         if (err != iotsmartsys::core::common::StateResult::Ok)
         {

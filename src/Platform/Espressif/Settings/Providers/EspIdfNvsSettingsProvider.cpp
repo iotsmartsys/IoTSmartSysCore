@@ -310,7 +310,7 @@ namespace iotsmartsys::platform::espressif
         _logger->info("EspIdfNvsSettingsProvider", "port mqtt: %d", settings.mqtt.primary.port);
         _logger->info("EspIdfNvsSettingsProvider", "firmware update method: %s", settings.firmware.update.c_str());
 
-        _logger->info("EspIdfNvsSettingsProvider", "save() called");
+    _logger->info("EspIdfNvsSettingsProvider", "save() called");
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
         {
@@ -369,7 +369,7 @@ namespace iotsmartsys::platform::espressif
 
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::saveWiFiOnly(const core::settings::WifiConfig &wifi)
     {
-        _logger->debug("EspIdfNvsSettingsProvider", "saveWiFiOnly() called");
+        
         if (wifi.ssid.empty() || wifi.password.empty())
         {
             _logger->warn("EspIdfNvsSettingsProvider", "saveWiFiOnly: ignoring empty WiFi config (ssid/password not provided)");
@@ -400,22 +400,20 @@ namespace iotsmartsys::platform::espressif
         if (err != ESP_OK || required != sizeof(StoredSettings))
         {
             // No existing blob or invalid size: create a new default-stored object.
-            _logger->debug("EspIdfNvsSettingsProvider", "nvs get_blob not found or invalid size: %d - creating new stored blob", (int)err);
+            
             std::memset(stored, 0, sizeof(*stored));
             stored->version = STORAGE_VERSION;
             // continue — we'll set wifi fields below and persist the new blob
         }
 
         // Update only WiFi settings
-        copyStr(stored->wifi.ssid, sizeof(stored->wifi.ssid), wifi.ssid);
-        _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi settings to NVS: SSID='%s'", wifi.ssid.c_str());
-        // Never log passwords; log only length for diagnostics.
-        _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi password_len=%u", (unsigned)wifi.password.size());
+    copyStr(stored->wifi.ssid, sizeof(stored->wifi.ssid), wifi.ssid);
+    // Never log passwords; optionally log only length for diagnostics (removed debug logs)
 
         copyStr(stored->wifi.password, sizeof(stored->wifi.password), wifi.password);
 
         // Debug: show what we'll write for WiFi (without password content)
-        _logger->debug("EspIdfNvsSettingsProvider", "About to write stored.wifi: SSID='%s' password_len=%u", stored->wifi.ssid, (unsigned)std::strlen(stored->wifi.password));
+        
 
         // Save back
         err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
@@ -427,8 +425,7 @@ namespace iotsmartsys::platform::espressif
             return map_esp_err(err);
         }
 
-        err = nvs_commit(h);
-        _logger->debug("EspIdfNvsSettingsProvider", "nvs commit result: %d", (int)err);
+    err = nvs_commit(h);
 
         // Read-back verification (diagnostic): re-open and read blob to ensure WiFi was persisted
         if (err == ESP_OK)
@@ -442,7 +439,7 @@ namespace iotsmartsys::platform::espressif
                 rerr = nvs_get_blob(hr, NVS_KEY, verify, &vreq);
                 if (rerr == ESP_OK && vreq == sizeof(*verify))
                 {
-                    _logger->debug("EspIdfNvsSettingsProvider", "Readback stored.wifi: SSID='%s' password_len=%u", verify->wifi.ssid, (unsigned)std::strlen(verify->wifi.password));
+                    
                 }
                 else
                 {

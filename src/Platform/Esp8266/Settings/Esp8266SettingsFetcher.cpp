@@ -1,5 +1,5 @@
-#include "Platform/Esp8266/Settings/Esp8266SettingsFetcher.h"
 #ifdef ESP8266
+#include "Platform/Esp8266/Settings/Esp8266SettingsFetcher.h"
 #include "Contracts/Common/StateResult.h"
 
 #include <cstring>
