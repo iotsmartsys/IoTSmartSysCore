@@ -304,7 +304,8 @@ namespace iotsmartsys::core::settings
             _logger->debug("SettingsManager", "handle(): SettingsGate available, syncFromApi()");
             this->syncFromApi();
         }
-        _logger->trace("SettingsManager", "_settingsGate.level() = %d", (int)_settingsGate.level());
+    // _logger->info("SettingsManager", "_settingsGate.level() = %d e networkReady = %s (ConnectivityGate.bits=0x%08x)", (int)_settingsGate.level(), networkReady ? " conectado" : "não conectado", gate.bits());
+
     }
 
     bool SettingsManager::save(const Settings &settings)
@@ -315,6 +316,7 @@ namespace iotsmartsys::core::settings
         _has_current = true;
 
         const auto serr = _provider.save(settings);
+        
         if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
             _logger->debug("SettingsManager", "save: NVS save failed: %d", (int)serr);

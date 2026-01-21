@@ -13,14 +13,7 @@ namespace iotsmartsys::platform::espressif
         iotsmartsys::core::common::StateResult parse(const char *json, iotsmartsys::core::settings::Settings &out) override;
 
     private:
-        static bool jsonGetString(void *obj, const char *key, std::string &out);
-        static bool jsonGetInt(void *obj, const char *key, int &out);
-        static bool jsonGetBool(void *obj, const char *key, bool &out);
-
-    static iotsmartsys::core::common::StateResult parseMqtt(void *mqttObj, iotsmartsys::core::settings::MqttSettings &out);
-    static iotsmartsys::core::common::StateResult parseMqttConfig(void *cfgObj, iotsmartsys::core::settings::MqttConfig &out, bool allowTtl);
-    static iotsmartsys::core::common::StateResult parseFirmware(void *fwObj, iotsmartsys::core::settings::FirmwareConfig &out);
-    static iotsmartsys::core::common::StateResult parseWifi(void *wifiObj, iotsmartsys::core::settings::WifiConfig &out);
-    static iotsmartsys::core::common::StateResult parseApi(void *apiObj, iotsmartsys::core::settings::ApiConfig &out);
+        // No private static cJSON helpers anymore; parsing is implemented using
+        // Platform::Common::Json::JsonPathExtractor in the .cpp file.
     };
 } // namespace iotsmartsys::platform::espressif

@@ -20,9 +20,11 @@ namespace iotsmartsys::platform::arduino
             case InputPullMode::PULL_UP:
                 pinMode(pin, INPUT_PULLUP);
                 break;
+#ifdef ESP32
             case InputPullMode::PULL_DOWN:
                 pinMode(pin, INPUT_PULLDOWN);
                 break;
+#endif
             default:
                 pinMode(pin, INPUT);
                 break;
@@ -36,9 +38,11 @@ namespace iotsmartsys::platform::arduino
             case InputPullMode::PULL_UP:
                 digitalWrite(pin, HIGH);
                 break;
+#ifdef ESP32
             case InputPullMode::PULL_DOWN:
                 digitalWrite(pin, LOW);
                 break;
+#endif
             default:
                 break;
             }

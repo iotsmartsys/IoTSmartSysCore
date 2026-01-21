@@ -37,7 +37,10 @@ namespace iotsmartsys::core
         }
     }
 
-    ILogger &ServiceManager::logger() { return *serviceProvider_.logger(); }
+    ILogger &ServiceManager::logger()
+    {
+        return *serviceProvider_.logger();
+    }
     ITimeProvider &ServiceManager::timeProvider() { return *serviceProvider_.time(); }
     settings::SettingsManager &ServiceManager::settingsManager() { return *serviceProvider_.getSettingsManager(); }
     settings::ISettingsGate &ServiceManager::settingsGate() { return *serviceProvider_.getSettingsGate(); }

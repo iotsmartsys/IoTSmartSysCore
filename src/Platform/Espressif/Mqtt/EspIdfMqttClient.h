@@ -58,4 +58,34 @@ namespace iotsmartsys::platform::espressif
     };
 
 } // namespace iotsmartsys::platform::esp32
+
+#else
+
+#include "Contracts/Mqtt/IMqttClient.h"
+#include "Contracts/Logging/ILogger.h"
+
+namespace iotsmartsys::platform::espressif
+{
+    // Minimal stub implementation used when not compiling for ESP32.
+    class EspIdfMqttClient : public iotsmartsys::core::IMqttClient
+    {
+    public:
+        EspIdfMqttClient(iotsmartsys::core::ILogger &) {}
+        ~EspIdfMqttClient() override = default;
+        bool begin(const iotsmartsys::core::TransportConfig &) override { return false; }
+        void start() override {}
+        void stop() override {}
+        void handle() override {}
+        bool isConnected() const override { return false; }
+        bool publish(const char *, const void *, std::size_t, bool) override { return false; }
+        bool republish(const iotsmartsys::core::TransportMessageView &) override { return false; }
+        bool subscribe(const char *) override { return false; }
+        void setOnMessage(iotsmartsys::core::TransportOnMessageFn, void *) override {}
+        void setOnConnected(iotsmartsys::core::TransportOnConnectedFn, void *) override {}
+        void setOnDisconnected(iotsmartsys::core::TransportOnDisconnectedFn, void *) override {}
+        const char *getName() const override { return "espid_stub"; }
+    };
+
+} // namespace iotsmartsys::platform::espressif
+
 #endif

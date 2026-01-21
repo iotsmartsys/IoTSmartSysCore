@@ -9,7 +9,9 @@ namespace iotsmartsys::core
     {
         NONE = 0,
         PULL_UP = 1,
+#ifdef ESP32
         PULL_DOWN = 2
+#endif
     };
 
     enum struct HardwareDigitalLogic

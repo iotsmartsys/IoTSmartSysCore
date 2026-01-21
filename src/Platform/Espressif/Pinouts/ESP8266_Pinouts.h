@@ -1,6 +1,5 @@
 #pragma once
 
-#include "sdkconfig.h"
 
 #ifdef ESP8266
 

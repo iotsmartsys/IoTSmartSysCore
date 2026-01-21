@@ -1,5 +1,7 @@
 // Platform/Espressif/Settings/EspIdfNvsSettingsProvider.cpp
 #include "EspIdfNvsSettingsProvider.h"
+
+#ifdef ESP32
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
 
@@ -490,3 +492,5 @@ namespace iotsmartsys::platform::espressif
         return map_esp_err(err);
     }
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32

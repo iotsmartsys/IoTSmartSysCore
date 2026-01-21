@@ -1,9 +1,10 @@
 #pragma once
 
+#ifdef ESP32
 #include "sdkconfig.h"
+#endif
 
 #if CONFIG_IDF_TARGET_ESP32S3
-
 
 #define ESP32_GPIO0 0
 #define ESP32_BOOT_PIN ESP32_GPIO0

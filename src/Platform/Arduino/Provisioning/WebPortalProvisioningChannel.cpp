@@ -1,14 +1,11 @@
 #include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
+#include "Platform/Arduino/Provisioning/ProvisioningJsonExtractor.h"
 
 #if defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
 
 #include <Arduino.h>
 #include <vector>
 #include <string>
-
-extern "C" {
-#include "cJSON.h"
-}
 
 #ifndef WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE
 #define WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE 0
@@ -45,7 +42,7 @@ namespace iotsmartsys::core::provisioning
         snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
         snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
         String apName = String(ssidBuf);
-        String apPass = "123456789"; //String(passBuf);
+        String apPass = "123456789"; // String(passBuf);
 
         // WPA2 password must be >= 8 chars; using setup-XXXXXX (11 chars)
         WiFi.softAP(apName.c_str(), apPass.c_str());
@@ -86,8 +83,7 @@ namespace iotsmartsys::core::provisioning
                        info += F("\", \"ssid\":\"");
                        info += apName;
                        info += F("\"}");
-                       _server.send(200, "application/json", info);
-                   });
+                       _server.send(200, "application/json", info); });
 
         _server.on("/wifi/scan", HTTP_GET, [this]()
                    {
@@ -106,8 +102,7 @@ namespace iotsmartsys::core::provisioning
                            }
                        }
                        result += F("]");
-                       _server.send(200, "application/json", result);
-                   });
+                       _server.send(200, "application/json", result); });
         _server.onNotFound([this]()
                            { handleNotFound(); });
 
@@ -235,36 +230,25 @@ namespace iotsmartsys::core::provisioning
 
         if (looksLikeJson)
         {
-            cJSON *root = cJSON_Parse(rawBody.c_str());
-            if (!root)
+            ProvisioningJsonFields fields;
+            if (!ProvisioningJsonExtractor::tryParse(rawBody, fields))
             {
                 _logger.warn("[PortalConfig]", "JSON parse failed in /save");
                 _server.send(400, "application/json", "{\"error\":\"invalid_json\"}");
                 return;
             }
 
-            auto getStr = [&](const char *key, String &out)
-            {
-                cJSON *item = cJSON_GetObjectItemCaseSensitive(root, key);
-                if (cJSON_IsString(item) && item->valuestring)
-                {
-                    out = item->valuestring;
-                }
-            };
-
-            getStr("ssid", ssid);
-            getStr("password", password);
-            getStr("device_api_key", deviceApiKey);
-            getStr("basic_auth", basicAuth);
-            getStr("device_api_url", device_api_url);
+            ssid = fields.ssid;
+            password = fields.password;
+            deviceApiKey = fields.deviceApiKey;
+            basicAuth = fields.basicAuth;
+            device_api_url = fields.deviceApiUrl;
 
             _logger.info("[PortalConfig]", "ssid: %s", ssid.c_str());
             _logger.info("[PortalConfig]", "password: %s", password.c_str());
             _logger.info("[PortalConfig]", "device_api_key: %s", deviceApiKey.c_str());
             _logger.info("[PortalConfig]", "basic_auth: %s", basicAuth.c_str());
             _logger.info("[PortalConfig]", "device_api_url: %s", device_api_url.c_str());
-
-            cJSON_Delete(root);
 
             if (ssid.isEmpty())
             {

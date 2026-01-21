@@ -95,6 +95,10 @@ namespace iotsmartsys::core
         uint32_t _connectedAtMs{0};
         bool _gotIp{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
+
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+        uint32_t _disconnectSinceMs{0};
+#endif
     };
 
 } // namespace iotsmartsys::app

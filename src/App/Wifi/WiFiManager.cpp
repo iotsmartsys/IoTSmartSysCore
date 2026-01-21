@@ -4,6 +4,10 @@
 namespace iotsmartsys::core
 {
 
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+    static constexpr uint32_t kDisconnectDebounceMs = 2000;
+#endif
+
     WiFiManager::WiFiManager(iotsmartsys::core::ILogger &log)
         : _log(log), _timeProvider(nullptr)
     {
@@ -18,6 +22,9 @@ namespace iotsmartsys::core
         _gotIp = false;
         _state = WiFiState::Idle;
         _nextActionAtMs = 0;
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+        _disconnectSinceMs = 0;
+#endif
 
         // garante que o estado latched de conectividade começa limpo
         {
@@ -33,7 +40,7 @@ namespace iotsmartsys::core
 #endif
 
         WiFi.mode(WIFI_STA);
-        WiFi.persistent(_cfg.persistent);
+        // WiFi.persistent(_cfg.persistent);
 
 #ifdef ESP32
         WiFi.setAutoReconnect(_cfg.autoReconnect);
@@ -47,7 +54,11 @@ namespace iotsmartsys::core
 #ifdef ESP32
         return _gotIp && WiFi.status() == WL_CONNECTED;
 #else
-        return WiFi.status() == WL_CONNECTED;
+        if (WiFi.localIP() != IPAddress(0, 0, 0, 0))
+        {
+            return true;
+        }
+        return WiFi.isConnected();
 #endif
     }
 
@@ -77,6 +88,15 @@ namespace iotsmartsys::core
                 _ipAddress = WiFi.localIP().toString().c_str();
                 _signalStrength = String(WiFi.RSSI()).c_str();
                 _log.info("WIFI", "Connected. IP=%s", _ipAddress.c_str());
+                // Signal the connectivity gate for non-ESP32 platforms as well
+                {
+                    auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                    gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                                 iotsmartsys::core::ConnectivityGate::IP_READY);
+                    // Debug: log current gate bits after setting
+
+                    _log.debug("WIFI", "ConnectivityGate bits after set = 0x%08x", gate.bits());
+                }
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
             {
@@ -90,12 +110,39 @@ namespace iotsmartsys::core
             break;
 
         case WiFiState::Connected:
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+            if (WiFi.status() != WL_CONNECTED)
+            {
+                if (_disconnectSinceMs == 0)
+                {
+                    _disconnectSinceMs = now;
+                }
+
+                if ((now - _disconnectSinceMs) < kDisconnectDebounceMs)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                _disconnectSinceMs = 0;
+            }
+#endif
             if (!isConnected())
             {
                 // evita ficar reconectando freneticamente se a rede está instável
                 if (now - _connectedAtMs < _cfg.reconnectMinUptimeMs)
                 {
                     _log.warn("WIFI", "Flapping detected; delaying reconnect");
+                }
+                // Clear connectivity bits so other components know network is not ready
+                {
+                    auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                    gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                                   iotsmartsys::core::ConnectivityGate::IP_READY |
+                                   iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                    // Debug: log current gate bits after clear
+                    _log.debug("WIFI", "ConnectivityGate bits after clear = 0x%08x", gate.bits());
                 }
                 scheduleRetry();
             }
@@ -165,7 +212,12 @@ namespace iotsmartsys::core
         uint32_t jitter = 0;
         if (_cfg.jitterMs)
         {
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+            // ESP8266: use SDK random generator
+            jitter = (uint32_t)(os_random() % (_cfg.jitterMs + 1));
+#else
             jitter = (uint32_t)(esp_random() % (_cfg.jitterMs + 1));
+#endif
         }
 
         return base + jitter;

@@ -1,28 +1,21 @@
-// Platform/Espressif/Settings/EspIdfNvsSettingsProvider.h
 #pragma once
-
-#ifdef ESP32
 
 #include "Contracts/Providers/ISettingsProvider.h"
 #include "Contracts/Logging/ILogger.h"
 
-extern "C"
-{
-#include "nvs.h"
-#include "nvs_flash.h"
-}
+// EEPROM will be used as storage backend on ESP8266
 
-namespace iotsmartsys::platform::espressif
+namespace iotsmartsys::platform::esp8266
 {
-    class EspIdfNvsSettingsProvider final : public core::providers::ISettingsProvider
+    class Esp8266NvsSettingsProvider final : public core::providers::ISettingsProvider
     {
     public:
-        EspIdfNvsSettingsProvider();
-        ~EspIdfNvsSettingsProvider() override = default;
+        Esp8266NvsSettingsProvider();
+        ~Esp8266NvsSettingsProvider() override = default;
 
-        iotsmartsys::core::common::StateResult load(core::settings::Settings &out) override;
-        iotsmartsys::core::common::StateResult save(const core::settings::Settings &settings) override;
-        iotsmartsys::core::common::StateResult saveWiFiOnly(const core::settings::WifiConfig &wifi) override;
+        iotsmartsys::core::common::StateResult load(iotsmartsys::core::settings::Settings &out) override;
+        iotsmartsys::core::common::StateResult save(const iotsmartsys::core::settings::Settings &settings) override;
+        iotsmartsys::core::common::StateResult saveWiFiOnly(const iotsmartsys::core::settings::WifiConfig &wifi) override;
         iotsmartsys::core::common::StateResult erase() override;
         bool exists() override;
 
@@ -95,9 +88,5 @@ namespace iotsmartsys::platform::espressif
         static void copyStr(char *dst, std::size_t dstSize, const std::string &src);
         static void copyStrIfNotEmpty(char *dst, std::size_t dstSize, const std::string &src);
         static std::string toString(const char *src);
-
-        static esp_err_t ensureNvsInit();
     };
-} // namespace iotsmartsys::platform::espressif
-
-#endif // ESP32
+} // namespace iotsmartsys::platform::esp8266
