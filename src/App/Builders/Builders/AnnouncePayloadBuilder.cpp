@@ -1,6 +1,4 @@
 #include "AnnouncePayloadBuilder.h"
-#include <utility>
-#include "Arduino.h"
 
 namespace iotsmartsys::app
 {
@@ -22,8 +20,7 @@ namespace iotsmartsys::app
 
         // Add capabilities
         payload += "\"capabilities\":[" + buildCapabilitiesJson() + "]";
-        Serial.print(payload.c_str());
-
+        
         payload += "}";
 
         return payload;

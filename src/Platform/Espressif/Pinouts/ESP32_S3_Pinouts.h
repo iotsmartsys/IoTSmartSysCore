@@ -36,7 +36,9 @@
 
 // LED pin definitions (if applicable). Ex. Board ESP32-S3-DevKitC-1 has an on-board LED on GPIO43; Officially Espressif AI
 #define ESP32_LED_GREEN_GPIO43 43
+#define ESP32_LED_GREEN ESP32_LED_GREEN_GPIO43
 #define ESP32_LED_BLUE_GPIO44 44
+#define ESP32_LED_BLUE ESP32_LED_BLUE_GPIO44
 #define ESP32_LED_BUILTIN ESP32_LED_BLUE_GPIO44
 
 // I2C default pins
