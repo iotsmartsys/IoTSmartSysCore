@@ -2,7 +2,10 @@
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
 
+#include "Platform/Esp8266/Mqtt/Esp8266PubSubMqttClient.h"
+
 #include <cstdio>
+#include <memory>
 using namespace iotsmartsys::platform::espressif::ota;
 
 namespace iotsmartsys
@@ -13,8 +16,13 @@ namespace iotsmartsys
           settingsManager_(serviceManager_.settingsManager()),
           settingsGate_(serviceManager_.settingsGate()),
           commandParser_(logger_),
-          mqttClient_(logger_),
-          mqttSink_(mqttClient_, settingsManager_),
+#ifdef ESP8266
+          mqttClient_(std::make_unique<platform::esp8266::Esp8266PubSubMqttClient>(logger_)),
+#else
+          mqttClient_(std::make_unique<platform::espressif::EspIdfMqttClient>(logger_)),
+#endif
+          mqtt_(*mqttClient_, logger_, settingsGate_, settingsManager_),
+          mqttSink_(mqtt_, settingsManager_),
           deviceStateManager_(logger_, hwFactory_, wifi_, provisioningController_),
           builder_(hwFactory_,
                    mqttSink_,
@@ -29,7 +37,6 @@ namespace iotsmartsys
                    deviceIdentityProvider_),
           wifi_(logger_),
           connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
-          mqtt_(mqttClient_, logger_, settingsGate_, settingsManager_),
           manifestParser_(),
 #ifndef OTA_DISABLED
           ota_(logger_, deviceIdentityProvider_),
@@ -81,6 +88,11 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
     {
+        logger_.info("MQTT connected to broker: %s", info.broker);
+        logger_.info("MQTT client ID: %s", info.clientId);
+        logger_.info("MQTT keep alive: %d", info.keepAliveSec);
+        
+        
         auto *capabilityManager = capabilityController_.manager();
         if (!capabilityManager)
         {
@@ -161,10 +173,12 @@ namespace iotsmartsys
 
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
+
+
         capabilityController_.setup(builder_);
         transportController_.addDispatcher(*capabilityController_.dispatcher());
         transportController_.configureMqtt(
-            settings_.clientId ? settings_.clientId : "",
+            deviceIdentityProvider_.getDeviceID().c_str(),
             &SmartSysApp::onMqttConnectedThunk,
             this);
         transportController_.start();

@@ -4,10 +4,12 @@
 
 #include <cstring>
 #include <algorithm>
+#include <new>
+#include <Arduino.h>
 
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266HTTPClient.h>
-#include <WiFiClientSecureBearSSL.h>
+#include <WiFiClientSecure.h>
 #else
 #include <HTTPClient.h>
 #endif
@@ -93,19 +95,40 @@ namespace iotsmartsys::platform::esp8266
             _logger.debug("Esp8266SettingsFetcher", "HTTP request attempt=%u url=%s https=%s",
                           (unsigned)attempt, _req.url ? _req.url : "(null)", is_https ? "true" : "false");
 
+            WiFiClientSecure *tls_client = nullptr;
+
             if (is_https)
             {
-                BearSSL::WiFiClientSecure client;
-                // Accept server certificate (insecure) for now; embedding root certs is more involved
-                client.setInsecure();
-                // Reduce TLS buffer sizes to fit ESP8266 RAM constraints
-                client.setBufferSizes(512, 512);
+                const uint32_t free_heap = ESP.getFreeHeap();
+                // Avoid TLS setup/connect if heap is too low; BearSSL will abort on OOM.
+                if (free_heap < 12 * 1024)
+                {
+                    _logger.error("Esp8266SettingsFetcher", "HTTPS skipped: low heap (%u bytes)", (unsigned)free_heap);
+                    final_err = StateResult::NoMem;
+                    break;
+                }
+                // Reuse a single TLS client to avoid repeated allocations/fragmentation.
+                static WiFiClientSecure client;
+                static bool client_configured = false;
+
+                if (!client_configured)
+                {
+                    // INSECURE: do not validate server certificate (use only when acceptable)
+                    client.setInsecure();
+                    // Keep timeouts explicit to avoid hanging sockets
+                    client.setTimeout((uint32_t)_req.read_timeout_ms);
+                    client_configured = true;
+                }
+
+                client.stop();
+                tls_client = &client;
 
                 if (!http.begin(client, _req.url))
                 {
                     _logger.warn("Esp8266SettingsFetcher", "http.begin failed for https url=%s", _req.url ? _req.url : "(null)");
                     final_err = StateResult::InvalidArg;
                     http.end();
+                    client.stop();
                     break;
                 }
 
@@ -129,7 +152,7 @@ namespace iotsmartsys::platform::esp8266
                                  code, http.errorToString(code).c_str());
                     char ssl_err[96];
                     ssl_err[0] = '\0';
-                    client.getLastSSLError(ssl_err, sizeof(ssl_err));
+                    tls_client->getLastSSLError(ssl_err, sizeof(ssl_err));
                     if (ssl_err[0] != '\0')
                     {
                         _logger.warn("Esp8266SettingsFetcher", "TLS last error: %s", ssl_err);
@@ -197,6 +220,8 @@ namespace iotsmartsys::platform::esp8266
                 }
 
                 http.end();
+                if (tls_client)
+                    tls_client->stop();
 
                 if (_cancel)
                 {
@@ -232,6 +257,8 @@ namespace iotsmartsys::platform::esp8266
                 // transport error
                 final_err = StateResult::IoError;
                 http.end();
+                if (tls_client)
+                    tls_client->stop();
                 // retry
             }
 

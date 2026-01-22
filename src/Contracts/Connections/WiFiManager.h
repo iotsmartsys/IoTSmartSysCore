@@ -98,6 +98,11 @@ namespace iotsmartsys::core
 
 #if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
         uint32_t _disconnectSinceMs{0};
+
+        WiFiEventHandler _hConnected;
+        WiFiEventHandler _hGotIp;
+        WiFiEventHandler _hDisconnected;
+
 #endif
     };
 

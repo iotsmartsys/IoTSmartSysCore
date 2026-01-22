@@ -181,6 +181,12 @@ namespace iotsmartsys::app
             return;
         }
 
+        if (_state == State::Connecting || _state == State::Online)
+        {
+            // Run client loop to keep keepalive/processing working (PubSubClient needs this).
+            _client.handle();
+        }
+
         switch (_state)
         {
         case State::Idle:

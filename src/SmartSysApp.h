@@ -2,6 +2,7 @@
 
 #include "pins.h"
 #include <Arduino.h>
+#include <memory>
 #include <string>
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
@@ -48,6 +49,7 @@
 
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
+#include "Contracts/Mqtt/IMqttClient.h"
 
 namespace iotsmartsys
 {
@@ -109,9 +111,11 @@ namespace iotsmartsys
                 core::settings::ISettingsGate &settingsGate_;
 
                 platform::espressif::EspIdfCommandParser commandParser_;
-                platform::espressif::EspIdfMqttClient mqttClient_;
+
+                std::unique_ptr<iotsmartsys::core::IMqttClient> mqttClient_;
 
                 iotsmartsys::core::settings::Settings settings_;
+                app::MqttService<12, 16, 256> mqtt_;
                 iotsmartsys::core::MqttSink mqttSink_;
                 iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
                 app::DeviceStateManager deviceStateManager_;
@@ -127,7 +131,6 @@ namespace iotsmartsys
 
                 core::WiFiManager wifi_;
                 app::ConnectivityBootstrap connectivityBootstrap_;
-                app::MqttService<12, 16, 256> mqtt_;
                 iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
 #ifndef OTA_DISABLED
                 ota::OTA ota_;

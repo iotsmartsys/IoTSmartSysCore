@@ -102,7 +102,8 @@ namespace iotsmartsys::platform::esp8266
 
     void Esp8266NvsSettingsProvider::fromStored(const StoredSettings &src, core::settings::Settings &dst)
     {
-        dst.clientId = _deviceIdentityProvider.getDeviceID().c_str();
+        _clientIdCache = _deviceIdentityProvider.getDeviceID();
+        dst.clientId = _clientIdCache.c_str();
         dst.in_config_mode = (src.in_config_mode != 0);
 
         dst.mqtt.primary.host = toString(src.mqtt.primary.host);

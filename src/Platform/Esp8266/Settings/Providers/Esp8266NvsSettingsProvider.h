@@ -4,6 +4,8 @@
 #include "Contracts/Logging/ILogger.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
+#include <string>
+
 // EEPROM will be used as storage backend on ESP8266
 
 namespace iotsmartsys::platform::esp8266
@@ -23,6 +25,7 @@ namespace iotsmartsys::platform::esp8266
     private:
         iotsmartsys::core::ILogger *_logger;
         platform::espressif::providers::DeviceIdentityProvider _deviceIdentityProvider;
+        std::string _clientIdCache;
         static constexpr const char *NVS_NAMESPACE = "iotsys";
         static constexpr const char *NVS_KEY = "settings";
 
