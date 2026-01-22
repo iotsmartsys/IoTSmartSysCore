@@ -13,7 +13,5 @@ namespace iotsmartsys::platform::espressif
         iotsmartsys::core::common::StateResult parse(const char *json, iotsmartsys::core::settings::Settings &out) override;
 
     private:
-        // No private static cJSON helpers anymore; parsing is implemented using
-        // Platform::Common::Json::JsonPathExtractor in the .cpp file.
     };
 } // namespace iotsmartsys::platform::espressif

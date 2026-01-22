@@ -71,7 +71,6 @@ namespace iotsmartsys::core
                     gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                                  iotsmartsys::core::ConnectivityGate::IP_READY);
 
-                    _log.debug("WIFI", "ConnectivityGate bits after set = 0x%08x", gate.bits());
                 }
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
@@ -100,8 +99,7 @@ namespace iotsmartsys::core
                     gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                                    iotsmartsys::core::ConnectivityGate::IP_READY |
                                    iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
-                    // Debug: log current gate bits after clear
-                    _log.debug("WIFI", "ConnectivityGate bits after clear = 0x%08x", gate.bits());
+                    
                 }
                 scheduleRetry();
             }

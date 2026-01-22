@@ -17,7 +17,9 @@ namespace iotsmartsys::core::provisioning
     constexpr uint8_t DNS_PORT = 53;
 
     WebPortalProvisioningChannel::WebPortalProvisioningChannel(core::WiFiManager &wifiManager, core::ILogger &logger, core::IDeviceIdentityProvider &deviceIdentityProvider)
-        : _wifiManager(wifiManager), _logger(logger), _server(80), _deviceIdentityProvider(deviceIdentityProvider)
+        : _wifiManager(wifiManager), _logger(logger),
+         _server(80),
+          _deviceIdentityProvider(deviceIdentityProvider)
     {
     }
 
@@ -36,11 +38,11 @@ namespace iotsmartsys::core::provisioning
         WiFi.mode(WIFI_AP_STA);
         auto deviceId = _deviceIdentityProvider.getDeviceID();
 
-        const uint32_t last6 = strtoul(deviceId.substr(deviceId.length() - 6).c_str(), nullptr, 16);
+        unsigned long last6 = strtoul(deviceId.substr(deviceId.length() - 6).c_str(), nullptr, 16);
         char ssidBuf[32];
         char passBuf[32];
-        snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06X", last6);
-        snprintf(passBuf, sizeof(passBuf), "setup-%06X", last6);
+        snprintf(ssidBuf, sizeof(ssidBuf), "iotsmartsys-%06lX", last6);
+        snprintf(passBuf, sizeof(passBuf), "setup-%06lX", last6);
         String apName = String(ssidBuf);
         String apPass = "123456789"; // String(passBuf);
 
