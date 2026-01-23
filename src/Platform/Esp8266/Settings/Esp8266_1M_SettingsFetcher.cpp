@@ -1,5 +1,4 @@
-#ifdef ESP8266
-#ifndef ESP8266_01S
+#ifdef ESP8266_01S
 #include "Platform/Esp8266/Settings/Esp8266SettingsFetcher.h"
 #include "Contracts/Common/StateResult.h"
 
@@ -10,7 +9,6 @@
 
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266HTTPClient.h>
-#include <WiFiClientSecure.h>
 #else
 #include <HTTPClient.h>
 #endif
@@ -96,99 +94,57 @@ namespace iotsmartsys::platform::esp8266
             _logger.debug("Esp8266SettingsFetcher", "HTTP request attempt=%u url=%s https=%s",
                           (unsigned)attempt, _req.url ? _req.url : "(null)", is_https ? "true" : "false");
 
-            WiFiClientSecure *tls_client = nullptr;
+            const char *effective_url = _req.url;
+            char *http_url = nullptr;
 
             if (is_https)
             {
-                const uint32_t free_heap = ESP.getFreeHeap();
-                // Avoid TLS setup/connect if heap is too low; BearSSL will abort on OOM.
-                if (free_heap < 12 * 1024)
+                const std::size_t url_len = std::strlen(_req.url);
+                if (url_len < 8)
                 {
-                    _logger.error("Esp8266SettingsFetcher", "HTTPS skipped: low heap (%u bytes)", (unsigned)free_heap);
+                    final_err = StateResult::InvalidArg;
+                    break;
+                }
+                http_url = (char *)malloc(url_len); // "https://" -> "http://" (len - 1)
+                if (!http_url)
+                {
                     final_err = StateResult::NoMem;
                     break;
                 }
-                // Reuse a single TLS client to avoid repeated allocations/fragmentation.
-                static WiFiClientSecure client;
-                static bool client_configured = false;
+                std::memcpy(http_url, "http://", 7);
+                std::memcpy(http_url + 7, _req.url + 8, url_len - 7);
+                effective_url = http_url;
+                _logger.warn("Esp8266SettingsFetcher", "Forcing HTTP for HTTPS URL: %s", effective_url);
+            }
 
-                if (!client_configured)
+            WiFiClient client;
+            if (!http.begin(client, effective_url))
+            {
+                _logger.warn("Esp8266SettingsFetcher", "http.begin failed for url=%s", effective_url ? effective_url : "(null)");
+                final_err = StateResult::InvalidArg;
+                http.end();
+                if (http_url)
+                    free(http_url);
+                break;
+            }
+
+            // headers
+            for (std::size_t i = 0; i < _req.headers_count; ++i)
+            {
+                const auto &h = _req.headers[i];
+                if (h.key && h.value)
                 {
-                    // INSECURE: do not validate server certificate (use only when acceptable)
-                    client.setInsecure();
-                    // Keep timeouts explicit to avoid hanging sockets
-                    client.setTimeout((uint32_t)_req.read_timeout_ms);
-                    client_configured = true;
-                }
-
-                client.stop();
-                tls_client = &client;
-
-                if (!http.begin(client, _req.url))
-                {
-                    _logger.warn("Esp8266SettingsFetcher", "http.begin failed for https url=%s", _req.url ? _req.url : "(null)");
-                    final_err = StateResult::InvalidArg;
-                    http.end();
-                    client.stop();
-                    break;
-                }
-
-                // headers
-                for (std::size_t i = 0; i < _req.headers_count; ++i)
-                {
-                    const auto &h = _req.headers[i];
-                    if (h.key && h.value)
-                    {
-                        http.addHeader(h.key, h.value);
-                    }
-                }
-
-                http.setTimeout((int)_req.read_timeout_ms);
-
-                code = http.GET();
-
-                if (code <= 0)
-                {
-                    _logger.warn("Esp8266SettingsFetcher", "HTTP GET failed (https). code=%d err=%s",
-                                 code, http.errorToString(code).c_str());
-                    char ssl_err[96];
-                    ssl_err[0] = '\0';
-                    tls_client->getLastSSLError(ssl_err, sizeof(ssl_err));
-                    if (ssl_err[0] != '\0')
-                    {
-                        _logger.warn("Esp8266SettingsFetcher", "TLS last error: %s", ssl_err);
-                    }
+                    http.addHeader(h.key, h.value);
                 }
             }
-            else
+
+            http.setTimeout((int)_req.read_timeout_ms);
+
+            code = http.GET();
+            if (code <= 0)
             {
-                WiFiClient client;
-                if (!http.begin(client, _req.url))
-                {
-                    _logger.warn("Esp8266SettingsFetcher", "http.begin failed for http url=%s", _req.url ? _req.url : "(null)");
-                    final_err = StateResult::InvalidArg;
-                    http.end();
-                    break;
-                }
-
-                // headers
-                for (std::size_t i = 0; i < _req.headers_count; ++i)
-                {
-                    const auto &h = _req.headers[i];
-                    if (h.key && h.value)
-                    {
-                        http.addHeader(h.key, h.value);
-                    }
-                }
-
-                http.setTimeout((int)_req.read_timeout_ms);
-
-                code = http.GET();
-                if (code <= 0)
-                {
-                    _logger.warn("Esp8266SettingsFetcher", "HTTP GET failed (http). code=%d err=%s",
-                                 code, http.errorToString(code).c_str());
-                }
+                _logger.warn("Esp8266SettingsFetcher", "HTTP GET failed. code=%d err=%s",
+                             code, http.errorToString(code).c_str());
             }
 
             if (code > 0)
@@ -221,8 +177,8 @@ namespace iotsmartsys::platform::esp8266
                 }
 
                 http.end();
-                if (tls_client)
-                    tls_client->stop();
+                if (http_url)
+                    free(http_url);
 
                 if (_cancel)
                 {
@@ -258,8 +214,8 @@ namespace iotsmartsys::platform::esp8266
                 // transport error
                 final_err = StateResult::IoError;
                 http.end();
-                if (tls_client)
-                    tls_client->stop();
+                if (http_url)
+                    free(http_url);
                 // retry
             }
 
@@ -315,5 +271,4 @@ namespace iotsmartsys::platform::esp8266
             _cb(r, _user_ctx);
     }
 } // namespace iotsmartsys::platform::esp8266
-#endif // ESP8266_01S
 #endif // ESP8266

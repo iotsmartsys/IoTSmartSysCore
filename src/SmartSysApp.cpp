@@ -154,12 +154,12 @@ namespace iotsmartsys
 
     void SmartSysApp::setup()
     {
-        serviceManager_.setLogLevel(core::LogLevel::Debug);
+        serviceManager_.setLogLevel(core::LogLevel::Info);
         core::Log::setLogger(&logger_);
         delay(3000);
         logger_.info("---------------------------------------------------------");
-        logger_.info("IoT SmartSys Core Version: %s", IOTSMARTSYSCORE_VERSION);
-        logger_.info("Device ID: %s", deviceIdentityProvider_.getDeviceID().c_str());
+        logger_.info("IoT SmartSys Core Version: ", IOTSMARTSYSCORE_VERSION);
+        logger_.info("Device ID: ", deviceIdentityProvider_.getDeviceID().c_str());
         logger_.info("---------------------------------------------------------");
 
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);

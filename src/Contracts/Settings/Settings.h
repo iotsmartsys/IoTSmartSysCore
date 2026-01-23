@@ -10,7 +10,6 @@ namespace iotsmartsys::core::settings
 {
     struct Settings
     {
-        // Dispositivo inicia assumindo modo normal; modo de configuração só é habilitado se vier do cache/API.
         bool in_config_mode{false};
 
         const char *clientId;

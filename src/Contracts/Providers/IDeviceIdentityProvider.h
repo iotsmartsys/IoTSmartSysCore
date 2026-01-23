@@ -18,6 +18,10 @@ namespace iotsmartsys::core
         /// @brief Obtém o identificador único do dispositivo.
         /// @return Identificador único do dispositivo.
         virtual std::string getDeviceUniqueId() const = 0;
+
+        /// @brief Obtem o modelo do Chip/Board
+        /// @return Modelo do Chip/Board
+        virtual std::string getDeviceModel() const = 0;
     };
 
-} // namespace iotsmartsys::core::provisioning
+} // namespace iotsmartsys::core
