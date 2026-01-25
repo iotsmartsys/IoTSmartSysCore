@@ -1,16 +1,9 @@
 #include "Arduino.h"
 #include "FirmwareUpdater.h"
-#if defined(ESP32)
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Update.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <Updater.h>
-#include <BearSSLHelpers.h>
-#endif
 #include "Version/VersionInfo.h"
 #include <algorithm>
 #include <cctype>

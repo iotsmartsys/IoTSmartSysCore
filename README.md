@@ -1,4 +1,4 @@
-# IoTSmartSysCore - Core IoT para ESP32/ESP8266 (Arduino/PlatformIO)
+# IoTSmartSysCore - Core IoT para ESP32 (Arduino/PlatformIO)
 
 Biblioteca core da plataforma IoTSmartSys para dispositivos IoT. Fornece o `SmartSysApp`, que orquestra WiFi, MQTT, SettingsManager (cache NVS + API), provisioning e OTA (opcional), alem de um conjunto de capabilities para sensores/atuadores.
 

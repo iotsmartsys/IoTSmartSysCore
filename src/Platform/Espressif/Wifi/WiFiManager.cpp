@@ -1,4 +1,3 @@
-#ifdef ESP32
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 
@@ -247,5 +246,3 @@ namespace iotsmartsys::core
     }
 
 } // namespace iotsmartsys::app
-
-#endif

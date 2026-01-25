@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+#error "ESP8266 is not supported in IoTSmartSysCore. Use an ESP32 target."
+#endif
+
 #ifndef IOTSMARTSYS_MINIMAL
 #define IOTSMARTSYS_MINIMAL 0
 #endif

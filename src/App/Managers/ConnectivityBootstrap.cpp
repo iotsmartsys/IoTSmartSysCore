@@ -43,10 +43,6 @@ namespace iotsmartsys::app
             logger_.info("[SettingsManager] Applying cached WiFi settings from NVS.");
             iotsmartsys::core::WiFiConfig cfg;
             cfg.loadFromSettings(outSettings);
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-            cfg.autoReconnect = true;
-            cfg.persistent = false;
-#endif
             wifi_.begin(cfg);
             return BootPath::Wifi;
         }

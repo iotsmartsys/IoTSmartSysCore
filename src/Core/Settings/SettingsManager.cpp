@@ -343,7 +343,7 @@ namespace iotsmartsys::core::settings
         }
         _syncUrlBuffer = _current.api.url;
         _logger->info("[SettingsManager]", "syncFromApi() original URL: %s", _syncUrlBuffer.c_str());
-        const auto deviceIdPlaceholder = std::string("<device_id>");
+        const auto deviceIdPlaceholder = std::string(":device_id");
         _logger->info("[SettingsManager]", "syncFromApi() deviceIdPlaceholder: %s", deviceIdPlaceholder.c_str());
         const auto placeholderPos = _syncUrlBuffer.find(deviceIdPlaceholder);
         _logger->info("[SettingsManager]", "syncFromApi() placeholderPos: %d", (int)placeholderPos);

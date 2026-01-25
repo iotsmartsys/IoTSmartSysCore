@@ -1,15 +1,14 @@
 #include "SmartSysApp.h"
 #include "App/Builders/Builders/AnnouncePayloadBuilder.h"
 #include "Version/VersionInfo.h"
-
-#include "Platform/Esp8266/Mqtt/Esp8266PubSubMqttClient.h"
+#if IOTSMARTSYS_OTA_ENABLED
+#include "Infra/OTA/OTA.h"
+#include "Infra/OTA/OTAManager.h"
+#include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
+#endif
 
 #include <cstdio>
 #include <memory>
-#if IOTSMARTSYS_OTA_ENABLED
-using namespace iotsmartsys::platform::espressif::ota;
-#endif
-
 namespace iotsmartsys
 {
     SmartSysApp::SmartSysApp()
@@ -18,11 +17,7 @@ namespace iotsmartsys
           settingsManager_(serviceManager_.settingsManager()),
           settingsGate_(serviceManager_.settingsGate()),
           commandParser_(logger_),
-#ifdef ESP8266
-          mqttClient_(std::make_unique<platform::esp8266::Esp8266PubSubMqttClient>(logger_)),
-#else
           mqttClient_(std::make_unique<platform::espressif::EspIdfMqttClient>(logger_)),
-#endif
           mqtt_(*mqttClient_, logger_, settingsGate_, settingsManager_),
           mqttSink_(mqtt_, settingsManager_),
           deviceStateManager_(logger_, hwFactory_, wifi_, provisioningController_),
@@ -39,24 +34,29 @@ namespace iotsmartsys
                    deviceIdentityProvider_),
           wifi_(logger_),
           connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
-#if IOTSMARTSYS_OTA_ENABLED
-          manifestParser_(),
-#ifndef OTA_DISABLED
-          ota_(logger_, deviceIdentityProvider_),
-#endif
-          otaManager_(settingsManager_, logger_, manifestParser_,
-#ifndef OTA_DISABLED
-                      ota_,
-#endif
-                      settingsGate_),
-#endif
           systemCommandProcessor_(logger_),
           factoryResetButtonController_(logger_, settingsManager_, systemCommandProcessor_, hwFactory_),
           capabilityController_(logger_, commandParser_, systemCommandProcessor_),
           transportController_(logger_, settingsManager_, mqtt_),
           provisioningController_(logger_, wifi_, deviceIdentityProvider_)
     {
+#if IOTSMARTSYS_OTA_ENABLED
+        manifestParser_ = std::make_unique<platform::espressif::ota::EspIdFirmwareManifestParser>();
+#ifndef OTA_DISABLED
+        ota_ = std::make_unique<ota::OTA>(logger_, deviceIdentityProvider_);
+#endif
+        otaManager_ = std::make_unique<ota::OTAManager>(
+            settingsManager_,
+            logger_,
+            *manifestParser_,
+#ifndef OTA_DISABLED
+            *ota_,
+#endif
+            settingsGate_);
+#endif
     }
+
+    SmartSysApp::~SmartSysApp() = default;
 
     void SmartSysApp::configureFactoryResetButton(iotsmartsys::app::PushButtonConfig cfg)
     {
@@ -203,7 +203,12 @@ namespace iotsmartsys
 
         wifi_.handle();
 #if IOTSMARTSYS_OTA_ENABLED
-        otaManager_.handle();
+#if IOTSMARTSYS_OTA_ENABLED
+        if (otaManager_)
+        {
+            otaManager_->handle();
+        }
+#endif
 #endif
         settingsManager_.handle();
         transportController_.handle();

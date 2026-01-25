@@ -8,12 +8,11 @@
 #include "Core/Provisioning/ProvisioningManager.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
-#if IOTSMARTSYS_PROVISIONING_ENABLED && defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
-#include "Platform/Espressif/Provisioning/BleProvisioningChannel.h"
-#endif
-#if IOTSMARTSYS_PROVISIONING_ENABLED && defined(WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE) && (WEB_PORTAL_PROVISIONING_CHANNEL_ENABLE != 0)
-#include "Platform/Arduino/Provisioning/WebPortalProvisioningChannel.h"
-#endif
+namespace iotsmartsys::core::provisioning
+{
+    class BleProvisioningChannel;
+    class WebPortalProvisioningChannel;
+}
 
 namespace iotsmartsys::app
 {

@@ -5,17 +5,11 @@
 #include <functional>
 #include <string>
 #include <vector>
-#if defined(ESP32)
 #include <WebServer.h>
 #if WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE == 1
 #include <DNSServer.h>
 #endif
 using HttpServer = WebServer;
-#elif defined(ESP8266)
-#include <ESP8266WebServer.h>
-#include <DNSServer.h>
-using HttpServer = ESP8266WebServer;
-#endif
 
 #include "Core/Provisioning/IProvisioningChannel.h"
 #include "Contracts/Connections/WiFiManager.h"

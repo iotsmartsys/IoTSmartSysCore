@@ -44,15 +44,22 @@
 #include "App/Managers/ProvisioningController.h"
 #include "App/Managers/TransportController.h"
 
-#if IOTSMARTSYS_OTA_ENABLED
-#include "Infra/OTA/OTAManager.h"
-#include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
-#endif
 #include "Infra/Factories/SensorFactory.h"
 
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 #include "Contracts/Mqtt/IMqttClient.h"
+
+namespace iotsmartsys::ota
+{
+        class OTA;
+        class OTAManager;
+}
+
+namespace iotsmartsys::platform::espressif::ota
+{
+        class EspIdFirmwareManifestParser;
+}
 
 namespace iotsmartsys
 {
@@ -60,6 +67,7 @@ namespace iotsmartsys
         {
         public:
                 SmartSysApp();
+                ~SmartSysApp();
 
                 /// @brief Initializes the application, including hardware and services.
                 void setup();
@@ -135,11 +143,11 @@ namespace iotsmartsys
                 core::WiFiManager wifi_;
                 app::ConnectivityBootstrap connectivityBootstrap_;
 #if IOTSMARTSYS_OTA_ENABLED
-                iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
+                std::unique_ptr<iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser> manifestParser_;
 #ifndef OTA_DISABLED
-                ota::OTA ota_;
+                std::unique_ptr<iotsmartsys::ota::OTA> ota_;
 #endif
-                ota::OTAManager otaManager_;
+                std::unique_ptr<iotsmartsys::ota::OTAManager> otaManager_;
 #endif
 
                 iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;

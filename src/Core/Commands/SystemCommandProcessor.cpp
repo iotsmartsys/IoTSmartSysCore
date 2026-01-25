@@ -1,13 +1,9 @@
 #include "SystemCommandProcessor.h"
 #include "Arduino.h"
 
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-#include <ESP8266WiFi.h>
-#else
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
-#endif
 
 namespace iotsmartsys::core
 {
@@ -46,10 +42,6 @@ namespace iotsmartsys::core
 
     void SystemCommandProcessor::reset_all_gpio_safely()
     {
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-        // ESP8266: no generic GPIO reset API like ESP32 IDF.
-        // Keep as a no-op to preserve call sites.
-#else
         // Ajuste se você quiser excluir pinos usados por USB/UART/etc.
         for (int pin = 0; pin < GPIO_NUM_MAX; pin++)
         {
@@ -58,25 +50,16 @@ namespace iotsmartsys::core
             gpio_reset_pin(g);
             gpio_set_direction(g, GPIO_MODE_DISABLE); // "hi-z" / desabilita saída
         }
-#endif
     }
 
     void SystemCommandProcessor::full_soft_powercycle_restart()
     {
-#if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
-        // ESP8266: best-effort shutdown of Wi-Fi before restart.
-        WiFi.disconnect(true);
-        WiFi.mode(WIFI_OFF);
-        delay(50);
-        ESP.restart();
-#else
         esp_wifi_stop();
         esp_wifi_deinit();
 
         reset_all_gpio_safely();
 
         esp_restart();
-#endif
     }
 
     void SystemCommandProcessor::restartSafely()

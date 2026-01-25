@@ -1,14 +1,11 @@
 #pragma once
 
-#if defined(ESP32)
 #include "mbedtls/sha256.h"
 #include "mbedtls/version.h"
-#endif
 
 namespace iotsmartsys::ota
 {
 
-#if defined(ESP32)
     struct Sha256Context
     {
         mbedtls_sha256_context ctx;
@@ -39,23 +36,4 @@ namespace iotsmartsys::ota
             mbedtls_sha256_free(&ctx);
         }
     };
-#elif defined(ESP8266)
-    struct Sha256Context
-    {
-        BearSSL::HashSHA256 hasher;
-        void begin()
-        {
-            hasher.begin();
-        }
-        void update(const uint8_t *data, size_t len)
-        {
-            hasher.add(data, len);
-        }
-        void finish(uint8_t out[32])
-        {
-            hasher.end();
-            memcpy(out, hasher.hash(), hasher.len());
-        }
-    };
-#endif
 } // namespace iotsmartsys::ota
