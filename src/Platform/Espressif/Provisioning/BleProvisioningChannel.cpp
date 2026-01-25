@@ -1,6 +1,6 @@
-#include "BleProvisioningChannel.h"
 
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
+#include "BleProvisioningChannel.h"
 
 #include <cstring>
 #include <string>

@@ -5,6 +5,7 @@
 
 namespace iotsmartsys::app
 {
+#if IOTSMARTSYS_PROVISIONING_ENABLED
     ProvisioningController::ProvisioningController(core::ILogger &logger,
                                                    core::WiFiManager &wifi,
                                                    platform::espressif::providers::DeviceIdentityProvider &deviceIdentityProvider)
@@ -75,4 +76,31 @@ namespace iotsmartsys::app
         provManager_->begin();
         inConfigMode_ = true;
     }
+#else
+    ProvisioningController::ProvisioningController(core::ILogger &logger,
+                                                   core::WiFiManager &wifi,
+                                                   platform::espressif::providers::DeviceIdentityProvider &deviceIdentityProvider)
+        : logger_(logger),
+          wifi_(wifi),
+          deviceIdentityProvider_(deviceIdentityProvider)
+    {
+    }
+
+    void ProvisioningController::begin()
+    {
+    }
+
+    void ProvisioningController::handle()
+    {
+    }
+
+    bool ProvisioningController::isActive() const
+    {
+        return false;
+    }
+
+    void ProvisioningController::setupProvisioning()
+    {
+    }
+#endif
 } // namespace iotsmartsys::app

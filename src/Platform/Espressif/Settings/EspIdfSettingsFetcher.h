@@ -1,5 +1,6 @@
 // Only compile the ESP-IDF fetcher on ESP32 targets
-#if defined(ESP32)
+#include "Config/BuildConfig.h"
+#if defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED
 
 #pragma once
 

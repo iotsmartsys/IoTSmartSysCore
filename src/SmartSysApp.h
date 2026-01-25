@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <memory>
 #include <string>
+#include "Config/BuildConfig.h"
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 // -----------------------------------------------------------------------------
@@ -43,8 +44,10 @@
 #include "App/Managers/ProvisioningController.h"
 #include "App/Managers/TransportController.h"
 
+#if IOTSMARTSYS_OTA_ENABLED
 #include "Infra/OTA/OTAManager.h"
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
+#endif
 #include "Infra/Factories/SensorFactory.h"
 
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
@@ -131,17 +134,19 @@ namespace iotsmartsys
 
                 core::WiFiManager wifi_;
                 app::ConnectivityBootstrap connectivityBootstrap_;
+#if IOTSMARTSYS_OTA_ENABLED
                 iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
 #ifndef OTA_DISABLED
                 ota::OTA ota_;
 #endif
                 ota::OTAManager otaManager_;
+#endif
 
                 iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;
                 app::FactoryResetButtonController factoryResetButtonController_;
                 app::CapabilityController capabilityController_;
                 app::TransportController transportController_;
-                SerialTransportChannel *uart_;
+                core::SerialTransportChannel *uart_;
                 platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
                 app::ProvisioningController provisioningController_;
         };

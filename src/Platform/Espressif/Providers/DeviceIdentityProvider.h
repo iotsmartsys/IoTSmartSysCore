@@ -21,4 +21,4 @@ namespace iotsmartsys::platform::espressif::providers
         std::string getDeviceModel() const override;
     };
 
-} // namespace iotsmartsys::core
+} // namespace iotsmartsys::platform::espressif::providers

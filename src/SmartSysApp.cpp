@@ -6,7 +6,9 @@
 
 #include <cstdio>
 #include <memory>
+#if IOTSMARTSYS_OTA_ENABLED
 using namespace iotsmartsys::platform::espressif::ota;
+#endif
 
 namespace iotsmartsys
 {
@@ -37,6 +39,7 @@ namespace iotsmartsys
                    deviceIdentityProvider_),
           wifi_(logger_),
           connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
+#if IOTSMARTSYS_OTA_ENABLED
           manifestParser_(),
 #ifndef OTA_DISABLED
           ota_(logger_, deviceIdentityProvider_),
@@ -46,6 +49,7 @@ namespace iotsmartsys
                       ota_,
 #endif
                       settingsGate_),
+#endif
           systemCommandProcessor_(logger_),
           factoryResetButtonController_(logger_, settingsManager_, systemCommandProcessor_, hwFactory_),
           capabilityController_(logger_, commandParser_, systemCommandProcessor_),
@@ -71,7 +75,7 @@ namespace iotsmartsys
             delete uart_;
             uart_ = nullptr;
         }
-        uart_ = new SerialTransportChannel(serial, baudRate, rxPin, txPin);
+        uart_ = new core::SerialTransportChannel(serial, baudRate, rxPin, txPin);
         TransportConfig cfg{};
         cfg.uri = "serial://uart2";
         cfg.clientId = "esp32-uart-bridge";
@@ -198,7 +202,9 @@ namespace iotsmartsys
         capabilityController_.handle();
 
         wifi_.handle();
+#if IOTSMARTSYS_OTA_ENABLED
         otaManager_.handle();
+#endif
         settingsManager_.handle();
         transportController_.handle();
     }

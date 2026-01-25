@@ -1,5 +1,6 @@
 // Only compile this implementation on ESP32 targets
-#if defined(ESP32)
+#include "Config/BuildConfig.h"
+#if defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED
 
 #include "Platform/Espressif/Settings/EspIdfSettingsFetcher.h"
 #include "Contracts/Common/StateResult.h"
@@ -362,4 +363,4 @@ namespace iotsmartsys::platform::espressif
     }
 } // namespace iotsmartsys::platform::espressif
 
-#endif // ESP32
+#endif // defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED
