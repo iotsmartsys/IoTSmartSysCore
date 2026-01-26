@@ -55,10 +55,7 @@ namespace iotsmartsys::core
         }
 
         virtual void applyCommand(CapabilityCommand command)
-        {
-            logger.info("COMMAND", "Applying command: capability=%s value=%s",
-                        command.capability_name,
-                        command.value);
+        {            
 
             if (command_interpreter)
             {

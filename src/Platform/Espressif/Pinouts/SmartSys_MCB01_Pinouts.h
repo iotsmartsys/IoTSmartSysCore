@@ -4,9 +4,9 @@
 #if CONFIG_IDF_TARGET_ESP32 && defined(IOTSMARTSYS_MCB01)
 // Pin boot for SmartSys MCB01 board
 
-#define GPIO0 0
-#define GPIO1 1
-#define GPIO3 3
+#define ESP32_GPIO0 0
+#define ESP32_GPIO1 1
+#define ESP32_GPIO3 3
 #define SAFE_GPIO13 13
 #define SAFE_GPIO14 14
 #define SAFE_GPIO17 17
@@ -21,7 +21,7 @@
 #define SAFE_GPIO33 33
 #define SAFE_GPIO34 34
 
-#define BOOT_PIN GPIO0
+#define MCB01_BOOT_PIN ESP32_GPIO0
 
 /// LED pin definition for SmartSys MCB01 board
 #define LED_BUILTIN SAFE_GPIO19 
