@@ -1,58 +1,19 @@
 
-
 #include "EspIdfSettingsParser.h"
 
 #include <cstring>
 
 #include "Contracts/Common/StateResult.h"
-
-extern "C"
-{
-#include "cJSON.h"
-}
+#include "Platform/Common/Json/JsonPathExtractor.h"
 
 namespace iotsmartsys::platform::espressif
 {
     using namespace iotsmartsys::core::settings;
     using iotsmartsys::core::common::StateResult;
 
-    // Helpers cJSON
-    bool EspIdfSettingsParser::jsonGetString(void *obj, const char *key, std::string &out)
+    // Parse mqtt sub-object at path base (e.g. "mqtt.primary")
+    static StateResult parseMqttConfig(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, const char *base, MqttConfig &out, bool allowTtl)
     {
-        auto *o = static_cast<cJSON *>(obj);
-        cJSON *v = cJSON_GetObjectItemCaseSensitive(o, key);
-        if (!cJSON_IsString(v) || !v->valuestring)
-            return false;
-        out.assign(v->valuestring);
-        return true;
-    }
-
-    bool EspIdfSettingsParser::jsonGetInt(void *obj, const char *key, int &out)
-    {
-        auto *o = static_cast<cJSON *>(obj);
-        cJSON *v = cJSON_GetObjectItemCaseSensitive(o, key);
-        if (!cJSON_IsNumber(v))
-            return false;
-        out = v->valueint;
-        return true;
-    }
-
-    bool EspIdfSettingsParser::jsonGetBool(void *obj, const char *key, bool &out)
-    {
-        auto *o = static_cast<cJSON *>(obj);
-        cJSON *v = cJSON_GetObjectItemCaseSensitive(o, key);
-        if (!cJSON_IsBool(v))
-            return false;
-        out = cJSON_IsTrue(v);
-        return true;
-    }
-
-    iotsmartsys::core::common::StateResult EspIdfSettingsParser::parseMqttConfig(void *cfgObj, MqttConfig &out, bool allowTtl)
-    {
-        auto *cfg = static_cast<cJSON *>(cfgObj);
-        if (!cJSON_IsObject(cfg))
-            return StateResult::InvalidState;
-
         // defaults
         out = MqttConfig{};
         out.port = 1883;
@@ -60,142 +21,112 @@ namespace iotsmartsys::platform::espressif
         out.ttl = 0;
 
         // host obrigatório
-        if (!jsonGetString(cfg, "host", out.host) || out.host.empty())
+        std::string host;
+        std::string pathHost = std::string(base) + ".host";
+        if (!ext.getString(pathHost.c_str(), host) || host.empty())
             return StateResult::InvalidState;
+        out.host = host;
 
-        // port obrigatório no seu JSON (mas vamos aceitar default se vier ausente)
+        // port (optional, default already set)
         int port = 1883;
-        if (jsonGetInt(cfg, "port", port))
+        std::string pathPort = std::string(base) + ".port";
+        if (ext.getInt(pathPort.c_str(), port))
         {
             if (port <= 0 || port > 65535)
                 return StateResult::Overflow;
             out.port = port;
         }
 
-        // user/password opcionais (mas normalmente presentes)
-        (void)jsonGetString(cfg, "user", out.user);
-        (void)jsonGetString(cfg, "password", out.password);
+        // user/password optional
+        std::string tmp;
+        if (ext.getString((std::string(base) + ".user").c_str(), tmp)) out.user = tmp;
+        if (ext.getString((std::string(base) + ".password").c_str(), tmp)) out.password = tmp;
 
-        // protocol opcional (default mqtt)
-        (void)jsonGetString(cfg, "protocol", out.protocol);
-        if (out.protocol.empty())
-            out.protocol = "mqtt";
+        // protocol optional
+        if (ext.getString((std::string(base) + ".protocol").c_str(), tmp)) out.protocol = tmp;
+        if (out.protocol.empty()) out.protocol = "mqtt";
 
-        // ttl apenas para secondary no seu JSON (mas pode existir em ambos)
         if (allowTtl)
         {
             int ttl = 0;
-            if (jsonGetInt(cfg, "ttl", ttl))
+            if (ext.getInt((std::string(base) + ".ttl").c_str(), ttl))
             {
-                // Guard rails: TTL em minutos, 0..1440 (1 dia) por segurança
                 if (ttl < 0 || ttl > 1440)
                     return StateResult::Overflow;
                 out.ttl = ttl;
             }
         }
 
-        // validação mínima final
         if (!out.isValid())
             return StateResult::InvalidState;
 
         return StateResult::Ok;
     }
 
-    iotsmartsys::core::common::StateResult EspIdfSettingsParser::parseMqtt(void *mqttObj, MqttSettings &out)
+    static StateResult parseMqtt(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, MqttSettings &out)
     {
-        auto *mqtt = static_cast<cJSON *>(mqttObj);
-        if (!cJSON_IsObject(mqtt))
-            return StateResult::InvalidState;
+        // primary required
+        StateResult err = parseMqttConfig(ext, "mqtt.primary", out.primary, /*allowTtl*/ false);
+        if (err != StateResult::Ok) return err;
 
-        cJSON *primary = cJSON_GetObjectItemCaseSensitive(mqtt, "primary");
-        cJSON *secondary = cJSON_GetObjectItemCaseSensitive(mqtt, "secondary");
-        cJSON *topic = cJSON_GetObjectItemCaseSensitive(mqtt, "topic");
-
-        // primary obrigatório
-        iotsmartsys::core::common::StateResult err = parseMqttConfig(primary, out.primary, /*allowTtl*/ false);
-        if (err != StateResult::Ok)
-            return err;
-
-        // secondary opcional
-        if (cJSON_IsObject(secondary))
+        // secondary optional
+        // detect presence by trying to get host
+        std::string tmp;
+        if (ext.getString("mqtt.secondary.host", tmp))
         {
-            err = parseMqttConfig(secondary, out.secondary, /*allowTtl*/ true);
-            if (err != StateResult::Ok)
-                return err;
+            err = parseMqttConfig(ext, "mqtt.secondary", out.secondary, /*allowTtl*/ true);
+            if (err != StateResult::Ok) return err;
         }
         else
         {
-            out.secondary = MqttConfig{}; // limpa
+            out.secondary = MqttConfig{};
         }
 
-        // topics opcionais (defaults já existem no model)
-        if (cJSON_IsObject(topic))
-        {
-            (void)jsonGetString(topic, "announce", out.announce_topic);
-            (void)jsonGetString(topic, "command", out.command_topic);
-            (void)jsonGetString(topic, "notify", out.notify_topic);
-        }
+        // topics optional
+        if (ext.getString("mqtt.topic.announce", tmp)) out.announce_topic = tmp;
+        if (ext.getString("mqtt.topic.command", tmp)) out.command_topic = tmp;
+        if (ext.getString("mqtt.topic.notify", tmp)) out.notify_topic = tmp;
 
         return StateResult::Ok;
     }
 
-    iotsmartsys::core::common::StateResult EspIdfSettingsParser::parseFirmware(void *fwObj, FirmwareConfig &out)
+    static StateResult parseFirmware(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, FirmwareConfig &out)
     {
-        auto *fw = static_cast<cJSON *>(fwObj);
-        if (!cJSON_IsObject(fw))
-            return StateResult::InvalidState;
+        std::string update;
+        if (!ext.getString("firmware.update", update))
+            update = "none";
 
-        std::string url, manifest, update;
+        std::string url, manifest;
         bool verify = false;
 
-        // update é string no JSON: "auto" / "ota" / "none"
-        if (jsonGetString(fw, "update", update))
+        if (update == "auto")
         {
-        }
-        else
-        {
-            update = "none"; // default
+            if (!ext.getString("firmware.url", url) || url.empty()) return StateResult::InvalidState;
+            if (!ext.getString("firmware.manifest", manifest) || manifest.empty()) return StateResult::InvalidState;
         }
 
-        if (update == "auto" && (!jsonGetString(fw, "url", url) || url.empty()))
-            return StateResult::InvalidState;
-
-        if (update == "auto" && (!jsonGetString(fw, "manifest", manifest) || manifest.empty()))
-            return StateResult::InvalidState;
-
-        (void)jsonGetBool(fw, "verifysha256", verify);
-
+        if (ext.getBool("firmware.verifysha256", verify)) {}
 
         out.url = url;
         out.manifest = manifest;
         out.verify_sha256 = verify;
         out.update = update;
-
         return StateResult::Ok;
     }
 
-    iotsmartsys::core::common::StateResult EspIdfSettingsParser::parseWifi(void *wifiObj, WifiConfig &out)
+    static StateResult parseWifi(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, WifiConfig &out)
     {
-        auto *wifi = static_cast<cJSON *>(wifiObj);
-        if (!cJSON_IsObject(wifi))
-            return StateResult::InvalidState;
-
-        // No JSON que você mostrou, wifi não veio (você disse que esse JSON é exatamente o que vai gravar).
-        // Então: se não existir, não falha. Aqui a função assume que foi chamada só se existir.
-        (void)jsonGetString(wifi, "ssid", out.ssid);
-        (void)jsonGetString(wifi, "password", out.password);
+        std::string tmp;
+        (void)ext.getString("wifi.ssid", out.ssid);
+        (void)ext.getString("wifi.password", out.password);
         return StateResult::Ok;
     }
 
-    iotsmartsys::core::common::StateResult EspIdfSettingsParser::parseApi(void *apiObj, ApiConfig &out)
+    static StateResult parseApi(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, ApiConfig &out)
     {
-        auto *api = static_cast<cJSON *>(apiObj);
-        if (!cJSON_IsObject(api))
-            return StateResult::InvalidState;
-
-        (void)jsonGetString(api, "url", out.url);
-        (void)jsonGetString(api, "key", out.key);
-        (void)jsonGetString(api, "basic_auth", out.basic_auth);
+        (void)ext.getString("api.url", out.url);
+        (void)ext.getString("api.key", out.key);
+        (void)ext.getString("api.basic_auth", out.basic_auth);
         return StateResult::Ok;
     }
 
@@ -204,77 +135,42 @@ namespace iotsmartsys::platform::espressif
         if (!json || *json == '\0')
             return StateResult::InvalidArg;
 
-        cJSON *root = cJSON_Parse(json);
-        if (!root)
-            return StateResult::InvalidArg;
+        size_t len = strlen(json);
+        iotsmartsys::platform::common::json::JsonPathExtractor ext(json, len);
 
-        // Garantia de cleanup em qualquer return:
-        iotsmartsys::core::common::StateResult result = StateResult::Ok;
+        StateResult result = StateResult::Ok;
 
         // mqtt obrigatório
-        cJSON *mqtt = cJSON_GetObjectItemCaseSensitive(root, "mqtt");
-        result = parseMqtt(mqtt, out.mqtt);
-        if (result != StateResult::Ok)
+        result = parseMqtt(ext, out.mqtt);
+        if (result != StateResult::Ok) return result;
+
+        // firmware obrigatório
+        result = parseFirmware(ext, out.firmware);
+        if (result != StateResult::Ok) return result;
+
+        // wifi optional
+        (void)parseWifi(ext, out.wifi);
+
+        // api optional
+        (void)parseApi(ext, out.api);
+
+        // in_config_mode optional
+        bool icm = false;
+        if (ext.getBool("in_config_mode", icm)) out.in_config_mode = icm;
+
+        // prefix_auto_format_properies_json -- ignored (kept parity with previous behaviour)
+
+        // log_level optional
+        std::string logLevel;
+        if (ext.getString("log_level", logLevel))
         {
-            cJSON_Delete(root);
-            return result;
+            if (logLevel == "trace") out.logLevel = iotsmartsys::core::LogLevel::Trace;
+            else if (logLevel == "debug") out.logLevel = iotsmartsys::core::LogLevel::Debug;
+            else if (logLevel == "info") out.logLevel = iotsmartsys::core::LogLevel::Info;
+            else if (logLevel == "warn") out.logLevel = iotsmartsys::core::LogLevel::Warn;
+            else if (logLevel == "error") out.logLevel = iotsmartsys::core::LogLevel::Error;
         }
 
-        // firmware obrigatório (no seu JSON atual)
-        cJSON *fw = cJSON_GetObjectItemCaseSensitive(root, "firmware");
-        result = parseFirmware(fw, out.firmware);
-        if (result != StateResult::Ok)
-        {
-            cJSON_Delete(root);
-            return result;
-        }
-
-        // wifi opcional (não existe no JSON que você mostrou)
-        cJSON *wifi = cJSON_GetObjectItemCaseSensitive(root, "wifi");
-        if (cJSON_IsObject(wifi))
-        {
-            (void)parseWifi(wifi, out.wifi);
-        }
-
-        // api opcional (não existe no JSON que você mostrou)
-        cJSON *api = cJSON_GetObjectItemCaseSensitive(root, "api");
-        if (cJSON_IsObject(api))
-        {
-            (void)parseApi(api, out.api);
-        }
-
-        // in_config_mode opcional
-        cJSON *icm = cJSON_GetObjectItemCaseSensitive(root, "in_config_mode");
-        if (cJSON_IsBool(icm))
-            out.in_config_mode = cJSON_IsTrue(icm);
-
-        // prefix_auto_format_properies_json (typo no nome no JSON)
-        cJSON *pref = cJSON_GetObjectItemCaseSensitive(root, "prefix_auto_format_properies_json");
-        if (cJSON_IsString(pref) && pref->valuestring)
-        {
-            // você não tem isso no model Settings atual (só existe no JSON),
-            // então aqui eu não salvo em lugar nenhum.
-            // Se você quiser, adicionamos no model.
-        }
-
-        // log_level opcional
-        cJSON *ll = cJSON_GetObjectItemCaseSensitive(root, "log_level");
-        if (cJSON_IsString(ll) && ll->valuestring)
-        {
-            std::string logLevel = ll->valuestring;
-            if (logLevel == "trace")
-                out.logLevel = iotsmartsys::core::LogLevel::Trace;
-            else if (logLevel == "debug")
-                out.logLevel = iotsmartsys::core::LogLevel::Debug;
-            else if (logLevel == "info")
-                out.logLevel = iotsmartsys::core::LogLevel::Info;
-            else if (logLevel == "warn")
-                out.logLevel = iotsmartsys::core::LogLevel::Warn;
-            else if (logLevel == "error")
-                out.logLevel = iotsmartsys::core::LogLevel::Error;
-        }
-
-        cJSON_Delete(root);
         return StateResult::Ok;
     }
 } // namespace iotsmartsys::platform::espressif

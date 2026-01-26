@@ -25,7 +25,7 @@ namespace iotsmartsys::app
         void *mem = malloc(factory_.outputAdapterSize());
         if (!mem)
         {
-            logger_.error("Failed to allocate memory for factory reset button adapter.");
+           //  logger_.error("Failed to allocate memory for factory reset button adapter.");
             return;
         }
 
@@ -45,7 +45,7 @@ namespace iotsmartsys::app
         button_->handle();
         if (button_->digitalActive() && millis() - button_->lastStateReadMillis() > 15000)
         {
-            logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
+           //  logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
             settingsManager_.clear();
             delay(2000);
             systemCommandProcessor_.restartSafely();

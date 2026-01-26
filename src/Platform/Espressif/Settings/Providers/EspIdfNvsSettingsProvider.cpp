@@ -1,5 +1,7 @@
 // Platform/Espressif/Settings/EspIdfNvsSettingsProvider.cpp
 #include "EspIdfNvsSettingsProvider.h"
+
+#ifdef ESP32
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
 
@@ -219,7 +221,7 @@ namespace iotsmartsys::platform::espressif
         dst.firmware.update = src.firmware.update;
 
         // wifi
-        dst.wifi.ssid = toString(src.wifi.ssid);
+        dst.wifi.ssid = toString(src.wifi.ssid);        
         dst.wifi.password = toString(src.wifi.password);
 
         // api
@@ -305,14 +307,14 @@ namespace iotsmartsys::platform::espressif
 
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::save(const core::settings::Settings &settings)
     {
-        _logger->info("EspIdfNvsSettingsProvider", "port mqtt: %d", settings.mqtt.primary.port);
-        _logger->info("EspIdfNvsSettingsProvider", "firmware update method: %s", settings.firmware.update.c_str());
+        // _logger->info("EspIdfNvsSettingsProvider", "port mqtt: %d", settings.mqtt.primary.port);
+        // _logger->info("EspIdfNvsSettingsProvider", "firmware update method: %s", settings.firmware.update.c_str());
 
-        _logger->info("EspIdfNvsSettingsProvider", "save() called");
+        // _logger->info("EspIdfNvsSettingsProvider", "save() called");
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs init failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs init failed: %d", (int)err);
             return map_esp_err(err);
         }
 
@@ -321,7 +323,7 @@ namespace iotsmartsys::platform::espressif
         err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
             return map_esp_err(err);
         }
 
@@ -343,21 +345,21 @@ namespace iotsmartsys::platform::espressif
         err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
             delete existing;
             delete stored;
             nvs_close(h);
             return map_esp_err(err);
         }
-        _logger->info("EspIdfNvsSettingsProvider", "nvs set_blob succeeded, committing...");
+        // _logger->info("EspIdfNvsSettingsProvider", "nvs set_blob succeeded, committing...");
         err = nvs_commit(h);
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs commit failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs commit failed: %d", (int)err);
         }
         else
         {
-            _logger->info("EspIdfNvsSettingsProvider", "nvs commit succeeded");
+            // _logger->info("EspIdfNvsSettingsProvider", "nvs commit succeeded");
         }
         delete existing;
         delete stored;
@@ -367,17 +369,17 @@ namespace iotsmartsys::platform::espressif
 
     iotsmartsys::core::common::StateResult EspIdfNvsSettingsProvider::saveWiFiOnly(const core::settings::WifiConfig &wifi)
     {
-        _logger->debug("EspIdfNvsSettingsProvider", "saveWiFiOnly() called");
+
         if (wifi.ssid.empty() || wifi.password.empty())
         {
-            _logger->warn("EspIdfNvsSettingsProvider", "saveWiFiOnly: ignoring empty WiFi config (ssid/password not provided)");
+            // _logger->warn("EspIdfNvsSettingsProvider", "saveWiFiOnly: ignoring empty WiFi config (ssid/password not provided)");
             return StateResult::InvalidArg;
         }
 
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs init failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs init failed: %d", (int)err);
             return map_esp_err(err);
         }
 
@@ -385,7 +387,7 @@ namespace iotsmartsys::platform::espressif
         err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
             return map_esp_err(err);
         }
 
@@ -398,7 +400,7 @@ namespace iotsmartsys::platform::espressif
         if (err != ESP_OK || required != sizeof(StoredSettings))
         {
             // No existing blob or invalid size: create a new default-stored object.
-            _logger->debug("EspIdfNvsSettingsProvider", "nvs get_blob not found or invalid size: %d - creating new stored blob", (int)err);
+
             std::memset(stored, 0, sizeof(*stored));
             stored->version = STORAGE_VERSION;
             // continue — we'll set wifi fields below and persist the new blob
@@ -406,27 +408,23 @@ namespace iotsmartsys::platform::espressif
 
         // Update only WiFi settings
         copyStr(stored->wifi.ssid, sizeof(stored->wifi.ssid), wifi.ssid);
-        _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi settings to NVS: SSID='%s'", wifi.ssid.c_str());
-        // Never log passwords; log only length for diagnostics.
-        _logger->debug("EspIdfNvsSettingsProvider", "Saving WiFi password_len=%u", (unsigned)wifi.password.size());
+        // Never log passwords; optionally log only length for diagnostics (removed debug logs)
 
         copyStr(stored->wifi.password, sizeof(stored->wifi.password), wifi.password);
 
         // Debug: show what we'll write for WiFi (without password content)
-        _logger->debug("EspIdfNvsSettingsProvider", "About to write stored.wifi: SSID='%s' password_len=%u", stored->wifi.ssid, (unsigned)std::strlen(stored->wifi.password));
 
         // Save back
         err = nvs_set_blob(h, NVS_KEY, stored, sizeof(*stored));
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs set_blob failed: %d", (int)err);
             delete stored;
             nvs_close(h);
             return map_esp_err(err);
         }
 
         err = nvs_commit(h);
-        _logger->debug("EspIdfNvsSettingsProvider", "nvs commit result: %d", (int)err);
 
         // Read-back verification (diagnostic): re-open and read blob to ensure WiFi was persisted
         if (err == ESP_OK)
@@ -440,18 +438,17 @@ namespace iotsmartsys::platform::espressif
                 rerr = nvs_get_blob(hr, NVS_KEY, verify, &vreq);
                 if (rerr == ESP_OK && vreq == sizeof(*verify))
                 {
-                    _logger->debug("EspIdfNvsSettingsProvider", "Readback stored.wifi: SSID='%s' password_len=%u", verify->wifi.ssid, (unsigned)std::strlen(verify->wifi.password));
                 }
                 else
                 {
-                    _logger->warn("EspIdfNvsSettingsProvider", "Readback failed: err=%d vreq=%u", (int)rerr, (unsigned)vreq);
+                    // _logger->warn("EspIdfNvsSettingsProvider", "Readback failed: err=%d vreq=%u", (int)rerr, (unsigned)vreq);
                 }
                 delete verify;
                 nvs_close(hr);
             }
             else
             {
-                _logger->warn("EspIdfNvsSettingsProvider", "Readback nvs_open failed: %d", (int)rerr);
+                // _logger->warn("EspIdfNvsSettingsProvider", "Readback nvs_open failed: %d", (int)rerr);
             }
         }
 
@@ -470,23 +467,25 @@ namespace iotsmartsys::platform::espressif
         err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
         {
-            _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
+            // _logger->error("EspIdfNvsSettingsProvider", "nvs open failed: %d", (int)err);
             return map_esp_err(err);
         }
 
         err = nvs_erase_key(h, NVS_KEY);
         if (err == ESP_ERR_NVS_NOT_FOUND)
         {
-            _logger->warn("EspIdfNvsSettingsProvider", "nvs key not found: %d", (int)err);
+            // _logger->warn("EspIdfNvsSettingsProvider", "nvs key not found: %d", (int)err);
             err = ESP_OK;
         }
 
         if (err == ESP_OK)
         {
-            _logger->info("EspIdfNvsSettingsProvider", "nvs key erased successfully");
+            // _logger->info("EspIdfNvsSettingsProvider", "nvs key erased successfully");
             err = nvs_commit(h);
         }
         nvs_close(h);
         return map_esp_err(err);
     }
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32

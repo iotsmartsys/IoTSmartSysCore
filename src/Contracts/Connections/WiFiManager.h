@@ -8,11 +8,7 @@
 #include "Contracts/Providers/Time.h"
 #include "Contracts/Providers/ITimeProvider.h"
 
-#ifdef ESP32
 #include <WiFi.h>
-#else
-#include <ESP8266WiFi.h>
-#endif
 
 #include "Contracts/Settings/Settings.h"
 
@@ -74,10 +70,8 @@ namespace iotsmartsys::core
         void scheduleRetry();
         uint32_t computeBackoffMs() const;
 
-#ifdef ESP32
         void onWiFiEvent(WiFiEvent_t event);
         WiFiEventId_t _eventId{};
-#endif
 
     private:
         iotsmartsys::core::ILogger &_log;
@@ -95,6 +89,7 @@ namespace iotsmartsys::core
         uint32_t _connectedAtMs{0};
         bool _gotIp{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
+
     };
 
 } // namespace iotsmartsys::app

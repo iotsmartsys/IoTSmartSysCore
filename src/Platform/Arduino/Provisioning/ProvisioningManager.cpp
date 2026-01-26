@@ -90,7 +90,7 @@ namespace iotsmartsys::core::provisioning
         if (message)
         {
             if (_logger)
-            _logger->info(message);
+           _logger->info(message);
         }
     }
 

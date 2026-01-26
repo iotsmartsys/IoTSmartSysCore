@@ -1,9 +1,13 @@
 #pragma once
 
+#include "Config/BuildConfig.h"
 #include "Contracts/Sensors/ISensorFactory.h"
-#include "Platform/Arduino/Sensors/DHTSensor.h"
-#include "Platform/Arduino/Sensors/DHTSensor.h"
 #include "Contracts/Logging/ILogger.h"
+
+#if IOTSMARTSYS_SENSORS_ENABLED
+#include "Platform/Arduino/Sensors/DHTSensor.h"
+#include "Platform/Arduino/Sensors/DHTSensor.h"
+#endif
 
 namespace iotsmartsys::infra::factories
 {
@@ -21,7 +25,7 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created temperature sensor.
         std::unique_ptr<core::ITemperatureSensor> createTemperatureSensor(const int gpio, core::TemperatureSensorModel model) override;
 
-#ifdef DHT_SENSOR_ENABLED
+#if IOTSMARTSYS_SENSORS_ENABLED && defined(DHT_SENSOR_ENABLED)
         /// @brief Creates a DHT sensor.
         /// @param gpio The GPIO pin to which the sensor is connected.
         /// @return A unique pointer to the created DHT sensor.

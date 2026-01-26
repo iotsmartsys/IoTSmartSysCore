@@ -7,7 +7,7 @@ namespace iotsmartsys::core
     struct IRCommand
     {
         bool triggered;
-        std::uint64_t code;
+        uint64_t code;
         std::string type;
     };
 

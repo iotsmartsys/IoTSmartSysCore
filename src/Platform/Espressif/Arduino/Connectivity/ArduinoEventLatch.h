@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef ARDUINO_ARCH_ESP32
-
 #include "Contracts/Connectivity/IEventLatch.h"
 
 #include "freertos/FreeRTOS.h"
@@ -52,5 +50,3 @@ namespace iotsmartsys::platform::espressif::arduino
     };
 
 } // namespace iotsmartsys::platform::espressif::arduino
-
-#endif // ARDUINO_ARCH_ESP32

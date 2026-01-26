@@ -1,9 +1,6 @@
 #include "EspIdFirmwareManifestParser.h"
 
-extern "C"
-{
-#include "cJSON.h"
-}
+#include "Platform/Common/Json/JsonPathExtractor.h"
 
 namespace iotsmartsys::platform::espressif::ota
 {
@@ -11,50 +8,47 @@ namespace iotsmartsys::platform::espressif::ota
                                                     size_t payloadLen,
                                                     iotsmartsys::ota::ManifestInfo &outInfo)
     {
-        cJSON *root = cJSON_ParseWithLength(jsonPayload, payloadLen);
-        if (!root)
-        {
+        if (!jsonPayload || payloadLen == 0)
             return false;
-        }
 
-        cJSON *module = cJSON_GetObjectItem(root, "module");
-        cJSON *env = cJSON_GetObjectItem(root, "env");
-        cJSON *version = cJSON_GetObjectItem(root, "version");
-        // Accept both snake_case and camelCase for urlPath
-        cJSON *urlPath = cJSON_GetObjectItem(root, "url_path");
-        if (!urlPath)
-            urlPath = cJSON_GetObjectItem(root, "urlPath");
-        cJSON *size = cJSON_GetObjectItem(root, "size");
-        cJSON *mandatory = cJSON_GetObjectItem(root, "mandatory");
-        cJSON *checksumBlock = cJSON_GetObjectItem(root, "checksum");
+        iotsmartsys::platform::common::json::JsonPathExtractor ext(jsonPayload, payloadLen);
 
-        if (module && env && version && urlPath && size && checksumBlock)
+        std::string module, env, version, urlPath, checksumType, checksumValue;
+        int sizeInt = 0;
+        bool mandatory = false;
+
+        if (!ext.getString("module", module)) return false;
+        if (!ext.getString("env", env)) return false;
+        if (!ext.getString("version", version)) return false;
+
+        // accept both url_path and urlPath
+        if (!ext.getString("url_path", urlPath))
         {
-            outInfo.module = module->valuestring ? module->valuestring : "";
-            outInfo.env = env->valuestring ? env->valuestring : "";
-            outInfo.version = version->valuestring ? version->valuestring : "";
-            outInfo.urlPath = urlPath->valuestring ? urlPath->valuestring : "";
-            // size pode vir como number int/double
-            outInfo.size = static_cast<size_t>(size->valuedouble);
-            // mandatory é opcional; default false
-            outInfo.mandatory = (mandatory && cJSON_IsBool(mandatory)) ? cJSON_IsTrue(mandatory) : false;
-
-            cJSON *checksumType = cJSON_GetObjectItem(checksumBlock, "type");
-            cJSON *checksumValue = cJSON_GetObjectItem(checksumBlock, "value");
-
-            if (checksumType && checksumValue)
-            {
-                outInfo.checksumType = checksumType->valuestring;
-                outInfo.checksumValue = checksumValue->valuestring;
-
-                outInfo.valid = true;
-                cJSON_Delete(root);
-                return true;
-            }
+            (void)ext.getString("urlPath", urlPath);
         }
+        if (urlPath.empty()) return false;
 
-        cJSON_Delete(root);
-        return false;
+        // size: try integer
+        if (!ext.getInt("size", sizeInt)) return false;
+
+        // mandatory optional
+        (void)ext.getBool("mandatory", mandatory);
+
+        // checksum.type/value required under checksum
+        if (!ext.getString("checksum.type", checksumType)) return false;
+        if (!ext.getString("checksum.value", checksumValue)) return false;
+
+        outInfo.module = module;
+        outInfo.env = env;
+        outInfo.version = version;
+        outInfo.urlPath = urlPath;
+        outInfo.size = static_cast<size_t>(sizeInt);
+        outInfo.mandatory = mandatory;
+        outInfo.checksumType = checksumType;
+        outInfo.checksumValue = checksumValue;
+        outInfo.valid = true;
+
+        return true;
     }
 
 } // namespace iotsmartsys::platform::espressif::ota

@@ -1,3 +1,7 @@
+// Only compile this implementation on ESP32 targets
+#include "Config/BuildConfig.h"
+#if defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED
+
 #include "Platform/Espressif/Settings/EspIdfSettingsFetcher.h"
 #include "Contracts/Common/StateResult.h"
 
@@ -212,7 +216,7 @@ namespace iotsmartsys::platform::espressif
         cfg.event_handler = &EspIdfSettingsFetcher::httpEventHandler;
         cfg.user_data = this;
         cfg.disable_auto_redirect = false;
-        _logger.info("EspIdfSettingsFetcher", "Performing HTTP %s to %s", is_https ? "HTTPS" : "HTTP", _req.url);
+       // _logger.info("EspIdfSettingsFetcher", "Performing HTTP %s to %s", is_https ? "HTTPS" : "HTTP", _req.url);
         if (_client)
         {
             esp_http_client_cleanup(_client);
@@ -349,7 +353,7 @@ namespace iotsmartsys::platform::espressif
         r.body_len = _body_len;
 
         // write raw response text complete to log
-        _logger.info("EspIdfSettingsFetcher", "HTTP Response: %s", r.body);
+       // _logger.info("EspIdfSettingsFetcher", "HTTP Response: %s", r.body);
 
         // callback SEMPRE, para o chamador decidir fallback
         if (_cb)
@@ -358,3 +362,5 @@ namespace iotsmartsys::platform::espressif
         }
     }
 } // namespace iotsmartsys::platform::espressif
+
+#endif // defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED

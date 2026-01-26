@@ -16,10 +16,8 @@ namespace iotsmartsys::core
         _cfg = cfg;
         _attempt = 0;
         _gotIp = false;
-        _state = WiFiState::Idle;
+        _state = WiFiState::Connecting;
         _nextActionAtMs = 0;
-
-        // garante que o estado latched de conectividade começa limpo
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
@@ -27,28 +25,18 @@ namespace iotsmartsys::core
                            iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
         }
 
-#ifdef ESP32
         _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t)
                                 { this->onWiFiEvent(event); });
-#endif
 
         WiFi.mode(WIFI_STA);
-        WiFi.persistent(_cfg.persistent);
-
-#ifdef ESP32
         WiFi.setAutoReconnect(_cfg.autoReconnect);
-#endif
 
         startConnect();
     }
 
     bool WiFiManager::isConnected() const
     {
-#ifdef ESP32
         return _gotIp && WiFi.status() == WL_CONNECTED;
-#else
-        return WiFi.status() == WL_CONNECTED;
-#endif
     }
 
     WiFiState WiFiManager::currentState() const
@@ -77,6 +65,12 @@ namespace iotsmartsys::core
                 _ipAddress = WiFi.localIP().toString().c_str();
                 _signalStrength = String(WiFi.RSSI()).c_str();
                 _log.info("WIFI", "Connected. IP=%s", _ipAddress.c_str());
+                {
+                    auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                    gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                                 iotsmartsys::core::ConnectivityGate::IP_READY);
+
+                }
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
             {
@@ -90,12 +84,21 @@ namespace iotsmartsys::core
             break;
 
         case WiFiState::Connected:
+
             if (!isConnected())
             {
                 // evita ficar reconectando freneticamente se a rede está instável
                 if (now - _connectedAtMs < _cfg.reconnectMinUptimeMs)
                 {
                     _log.warn("WIFI", "Flapping detected; delaying reconnect");
+                }
+                // Clear connectivity bits so other components know network is not ready
+                {
+                    auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                    gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                                   iotsmartsys::core::ConnectivityGate::IP_READY |
+                                   iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                    
                 }
                 scheduleRetry();
             }
@@ -128,7 +131,7 @@ namespace iotsmartsys::core
 
         _log.info("WIFI", "Connecting to SSID=%s (attempt=%lu)", _cfg.ssid, (unsigned long)(_attempt + 1));
 
-        WiFi.disconnect(true); // limpa estado anterior
+        // WiFi.disconnect(true); // limpa estado anterior
         WiFi.begin(_cfg.ssid, _cfg.password);
     }
 
@@ -171,7 +174,6 @@ namespace iotsmartsys::core
         return base + jitter;
     }
 
-#ifdef ESP32
     void WiFiManager::onWiFiEvent(WiFiEvent_t event)
     {
         auto &gate = iotsmartsys::core::ConnectivityGate::instance();
@@ -201,7 +203,6 @@ namespace iotsmartsys::core
             break;
         }
     }
-#endif
 
     std::vector<std::string> WiFiManager::getAvailableSSIDs()
     {

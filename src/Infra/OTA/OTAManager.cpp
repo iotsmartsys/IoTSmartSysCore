@@ -28,11 +28,11 @@ void OTAManager::handle()
     {
         if (settingsReady)
         {
-            _logger.info("[OTA Manager]", "SettingsReady=TRUE (cache OK). OTA liberado quando NetworkReady=TRUE.");
+           // _logger.info("[OTA Manager]", "SettingsReady=TRUE (cache OK). OTA liberado quando NetworkReady=TRUE.");
         }
         else
         {
-            _logger.warn("[OTA Manager]", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando OTA.");
+           // _logger.warn("[OTA Manager]", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando OTA.");
         }
         _lastSettingsReady = settingsReady;
     }
@@ -41,11 +41,11 @@ void OTAManager::handle()
     {
         if (networkReady)
         {
-            _logger.info("[OTA Manager]", "NetworkReady=TRUE (Wi-Fi/IP). OTA liberado quando SettingsReady=TRUE.");
+           // _logger.info("[OTA Manager]", "NetworkReady=TRUE (Wi-Fi/IP). OTA liberado quando SettingsReady=TRUE.");
         }
         else
         {
-            _logger.warn("[OTA Manager]", "NetworkReady=FALSE (Wi-Fi/IP não pronto). Bloqueando OTA.");
+           // _logger.warn("[OTA Manager]", "NetworkReady=FALSE (Wi-Fi/IP não pronto). Bloqueando OTA.");
         }
         _lastNetworkReady = networkReady;
     }
@@ -55,40 +55,40 @@ void OTAManager::handle()
 
     if (!_settingsProvider.hasCurrent())
     {
-        _logger.warn("[OTA Manager]", "Nenhuma configuração atual disponível. Abortando OTA.");
+       // _logger.warn("[OTA Manager]", "Nenhuma configuração atual disponível. Abortando OTA.");
         return;
     }
 
-    _logger.debug("[OTA Manager]", "Inicializando OTA a partir das configurações...");
+   // _logger.debug("[OTA Manager]", "Inicializando OTA a partir das configurações...");
     settings::FirmwareConfig firmwareSettings;
     settings::Settings currentSettings;
     if (_settingsProvider.copyCurrent(currentSettings))
     {
-        _logger.debug("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
-        _logger.debug("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
-        _logger.debug("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
-        _logger.debug("[OTA Manager]", "Firmware Update Method: %d", currentSettings.firmware.update);
+       // _logger.debug("[OTA Manager]", "Configurações atuais obtidas com sucesso.");
+       // _logger.debug("[OTA Manager]", "Firmware URL: %s", currentSettings.firmware.url.c_str());
+       // _logger.debug("[OTA Manager]", "Firmware Manifest: %s", currentSettings.firmware.manifest.c_str());
+       // _logger.debug("[OTA Manager]", "Firmware Update Method: %s", currentSettings.firmware.update.c_str());
 
         firmwareSettings = currentSettings.firmware;
     }
     else
     {
-        _logger.error("[OTA Manager]", "Falha ao obter configurações atuais. Abortando OTA.");
+       // _logger.error("[OTA Manager]", "Falha ao obter configurações atuais. Abortando OTA.");
         return;
     }
 
     if (firmwareSettings.update == "none")
     {
-        _logger.debug("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
+       // _logger.debug("[OTA Manager]", "Atualizações desabilitadas (FirmwareUpdateMethod::NONE).");
         return;
     }
     if (firmwareSettings.update == "ota")
     {
-        _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
+       // _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
 #ifndef OTA_DISABLED
         if (!_ota.isInitialized())
         {
-            _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
+           // _logger.debug("[OTA Manager]", "Método de atualização definido como OTA.");
             _ota.setup();
         }
 
@@ -97,7 +97,7 @@ void OTAManager::handle()
     }
     if (firmwareSettings.update == "auto")
     {
-        _logger.debug("[OTA Manager]", "Método de atualização definido como AUTO.");
+       // _logger.debug("[OTA Manager]", "Método de atualização definido como AUTO.");
         update(firmwareSettings);
     }
 }
@@ -106,7 +106,7 @@ void OTAManager::update(FirmwareConfig firmwareSettings)
 {
     if (_firmwareUpdater.hasCheckedForUpdate())
     {
-        _logger.debug("[OTA Manager]", "Verificação de atualização já realizada nesta sessão. Pulando.");
+       // _logger.debug("[OTA Manager]", "Verificação de atualização já realizada nesta sessão. Pulando.");
         return;
     }
 

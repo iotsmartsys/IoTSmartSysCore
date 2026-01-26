@@ -1,8 +1,9 @@
 #include "SystemCommandProcessor.h"
+#include "Arduino.h"
+
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
-#include "Arduino.h"
 
 namespace iotsmartsys::core
 {
@@ -13,27 +14,27 @@ namespace iotsmartsys::core
 
     bool SystemCommandProcessor::process(const DeviceCommand &command)
     {
-        _logger.warn("SystemCommandProcessor: Processing system command.");
+       // _logger.warn("SystemCommandProcessor: Processing system command.");
         switch (command.getSystemCommand())
         {
         case SystemCommands::REBOOT:
-            _logger.warn("SystemCommandProcessor: Executing REBOOT command.");
+           // _logger.warn("SystemCommandProcessor: Executing REBOOT command.");
             delay(1000); // Pequeno atraso para garantir que o log seja enviado
             full_soft_powercycle_restart();
             return true;
             break;
         case SystemCommands::FACTORY_RESET:
-            _logger.info("SystemCommandProcessor: Executing FACTORY_RESET command.");
+           // _logger.info("SystemCommandProcessor: Executing FACTORY_RESET command.");
             /* code for factory reset */
             return true;
             break;
         case SystemCommands::UPDATE_FIRMWARE:
-            _logger.info("SystemCommandProcessor: Executing UPDATE_FIRMWARE command.");
+           // _logger.info("SystemCommandProcessor: Executing UPDATE_FIRMWARE command.");
             /* code for update firmware */
             return true;
             break;
         default:
-            _logger.warn("SystemCommandProcessor: Unknown system command received.");
+           // _logger.warn("SystemCommandProcessor: Unknown system command received.");
             return false;
             break;
         }
@@ -63,7 +64,7 @@ namespace iotsmartsys::core
 
     void SystemCommandProcessor::restartSafely()
     {
-        _logger.warn("SystemCommandProcessor: Performing safe restart.");
+       // _logger.warn("SystemCommandProcessor: Performing safe restart.");
         full_soft_powercycle_restart();
     }
 } // namespace iotsmartsys::core

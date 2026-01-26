@@ -105,11 +105,13 @@ namespace iotsmartsys::app
     bool CapabilitiesBuilder::registerCapability(ICapability *cap, void (*destructor)(void *))
     {
         if (_count >= _capsMax)
+        {
             return false;
+        }
 
         if (cap->capability_name.empty())
         {
-            auto deviceId = _deviceIdentityProvider.getDeviceID();
+            auto deviceId = _deviceIdentityProvider.getDeviceID();            
             cap->capability_name = deviceId + "_" + cap->type;
         }
 

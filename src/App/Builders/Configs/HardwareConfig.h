@@ -10,7 +10,7 @@ namespace iotsmartsys::app
     public:
         uint8_t GPIO;
         bool highIsOn = true;
-        const char *capability_name;
+        const char *capability_name = nullptr;
 
         explicit HardwareConfig(uint8_t gpio) : GPIO(gpio) {}
         explicit HardwareConfig(uint8_t gpio, bool highOn) : GPIO(gpio), highIsOn(highOn) {}
@@ -23,7 +23,7 @@ namespace iotsmartsys::app
     public:
         uint8_t GPIO;
         bool highIsOn = true;
-        const char *capability_name;
+        const char *capability_name = nullptr;
         long debounceTimeMs = 50;
 
         explicit InputHardwareConfig(uint8_t gpio) : GPIO(gpio) {}

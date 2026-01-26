@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <atomic>
 #include "Contracts/Common/StateResult.h"
 
 #include "Contracts/Settings/Settings.h"
@@ -93,7 +94,6 @@ namespace iotsmartsys::core::settings
         ISettingsParser &_parser;
 
         // estado atual
-        mutable void *_mutex; // SemaphoreHandle_t, mas sem incluir FreeRTOS aqui no Core
         SettingsManagerState _state{SettingsManagerState::Idle};
         bool _has_current{false};
         Settings _current{};
@@ -108,5 +108,22 @@ namespace iotsmartsys::core::settings
         std::string _syncUrlBuffer{};
 
         void syncFromApi();
+
+        struct PendingSettingsUpdate
+        {
+            bool cancelled{false};
+            iotsmartsys::core::common::StateResult fetch_err{iotsmartsys::core::common::StateResult::Ok};
+            int http_status{-1};
+            bool has_parsed{false};
+            iotsmartsys::core::common::StateResult parse_err{iotsmartsys::core::common::StateResult::Ok};
+            Settings parsed{};
+        };
+
+        void setPendingUpdate(const PendingSettingsUpdate &pending);
+        void applyPendingUpdate(const PendingSettingsUpdate &pending);
+
+        PendingSettingsUpdate _pendingUpdate{};
+        std::atomic<bool> _hasPending{false};
+        std::atomic<std::uint32_t> _pendingSeq{0};
     };
 } // namespace iotsmartsys::core::settings

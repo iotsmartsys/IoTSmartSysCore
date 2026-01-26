@@ -1,3 +1,6 @@
+// Only compile ESP-IDF connectivity bridge on ESP32 targets
+#if defined(ESP32)
+
 #include "EspIdfConnectivityBridge.h"
 
 #include "esp_wifi.h"
@@ -99,3 +102,5 @@ namespace iotsmartsys::platform::espressif
     }
 
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32

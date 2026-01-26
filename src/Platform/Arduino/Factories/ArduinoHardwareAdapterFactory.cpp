@@ -3,7 +3,10 @@
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
+#include "Config/BuildConfig.h"
+#if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
+#endif
 
 namespace iotsmartsys::platform::arduino
 {
@@ -87,21 +90,37 @@ namespace iotsmartsys::platform::arduino
     /* IWaterLevelSensor */
     std::size_t ArduinoHardwareAdapterFactory::waterLevelSensorAdapterSize() const
     {
+#if IOTSMARTSYS_SENSORS_ENABLED
         return sizeof(ArduinoUltrassonicWaterLevelSensor);
+#else
+        return 0;
+#endif
     }
     std::size_t ArduinoHardwareAdapterFactory::waterLevelSensorAdapterAlign() const
     {
+#if IOTSMARTSYS_SENSORS_ENABLED
         return alignof(ArduinoUltrassonicWaterLevelSensor);
+#else
+        return 0;
+#endif
     }
     static void destroyWaterLevelSensorAdapter(void *p)
     {
+#if IOTSMARTSYS_SENSORS_ENABLED
         if (!p)
             return;
         static_cast<ArduinoUltrassonicWaterLevelSensor *>(p)->~ArduinoUltrassonicWaterLevelSensor();
+#else
+        (void)p;
+#endif
     }
     ArduinoHardwareAdapterFactory::AdapterDestructor ArduinoHardwareAdapterFactory::waterLevelSensorAdapterDestructor() const
     {
+#if IOTSMARTSYS_SENSORS_ENABLED
         return &destroyWaterLevelSensorAdapter;
+#else
+        return nullptr;
+#endif
     }
     iotsmartsys::core::IWaterLevelSensor *ArduinoHardwareAdapterFactory::createWaterLevelSensor(
         void *mem,
@@ -111,9 +130,19 @@ namespace iotsmartsys::platform::arduino
         float maxLevelCm,
         iotsmartsys::core::WaterLevelRecipentType recipentType)
     {
+#if IOTSMARTSYS_SENSORS_ENABLED
         auto *sr04Sensor = new SensorUltrassonicHCSR04(trigPin, echoPin, static_cast<long>(minLevelCm), static_cast<long>(maxLevelCm));
 
         return new (mem) ArduinoUltrassonicWaterLevelSensor(sr04Sensor, recipentType);
+#else
+        (void)mem;
+        (void)trigPin;
+        (void)echoPin;
+        (void)minLevelCm;
+        (void)maxLevelCm;
+        (void)recipentType;
+        return nullptr;
+#endif
     }
 
     /* IColorSensor */

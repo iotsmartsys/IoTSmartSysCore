@@ -9,8 +9,8 @@
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
 #include "Contracts/Transports/ITransportChannel.h"
+#include "Contracts/Mqtt/IMqttClient.h"
 #include "Contracts/Settings/IReadOnlySettingsProvider.h"
-#include "IMqttClient.h"
 
 namespace iotsmartsys::app
 {

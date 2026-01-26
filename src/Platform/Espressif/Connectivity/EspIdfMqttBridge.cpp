@@ -1,3 +1,6 @@
+// Only compile the ESP-IDF MQTT bridge on ESP32 targets
+#if defined(ESP32)
+
 #include "EspIdfMqttBridge.h"
 #include "esp_log.h"
 
@@ -46,3 +49,5 @@ namespace iotsmartsys::platform::espressif
     }
 
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32

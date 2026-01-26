@@ -1,5 +1,4 @@
 #include "AnnouncePayloadBuilder.h"
-#include <utility>
 
 namespace iotsmartsys::app
 {
@@ -21,7 +20,7 @@ namespace iotsmartsys::app
 
         // Add capabilities
         payload += "\"capabilities\":[" + buildCapabilitiesJson() + "]";
-
+        
         payload += "}";
 
         return payload;

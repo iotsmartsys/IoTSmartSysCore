@@ -2,7 +2,9 @@
 
 #include "pins.h"
 #include <Arduino.h>
+#include <memory>
 #include <string>
+#include "Config/BuildConfig.h"
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 // -----------------------------------------------------------------------------
@@ -42,12 +44,22 @@
 #include "App/Managers/ProvisioningController.h"
 #include "App/Managers/TransportController.h"
 
-#include "Infra/OTA/OTAManager.h"
-#include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
 #include "Infra/Factories/SensorFactory.h"
 
 #include "Platform/Arduino/Transports/ArduinoSerialTransportChannel.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
+#include "Contracts/Mqtt/IMqttClient.h"
+
+namespace iotsmartsys::ota
+{
+        class OTA;
+        class OTAManager;
+}
+
+namespace iotsmartsys::platform::espressif::ota
+{
+        class EspIdFirmwareManifestParser;
+}
 
 namespace iotsmartsys
 {
@@ -55,6 +67,7 @@ namespace iotsmartsys
         {
         public:
                 SmartSysApp();
+                ~SmartSysApp();
 
                 /// @brief Initializes the application, including hardware and services.
                 void setup();
@@ -109,12 +122,20 @@ namespace iotsmartsys
                 core::settings::ISettingsGate &settingsGate_;
 
                 platform::espressif::EspIdfCommandParser commandParser_;
-                platform::espressif::EspIdfMqttClient mqttClient_;
+
+                std::unique_ptr<iotsmartsys::core::IMqttClient> mqttClient_;
 
                 iotsmartsys::core::settings::Settings settings_;
+                app::MqttService<12, 16, 256> mqtt_;
                 iotsmartsys::core::MqttSink mqttSink_;
                 iotsmartsys::platform::arduino::ArduinoHardwareAdapterFactory hwFactory_;
+                platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
+
+                core::WiFiManager wifi_;
+                app::ProvisioningController provisioningController_;
                 app::DeviceStateManager deviceStateManager_;
+                app::ConnectivityBootstrap connectivityBootstrap_;
+
                 core::ICapability *capSlots_[8] = {};
                 void (*capDtors_[8])(void *) = {};
                 void *adapterSlots_[8] = {};
@@ -125,21 +146,18 @@ namespace iotsmartsys
 
                 iotsmartsys::platform::espressif::arduino::ArduinoEventLatch latch_;
 
-                core::WiFiManager wifi_;
-                app::ConnectivityBootstrap connectivityBootstrap_;
-                app::MqttService<12, 16, 256> mqtt_;
-                iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser manifestParser_;
+#if IOTSMARTSYS_OTA_ENABLED
+                std::unique_ptr<iotsmartsys::platform::espressif::ota::EspIdFirmwareManifestParser> manifestParser_;
 #ifndef OTA_DISABLED
-                ota::OTA ota_;
+                std::unique_ptr<iotsmartsys::ota::OTA> ota_;
 #endif
-                ota::OTAManager otaManager_;
+                std::unique_ptr<iotsmartsys::ota::OTAManager> otaManager_;
+#endif
 
                 iotsmartsys::core::SystemCommandProcessor systemCommandProcessor_;
                 app::FactoryResetButtonController factoryResetButtonController_;
                 app::CapabilityController capabilityController_;
                 app::TransportController transportController_;
-                SerialTransportChannel *uart_;
-                platform::espressif::providers::DeviceIdentityProvider deviceIdentityProvider_;
-                app::ProvisioningController provisioningController_;
+                core::SerialTransportChannel *uart_;
         };
 } // namespace iotsmartsys

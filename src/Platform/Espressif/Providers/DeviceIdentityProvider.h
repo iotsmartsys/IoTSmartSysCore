@@ -15,6 +15,10 @@ namespace iotsmartsys::platform::espressif::providers
         /// @brief Obtém o identificador único do dispositivo.
         /// @return Identificador único do dispositivo.
         std::string getDeviceUniqueId() const override;
+
+        /// @brief Obtem o modelo do Chip/Board
+        /// @return Modelo do Chip/Board
+        std::string getDeviceModel() const override;
     };
 
-} // namespace iotsmartsys::core
+} // namespace iotsmartsys::platform::espressif::providers

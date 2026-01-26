@@ -1,3 +1,7 @@
+// Only compile the ESP-IDF fetcher on ESP32 targets
+#include "Config/BuildConfig.h"
+#if defined(ESP32) && IOTSMARTSYS_SETTINGS_FETCH_ENABLED
+
 #pragma once
 
 #include "Contracts/Settings/ISettingsFetcher.h"
@@ -63,3 +67,5 @@ namespace iotsmartsys::platform::espressif
         void finishAndCallback(iotsmartsys::core::common::StateResult err, int http_status, bool cancelled);
     };
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32

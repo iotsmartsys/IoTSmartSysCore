@@ -1,6 +1,8 @@
 // Platform/Espressif/Settings/EspIdfNvsSettingsProvider.h
 #pragma once
 
+#ifdef ESP32
+
 #include "Contracts/Providers/ISettingsProvider.h"
 #include "Contracts/Logging/ILogger.h"
 
@@ -97,3 +99,5 @@ namespace iotsmartsys::platform::espressif
         static esp_err_t ensureNvsInit();
     };
 } // namespace iotsmartsys::platform::espressif
+
+#endif // ESP32
