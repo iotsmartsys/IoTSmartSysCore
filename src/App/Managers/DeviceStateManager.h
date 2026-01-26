@@ -17,7 +17,10 @@ namespace iotsmartsys::app
     class DeviceStateManager
     {
     public:
-        DeviceStateManager(core::ILogger &logger, core::IHardwareAdapterFactory &factory, core::WiFiManager wifi, app::ProvisioningController provisioningController);
+        DeviceStateManager(core::ILogger &logger,
+                           core::IHardwareAdapterFactory &factory,
+                           core::WiFiManager &wifi,
+                           app::ProvisioningController &provisioningController);
 
         bool configure(const LightConfig &cfg);
         void handle();
@@ -31,10 +34,10 @@ namespace iotsmartsys::app
         void handleError(uint32_t nowMs);
 
         core::ILogger &logger_;
-        core::WiFiManager wifi_;
+        core::WiFiManager &wifi_;
         core::IHardwareAdapterFactory &factory_;
         core::ICommandHardwareAdapter *led{nullptr};
-        app::ProvisioningController provisioningController_;
+        app::ProvisioningController &provisioningController_;
 
         uint32_t lastToggleMs_{0};
         int blinkCount_{0};

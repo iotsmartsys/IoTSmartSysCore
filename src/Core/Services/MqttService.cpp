@@ -37,13 +37,13 @@ namespace iotsmartsys::app
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::begin(const iotsmartsys::core::TransportConfig &cfg,
                                                              const RetryPolicy &policy)
     {
-        _logger.info("MQTT", "MqttService::begin()");
+        // _logger.info("MQTT", "MqttService::begin()");
 
         _time = &iotsmartsys::core::Time::get();
-        _logger.info("MQTT", "Time provider set.");
+        // _logger.info("MQTT", "Time provider set.");
         if (!_time)
         {
-            _logger.debug("MQTT", "Time provider is not set yet");
+            // _logger.debug("MQTT", "Time provider is not set yet");
         }
         _cfg = cfg;
         _policy = policy;
@@ -56,14 +56,14 @@ namespace iotsmartsys::app
         // Ensure MQTT_CONNECTED bit is clear at start
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
-            _logger.debug("MQTT", "Clearing MQTT_CONNECTED bit");
+            // _logger.debug("MQTT", "Clearing MQTT_CONNECTED bit");
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
-            _logger.debug("MQTT", "MQTT_CONNECTED bit cleared");
+            // _logger.debug("MQTT", "MQTT_CONNECTED bit cleared");
         }
         _settingsReady = false;
         _lastSettingsReady = false;
         _lastStatusLogAtMs = 0;
-        _logger.debug("MQTT", "Subscribing to SettingsGate for SettingsReady events...");
+        // _logger.debug("MQTT", "Subscribing to SettingsGate for SettingsReady events...");
 
         const auto gateSubErr = _settingsGate.runWhenReady(
             iotsmartsys::core::settings::SettingsReadyLevel::Available,
@@ -71,7 +71,7 @@ namespace iotsmartsys::app
             this);
         if (gateSubErr != iotsmartsys::core::common::StateResult::Ok)
         {
-            _logger.warn("MQTT", "SettingsGate subscription failed (err=%d). MQTT will stay blocked by SettingsReady.", (int)gateSubErr);
+            // _logger.warn("MQTT", "SettingsGate subscription failed (err=%d). MQTT will stay blocked by SettingsReady.", (int)gateSubErr);
         }
 
         // _subCount = 0;
@@ -79,14 +79,14 @@ namespace iotsmartsys::app
         subscribe(cfg.subscribeTopic);
 
         const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
-        _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
+        // _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
         _client.setOnMessage(&MqttService::onMessageThunk, this);
         _client.setOnConnected(&MqttService::onConnectedThunk, this);
         _client.setOnDisconnected(&MqttService::onDisconnectedThunk, this);
-        _logger.info("MQTT", "MQTT client initialized.");
+        // _logger.info("MQTT", "MQTT client initialized.");
         const bool clientInitOk = _client.begin(_cfg);
 
-        _logger.info("MQTT", "Scheduling initial connection...");
+        // _logger.info("MQTT", "Scheduling initial connection...");
         // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
@@ -106,23 +106,13 @@ namespace iotsmartsys::app
         // Snapshot periódico para diagnosticar facilmente "por que não conectou"
         if (_statusLogEveryMs && (_lastStatusLogAtMs == 0 || (now - _lastStatusLogAtMs) >= _statusLogEveryMs))
         {
-            const int32_t until = (_nextActionAtMs > now) ? (int32_t)(_nextActionAtMs - now) : 0;
-            _logger.debug(
-                "MQTT",
-                "Status: state=%s net=%d settings=%d client=%d attempt=%lu nextInMs=%ld",
-                stateToStr(_state),
-                (int)networkReady,
-                (int)_settingsReady,
-                (int)_client.isConnected(),
-                (unsigned long)_attempt,
-                (long)until);
             _lastStatusLogAtMs = now;
         }
 
         // Se os dois gates ficaram prontos enquanto está Idle, agenda conexão.
         if (canConnect && _state == State::Idle)
         {
-            _logger.debug("MQTT", "Gates ready and state=Idle; scheduling connection now.");
+            // _logger.debug("MQTT", "Gates ready and state=Idle; scheduling connection now.");
             _state = State::BackoffWaiting;
             _nextActionAtMs = now;
         }
@@ -132,11 +122,11 @@ namespace iotsmartsys::app
         {
             if (networkReady)
             {
-                _logger.debug("MQTT", "NetworkReady=TRUE (Wi-Fi+IP). MQTT pode conectar.");
+                // _logger.debug("MQTT", "NetworkReady=TRUE (Wi-Fi+IP). MQTT pode conectar.");
             }
             else
             {
-                _logger.debug("MQTT", "NetworkReady=FALSE (Wi-Fi/IP). Pausando MQTT.");
+                // _logger.debug("MQTT", "NetworkReady=FALSE (Wi-Fi/IP). Pausando MQTT.");
             }
             _lastNetworkReady = networkReady;
         }
@@ -149,11 +139,11 @@ namespace iotsmartsys::app
         {
             if (_settingsReady)
             {
-                _logger.debug("MQTT", "SettingsReady=TRUE (cache OK). MQTT pode conectar quando NetworkReady=TRUE.");
+                // _logger.debug("MQTT", "SettingsReady=TRUE (cache OK). MQTT pode conectar quando NetworkReady=TRUE.");
             }
             else
             {
-                _logger.debug("MQTT", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando MQTT.");
+                // _logger.debug("MQTT", "SettingsReady=FALSE (cache ainda não carregou). Bloqueando MQTT.");
             }
             _lastSettingsReady = _settingsReady;
         }
@@ -161,18 +151,12 @@ namespace iotsmartsys::app
         // Gate composto: MQTT só pode operar quando rede (Wi-Fi+IP) E settings (cache ok) estiverem prontos.
         if (!canConnect)
         {
-            if (!networkReady)
-                _logger.debug("MQTT", "Blocking MQTT: NetworkReady=FALSE (Wi-Fi/IP).");
-            else
-                _logger.debug("MQTT", "Blocking MQTT: SettingsReady=FALSE (cache ainda não carregou).");
-
             if (_state == State::Connecting || _state == State::Online)
             {
-                _logger.debug("MQTT", "Stopping MQTT due to canConnect=FALSE");
                 _client.stop();
             }
 
-            // garante bit limpo mesmo se já estiver em backoff/idle
+            // Garante bit limpo mesmo se já estiver em backoff/idle
             gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
 
             // Fica em Idle aguardando os gates liberarem.
@@ -207,7 +191,6 @@ namespace iotsmartsys::app
             }
             else if (_nextActionAtMs && now >= _nextActionAtMs)
             {
-                _logger.debug("MQTT", "Connect timeout (soft-timeout). Scheduling retry.");
                 scheduleRetry();
             }
             break;
@@ -229,7 +212,6 @@ namespace iotsmartsys::app
             }
             else
             {
-                // tenta drenar aos poucos (sem travar)
                 drainQueue();
             }
             break;
@@ -261,40 +243,40 @@ namespace iotsmartsys::app
     {
         if (!topic || std::strlen(topic) == 0)
         {
-            _logger.debug("MQTT", "Empty topic in subscribe()");
+            // _logger.debug("MQTT", "Empty topic in subscribe()");
             return false;
         }
-        
+
         // guarda para resubscribe
         // deve evitar que tópicos duplicados sejam adicionados
         for (std::size_t i = 0; i < _subCount; ++i)
         {
             if (_subs[i] == topic)
             {
-                _logger.debug("MQTT", "Topic already in subscribe list; topic=%s", topic);
+                // _logger.debug("MQTT", "Topic already in subscribe list; topic=%s", topic);
                 return true;
             }
         }
 
         if (_subCount < MaxTopics)
         {
-            _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
+            // _logger.info("MQTT", "(func subscribe) Subscribing to topic: %s", topic);
             _subs[_subCount++] = (topic ? topic : "");
         }
         else
         {
-            _logger.debug("MQTT", "Subscribe list full; topic=%s", topic);
+            // _logger.debug("MQTT", "Subscribe list full; topic=%s", topic);
             return false;
         }
 
         if (_client.isConnected())
         {
-            _logger.info("MQTT", "(func subscribe) Client connected, subscribing to topic: %s", topic);
+            // _logger.info("MQTT", "(func subscribe) Client connected, subscribing to topic: %s", topic);
             return _client.subscribe(topic);
         }
         else
         {
-            _logger.info("MQTT", "(func subscribe) Client not connected, enqueuing topic: %s", topic);
+            // _logger.info("MQTT", "(func subscribe) Client not connected, enqueuing topic: %s", topic);
         }
         return true;
     }
@@ -356,7 +338,6 @@ namespace iotsmartsys::app
         // Gate redundante (segurança): nunca tenta MQTT antes de settings estar pronto
         if (!_settingsReady)
         {
-            _logger.debug("MQTT", "startConnect blocked: SettingsReady=FALSE (cache ainda não carregou). state=%s", stateToStr(_state));
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -365,7 +346,6 @@ namespace iotsmartsys::app
         iotsmartsys::core::settings::Settings settings;
         if (!_settingsProvider.copyCurrent(settings))
         {
-            _logger.debug("MQTT", "startConnect aborted: settings not available yet.");
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -389,7 +369,6 @@ namespace iotsmartsys::app
 
         if (_uriStr.empty())
         {
-            _logger.debug("MQTT", "startConnect aborted: MQTT host/uri not configured.");
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -414,7 +393,7 @@ namespace iotsmartsys::app
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             if (!gate.isNetworkReady())
             {
-                _logger.debug("MQTT", "startConnect blocked: NetworkReady=FALSE (Wi-Fi/IP não pronto). state=%s", stateToStr(_state));
+                // _logger.debug("MQTT", "startConnect blocked: NetworkReady=FALSE (Wi-Fi/IP não pronto). state=%s", stateToStr(_state));
                 _state = State::BackoffWaiting;
                 _nextActionAtMs = _time ? _time->nowMs() + 1000 : 1000;
                 return;
@@ -422,9 +401,9 @@ namespace iotsmartsys::app
         }
 
         _state = State::Connecting;
-        _logger.debug("MQTT", "Starting connection attempt %lu", (unsigned long)(_attempt + 1));
+        // _logger.debug("MQTT", "Starting connection attempt %lu", (unsigned long)(_attempt + 1));
         _nextActionAtMs = (_time ? _time->nowMs() : 0) + 15000; // soft-timeout de conexão
-        _logger.info("MQTT", "Connecting (attempt=%lu)", (unsigned long)(_attempt + 1));
+                                                                // _logger.info("MQTT", "Connecting (attempt=%lu)", (unsigned long)(_attempt + 1));
         _client.start();
     }
 
@@ -442,9 +421,6 @@ namespace iotsmartsys::app
         }
         _state = State::BackoffWaiting;
         _nextActionAtMs = now + backoff;
-
-        _logger.debug("MQTT", "Retry in %lu ms (attempt=%lu)",
-                      (unsigned long)backoff, (unsigned long)_attempt);
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -476,10 +452,10 @@ namespace iotsmartsys::app
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     void MqttService<MaxTopics, QueueLen, MaxPayload>::resubscribeAll()
     {
-        _logger.info("MQTT", "Resubscribing to %lu topics", (unsigned long)_subCount);
+        // _logger.info("MQTT", "Resubscribing to %lu topics", (unsigned long)_subCount);
         for (std::size_t i = 0; i < _subCount; ++i)
         {
-            _logger.info("MQTT", "Resubscribing to topic: %s", _subs[i].c_str());
+            // _logger.info("MQTT", "Resubscribing to topic: %s", _subs[i].c_str());
             _client.subscribe(_subs[i].c_str());
         }
     }
@@ -509,7 +485,6 @@ namespace iotsmartsys::app
         }
         if (_qCount >= QueueLen)
         {
-            _logger.warn("MQTT", "Queue full. Drop.");
             return false;
         }
 
@@ -581,7 +556,7 @@ namespace iotsmartsys::app
             }
         }
 
-        _logger.info("MQTT", "SettingsReady=TRUE (cache OK). MQTT liberado quando NetworkReady=TRUE.");
+        // _logger.info("MQTT", "SettingsReady=TRUE (cache OK). MQTT liberado quando NetworkReady=TRUE.");
     }
 
     // Explicit instantiation for the common configuration used in this project

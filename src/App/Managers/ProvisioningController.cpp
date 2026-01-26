@@ -28,6 +28,27 @@ namespace iotsmartsys::app
             return;
         }
         setupProvisioning();
+#if IOTSMARTSYS_PROVISIONING_ENABLED
+        if (!provisioningTaskRunning_)
+        {
+            BaseType_t ok = xTaskCreate(&ProvisioningController::provisioningTaskEntry,
+                                        "provisioning",
+                                        4096,
+                                        this,
+                                        4,
+                                        &provisioningTask_);
+            if (ok == pdPASS)
+            {
+                provisioningTaskRunning_ = true;
+            }
+            else
+            {
+                provisioningTask_ = nullptr;
+                provisioningTaskRunning_ = false;
+                logger_.warn("Provisioning task creation failed; falling back to main loop handling.");
+            }
+        }
+#endif
     }
 
     void ProvisioningController::handle()
@@ -36,6 +57,12 @@ namespace iotsmartsys::app
         {
             return;
         }
+#if IOTSMARTSYS_PROVISIONING_ENABLED
+        if (provisioningTaskRunning_)
+        {
+            return;
+        }
+#endif
         provManager_->handle();
     }
 
@@ -46,9 +73,9 @@ namespace iotsmartsys::app
 
     void ProvisioningController::setupProvisioning()
     {
-        logger_.info("--------------------------------------------------------");
-        logger_.info("Entering in Config Mode - Starting Provisioning Manager");
-        logger_.info("--------------------------------------------------------");
+       //  logger_.info("--------------------------------------------------------");
+       //  logger_.info("Entering in Config Mode - Starting Provisioning Manager");
+       //  logger_.info("--------------------------------------------------------");
         provManager_ = new core::provisioning::ProvisioningManager();
 
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
@@ -82,6 +109,29 @@ namespace iotsmartsys::app
         provManager_->begin();
         inConfigMode_ = true;
     }
+
+#if IOTSMARTSYS_PROVISIONING_ENABLED
+    void ProvisioningController::provisioningTaskEntry(void *arg)
+    {
+        auto *self = static_cast<ProvisioningController *>(arg);
+        if (self)
+        {
+            self->provisioningTaskLoop();
+        }
+        vTaskDelete(nullptr);
+    }
+
+    void ProvisioningController::provisioningTaskLoop()
+    {
+        while (inConfigMode_ && provManager_)
+        {
+            provManager_->handle();
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+        provisioningTaskRunning_ = false;
+        provisioningTask_ = nullptr;
+    }
+#endif
 #else
     ProvisioningController::ProvisioningController(core::ILogger &logger,
                                                    core::WiFiManager &wifi,

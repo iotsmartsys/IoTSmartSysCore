@@ -19,7 +19,7 @@ namespace iotsmartsys::core
         iotsmartsys::core::DeviceCommand *cmd = _commandParser.parseCommand(msg.payload, msg.payloadLen);
         if (!cmd)
         {
-            _logger.error("Failed to parse MQTT message payload.");
+           // _logger.error("Failed to parse MQTT message payload.");
             return false;
         }
 
@@ -33,7 +33,7 @@ namespace iotsmartsys::core
         }
         else
         {
-            _logger.warn("No command processor available for command type.");
+           // _logger.warn("No command processor available for command type.");
             return false;
         }
     }

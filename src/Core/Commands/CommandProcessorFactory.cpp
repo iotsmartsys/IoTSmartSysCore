@@ -16,7 +16,7 @@ namespace iotsmartsys::core
         case CommandTypes::SYSTEM:
             return &_systemCommandProcessor;
         default:
-            _logger.error("Unknown command type.");
+           // _logger.error("Unknown command type.");
             return nullptr;
         }
     }

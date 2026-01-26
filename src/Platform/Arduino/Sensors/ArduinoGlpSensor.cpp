@@ -16,15 +16,15 @@ namespace iotsmartsys::platform::arduino
         pinMode(pinAO, INPUT);
         pinMode(pinDO, INPUT_PULLUP);
 
-        _logger.debug("ArduinoGlpSensor", "MQ-2 + ESP32 - Inicializando...");
-        _logger.debug("ArduinoGlpSensor", "Aquecendo sensor (~20 segundos)...");
+       // _logger.debug("ArduinoGlpSensor", "MQ-2 + ESP32 - Inicializando...");
+       // _logger.debug("ArduinoGlpSensor", "Aquecendo sensor (~20 segundos)...");
         delay(20000); // para exemplo; o ideal seria bem mais tempo para estabilizar melhor
 
-        _logger.debug("ArduinoGlpSensor", "Calibrando em 'ar limpo' (rápido)...");
+       // _logger.debug("ArduinoGlpSensor", "Calibrando em 'ar limpo' (rápido)...");
         cleanAirBase = readAnalogAverage();
         calibrated = true;
 
-        _logger.debug("ArduinoGlpSensor", "Valor base (cleanAirBase): %d", cleanAirBase);
+       // _logger.debug("ArduinoGlpSensor", "Valor base (cleanAirBase): %d", cleanAirBase);
     }
 
     void ArduinoGlpSensor::handle()
@@ -95,7 +95,7 @@ namespace iotsmartsys::platform::arduino
         }
 
         // Log na serial
-        _logger.warn("ArduinoGlpSensor", "ADC: %d, DO: %s, Nível GLP: %.2f%% (%s)", analogValue, (doState == LOW) ? "ALERTA" : "NORMAL", levelPercent, levelState.c_str());
+       // _logger.warn("ArduinoGlpSensor", "ADC: %d, DO: %s, Nível GLP: %.2f%% (%s)", analogValue, (doState == LOW) ? "ALERTA" : "NORMAL", levelPercent, levelState.c_str());
     }
 
     float ArduinoGlpSensor::getLevelPercent()

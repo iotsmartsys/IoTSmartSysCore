@@ -3,7 +3,10 @@
 
 namespace iotsmartsys::app
 {
-    DeviceStateManager::DeviceStateManager(core::ILogger &logger, core::IHardwareAdapterFactory &factory, core::WiFiManager wifi, app::ProvisioningController provisioningController)
+    DeviceStateManager::DeviceStateManager(core::ILogger &logger,
+                                           core::IHardwareAdapterFactory &factory,
+                                           core::WiFiManager &wifi,
+                                           app::ProvisioningController &provisioningController)
         : logger_(logger),
           factory_(factory),
           wifi_(wifi),
@@ -15,14 +18,14 @@ namespace iotsmartsys::app
     {
         if (led)
         {
-            logger_.warn("Status LED already configured. Returning existing instance.");
+            //  logger_.warn("Status LED already configured. Returning existing instance.");
             return false;
         }
 
         void *adapterMem = malloc(factory_.outputAdapterSize());
         if (!adapterMem)
         {
-            logger_.error("Failed to allocate memory for status LED hardware adapter.");
+            //  logger_.error("Failed to allocate memory for status LED hardware adapter.");
             return false;
         }
 
@@ -55,10 +58,11 @@ namespace iotsmartsys::app
                 break;
             default:
                 // state_ = core::StateDevice::Error;
-                handleIdle();
+                handleError(nowMs);
                 break;
             }
         }
+
         if (led)
             led->handle();
     }
@@ -101,7 +105,7 @@ namespace iotsmartsys::app
 
     void DeviceStateManager::handleConnecting(uint32_t nowMs)
     {
-        const uint32_t toggleMs = 250;
+        const uint32_t toggleMs = 500;
         if (nowMs - lastToggleMs_ < toggleMs)
         {
             return;

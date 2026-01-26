@@ -37,7 +37,7 @@ namespace iotsmartsys::platform::arduino
             }
             soma += scale->read();
             delay(20);
-            _logger.info("ArduinoGlpMeter: Scale initialized and tared.");
+           // _logger.info("ArduinoGlpMeter: Scale initialized and tared.");
         }
     }
 
@@ -85,9 +85,9 @@ namespace iotsmartsys::platform::arduino
                 startTimeMs = millis();
             }
 
-            _logger.debug("ArduinoGlpMeter", "Raw reading: %ld", media);
-            _logger.debug("ArduinoGlpMeter", "Delta: %ld", delta);
-            _logger.debug("ArduinoGlpMeter", "Kg: %.3f", kgFiltrado);
+           // _logger.debug("ArduinoGlpMeter", "Raw reading: %ld", media);
+           // _logger.debug("ArduinoGlpMeter", "Delta: %ld", delta);
+           // _logger.debug("ArduinoGlpMeter", "Kg: %.3f", kgFiltrado);
 
             static float lastKgStable = 0.0f;
             static bool kgIsStable = false;

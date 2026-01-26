@@ -24,7 +24,6 @@ namespace iotsmartsys::core::settings
     {
         using namespace iotsmartsys::core::common;
 
-
         Settings loaded;
         // provider returns platform result; o provider agora retorna Error
         const StateResult perr = _provider.load(loaded);
@@ -39,7 +38,7 @@ namespace iotsmartsys::core::settings
         }
         else
         {
-            
+
             _stats.cache_load_fail++;
             _stats.last_err = perr;
             // Não muda _current se não carregou; pode continuar vazio
@@ -141,7 +140,7 @@ namespace iotsmartsys::core::settings
     void SettingsManager::onFetchCompleted(const SettingsFetchResult &res)
     {
         // Nunca trava: callback vem da task do fetcher, é rápido.
-        _logger->info("SettingsManager", "onFetchCompleted() called (cancelled=%s, err=%d, http=%d)", res.cancelled ? "true" : "false", (int)res.err, res.http_status);
+        // _logger->info("SettingsManager", "onFetchCompleted() called (cancelled=%s, err=%d, http=%d)", res.cancelled ? "true" : "false", (int)res.err, res.http_status);
         PendingSettingsUpdate pending{};
         pending.cancelled = res.cancelled;
         pending.fetch_err = res.err;
@@ -169,7 +168,7 @@ namespace iotsmartsys::core::settings
     {
         if (pending.cancelled)
         {
-            _logger->error("SettingsManager", "Settings fetch cancelled (branch)");
+            // _logger->error("SettingsManager", "Settings fetch cancelled (branch)");
             _stats.last_err = iotsmartsys::core::common::StateResult::InvalidState;
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Idle);
             _settingsGate.setLevel(SettingsReadyLevel::None, iotsmartsys::core::common::StateResult::InvalidState);
@@ -179,7 +178,7 @@ namespace iotsmartsys::core::settings
         // Falha de HTTP/transporte ou status != 2xx => mantém redundância (NVS/memória)
         if (pending.fetch_err != iotsmartsys::core::common::StateResult::Ok || pending.http_status < 200 || pending.http_status >= 300)
         {
-            _logger->error("SettingsManager", "fetch failed: err=%d http=%d", (int)pending.fetch_err, pending.http_status);
+            // _logger->error("SettingsManager", "fetch failed: err=%d http=%d", (int)pending.fetch_err, pending.http_status);
             updateStatsFail(pending.fetch_err, pending.http_status);
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Error);
 
@@ -187,14 +186,14 @@ namespace iotsmartsys::core::settings
             const auto gateErr = (pending.fetch_err != iotsmartsys::core::common::StateResult::Ok)
                                      ? pending.fetch_err
                                      : iotsmartsys::core::common::StateResult::InvalidState;
-            _logger->error("SettingsManager", "signaling gate error %d", (int)gateErr);
+            // _logger->error("SettingsManager", "signaling gate error %d", (int)gateErr);
             _settingsGate.setLevel(SettingsReadyLevel::None, gateErr);
             return;
         }
 
         if (!pending.has_parsed)
         {
-            _logger->error("SettingsManager", "parse failed: %d", (int)pending.parse_err);
+            // _logger->error("SettingsManager", "parse failed: %d", (int)pending.parse_err);
             _stats.parse_fail++;
             _stats.last_err = pending.parse_err;
             _stats.last_http_status = pending.http_status;
@@ -212,7 +211,7 @@ namespace iotsmartsys::core::settings
 
         if (changed)
         {
-            _logger->info("SettingsManager", "fetched settings differ from current; updating in-memory and saving to NVS");
+            // _logger->info("SettingsManager", "fetched settings differ from current; updating in-memory and saving to NVS");
 
             _current = candidate;
             _has_current = true;
@@ -220,7 +219,7 @@ namespace iotsmartsys::core::settings
             const iotsmartsys::core::common::StateResult serr = _provider.save(_current);
             if (serr != iotsmartsys::core::common::StateResult::Ok)
             {
-                _logger->error("SettingsManager", "nvs save failed: %d", (int)serr);
+                // _logger->error("SettingsManager", "nvs save failed: %d", (int)serr);
                 _stats.nvs_save_fail++;
                 _stats.last_err = serr;
                 _stats.last_http_status = pending.http_status;
@@ -229,7 +228,7 @@ namespace iotsmartsys::core::settings
             }
             else
             {
-                _logger->info("SettingsManager", "nvs save OK");
+                // _logger->info("SettingsManager", "nvs save OK");
                 _stats.api_fetch_ok++;
                 _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
                 _stats.last_http_status = pending.http_status;
@@ -238,7 +237,7 @@ namespace iotsmartsys::core::settings
         }
         else
         {
-            _logger->info("SettingsManager", "fetched settings identical to current; skipping NVS save");
+            // _logger->info("SettingsManager", "fetched settings identical to current; skipping NVS save");
             if (!hadCurrent)
             {
                 _current = candidate;
@@ -251,7 +250,7 @@ namespace iotsmartsys::core::settings
         }
 
         // Gate: Synced quando veio da API (fetch + parse OK) e foi aplicado em memória.
-        _logger->info("SettingsManager", "signaling gate Synced");
+        // _logger->info("SettingsManager", "signaling gate Synced");
         _settingsGate.setLevel(SettingsReadyLevel::Synced, iotsmartsys::core::common::StateResult::Ok);
 
         if (_updated_cb)
@@ -259,18 +258,18 @@ namespace iotsmartsys::core::settings
             const Settings snapshot = _current;
             _updated_cb(snapshot, _updated_ctx);
         }
-        _logger->info("SettingsManager", "onFetchCompleted() finished, callback invoked=%s", _updated_cb ? "true" : "false");
+        // _logger->info("SettingsManager", "onFetchCompleted() finished, callback invoked=%s", _updated_cb ? "true" : "false");
     }
 
     void SettingsManager::handle()
     {
         if (_hasPending.load(std::memory_order_acquire))
         {
-            _logger->info("SettingsManager", "handle(): applying pending update");
+            // _logger->info("SettingsManager", "handle(): applying pending update");
             PendingSettingsUpdate pending{};
             for (;;)
             {
-                _logger->info("SettingsManager", "handle(): checking pending update");
+                // _logger->info("SettingsManager", "handle(): checking pending update");
                 const auto seq1 = _pendingSeq.load(std::memory_order_acquire);
                 if (seq1 & 1U)
                     continue;
@@ -279,9 +278,9 @@ namespace iotsmartsys::core::settings
                 if (seq1 == seq2 && !(seq2 & 1U))
                     break;
             }
-            _logger->info("SettingsManager", "handle(): got pending update, applying");
+            // _logger->info("SettingsManager", "handle(): got pending update, applying");
             _hasPending.store(false, std::memory_order_release);
-            _logger->info("SettingsManager", "handle(): calling applyPendingUpdate()");
+            // _logger->info("SettingsManager", "handle(): calling applyPendingUpdate()");
             applyPendingUpdate(pending);
         }
 
@@ -291,8 +290,7 @@ namespace iotsmartsys::core::settings
         {
             this->syncFromApi();
         }
-    // _logger->info("SettingsManager", "_settingsGate.level() = %d e networkReady = %s (ConnectivityGate.bits=0x%08x)", (int)_settingsGate.level(), networkReady ? " conectado" : "não conectado", gate.bits());
-
+        //// _logger->info("SettingsManager", "_settingsGate.level() = %d e networkReady = %s (ConnectivityGate.bits=0x%08x)", (int)_settingsGate.level(), networkReady ? " conectado" : "não conectado", gate.bits());
     }
 
     bool SettingsManager::save(const Settings &settings)
@@ -302,7 +300,7 @@ namespace iotsmartsys::core::settings
         _has_current = true;
 
         const auto serr = _provider.save(settings);
-        
+
         if (serr != iotsmartsys::core::common::StateResult::Ok)
         {
             _stats.nvs_save_fail++;
@@ -330,31 +328,23 @@ namespace iotsmartsys::core::settings
     void SettingsManager::syncFromApi()
     {
         {
-            _logger->info("SettingsManager", "signaling gate Syncing");
             _settingsGate.setLevel(SettingsReadyLevel::Syncing, iotsmartsys::core::common::StateResult::Ok);
         }
-        _logger->info("SettingsManager", "syncFromApi() starting");
-        // 2) API is source of truth: refresh asynchronously (does not block firmware)
+
         SettingsFetchRequest req;
-        // replace <device_id> from url with actual clientId
+
         if (_has_current == false)
         {
             _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
+            return;
         }
         _syncUrlBuffer = _current.api.url;
-        _logger->info("[SettingsManager]", "syncFromApi() original URL: %s", _syncUrlBuffer.c_str());
         const auto deviceIdPlaceholder = std::string(":device_id");
-        _logger->info("[SettingsManager]", "syncFromApi() deviceIdPlaceholder: %s", deviceIdPlaceholder.c_str());
         const auto placeholderPos = _syncUrlBuffer.find(deviceIdPlaceholder);
-        _logger->info("[SettingsManager]", "syncFromApi() placeholderPos: %d", (int)placeholderPos);
         if (placeholderPos != std::string::npos && _current.clientId != nullptr)
         {
-            _logger->info("[SettingsManager]", "syncFromApi() replacing placeholder with clientId:");
-            _logger->info("[SettingsManager]", "syncFromApi() clientId: %s", _current.clientId);
             _syncUrlBuffer.replace(placeholderPos, deviceIdPlaceholder.length(), _current.clientId);
-            _logger->info("[SettingsManager]", "syncFromApi() replaced URL: %s", _syncUrlBuffer.c_str());
         }
-        _logger->info("[SettingsManager]", "syncFromApi() requesting URL: %s", _syncUrlBuffer.c_str());
 
         // Keep pointer valid while the async fetcher runs.
         req.url = _syncUrlBuffer.c_str();
@@ -375,9 +365,13 @@ namespace iotsmartsys::core::settings
 
         const auto startErr = refreshFromApiAsync(req);
         if (startErr == StateResult::Ok)
+        {
             _logger->info("[SettingsManager] API refresh started.");
+        }
         else
+        {
             _logger->warn("[SettingsManager] Failed to start API refresh.");
+        }
     }
 
     void SettingsManager::clear()
@@ -385,14 +379,13 @@ namespace iotsmartsys::core::settings
         const auto err = _provider.erase();
         if (err != iotsmartsys::core::common::StateResult::Ok)
         {
-            _logger->error("SettingsManager", "eraseCache: NVS erase failed: %d", (int)err);
+            // _logger->error("SettingsManager", "eraseCache: NVS erase failed: %d", (int)err);
             _stats.last_err = err;
         }
         else
         {
-            _logger->info("SettingsManager", "eraseCache: NVS erase OK");
+            // _logger->info("SettingsManager", "eraseCache: NVS erase OK");
             _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
-            // Clear in-memory current as well
             _current = Settings{};
             _has_current = false;
             _state = SettingsManagerState::Idle;

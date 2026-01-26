@@ -8,6 +8,11 @@
 #include "Core/Provisioning/ProvisioningManager.h"
 #include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
+#if IOTSMARTSYS_PROVISIONING_ENABLED
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#endif
+
 namespace iotsmartsys::core::provisioning
 {
     class BleProvisioningChannel;
@@ -43,5 +48,11 @@ namespace iotsmartsys::app
         core::provisioning::WebPortalProvisioningChannel *webPortalChannel_{nullptr};
 #endif
         bool inConfigMode_{false};
+#if IOTSMARTSYS_PROVISIONING_ENABLED
+        static void provisioningTaskEntry(void *arg);
+        void provisioningTaskLoop();
+        TaskHandle_t provisioningTask_{nullptr};
+        bool provisioningTaskRunning_{false};
+#endif
     };
 } // namespace iotsmartsys::app

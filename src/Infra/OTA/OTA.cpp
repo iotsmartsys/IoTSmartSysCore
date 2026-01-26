@@ -47,7 +47,7 @@ namespace iotsmartsys::ota
 
         ArduinoOTA.begin();
         _initialized = true;
-        _logger.info("OTA", "Pronto.");
+       // _logger.info("OTA", "Pronto.");
     }
 
     void OTA::handle()

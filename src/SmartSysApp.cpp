@@ -20,7 +20,12 @@ namespace iotsmartsys
           mqttClient_(std::make_unique<platform::espressif::EspIdfMqttClient>(logger_)),
           mqtt_(*mqttClient_, logger_, settingsGate_, settingsManager_),
           mqttSink_(mqtt_, settingsManager_),
+          hwFactory_(),
+          deviceIdentityProvider_(),
+          wifi_(logger_),
+          provisioningController_(logger_, wifi_, deviceIdentityProvider_),
           deviceStateManager_(logger_, hwFactory_, wifi_, provisioningController_),
+          connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
           builder_(hwFactory_,
                    mqttSink_,
                    capSlots_,
@@ -32,13 +37,11 @@ namespace iotsmartsys
                    arena_,
                    sizeof(arena_),
                    deviceIdentityProvider_),
-          wifi_(logger_),
-          connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
           systemCommandProcessor_(logger_),
           factoryResetButtonController_(logger_, settingsManager_, systemCommandProcessor_, hwFactory_),
           capabilityController_(logger_, commandParser_, systemCommandProcessor_),
           transportController_(logger_, settingsManager_, mqtt_),
-          provisioningController_(logger_, wifi_, deviceIdentityProvider_)
+          uart_(nullptr)
     {
 #if IOTSMARTSYS_OTA_ENABLED
         manifestParser_ = std::make_unique<platform::espressif::ota::EspIdFirmwareManifestParser>();
@@ -92,15 +95,9 @@ namespace iotsmartsys
 
     void SmartSysApp::onMqttConnected(const core::TransportConnectedView &info)
     {
-        logger_.info("MQTT connected to broker: %s", info.broker);
-        logger_.info("MQTT client ID: %s", info.clientId);
-        logger_.info("MQTT keep alive: %d", info.keepAliveSec);
-        
-        
         auto *capabilityManager = capabilityController_.manager();
         if (!capabilityManager)
         {
-            logger_.error("CapabilityManager not initialized; skipping announce.");
             return;
         }
         app::AnnouncePayloadBuilder builder(
@@ -116,43 +113,23 @@ namespace iotsmartsys
             .withMacAddress(wifi_.getMacAddress());
 
         std::string payload = builder.build();
-        logger_.info("Publishing MQTT message: %s", payload.c_str());
 
         core::settings::Settings currentSettings;
         if (!settingsManager_.copyCurrent(currentSettings))
         {
-            logger_.error("Failed to copy current settings for MQTT publish.");
             return;
         }
 
         std::string topic = currentSettings.mqtt.announce_topic;
-        if (mqtt_.publish(
-                topic.c_str(),
-                payload.c_str(),
-                payload.length(),
-                false))
-        {
-            logger_.info("MQTT message published successfully in topic: %s", topic.c_str());
-        }
-        else
-        {
-            logger_.error("Failed to publish MQTT message.");
-        }
+        mqtt_.publish(topic.c_str(), payload.c_str(), payload.length(), false);
     }
 
     void SmartSysApp::onSettingsUpdated(const iotsmartsys::core::settings::Settings &newSettings)
     {
-        logger_.warn("[SettingsManager] Settings updated from API. Re-applying runtime config...");
         if (newSettings.hasChanges())
         {
             settings_ = newSettings;
-            logger_.warn("[SettingsManager] Settings have changes. Applying...");
             applySettingsToRuntime(newSettings);
-        }
-        else
-        {
-            logger_.warn("[SettingsManager] Settings have NO changes. Skipping apply.");
-            return;
         }
     }
 
@@ -163,7 +140,7 @@ namespace iotsmartsys
         delay(3000);
         logger_.info("---------------------------------------------------------");
         logger_.info("IoT SmartSys Core Version: ", IOTSMARTSYSCORE_VERSION);
-        logger_.info("Device ID: ", deviceIdentityProvider_.getDeviceID().c_str());
+        logger_.info("Device ID", deviceIdentityProvider_.getDeviceID().c_str());
         logger_.info("---------------------------------------------------------");
 
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
@@ -177,8 +154,6 @@ namespace iotsmartsys
 
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
-
-
         capabilityController_.setup(builder_);
         transportController_.addDispatcher(*capabilityController_.dispatcher());
         transportController_.configureMqtt(
@@ -190,11 +165,10 @@ namespace iotsmartsys
 
     void SmartSysApp::handle()
     {
-        // deviceStateManager_.handle();
+        deviceStateManager_.handle();
         if (provisioningController_.isActive())
         {
             provisioningController_.handle();
-            return;
         }
 
         factoryResetButtonController_.handle();

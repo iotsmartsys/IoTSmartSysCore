@@ -16,7 +16,7 @@ namespace iotsmartsys::core
         _cfg = cfg;
         _attempt = 0;
         _gotIp = false;
-        _state = WiFiState::Idle;
+        _state = WiFiState::Connecting;
         _nextActionAtMs = 0;
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();

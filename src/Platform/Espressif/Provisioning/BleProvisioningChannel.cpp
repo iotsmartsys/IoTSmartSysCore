@@ -186,13 +186,13 @@ namespace iotsmartsys::core::provisioning
         }
 
         esp_err_t rc_gap_cb = esp_ble_gap_register_callback(&BleProvisioningChannel::gapEventHandler);
-        _logger.info(TAG, "begin: esp_ble_gap_register_callback -> %s", esp_err_to_name(rc_gap_cb));
+       // _logger.info(TAG, "begin: esp_ble_gap_register_callback -> %s", esp_err_to_name(rc_gap_cb));
 
         esp_err_t rc_gatts_cb = esp_ble_gatts_register_callback(&BleProvisioningChannel::gattsEventHandler);
-        _logger.info(TAG, "begin: esp_ble_gatts_register_callback -> %s", esp_err_to_name(rc_gatts_cb));
+       // _logger.info(TAG, "begin: esp_ble_gatts_register_callback -> %s", esp_err_to_name(rc_gatts_cb));
 
         esp_err_t rc_app = esp_ble_gatts_app_register(GATTS_APP_ID);
-        _logger.info(TAG, "begin: esp_ble_gatts_app_register -> %s", esp_err_to_name(rc_app));
+       // _logger.info(TAG, "begin: esp_ble_gatts_app_register -> %s", esp_err_to_name(rc_app));
 
         sendStatus(ProvisioningStatus::WaitingUserInput, "[BLE] Aguardando configuracao via BLE...");
     }
@@ -276,7 +276,7 @@ namespace iotsmartsys::core::provisioning
             return;
         }
 
-        _logger.info(TAG, "%s", msg);
+       // _logger.info(TAG, "%s", msg);
 
         if (_gattsIf == ESP_GATT_IF_NONE)
         {
@@ -314,10 +314,10 @@ namespace iotsmartsys::core::provisioning
 
     void BleProvisioningChannel::onConfigWrite(const uint8_t *data, uint16_t len)
     {
-        _logger.debug(TAG, "onConfigWrite: len=%u data=%p", (unsigned)len, (const void *)data);
+       // _logger.debug(TAG, "onConfigWrite: len=%u data=%p", (unsigned)len, (const void *)data);
         if (!data || len == 0 || len > 96)
         {
-            _logger.debug(TAG, "onConfigWrite: INVALID_LENGTH (len=%u)", (unsigned)len);
+           // _logger.debug(TAG, "onConfigWrite: INVALID_LENGTH (len=%u)", (unsigned)len);
             sendStatus(ProvisioningStatus::Failed, "[BLE] ERROR:INVALID_LENGTH");
             return;
         }
@@ -325,7 +325,7 @@ namespace iotsmartsys::core::provisioning
         char payload[97];
         memcpy(payload, data, len);
         payload[len] = '\0';
-        _logger.debug(TAG, "onConfigWrite: payload='%s' (len=%u)", payload, (unsigned)len);
+       // _logger.debug(TAG, "onConfigWrite: payload='%s' (len=%u)", payload, (unsigned)len);
 
         sendStatus(ProvisioningStatus::ReceivingData, "[BLE] CONFIG_RECEIVED");
 

@@ -22,7 +22,13 @@ namespace iotsmartsys::platform::espressif
           settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
           wifiManager_(logger_)
     {
+#if defined(SERIAL_ENABLED) && SERIAL_ENABLED == 1
+#ifdef SERIAL_BAUD_RATE
+        Serial.begin(SERIAL_BAUD_RATE);
+#else
         Serial.begin(115200);
+#endif
+#endif
     }
 
     void EspressifPlatformServiceRegistrar::registerPlatformServices(iotsmartsys::core::ServiceProvider &sp)

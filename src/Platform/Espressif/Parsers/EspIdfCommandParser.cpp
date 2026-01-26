@@ -174,7 +174,7 @@ namespace iotsmartsys::platform::espressif
     {
         if (!jsonPayload || payloadLen == 0)
         {
-            _logger.error("Failed to parse JSON payload: empty payload.");
+           // _logger.error("Failed to parse JSON payload: empty payload.");
             return nullptr;
         }
 
@@ -190,7 +190,7 @@ namespace iotsmartsys::platform::espressif
 
         if (!okCap || !okDev || !okVal)
         {
-            _logger.error("Failed to parse JSON payload: missing required fields.");
+           // _logger.error("Failed to parse JSON payload: missing required fields.");
             return nullptr;
         }
 

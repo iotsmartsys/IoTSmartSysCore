@@ -51,11 +51,11 @@ namespace iotsmartsys::core::provisioning
 
         IPAddress ip = WiFi.softAPIP();
         _availableSsids = _wifiManager.getAvailableSSIDs();
-        _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
-        _logger.info("[PortalConfig]", "DEVICE ID: %s", deviceId.c_str());
-        _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
-        _logger.info("[PortalConfig]", "SSID: %s", apName.c_str());
-        _logger.info("[PortalConfig]", "Senha: %s", apPass.c_str());
+       // _logger.info("[PortalConfig]", "Modo de configuracao iniciado.");
+       // _logger.info("[PortalConfig]", "DEVICE ID: %s", deviceId.c_str());
+       // _logger.info("[PortalConfig]", "Acesse em: http://%s", ip.toString().c_str());
+       // _logger.info("[PortalConfig]", "SSID: %s", apName.c_str());
+       // _logger.info("[PortalConfig]", "Senha: %s", apPass.c_str());
 
 #if defined(WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE) && (WEB_PORTAL_PROVISIONING_CAPTIVE_ENABLE != 0)
         _dnsServer.start(DNS_PORT, "*", ip);
@@ -109,7 +109,7 @@ namespace iotsmartsys::core::provisioning
                            { handleNotFound(); });
 
         _server.begin();
-        _logger.info("[PortalConfig]", "Servidor HTTP iniciado na porta 80.");
+       // _logger.info("[PortalConfig]", "Servidor HTTP iniciado na porta 80.");
 
         _active = true;
         sendStatus(ProvisioningStatus::WaitingUserInput, "Portal em execucao; aguardando configuracao do usuario");
@@ -143,7 +143,7 @@ namespace iotsmartsys::core::provisioning
 
         _active = false;
 
-        _logger.info("[PortalConfig]", "Portal de configuracao finalizado.");
+       // _logger.info("[PortalConfig]", "Portal de configuracao finalizado.");
         sendStatus(ProvisioningStatus::Idle, "Portal parado");
     }
 
@@ -155,7 +155,7 @@ namespace iotsmartsys::core::provisioning
         }
         if (msg)
         {
-            _logger.info("[PortalConfig]", "%s", msg);
+           // _logger.info("[PortalConfig]", "%s", msg);
         }
     }
 
@@ -218,7 +218,7 @@ namespace iotsmartsys::core::provisioning
 
     void WebPortalProvisioningChannel::handleSave()
     {
-        _logger.info("[PortalConfig]", "Recebendo configuracao via portal...");
+       // _logger.info("[PortalConfig]", "Recebendo configuracao via portal...");
         String ssid;
         String password;
         String deviceApiKey;
@@ -235,7 +235,7 @@ namespace iotsmartsys::core::provisioning
             ProvisioningJsonFields fields;
             if (!ProvisioningJsonExtractor::tryParse(rawBody, fields))
             {
-                _logger.warn("[PortalConfig]", "JSON parse failed in /save");
+               // _logger.warn("[PortalConfig]", "JSON parse failed in /save");
                 _server.send(400, "application/json", "{\"error\":\"invalid_json\"}");
                 return;
             }
@@ -246,11 +246,11 @@ namespace iotsmartsys::core::provisioning
             basicAuth = fields.basicAuth;
             device_api_url = fields.deviceApiUrl;
 
-            _logger.info("[PortalConfig]", "ssid: %s", ssid.c_str());
-            _logger.info("[PortalConfig]", "password: %s", password.c_str());
-            _logger.info("[PortalConfig]", "device_api_key: %s", deviceApiKey.c_str());
-            _logger.info("[PortalConfig]", "basic_auth: %s", basicAuth.c_str());
-            _logger.info("[PortalConfig]", "device_api_url: %s", device_api_url.c_str());
+           // _logger.info("[PortalConfig]", "ssid: %s", ssid.c_str());
+           // _logger.info("[PortalConfig]", "password: %s", password.c_str());
+           // _logger.info("[PortalConfig]", "device_api_key: %s", deviceApiKey.c_str());
+           // _logger.info("[PortalConfig]", "basic_auth: %s", basicAuth.c_str());
+           // _logger.info("[PortalConfig]", "device_api_url: %s", device_api_url.c_str());
 
             if (ssid.isEmpty())
             {

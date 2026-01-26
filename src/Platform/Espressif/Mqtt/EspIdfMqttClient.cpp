@@ -21,11 +21,11 @@ namespace iotsmartsys::platform::espressif
 
     bool EspIdfMqttClient::begin(const iotsmartsys::core::TransportConfig &cfg)
     {
-        _logger.info("[MQTT DBG] EspIdfMqttClient::begin()...");
+       // _logger.info("[MQTT DBG] EspIdfMqttClient::begin()...");
         if (_client)
             return true;
 
-        _logger.info("[MQTT DBG] Preparing esp_mqtt_client_config_t...");
+       // _logger.info("[MQTT DBG] Preparing esp_mqtt_client_config_t...");
 
         esp_mqtt_client_config_t c{};
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
@@ -34,13 +34,7 @@ namespace iotsmartsys::platform::espressif
         c.credentials.username = cfg.username;
         c.credentials.authentication.password = cfg.password;
         c.session.keepalive = cfg.keepAliveSec;
-        c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;
-        _logger.debug("[MQTT DBG] Config: uri='%s' client_id='%s' username='%s' keepalive=%d clean_session=%d",
-                      c.broker.address.uri ? c.broker.address.uri : "(null)",
-                      c.credentials.client_id ? c.credentials.client_id : "(null)",
-                      c.credentials.username ? c.credentials.username : "(null)",
-                      c.session.keepalive,
-                      c.session.disable_clean_session);
+        c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;       
 #else
         c.uri = cfg.uri;
         c.client_id = cfg.clientId;
@@ -48,34 +42,20 @@ namespace iotsmartsys::platform::espressif
         c.password = cfg.password;
         c.keepalive = cfg.keepAliveSec;
         c.disable_clean_session = cfg.cleanSession ? 0 : 1;
-        _logger.debug("[MQTT DBG] Config: uri='%s' client_id='%s' username='%s' keepalive=%d clean_session=%d",
-                      c.uri ? c.uri : "(null)",
-                      c.client_id ? c.client_id : "(null)",
-                      c.username ? c.username : "(null)",
-                      c.keepalive,
-                      c.disable_clean_session);
 #endif
 
-        _logger.info("[MQTT DBG] esp_mqtt_client_init()...");
         _client = esp_mqtt_client_init(&c);
         if (!_client)
         {
-            _logger.error("[MQTT DBG] esp_mqtt_client_init() returned NULL");
             return false;
         }
 
-        _logger.info("[MQTT DBG] esp_mqtt_client_register_event()...");
         esp_err_t r = esp_mqtt_client_register_event(_client, MQTT_EVENT_ANY,
                                                      (esp_event_handler_t)&EspIdfMqttClient::eventHandlerBridge,
                                                      this);
         if (r != ESP_OK)
         {
-            _logger.error("[MQTT DBG] register_event failed: %d\n", (int)r);
-            // continue but warn
-        }
-        else
-        {
-            _logger.info("[MQTT DBG] register_event OK");
+           _logger.error("[MQTT DBG] register_event failed: %d\n", (int)r);
         }
 
         _clientIdStr = cfg.clientId ? cfg.clientId : "";
