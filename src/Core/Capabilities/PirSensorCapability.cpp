@@ -17,7 +17,7 @@ namespace iotsmartsys::core
         const bool changed = updateLatched(isTriggered(), PIR_DETECTED, PIR_NO_DETECTED);
         if (changed)
         {
-            logger.debug("PIR", "Presence state changed to: %s", latched() ? "DETECTED" : "NO_DETECTED");
+            logger.info("PIR", "Presence state changed to: %s", latched() ? "DETECTED" : "NO_DETECTED");
         }
     }
 

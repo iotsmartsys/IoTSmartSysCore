@@ -111,7 +111,7 @@ namespace iotsmartsys::app
 
         if (cap->capability_name.empty())
         {
-            auto deviceId = _deviceIdentityProvider.getDeviceID();            
+            auto deviceId = _deviceIdentityProvider.getDeviceID();
             cap->capability_name = deviceId + "_" + cap->type;
         }
 
@@ -323,7 +323,7 @@ namespace iotsmartsys::app
     // --------------------------- addPirSensor ---------------------------
     iotsmartsys::core::PirSensorCapability *CapabilitiesBuilder::addPirSensor(const PirSensorConfig &cfg)
     {
-        auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
+        auto *hardwareAdapter = createInputAdapter(cfg.GPIO, cfg.highIsOn ? iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON : iotsmartsys::core::HardwareDigitalLogic::LOW_IS_ON, iotsmartsys::core::InputPullMode::NONE);
         if (!hardwareAdapter)
             return nullptr;
 

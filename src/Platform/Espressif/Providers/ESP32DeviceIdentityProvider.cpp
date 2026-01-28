@@ -26,8 +26,8 @@ namespace iotsmartsys::platform::espressif::providers
                 return "ESP32-S3";
             case CHIP_ESP32C3:
                 return "ESP32-C3";
-            case CHIP_ESP32C6:
-                return "ESP32-C6";
+            // case CHIP_ESP32C6:
+            //     return "ESP32-C6";
             case CHIP_ESP32H2:
                 return "ESP32-H2";
             default:
@@ -47,8 +47,8 @@ namespace iotsmartsys::platform::espressif::providers
                 return "esp32s3";
             case CHIP_ESP32C3:
                 return "esp32c3";
-            case CHIP_ESP32C6:
-                return "esp32c6";
+            // case CHIP_ESP32C6:
+            //     return "esp32c6";
             case CHIP_ESP32H2:
                 return "esp32h2";
             default:
