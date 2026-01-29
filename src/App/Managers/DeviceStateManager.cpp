@@ -69,6 +69,11 @@ namespace iotsmartsys::app
 
     void DeviceStateManager::handleProvisioning(uint32_t nowMs)
     {
+        if (!led)
+        {
+            return;
+        }
+
         const uint32_t onMs = 100;
         const uint32_t offMs = 100;
         const uint32_t pauseMs = 1000;
@@ -105,6 +110,11 @@ namespace iotsmartsys::app
 
     void DeviceStateManager::handleConnecting(uint32_t nowMs)
     {
+        if (!led)
+        {
+            return;
+        }
+
         const uint32_t toggleMs = 500;
         if (nowMs - lastToggleMs_ < toggleMs)
         {
@@ -117,6 +127,11 @@ namespace iotsmartsys::app
 
     void DeviceStateManager::handleIdle()
     {
+        if (!led)
+        {
+            return;
+        }
+
         if (ledOn_)
         {
             return;
@@ -128,6 +143,11 @@ namespace iotsmartsys::app
 
     void DeviceStateManager::handleError(uint32_t nowMs)
     {
+        if (!led)
+        {
+            return;
+        }
+
         const uint32_t toggleMs = 100;
         if (nowMs - lastToggleMs_ < toggleMs)
         {
