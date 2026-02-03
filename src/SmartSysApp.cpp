@@ -177,12 +177,10 @@ namespace iotsmartsys
 
         wifi_.handle();
 #if IOTSMARTSYS_OTA_ENABLED
-#if IOTSMARTSYS_OTA_ENABLED
         if (otaManager_)
         {
             otaManager_->handle();
         }
-#endif
 #endif
         settingsManager_.handle();
         transportController_.handle();

@@ -5,7 +5,7 @@
 #include "Platform/Arduino/Sensors/Bh1750LuminositySensor.h"
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
 #include "Platform/Arduino/Sensors/ArduinoGlpSensor.h"
-#include "Platform/Arduino/Sensors/ArduinoGlpMeter.h"
+#include "Platform/Arduino/Sensors/HX711WeightMeter.h"
 #endif
 #include <memory>
 
@@ -92,12 +92,52 @@ namespace iotsmartsys::infra::factories
 #endif
     }
 
-    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int pinAO)
+    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin)
     {
 #if IOTSMARTSYS_SENSORS_ENABLED
-        return std::unique_ptr<ArduinoGlpMeter>(new ArduinoGlpMeter(pinAO, _logger));
+        HX711WeightMeter::Config cfg;
+        cfg.doutPin = DOutPin;
+        cfg.sckPin = SCKPin;
+
+        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
 #else
-        (void)pinAO;
+        (void)DOutPin;
+        (void)SCKPin;
+        return nullptr;
+#endif
+    }
+
+    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin, float tare)
+    {
+#if IOTSMARTSYS_SENSORS_ENABLED
+        HX711WeightMeter::Config cfg;
+        cfg.doutPin = DOutPin;
+        cfg.sckPin = SCKPin;
+        cfg.tare = tare;
+
+        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
+#else
+        (void)DOutPin;
+        (void)SCKPin;
+        (void)tare;
+        return nullptr;
+#endif
+    }
+
+    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin, float tare, float variationTolerance)
+    {
+#if IOTSMARTSYS_SENSORS_ENABLED
+        HX711WeightMeter::Config cfg;
+        cfg.doutPin = DOutPin;
+        cfg.sckPin = SCKPin;
+        cfg.tare = tare;
+        cfg.variationTolerance = variationTolerance;
+
+        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
+#else
+        (void)DOutPin;
+        (void)SCKPin;
+        (void)tare;
         return nullptr;
 #endif
     }

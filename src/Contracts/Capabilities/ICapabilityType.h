@@ -116,6 +116,7 @@ namespace iotsmartsys::core
 #define PUSH_BUTTON_PRESSED_3_X BUTTON_PRESSED_ "x3"
 #define PUSH_BUTTON_PRESSED_4_X BUTTON_PRESSED_ "x4"
 
+#define GLP_METER_WEIGHT_TYPE "GLP Meter Weight"
 #define GLP_METER_TYPE "GLP Meter"
 #define GLP_SENSOR_TYPE "GLP Sensor Level"
 

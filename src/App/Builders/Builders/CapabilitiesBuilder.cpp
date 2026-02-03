@@ -466,7 +466,7 @@ namespace iotsmartsys::app
 
         return createCapability<iotsmartsys::core::GlpMeterPercentCapability>(
             *static_cast<iotsmartsys::core::IGlpMeter *>(cfg.sensor),
-            &_eventSink);
+            &_eventSink, cfg.maxKgExpected);
     }
 
     // --------------------------- addGlpMeterKg ---------------------------

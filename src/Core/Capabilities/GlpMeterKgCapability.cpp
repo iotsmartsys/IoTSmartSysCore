@@ -5,7 +5,7 @@
 using namespace iotsmartsys::core;
 
 GlpMeterKgCapability::GlpMeterKgCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink)
-    : ICapability(event_sink, "", GLP_METER_TYPE, "0"), meter(meter)
+    : ICapability(event_sink, "", GLP_METER_WEIGHT_TYPE, "0"), meter(meter)
 {
 }
 
@@ -16,14 +16,10 @@ void GlpMeterKgCapability::setup()
 
 void GlpMeterKgCapability::handle()
 {
-    meter.handle();
-
     unsigned long now = timeProvider.nowMs();
     if (now - lastCheckMillis >= 1000 || lastKg == 0.0f)
     {
         lastCheckMillis = now;
-        meter.handle();
-
         float kg = meter.getKg();
 
         // build state string (kg with 2 decimals)

@@ -4,8 +4,8 @@
 
 using namespace iotsmartsys::core;
 
-GlpMeterPercentCapability::GlpMeterPercentCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink)
-    : ICapability(event_sink, "", GLP_METER_TYPE, "0"), meter(meter)
+GlpMeterPercentCapability::GlpMeterPercentCapability(IGlpMeter &meter, ICapabilityEventSink *event_sink, float maxKgExpected)
+    : ICapability(event_sink, "", GLP_METER_TYPE, "0"), meter(meter), maxKgExpected(maxKgExpected)
 {
 }
 
@@ -16,16 +16,21 @@ void GlpMeterPercentCapability::setup()
 
 void GlpMeterPercentCapability::handle()
 {
-    meter.handle();
-
     unsigned long now = timeProvider.nowMs();
     if (now - lastCheckMillis >= 1000 || lastState.empty())
     {
         lastCheckMillis = now;
-        meter.handle();
 
         float kg = meter.getKg();
-        float percent = meter.getPercent();
+        float percent = 0.0f;
+        if (maxKgExpected > 0.0f)
+        {
+            percent = (kg / maxKgExpected) * 100.0f;
+            if (percent < 0.0f)
+                percent = 0.0f;
+            if (percent > 100.0f)
+                percent = 100.0f;
+        }
 
         // build state string (percent with 2 decimals)
         char buf[32];

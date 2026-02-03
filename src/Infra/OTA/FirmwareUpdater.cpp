@@ -74,7 +74,7 @@ namespace iotsmartsys::ota
             }
         }
 
-        // _logger.info("FW-OTA", "Baixando manifest em: %s", manifestUrl.c_str());
+        _logger.info("FW-OTA", "Baixando manifest em: %s", manifestUrl.c_str());
 
         std::string payload;
 
@@ -198,6 +198,8 @@ namespace iotsmartsys::ota
     {
         std::string currentVersion = getBuildIdentifier();
 
+        _logger.info("FW-OTA", "Versão atual: %s", currentVersion.c_str());
+        _logger.info("FW-OTA", "Versão remota: %s", manifest.version.c_str());
         if (manifest.compare(currentVersion) > 0)
         {
             _logger.info("FW-OTA", "Nova versão disponível.");

@@ -92,6 +92,9 @@ namespace iotsmartsys::app
     {
     public:
         iotsmartsys::core::IGlpMeter *sensor{nullptr};
+        float variationTolerance = 0.5f; // in kilograms
+        float maxKgExpected = 0.0f;
+        
     };
 
     class OperationalColorSensorConfig : public InputHardwareConfig
