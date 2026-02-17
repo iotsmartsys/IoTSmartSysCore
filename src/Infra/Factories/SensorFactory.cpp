@@ -92,52 +92,22 @@ namespace iotsmartsys::infra::factories
 #endif
     }
 
-    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin)
+    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(const core::GlpMeterCreationConfig &cfg)
     {
 #if IOTSMARTSYS_SENSORS_ENABLED
-        HX711WeightMeter::Config cfg;
-        cfg.doutPin = DOutPin;
-        cfg.sckPin = SCKPin;
+        HX711WeightMeter::Config hxCfg;
+        hxCfg.doutPin = cfg.doutPin;
+        hxCfg.sckPin = cfg.sckPin;
+        hxCfg.tare = cfg.tare;
+        hxCfg.variationTolerance = cfg.variationTolerance;
+        hxCfg.readOfTimesIntervalMs = cfg.readOfTimesIntervalMs;
+        hxCfg.readType = (cfg.readType == core::GlpMeterReadType::INTERVAL)
+                           ? HX711WeightMeter::ReadType::INTERVAL
+                           : HX711WeightMeter::ReadType::CONTINUOUS;
 
-        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
+        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(hxCfg));
 #else
-        (void)DOutPin;
-        (void)SCKPin;
-        return nullptr;
-#endif
-    }
-
-    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin, float tare)
-    {
-#if IOTSMARTSYS_SENSORS_ENABLED
-        HX711WeightMeter::Config cfg;
-        cfg.doutPin = DOutPin;
-        cfg.sckPin = SCKPin;
-        cfg.tare = tare;
-
-        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
-#else
-        (void)DOutPin;
-        (void)SCKPin;
-        (void)tare;
-        return nullptr;
-#endif
-    }
-
-    std::unique_ptr<core::IGlpMeter> SensorFactory::createGlpMeter(int DOutPin, int SCKPin, float tare, float variationTolerance)
-    {
-#if IOTSMARTSYS_SENSORS_ENABLED
-        HX711WeightMeter::Config cfg;
-        cfg.doutPin = DOutPin;
-        cfg.sckPin = SCKPin;
-        cfg.tare = tare;
-        cfg.variationTolerance = variationTolerance;
-
-        return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(cfg));
-#else
-        (void)DOutPin;
-        (void)SCKPin;
-        (void)tare;
+        (void)cfg;
         return nullptr;
 #endif
     }

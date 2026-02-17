@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 #include "Contracts/Sensors/ITemperatureSensor.h"
 #include "Contracts/Sensors/IGlpSensor.h"
 #include "Contracts/Sensors/SensorModel.h"
@@ -11,6 +12,22 @@
 
 namespace iotsmartsys::core
 {
+    enum class GlpMeterReadType : uint8_t
+    {
+        CONTINUOUS = 0,
+        INTERVAL = 1
+    };
+
+    struct GlpMeterCreationConfig
+    {
+        int doutPin = -1;
+        int sckPin = -1;
+        float tare = 0.0f;
+        float variationTolerance = 0.2f;
+        GlpMeterReadType readType = GlpMeterReadType::CONTINUOUS;
+        long readOfTimesIntervalMs = 60000;
+    };
+
     class ISensorFactory
     {
     public:
@@ -21,9 +38,7 @@ namespace iotsmartsys::core
         virtual std::unique_ptr<ILuminositySensor> createLuminositySensor(const int gpioSDA, const int gpioSCL) = 0;
         virtual std::unique_ptr<IWaterLevelSensor> createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, WaterLevelRecipentType recipentType) = 0;
         virtual std::unique_ptr<IGlpSensor> createGlpSensor(int pinAO, int pinDO) = 0;
-        virtual std::unique_ptr<IGlpMeter> createGlpMeter(int DOutPin, int SCKPin) = 0;
-        virtual std::unique_ptr<IGlpMeter> createGlpMeter(int DOutPin, int SCKPin, float tare) = 0;
-        virtual std::unique_ptr<IGlpMeter> createGlpMeter(int DOutPin, int SCKPin, float tare, float variationTolerance) = 0;
+        virtual std::unique_ptr<IGlpMeter> createGlpMeter(const GlpMeterCreationConfig &cfg) = 0;
     };
 
 } // namespace iotsmartsys::core

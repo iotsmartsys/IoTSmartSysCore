@@ -51,25 +51,7 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created GLP sensor.
         std::unique_ptr<core::IGlpSensor> createGlpSensor(int pinAO, int pinDO) override;
 
-        /// @brief Creates a GLP meter.
-        /// @param DOutPin The data output pin.
-        /// @param SCKPin The clock pin.
-        /// @return A unique pointer to the created GLP meter.
-        std::unique_ptr<core::IGlpMeter> createGlpMeter(int DOutPin, int SCKPin) override;
-
-        /// @brief Creates a GLP meter with tare.
-        /// @param DOutPin The data output pin.
-        /// @param SCKPin The clock pin.
-        /// @param tare The tare value.
-        /// @return A unique pointer to the created GLP meter.
-        std::unique_ptr<core::IGlpMeter> createGlpMeter(int DOutPin, int SCKPin, float tare) override;
-        /// @brief Creates a GLP meter with tare and variation tolerance.
-        /// @param DOutPin The data output pin.
-        /// @param SCKPin The clock pin.
-        /// @param tare The tare value.
-        /// @param variationTolerance The variation tolerance.
-        /// @return A unique pointer to the created GLP meter.
-        std::unique_ptr<core::IGlpMeter> createGlpMeter(int DOutPin, int SCKPin, float tare, float variationTolerance) override;
+        std::unique_ptr<core::IGlpMeter> createGlpMeter(const core::GlpMeterCreationConfig &cfg) override;
 
     private:
         ILogger &_logger;

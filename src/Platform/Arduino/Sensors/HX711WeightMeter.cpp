@@ -1,10 +1,15 @@
+#include <math.h>
 #include "Platform/Arduino/Sensors/HX711WeightMeter.h"
 
 namespace iotsmartsys::platform::arduino
 {
+    static constexpr long READ_OF_TIMES_INTERVAL_MS_MIN = 60000L;
+
     HX711WeightMeter::HX711WeightMeter(const Config &cfg)
         : _cfg(cfg)
     {
+        if (_cfg.readOfTimesIntervalMs < READ_OF_TIMES_INTERVAL_MS_MIN)
+            _cfg.readOfTimesIntervalMs = READ_OF_TIMES_INTERVAL_MS_MIN;
     }
 
     void HX711WeightMeter::setup()
@@ -37,6 +42,20 @@ namespace iotsmartsys::platform::arduino
             tareNow(500);
         }
 
+        if (_cfg.readType == ReadType::INTERVAL && !_intervalWindowActive)
+        {
+            if (_nextIntervalWindowMs != 0 && (int32_t)(now - _nextIntervalWindowMs) < 0)
+                return;
+
+            _intervalWindowActive = true;
+            _stableSinceMs = 0;
+            _medCount = 0;
+            _medIdx = 0;
+            _avgCount = 0;
+            _avgIdx = 0;
+            _lastSampleMs = 0;
+        }
+
         if (_lastSampleMs != 0 && (uint32_t)(now - _lastSampleMs) < _cfg.sampleIntervalMs)
             return;
         _lastSampleMs = now;
@@ -44,17 +63,25 @@ namespace iotsmartsys::platform::arduino
         int32_t raw = 0;
         if (!readRaw(raw))
             return;
-
+        // Serial.printf("Raw read: %d\n", raw);
         // Drop invalid sentinel, if it ever appears from upstream wiring glitches
         if (raw == -8388608)
             return;
 
-        // Drop absurd jumps (prevents one bad read from polluting filters/stable state)
         if (_hasLastRaw)
         {
-            if (fabsf((float)(raw - _lastRaw)) > _cfg.glitchRawJump)
+            const float jump = fabsf((float)(raw - _lastRaw));
+            if (jump > _cfg.glitchRawJump)
+            {
+                // Re-sync baseline to the new level and restart filters.
+                _lastRaw = raw;
+                _hasLastRaw = true;
+                _lastStateReadMs = (long)now;
+                resetFilters();
                 return;
+            }
         }
+
         _lastRaw = raw;
         _hasLastRaw = true;
         _lastStateReadMs = (long)now;
@@ -88,11 +115,18 @@ namespace iotsmartsys::platform::arduino
 
             if ((uint32_t)(now - _stableSinceMs) >= _cfg.stableHoldMs)
             {
-                float finalValue = st.avg - _cfg.tare;
-                if (finalValue - _lastStableKg > _cfg.variationTolerance ||
-                    _lastStableKg - finalValue > _cfg.variationTolerance)
+                const float finalValue = st.avg - _cfg.tare;
+
+                // First stable value must always be accepted. After that, apply tolerance.
+                if (isnan(_lastStableKg) || fabsf(finalValue - _lastStableKg) > _cfg.variationTolerance)
                 {
                     _lastStableKg = finalValue;
+                }
+
+                if (_cfg.readType == ReadType::INTERVAL)
+                {
+                    _intervalWindowActive = false;
+                    _nextIntervalWindowMs = now + static_cast<uint32_t>(_cfg.readOfTimesIntervalMs);
                 }
             }
         }
@@ -104,7 +138,7 @@ namespace iotsmartsys::platform::arduino
 
     float HX711WeightMeter::getKg() const
     {
-        return _lastStableKg;
+        return isnan(_lastStableKg) ? 0.0f : _lastStableKg;
     }
 
     long HX711WeightMeter::lastStateReadMillis() const
@@ -334,7 +368,11 @@ namespace iotsmartsys::platform::arduino
         _avgIdx = 0;
 
         _stableSinceMs = 0;
-        _lastStableKg = 0.0f;
+        _nextIntervalWindowMs = 0;
+        _intervalWindowActive = (_cfg.readType == ReadType::CONTINUOUS);
+        // Don't force the stable value to 0 on every filter reset; keep it as "unknown" until
+        // we actually converge. This avoids wiping the stable reading after large load jumps.
+        _lastStableKg = NAN;
     }
 
-} // namespace iotsmartsys::core
+} // namespace iotsmartsys::platform::arduino

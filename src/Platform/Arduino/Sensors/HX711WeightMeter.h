@@ -12,12 +12,20 @@ namespace iotsmartsys::platform::arduino
     class HX711WeightMeter final : public iotsmartsys::core::IGlpMeter
     {
     public:
+        enum class ReadType : uint8_t
+        {
+            CONTINUOUS = 0,
+            INTERVAL = 1
+        };
+
         struct Config
         {
             int doutPin = -1;
             int sckPin = -1;
             float tare = 0.0f;
             float variationTolerance = 0.2f;
+            ReadType readType = ReadType::CONTINUOUS;
+            long readOfTimesIntervalMs = 60000;
 
             // HX711 protocol
             uint8_t extraPulses = 1;     /// @brief 1 => channel A gain 128
@@ -106,6 +114,8 @@ namespace iotsmartsys::platform::arduino
 
         float _lastStableKg = 0.0f;
         uint32_t _stableSinceMs = 0;
+        uint32_t _nextIntervalWindowMs = 0;
+        bool _intervalWindowActive = true;
 
         volatile bool _tareRequested = false;
 
