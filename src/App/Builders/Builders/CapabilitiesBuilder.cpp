@@ -336,7 +336,12 @@ namespace iotsmartsys::app
     // --------------------------- addClapSensor ---------------------------
     iotsmartsys::core::ClapSensorCapability *CapabilitiesBuilder::addClapSensor(const ClapSensorConfig &cfg)
     {
-        auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
+        const auto logic = cfg.highIsOn ? iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON
+                                        : iotsmartsys::core::HardwareDigitalLogic::LOW_IS_ON;
+        const auto pullMode = cfg.highIsOn ? iotsmartsys::core::InputPullMode::PULL_DOWN
+                                           : iotsmartsys::core::InputPullMode::PULL_UP;
+
+        auto *hardwareAdapter = createInputAdapter(cfg.GPIO, logic, pullMode);
         if (!hardwareAdapter)
             return nullptr;
 

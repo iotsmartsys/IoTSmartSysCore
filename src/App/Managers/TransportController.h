@@ -27,6 +27,7 @@ namespace iotsmartsys::app
 
     private:
         core::TransportHub hub_;
+        core::settings::IReadOnlySettingsProvider &settingsProvider_;
         MqttServiceType &mqtt_;
         bool mqttAdded_{false};
     };

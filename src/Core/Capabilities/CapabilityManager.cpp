@@ -28,8 +28,10 @@ namespace iotsmartsys::core
         (void)level;
         _settingsReady = true;
         iotsmartsys::core::settings::Settings settings;
-        _settingsProvider.copyCurrent(settings);
-        _currentSettings = &settings;
+        if (!_settingsProvider.copyCurrent(settings))
+        {
+            _logger.warn("CapabilityManager", "SettingsReady signaled but no current settings snapshot available.");
+        }
     }
 
     iotsmartsys::core::ICommandCapability *CapabilityManager::getCommandCapabilityByName(const char *name) const

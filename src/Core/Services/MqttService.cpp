@@ -52,6 +52,8 @@ namespace iotsmartsys::app
         _state = State::Idle;
         _lastNetworkReady = false;
         _lastSettingsReady = false;
+        _offlineSinceMs = 0;
+        _reconnectStats = MqttReconnectStats{};
 
         // Ensure MQTT_CONNECTED bit is clear at start
         {
@@ -90,6 +92,7 @@ namespace iotsmartsys::app
         // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
+        _offlineSinceMs = now;
         _nextActionAtMs = now; // connect on first handle()
         return clientInitOk;
     }
@@ -153,6 +156,7 @@ namespace iotsmartsys::app
         {
             if (_state == State::Connecting || _state == State::Online)
             {
+                markDisconnected(MqttDisconnectReason::NetworkGateClosed, now);
                 _client.stop();
             }
 
@@ -179,6 +183,7 @@ namespace iotsmartsys::app
         case State::Connecting:
             if (_client.isConnected())
             {
+                markConnected(now);
                 _state = State::Online;
                 _attempt = 0;
                 _logger.info("MQTT", "Online");
@@ -191,6 +196,8 @@ namespace iotsmartsys::app
             }
             else if (_nextActionAtMs && now >= _nextActionAtMs)
             {
+                markDisconnected(MqttDisconnectReason::ConnectTimeout, now);
+                _reconnectStats.connectTimeoutsTotal++;
                 scheduleRetry();
             }
             break;
@@ -203,6 +210,7 @@ namespace iotsmartsys::app
         case State::Online:
             if (!_client.isConnected())
             {
+                markDisconnected(MqttDisconnectReason::ConnectionLost, now);
                 _logger.warn("MQTT", "Disconnected");
                 {
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();
@@ -223,7 +231,10 @@ namespace iotsmartsys::app
     {
         if (_client.isConnected())
         {
-            return _client.publish(topic, payload, len, retain);
+            if (_client.publish(topic, payload, len, retain))
+            {
+                return true;
+            }
         }
         return enqueue(topic, payload, len, retain);
     }
@@ -233,7 +244,10 @@ namespace iotsmartsys::app
     {
         if (_client.isConnected())
         {
-            return _client.republish(msg);
+            if (_client.republish(msg))
+            {
+                return true;
+            }
         }
         return enqueue(msg.topic, msg.payload, msg.payloadLen, msg.retain);
     }
@@ -315,6 +329,16 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    uint32_t MqttService<MaxTopics, QueueLen, MaxPayload>::offlineDurationMs() const
+    {
+        if (_offlineSinceMs == 0 || !_time)
+        {
+            return 0;
+        }
+        return _time->nowMs() - _offlineSinceMs;
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     const char *MqttService<MaxTopics, QueueLen, MaxPayload>::stateToStr(State s)
     {
         switch (s)
@@ -330,6 +354,68 @@ namespace iotsmartsys::app
         default:
             return "?";
         }
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    const char *MqttService<MaxTopics, QueueLen, MaxPayload>::disconnectReasonToStr(MqttDisconnectReason reason)
+    {
+        switch (reason)
+        {
+        case MqttDisconnectReason::None:
+            return "none";
+        case MqttDisconnectReason::NetworkGateClosed:
+            return "network_gate_closed";
+        case MqttDisconnectReason::ConnectTimeout:
+            return "connect_timeout";
+        case MqttDisconnectReason::ConnectionLost:
+            return "connection_lost";
+        case MqttDisconnectReason::ClientInitFailed:
+            return "client_init_failed";
+        default:
+            return "unknown";
+        }
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::markDisconnected(MqttDisconnectReason reason, uint32_t now)
+    {
+        if (_offlineSinceMs == 0)
+        {
+            _offlineSinceMs = now;
+            _reconnectStats.disconnectsTotal++;
+            _reconnectStats.lastDisconnectReason = reason;
+        }
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::markConnected(uint32_t now)
+    {
+        if (_offlineSinceMs != 0)
+        {
+            const uint32_t offlineMs = now - _offlineSinceMs;
+            _reconnectStats.lastOfflineMs = offlineMs;
+            if (offlineMs > _reconnectStats.maxOfflineMs)
+            {
+                _reconnectStats.maxOfflineMs = offlineMs;
+            }
+            _reconnectStats.reconnectsTotal++;
+            _offlineSinceMs = 0;
+        }
+
+        if (_policy.clearQueueOnReconnect && _qCount > 0)
+        {
+            clearQueue();
+        }
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::clearQueue()
+    {
+        _logger.warn("MQTT", "Clearing offline queue due to reconnect policy (dropped=%lu).",
+                     (unsigned long)_qCount);
+        _qHead = 0;
+        _qTail = 0;
+        _qCount = 0;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -386,7 +472,17 @@ namespace iotsmartsys::app
         _cfg.keepAliveSec = settings.mqtt.primary.keepAliveSec;
         _cfg.cleanSession = settings.mqtt.primary.cleanSession;
 
-        begin(_cfg, _policy);
+        if (!_clientInitialized)
+        {
+            const bool clientInitOk = begin(_cfg, _policy);
+            if (!clientInitOk)
+            {
+                markDisconnected(MqttDisconnectReason::ClientInitFailed, _time ? _time->nowMs() : 0);
+                scheduleRetry();
+                return;
+            }
+            _clientInitialized = true;
+        }
 
         // Gate redundante (segurança): nunca tenta MQTT sem Wi-Fi + IP
         {
@@ -413,6 +509,8 @@ namespace iotsmartsys::app
         _attempt++;
         const uint32_t now = _time ? _time->nowMs() : 0;
         const uint32_t backoff = computeBackoffMs();
+        _reconnectStats.lastBackoffMs = backoff;
+        _reconnectStats.lastAttemptCount = _attempt;
 
         _client.stop();
         {
@@ -468,28 +566,50 @@ namespace iotsmartsys::app
             return;
 
         QueuedMsg &m = _queue[_qHead];
-        _client.publish(m.topic, m.payload, m.len, m.retain);
+        if (!_client.publish(m.topic, m.payload, m.len, m.retain))
+        {
+            return;
+        }
 
         _qHead = (_qHead + 1) % QueueLen;
         _qCount--;
+        _queueStats.drained++;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     bool MqttService<MaxTopics, QueueLen, MaxPayload>::enqueue(const char *topic, const void *payload, std::size_t len, bool retain)
     {
+        if (!topic || topic[0] == '\0')
+        {
+            _queueStats.droppedInvalidTopic++;
+            _logger.warn("MQTT", "Dropping message: empty topic.");
+            return false;
+        }
+        const std::size_t topicLen = std::strlen(topic);
+        if (topicLen >= MaxTopicLen)
+        {
+            _queueStats.droppedTopicTooLong++;
+            _logger.warn("MQTT", "Dropping message: topic too long (%lu >= %lu).",
+                         (unsigned long)topicLen, (unsigned long)MaxTopicLen);
+            return false;
+        }
         if (len > MaxPayload)
         {
+            _queueStats.droppedPayloadTooBig++;
             _logger.warn("MQTT", "Payload too big (%lu > %lu). Drop.",
                          (unsigned long)len, (unsigned long)MaxPayload);
             return false;
         }
         if (_qCount >= QueueLen)
         {
+            _queueStats.droppedQueueFull++;
+            _logger.warn("MQTT", "Dropping message: offline queue full (len=%lu).",
+                         (unsigned long)QueueLen);
             return false;
         }
 
         QueuedMsg &m = _queue[_qTail];
-        m.topic = topic;
+        std::memcpy(m.topic, topic, topicLen + 1);
         m.retain = retain;
         m.len = (uint16_t)len;
         for (std::size_t i = 0; i < len; ++i)
@@ -497,6 +617,7 @@ namespace iotsmartsys::app
 
         _qTail = (_qTail + 1) % QueueLen;
         _qCount++;
+        _queueStats.enqueued++;
         return true;
     }
 

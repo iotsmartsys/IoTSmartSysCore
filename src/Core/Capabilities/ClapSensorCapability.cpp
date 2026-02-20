@@ -2,13 +2,13 @@
 
 namespace iotsmartsys::core
 {
-    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
-        : LatchedTriggerCapability(input_hardware_adapter, event_sink, "", CLAP_SENSOR_TYPE, CLAP_NO_DETECTED, toleranceTimeSeconds * 1000)
+    ClapSensorCapability::ClapSensorCapability(IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeMs)
+        : LatchedTriggerCapability(input_hardware_adapter, event_sink, "", CLAP_SENSOR_TYPE, CLAP_NO_DETECTED, toleranceTimeMs)
     {
     }
 
-    ClapSensorCapability::ClapSensorCapability(const char *capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeSeconds)
-        : LatchedTriggerCapability(input_hardware_adapter, event_sink, capability_name, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED, toleranceTimeSeconds * 1000)
+    ClapSensorCapability::ClapSensorCapability(const char *capability_name, IInputHardwareAdapter &input_hardware_adapter, ICapabilityEventSink *event_sink, int toleranceTimeMs)
+        : LatchedTriggerCapability(input_hardware_adapter, event_sink, capability_name, CLAP_SENSOR_TYPE, CLAP_NO_DETECTED, toleranceTimeMs)
     {
     }
 

@@ -2,6 +2,7 @@
 
 #include "Contracts/Capabilities/IInputCapability.h"
 #include "Contracts/Capabilities/ICommandCapability.h"
+#include <cmath>
 #include <string>
 
 namespace iotsmartsys::core
@@ -205,7 +206,7 @@ namespace iotsmartsys::core
             if (newValue != newValue) // NaN check
                 return false;
 
-            if (!_hasValue || (newValue - _lastValue) >= _minDelta)
+            if (!_hasValue || std::fabs(newValue - _lastValue) >= _minDelta)
             {
                 _lastValue = newValue;
                 _hasValue = true;

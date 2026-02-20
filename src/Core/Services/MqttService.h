@@ -21,12 +21,46 @@ namespace iotsmartsys::app
         uint32_t maxBackoffMs{60000};
         uint32_t jitterMs{250};
         uint8_t maxFastRetries{5};
+        bool clearQueueOnReconnect{false};
+    };
+
+    struct MqttOfflineQueueStats
+    {
+        uint32_t enqueued{0};
+        uint32_t drained{0};
+        uint32_t droppedInvalidTopic{0};
+        uint32_t droppedTopicTooLong{0};
+        uint32_t droppedPayloadTooBig{0};
+        uint32_t droppedQueueFull{0};
+    };
+
+    enum class MqttDisconnectReason : uint8_t
+    {
+        None = 0,
+        NetworkGateClosed,
+        ConnectTimeout,
+        ConnectionLost,
+        ClientInitFailed
+    };
+
+    struct MqttReconnectStats
+    {
+        uint32_t disconnectsTotal{0};
+        uint32_t reconnectsTotal{0};
+        uint32_t connectTimeoutsTotal{0};
+        uint32_t lastOfflineMs{0};
+        uint32_t maxOfflineMs{0};
+        uint32_t lastBackoffMs{0};
+        uint32_t lastAttemptCount{0};
+        MqttDisconnectReason lastDisconnectReason{MqttDisconnectReason::None};
     };
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     class MqttService : public iotsmartsys::core::ITransportChannel
     {
     public:
+        static constexpr std::size_t MaxTopicLen = 128;
+
         explicit MqttService(iotsmartsys::core::IMqttClient &client,
                              iotsmartsys::core::ILogger &log,
                              iotsmartsys::core::settings::ISettingsGate &settingsGate,
@@ -54,6 +88,11 @@ namespace iotsmartsys::app
 
         bool isConnected() const override;
         bool isOnline() const;
+        std::size_t queuedCount() const { return _qCount; }
+        uint32_t offlineDurationMs() const;
+        MqttOfflineQueueStats offlineQueueStats() const { return _queueStats; }
+        MqttReconnectStats reconnectStats() const { return _reconnectStats; }
+        static const char *disconnectReasonToStr(MqttDisconnectReason reason);
         const char *getName() const override { return _client.getName(); }
 
     private:
@@ -71,7 +110,7 @@ namespace iotsmartsys::app
 
         struct QueuedMsg
         {
-            const char *topic; // ponteiro para string estática/literal (sem copiar)
+            char topic[MaxTopicLen];
             bool retain;
             uint16_t len;
             uint8_t payload[MaxPayload];
@@ -79,6 +118,9 @@ namespace iotsmartsys::app
 
     private:
         static const char *stateToStr(State s);
+        void markDisconnected(MqttDisconnectReason reason, uint32_t now);
+        void markConnected(uint32_t now);
+        void clearQueue();
 
         void startConnect();
         void scheduleRetry();
@@ -113,6 +155,7 @@ namespace iotsmartsys::app
         bool _lastNetworkReady{false};
         uint32_t _lastStatusLogAtMs{0};
         uint32_t _statusLogEveryMs{5000};
+        bool _clientInitialized{false};
 
         
         const char *_publishTopic{nullptr};
@@ -123,6 +166,9 @@ namespace iotsmartsys::app
         // queue ring-buffer (sem heap)
         QueuedMsg _queue[QueueLen]{};
         std::size_t _qHead{0}, _qTail{0}, _qCount{0};
+        MqttOfflineQueueStats _queueStats{};
+        MqttReconnectStats _reconnectStats{};
+        uint32_t _offlineSinceMs{0};
 
         // user callback
         iotsmartsys::core::TransportOnMessageFn _userMsgCb{nullptr};

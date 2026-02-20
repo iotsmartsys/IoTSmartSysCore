@@ -22,7 +22,6 @@ namespace iotsmartsys::core
         void onSettingsReady(iotsmartsys::core::settings::SettingsReadyLevel level);
         iotsmartsys::core::ILogger &_logger;
         iotsmartsys::core::settings::IReadOnlySettingsProvider &_settingsProvider;
-        iotsmartsys::core::settings::Settings *_currentSettings;
 
     public:
         CapabilityManager(iotsmartsys::core::ICapability *const *items, size_t count,

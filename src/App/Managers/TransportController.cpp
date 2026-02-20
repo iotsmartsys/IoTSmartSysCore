@@ -1,6 +1,6 @@
 #include "App/Managers/TransportController.h"
 
-#include <cstdio>
+#include <string>
 
 namespace iotsmartsys::app
 {
@@ -8,6 +8,7 @@ namespace iotsmartsys::app
                                              core::settings::IReadOnlySettingsProvider &settingsProvider,
                                              MqttServiceType &mqtt)
         : hub_(logger, settingsProvider),
+          settingsProvider_(settingsProvider),
           mqtt_(mqtt)
     {
     }
@@ -17,10 +18,18 @@ namespace iotsmartsys::app
                                             void *ctx)
     {
         const char *safeClientId = clientId ? clientId : "";
-        char topic[128];
-        snprintf(topic, sizeof(topic), "device/%s/command", safeClientId);
+        std::string topic;
+        core::settings::Settings settings;
+        if (settingsProvider_.copyCurrent(settings))
+        {
+            topic = settings.mqtt.getCommandTopicForDevice(safeClientId);
+        }
+        else
+        {
+            topic = "device/" + std::string(safeClientId) + "/command";
+        }
 
-        mqtt_.subscribe(topic);
+        mqtt_.subscribe(topic.c_str());
         mqtt_.setOnConnected(onConnected, ctx);
         mqtt_.setForwardRawMessages(true);
     }
