@@ -186,6 +186,7 @@ namespace iotsmartsys::app
                 markConnected(now);
                 _state = State::Online;
                 _attempt = 0;
+                _logger.info("MQTT", "host='%s' connected in %ums", _cfg.uri ? _cfg.uri : "(null)", now - _offlineSinceMs);
                 _logger.info("MQTT", "Online");
                 {
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();
@@ -437,13 +438,28 @@ namespace iotsmartsys::app
             return;
         }
 
+        const bool wantsSecondary = (settings.mqtt.profile == "secondary");
+        const core::settings::MqttConfig *selectedProfile = &settings.mqtt.primary;
+        if (wantsSecondary && settings.mqtt.secondary.isValid())
+        {
+            selectedProfile = &settings.mqtt.secondary;
+        }
+        else if (wantsSecondary && !settings.mqtt.secondary.isValid())
+        {
+            _logger.warn("MQTT", "mqtt.profile=secondary but secondary broker is invalid. Falling back to primary.");
+        }
+        else if (!settings.mqtt.profile.empty() && settings.mqtt.profile != "primary")
+        {
+            _logger.warn("MQTT", "mqtt.profile='%s' is unsupported. Falling back to primary.", settings.mqtt.profile.c_str());
+        }
+
         // Build persistent strings inside the service so we don't point to
         // temporaries owned by the local 'settings' object (that would dangle
         // after this function returns). Use a full URI (protocol://host:port)
         // if possible.
-        const std::string proto = settings.mqtt.primary.protocol.empty() ? std::string("mqtt") : settings.mqtt.primary.protocol;
-        const std::string host = settings.mqtt.primary.host.empty() ? std::string() : settings.mqtt.primary.host;
-        const int port = (settings.mqtt.primary.port > 0) ? settings.mqtt.primary.port : 1883;
+        const std::string proto = selectedProfile->protocol.empty() ? std::string("mqtt") : selectedProfile->protocol;
+        const std::string host = selectedProfile->host.empty() ? std::string() : selectedProfile->host;
+        const int port = (selectedProfile->port > 0) ? selectedProfile->port : 1883;
         if (!host.empty())
         {
             _uriStr = proto + "://" + host + ":" + std::to_string(port);
@@ -460,8 +476,8 @@ namespace iotsmartsys::app
             return;
         }
 
-        _usernameStr = settings.mqtt.primary.user;
-        _passwordStr = settings.mqtt.primary.password;
+        _usernameStr = selectedProfile->user;
+        _passwordStr = selectedProfile->password;
         _clientIdStr = settings.clientId ? settings.clientId : std::string();
 
         // Point _cfg members to the service-owned strings (stable storage)
@@ -469,8 +485,8 @@ namespace iotsmartsys::app
         _cfg.username = _usernameStr.empty() ? nullptr : _usernameStr.c_str();
         _cfg.password = _passwordStr.empty() ? nullptr : _passwordStr.c_str();
         _cfg.clientId = _clientIdStr.empty() ? nullptr : _clientIdStr.c_str();
-        _cfg.keepAliveSec = settings.mqtt.primary.keepAliveSec;
-        _cfg.cleanSession = settings.mqtt.primary.cleanSession;
+        _cfg.keepAliveSec = selectedProfile->keepAliveSec;
+        _cfg.cleanSession = selectedProfile->cleanSession;
 
         if (!_clientInitialized)
         {

@@ -11,6 +11,7 @@ namespace iotsmartsys::core::settings
     struct Settings
     {
         bool in_config_mode{false};
+        bool device_registered{false};
 
         const char *clientId;
         LogLevel logLevel{LogLevel::Info};
@@ -44,6 +45,11 @@ namespace iotsmartsys::core::settings
             if (in_config_mode != other.in_config_mode)
             {
                 in_config_mode = other.in_config_mode;
+                _is_changed = true;
+            }
+            if (!device_registered && other.device_registered)
+            {
+                device_registered = true;
                 _is_changed = true;
             }
             if (logLevel != other.logLevel)

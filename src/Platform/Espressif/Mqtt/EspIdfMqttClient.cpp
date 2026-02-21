@@ -1,9 +1,26 @@
 #ifdef ESP32
 #include "EspIdfMqttClient.h"
+#include "Infra/Certs/LetsEncryptISRGRootX1.h"
 #include <cstring>
+extern "C"
+{
+#include "esp_crt_bundle.h"
+}
 
 namespace iotsmartsys::platform::espressif
 {
+    namespace
+    {
+        bool isSecureUri(const char *uri)
+        {
+            if (!uri)
+            {
+                return false;
+            }
+            return (std::strncmp(uri, "mqtts://", 8) == 0) || (std::strncmp(uri, "wss://", 6) == 0);
+        }
+    } // namespace
+
     EspIdfMqttClient::EspIdfMqttClient(iotsmartsys::core::ILogger &log)
         : _logger(log)
     {
@@ -34,7 +51,13 @@ namespace iotsmartsys::platform::espressif
         c.credentials.username = cfg.username;
         c.credentials.authentication.password = cfg.password;
         c.session.keepalive = cfg.keepAliveSec;
-        c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;       
+        c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;
+        if (isSecureUri(cfg.uri))
+        {
+            c.broker.verification.certificate = ISRG_ROOT_X1_PEM;
+            c.broker.verification.crt_bundle_attach = arduino_esp_crt_bundle_attach;
+            c.broker.verification.skip_cert_common_name_check = false;
+        }
 #else
         c.uri = cfg.uri;
         c.client_id = cfg.clientId;
@@ -42,6 +65,12 @@ namespace iotsmartsys::platform::espressif
         c.password = cfg.password;
         c.keepalive = cfg.keepAliveSec;
         c.disable_clean_session = cfg.cleanSession ? 0 : 1;
+        if (isSecureUri(cfg.uri))
+        {
+            c.cert_pem = ISRG_ROOT_X1_PEM;
+            c.crt_bundle_attach = arduino_esp_crt_bundle_attach;
+            c.skip_cert_common_name_check = false;
+        }
 #endif
 
         _client = esp_mqtt_client_init(&c);

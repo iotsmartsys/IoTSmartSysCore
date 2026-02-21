@@ -65,6 +65,8 @@ namespace iotsmartsys::platform::espressif
 
     static StateResult parseMqtt(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, MqttSettings &out)
     {
+        out.profile = "primary";
+
         // primary required
         StateResult err = parseMqttConfig(ext, "mqtt.primary", out.primary, /*allowTtl*/ false);
         if (err != StateResult::Ok) return err;
@@ -86,6 +88,7 @@ namespace iotsmartsys::platform::espressif
         if (ext.getString("mqtt.topic.announce", tmp)) out.announce_topic = tmp;
         if (ext.getString("mqtt.topic.command", tmp)) out.command_topic = tmp;
         if (ext.getString("mqtt.topic.notify", tmp)) out.notify_topic = tmp;
+        if (ext.getString("mqtt.profile", tmp) && !tmp.empty()) out.profile = tmp;
 
         return StateResult::Ok;
     }

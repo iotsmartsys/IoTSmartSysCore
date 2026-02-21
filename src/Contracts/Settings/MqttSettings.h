@@ -13,6 +13,7 @@ namespace iotsmartsys::core::settings
         std::string announce_topic{"smarthome/discovery"};
         std::string command_topic{"device/{device_id}/command"};
         std::string notify_topic{"device/state"};
+        std::string profile{"primary"};
 
         bool hasSecondary() const
         {
@@ -41,7 +42,8 @@ namespace iotsmartsys::core::settings
                     secondary.hasChanged(other.secondary) ||
                     announce_topic != other.announce_topic ||
                     command_topic != other.command_topic ||
-                    notify_topic != other.notify_topic);
+                    notify_topic != other.notify_topic ||
+                    profile != other.profile);
         }
     };
 

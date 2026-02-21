@@ -23,11 +23,11 @@ namespace iotsmartsys::app
     }
 
     DeviceRegistrationManager::DeviceRegistrationManager(core::ILogger &logger,
-                                                         core::settings::IReadOnlySettingsProvider &settingsProvider,
+                                                         core::settings::SettingsManager &settingsManager,
                                                          core::WiFiManager &wifi,
                                                          core::IDeviceIdentityProvider &deviceIdentityProvider)
         : logger_(logger),
-          settingsProvider_(settingsProvider),
+          settingsManager_(settingsManager),
           wifi_(wifi),
           deviceIdentityProvider_(deviceIdentityProvider)
     {
@@ -47,9 +47,15 @@ namespace iotsmartsys::app
         }
 
         core::settings::Settings settings;
-        if (!settingsProvider_.copyCurrent(settings))
+        if (!settingsManager_.copyCurrent(settings))
         {
             scheduleRetry(nowMs);
+            return;
+        }
+
+        if (settings.device_registered)
+        {
+            registered_ = true;
             return;
         }
 
@@ -76,9 +82,13 @@ namespace iotsmartsys::app
 
         if (tryRegister(settings, deviceId))
         {
-            registered_ = true;
-            logger_.info("DeviceRegistration", "Device registered successfully.");
-            return;
+            if (markRegisteredInCache(settings))
+            {
+                registered_ = true;
+                logger_.info("DeviceRegistration", "Device registered successfully.");
+                return;
+            }
+            logger_.warn("DeviceRegistration", "Registration succeeded but could not persist registration flag.");
         }
 
         scheduleRetry(nowMs);
@@ -241,6 +251,13 @@ namespace iotsmartsys::app
         }
 
         return escaped;
+    }
+
+    bool DeviceRegistrationManager::markRegisteredInCache(const core::settings::Settings &settingsSnapshot)
+    {
+        core::settings::Settings persisted = settingsSnapshot;
+        persisted.device_registered = true;
+        return settingsManager_.save(persisted);
     }
 
     void DeviceRegistrationManager::scheduleRetry(uint32_t nowMs)

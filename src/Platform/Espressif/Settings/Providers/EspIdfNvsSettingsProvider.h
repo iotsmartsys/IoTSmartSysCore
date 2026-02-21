@@ -31,7 +31,7 @@ namespace iotsmartsys::platform::espressif
         static constexpr const char *NVS_NAMESPACE = "iotsys";
         static constexpr const char *NVS_KEY = "settings";
 
-        static constexpr std::uint32_t STORAGE_VERSION = 3;
+        static constexpr std::uint32_t STORAGE_VERSION = 5;
 
         // --- POD storage model (persistível) ---
 
@@ -52,6 +52,7 @@ namespace iotsmartsys::platform::espressif
             char announce_topic[128];
             char command_topic[128];
             char notify_topic[128];
+            char profile[16];
         };
 
         struct StoredFirmwareConfig
@@ -79,6 +80,7 @@ namespace iotsmartsys::platform::espressif
         {
             std::uint32_t version;
             std::uint8_t in_config_mode;
+            std::uint8_t device_registered;
             std::int32_t logLevel;
 
             StoredMqttSettings mqtt;

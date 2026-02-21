@@ -5,7 +5,7 @@
 
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
-#include "Contracts/Settings/IReadOnlySettingsProvider.h"
+#include "Contracts/Settings/SettingsManager.h"
 
 namespace iotsmartsys::app
 {
@@ -13,7 +13,7 @@ namespace iotsmartsys::app
     {
     public:
         DeviceRegistrationManager(core::ILogger &logger,
-                                  core::settings::IReadOnlySettingsProvider &settingsProvider,
+                                  core::settings::SettingsManager &settingsManager,
                                   core::WiFiManager &wifi,
                                   core::IDeviceIdentityProvider &deviceIdentityProvider);
 
@@ -27,10 +27,11 @@ namespace iotsmartsys::app
                                         const std::string &macAddress,
                                         const std::string &ipAddress);
         static std::string escapeJson(const std::string &value);
+        bool markRegisteredInCache(const core::settings::Settings &settingsSnapshot);
         void scheduleRetry(uint32_t nowMs);
 
         core::ILogger &logger_;
-        core::settings::IReadOnlySettingsProvider &settingsProvider_;
+        core::settings::SettingsManager &settingsManager_;
         core::WiFiManager &wifi_;
         core::IDeviceIdentityProvider &deviceIdentityProvider_;
 
