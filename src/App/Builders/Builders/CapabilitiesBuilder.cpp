@@ -235,7 +235,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::PushButtonCapability>(
+            name,
             *hardwareAdapter,
             &_eventSink,
             static_cast<unsigned long>(cfg.debounceTimeMs));
@@ -248,7 +250,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::TouchButtonCapability>(
+            name,
             *hardwareAdapter,
             &_eventSink,
             static_cast<unsigned long>(cfg.debounceTimeMs));
@@ -315,7 +319,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::DoorSensorCapability>(
+            name,
             *hardwareAdapter,
             &_eventSink);
     }
@@ -327,7 +333,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::PirSensorCapability>(
+            name,
             *hardwareAdapter,
             &_eventSink,
             cfg.debounceTimeMs);
@@ -345,7 +353,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::ClapSensorCapability>(
+            name.c_str(),
             *hardwareAdapter,
             &_eventSink,
             cfg.debounceTimeMs);
@@ -358,8 +368,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::SwitchPlugCapability>(
-            std::string(),
+            name,
             *hardwareAdapter,
             &_eventSink);
     }
@@ -371,7 +382,9 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::WaterFlowHallSensorCapability>(
+            name,
             *hardwareAdapter,
             &_eventSink);
     }
@@ -404,7 +417,9 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::TemperatureSensorCapability>(
+            name,
             *static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
             &_eventSink, cfg.readIntervalMs);
     }
@@ -415,7 +430,9 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::HumiditySensorCapability>(
+            name,
             *static_cast<iotsmartsys::core::IHumiditySensor *>(cfg.sensor),
             &_eventSink);
     }
@@ -458,7 +475,9 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::LuminosityCapability>(
+            name,
             *static_cast<iotsmartsys::core::ILuminositySensor *>(cfg.sensor),
             &_eventSink, cfg.variationTolerance, cfg.readIntervalMs);
     }

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <ctime>
 
 #include "Contracts/Logging/ILogger.h"
 #include "Contracts/Providers/Time.h"
@@ -69,6 +70,8 @@ namespace iotsmartsys::core
         void startConnect();
         void scheduleRetry();
         uint32_t computeBackoffMs() const;
+        void startTimeSync();
+        bool isSystemTimeValid() const;
 
         void onWiFiEvent(WiFiEvent_t event);
         WiFiEventId_t _eventId{};
@@ -89,6 +92,8 @@ namespace iotsmartsys::core
         uint32_t _connectedAtMs{0};
         bool _gotIp{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
+        bool _ntpSyncStarted{false};
+        bool _ntpSyncLogged{false};
 
     };
 

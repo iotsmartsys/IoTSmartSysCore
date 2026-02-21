@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <ctime>
 #include "Infra/Certs/LetsEncryptISRGRootX1.h"
 
 extern "C"
@@ -21,6 +22,13 @@ namespace iotsmartsys::platform::espressif
     using namespace iotsmartsys::core::settings;
     using iotsmartsys::core::common::StateResult;
     static const char *TAG = "SettingsFetcher";
+    static constexpr std::time_t kMinValidEpoch = 1704067200; // 2024-01-01 00:00:00 UTC
+
+    static bool isSystemTimeValid()
+    {
+        const std::time_t now = std::time(nullptr);
+        return now >= kMinValidEpoch;
+    }
 
     static StateResult map_esp_err(esp_err_t e)
     {
@@ -207,6 +215,19 @@ namespace iotsmartsys::platform::espressif
         const bool is_https = (_req.url && (std::strncmp(_req.url, "https://", 8) == 0));
         if (is_https)
         {
+            const std::uint32_t waitBudgetMs = std::max<std::uint32_t>(_req.connect_timeout_ms, 3000);
+            std::uint32_t waitedMs = 0;
+            while (!_cancel && !isSystemTimeValid() && waitedMs < waitBudgetMs)
+            {
+                vTaskDelay(pdMS_TO_TICKS(200));
+                waitedMs += 200;
+            }
+            if (!isSystemTimeValid())
+            {
+                _logger.warn("SettingsFetcher", "System time is not synchronized yet; postponing HTTPS fetch.");
+                return ESP_ERR_TIMEOUT;
+            }
+
             cfg.cert_pem = ISRG_ROOT_X1_PEM;
             cfg.crt_bundle_attach = nullptr;
             cfg.skip_cert_common_name_check = false;

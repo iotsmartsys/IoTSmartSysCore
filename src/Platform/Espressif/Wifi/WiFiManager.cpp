@@ -1,8 +1,13 @@
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
+#include <ctime>
 
 namespace iotsmartsys::core
 {
+    namespace
+    {
+        constexpr std::time_t kMinValidEpoch = 1704067200; // 2024-01-01 00:00:00 UTC
+    }
 
     WiFiManager::WiFiManager(iotsmartsys::core::ILogger &log)
         : _log(log), _timeProvider(nullptr)
@@ -84,6 +89,11 @@ namespace iotsmartsys::core
             break;
 
         case WiFiState::Connected:
+            if (_ntpSyncStarted && !_ntpSyncLogged && isSystemTimeValid())
+            {
+                _ntpSyncLogged = true;
+                _log.info("WIFI", "NTP synchronized. System time is valid for TLS.");
+            }
 
             if (!isConnected())
             {
@@ -186,6 +196,7 @@ namespace iotsmartsys::core
 
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             _gotIp = true;
+            startTimeSync();
 
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                          iotsmartsys::core::ConnectivityGate::IP_READY);
@@ -243,6 +254,20 @@ namespace iotsmartsys::core
     const char *WiFiManager::getSignalStrength() const
     {
         return _signalStrength.c_str();
+    }
+
+    void WiFiManager::startTimeSync()
+    {
+        configTzTime("UTC0", "pool.ntp.org", "time.nist.gov", "time.google.com");
+        _ntpSyncStarted = true;
+        _ntpSyncLogged = false;
+        _log.info("WIFI", "Starting NTP sync...");
+    }
+
+    bool WiFiManager::isSystemTimeValid() const
+    {
+        const std::time_t now = std::time(nullptr);
+        return now >= kMinValidEpoch;
     }
 
 } // namespace iotsmartsys::app
