@@ -25,6 +25,7 @@ namespace iotsmartsys
           wifi_(logger_),
           provisioningController_(logger_, wifi_, deviceIdentityProvider_),
           deviceStateManager_(logger_, hwFactory_, wifi_, provisioningController_),
+          deviceRegistrationManager_(logger_, settingsManager_, wifi_, deviceIdentityProvider_),
           connectivityBootstrap_(logger_, serviceManager_, settingsManager_, wifi_),
           builder_(hwFactory_,
                    mqttSink_,
@@ -105,21 +106,21 @@ namespace iotsmartsys
 
         const auto mqttQueueStats = mqtt_.offlineQueueStats();
         const auto mqttReconnectStats = mqtt_.reconnectStats();
-        const std::string mqttQueueDepth = std::to_string(mqtt_.queuedCount());
-        const std::string mqttQueuedTotal = std::to_string(mqttQueueStats.enqueued);
-        const std::string mqttDrainedTotal = std::to_string(mqttQueueStats.drained);
-        const std::string mqttDropQueueFull = std::to_string(mqttQueueStats.droppedQueueFull);
-        const std::string mqttDropPayloadTooBig = std::to_string(mqttQueueStats.droppedPayloadTooBig);
-        const std::string mqttDropTopicTooLong = std::to_string(mqttQueueStats.droppedTopicTooLong);
-        const std::string mqttDropInvalidTopic = std::to_string(mqttQueueStats.droppedInvalidTopic);
-        const std::string mqttDisconnectsTotal = std::to_string(mqttReconnectStats.disconnectsTotal);
-        const std::string mqttReconnectsTotal = std::to_string(mqttReconnectStats.reconnectsTotal);
-        const std::string mqttConnectTimeoutsTotal = std::to_string(mqttReconnectStats.connectTimeoutsTotal);
-        const std::string mqttLastOfflineMs = std::to_string(mqttReconnectStats.lastOfflineMs);
-        const std::string mqttMaxOfflineMs = std::to_string(mqttReconnectStats.maxOfflineMs);
-        const std::string mqttLastBackoffMs = std::to_string(mqttReconnectStats.lastBackoffMs);
-        const std::string mqttLastAttemptCount = std::to_string(mqttReconnectStats.lastAttemptCount);
-        const std::string mqttLastDisconnectReason = app::MqttService<12, 16, 256>::disconnectReasonToStr(mqttReconnectStats.lastDisconnectReason);
+        // const std::string mqttQueueDepth = std::to_string(mqtt_.queuedCount());
+        // const std::string mqttQueuedTotal = std::to_string(mqttQueueStats.enqueued);
+        // const std::string mqttDrainedTotal = std::to_string(mqttQueueStats.drained);
+        // const std::string mqttDropQueueFull = std::to_string(mqttQueueStats.droppedQueueFull);
+        // const std::string mqttDropPayloadTooBig = std::to_string(mqttQueueStats.droppedPayloadTooBig);
+        // const std::string mqttDropTopicTooLong = std::to_string(mqttQueueStats.droppedTopicTooLong);
+        // const std::string mqttDropInvalidTopic = std::to_string(mqttQueueStats.droppedInvalidTopic);
+        // const std::string mqttDisconnectsTotal = std::to_string(mqttReconnectStats.disconnectsTotal);
+        // const std::string mqttReconnectsTotal = std::to_string(mqttReconnectStats.reconnectsTotal);
+        // const std::string mqttConnectTimeoutsTotal = std::to_string(mqttReconnectStats.connectTimeoutsTotal);
+        // const std::string mqttLastOfflineMs = std::to_string(mqttReconnectStats.lastOfflineMs);
+        // const std::string mqttMaxOfflineMs = std::to_string(mqttReconnectStats.maxOfflineMs);
+        // const std::string mqttLastBackoffMs = std::to_string(mqttReconnectStats.lastBackoffMs);
+        // const std::string mqttLastAttemptCount = std::to_string(mqttReconnectStats.lastAttemptCount);
+        // const std::string mqttLastDisconnectReason = app::MqttService<12, 16, 256>::disconnectReasonToStr(mqttReconnectStats.lastDisconnectReason);
 
         builder.withDeviceId(info.clientId)
             .withBroker(info.broker)
@@ -127,21 +128,21 @@ namespace iotsmartsys
             .withBuild(getBuildIdentifier())
             .withProperty(Property("wifi_ssid", wifi_.getSsid()))
             .withProperty(Property("wifi_signal", wifi_.getSignalStrength()))
-            .withProperty(Property("mqtt_queue_depth", mqttQueueDepth.c_str()))
-            .withProperty(Property("mqtt_queue_enqueued_total", mqttQueuedTotal.c_str()))
-            .withProperty(Property("mqtt_queue_drained_total", mqttDrainedTotal.c_str()))
-            .withProperty(Property("mqtt_drop_queue_full", mqttDropQueueFull.c_str()))
-            .withProperty(Property("mqtt_drop_payload_too_big", mqttDropPayloadTooBig.c_str()))
-            .withProperty(Property("mqtt_drop_topic_too_long", mqttDropTopicTooLong.c_str()))
-            .withProperty(Property("mqtt_drop_invalid_topic", mqttDropInvalidTopic.c_str()))
-            .withProperty(Property("mqtt_disconnects_total", mqttDisconnectsTotal.c_str()))
-            .withProperty(Property("mqtt_reconnects_total", mqttReconnectsTotal.c_str()))
-            .withProperty(Property("mqtt_connect_timeouts_total", mqttConnectTimeoutsTotal.c_str()))
-            .withProperty(Property("mqtt_last_offline_ms", mqttLastOfflineMs.c_str()))
-            .withProperty(Property("mqtt_max_offline_ms", mqttMaxOfflineMs.c_str()))
-            .withProperty(Property("mqtt_last_backoff_ms", mqttLastBackoffMs.c_str()))
-            .withProperty(Property("mqtt_last_attempt_count", mqttLastAttemptCount.c_str()))
-            .withProperty(Property("mqtt_last_disconnect_reason", mqttLastDisconnectReason.c_str()))
+            // .withProperty(Property("mqtt_queue_depth", mqttQueueDepth.c_str()))
+            // .withProperty(Property("mqtt_queue_enqueued_total", mqttQueuedTotal.c_str()))
+            // .withProperty(Property("mqtt_queue_drained_total", mqttDrainedTotal.c_str()))
+            // .withProperty(Property("mqtt_drop_queue_full", mqttDropQueueFull.c_str()))
+            // .withProperty(Property("mqtt_drop_payload_too_big", mqttDropPayloadTooBig.c_str()))
+            // .withProperty(Property("mqtt_drop_topic_too_long", mqttDropTopicTooLong.c_str()))
+            // .withProperty(Property("mqtt_drop_invalid_topic", mqttDropInvalidTopic.c_str()))
+            // .withProperty(Property("mqtt_disconnects_total", mqttDisconnectsTotal.c_str()))
+            // .withProperty(Property("mqtt_reconnects_total", mqttReconnectsTotal.c_str()))
+            // .withProperty(Property("mqtt_connect_timeouts_total", mqttConnectTimeoutsTotal.c_str()))
+            // .withProperty(Property("mqtt_last_offline_ms", mqttLastOfflineMs.c_str()))
+            // .withProperty(Property("mqtt_max_offline_ms", mqttMaxOfflineMs.c_str()))
+            // .withProperty(Property("mqtt_last_backoff_ms", mqttLastBackoffMs.c_str()))
+            // .withProperty(Property("mqtt_last_attempt_count", mqttLastAttemptCount.c_str()))
+            // .withProperty(Property("mqtt_last_disconnect_reason", mqttLastDisconnectReason.c_str()))
             .withIpAddress(wifi_.getIpAddress())
             .withMacAddress(wifi_.getMacAddress());
 
@@ -193,11 +194,24 @@ namespace iotsmartsys
             deviceIdentityProvider_.getDeviceID().c_str(),
             &SmartSysApp::onMqttConnectedThunk,
             this);
-        transportController_.start();
     }
 
     void SmartSysApp::handle()
     {
+        wifi_.handle();
+
+        if (wifi_.isConnected() && !deviceRegistrationManager_.isRegistered())
+        {
+            deviceRegistrationManager_.handle();
+            return;
+        }
+
+        if (!transportStarted_)
+        {
+            transportController_.start();
+            transportStarted_ = true;
+        }
+
         deviceStateManager_.handle();
         if (provisioningController_.isActive())
         {
@@ -207,8 +221,6 @@ namespace iotsmartsys
         factoryResetButtonController_.handle();
 
         capabilityController_.handle();
-
-        wifi_.handle();
 #if IOTSMARTSYS_OTA_ENABLED
         if (otaManager_)
         {

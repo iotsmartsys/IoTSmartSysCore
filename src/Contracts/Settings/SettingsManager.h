@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <atomic>
+#include <array>
 #include "Contracts/Common/StateResult.h"
 
 #include "Contracts/Settings/Settings.h"
@@ -106,6 +107,11 @@ namespace iotsmartsys::core::settings
         iotsmartsys::core::settings::ISettingsGate &_settingsGate;
         // Keep last sync URL alive while the async fetcher is running.
         std::string _syncUrlBuffer{};
+        // Keep header values alive while async fetcher uses request pointers.
+        std::string _syncApiKeyBuffer{};
+        std::string _syncClientIdBuffer{};
+        std::string _syncAuthBuffer{};
+        std::array<HttpHeader, 3> _syncHeaders{};
 
         void syncFromApi();
 

@@ -41,6 +41,7 @@
 #include "App/Managers/ConnectivityBootstrap.h"
 #include "App/Managers/FactoryResetButtonController.h"
 #include "App/Managers/DeviceStateManager.h"
+#include "App/Managers/DeviceRegistrationManager.h"
 #include "App/Managers/ProvisioningController.h"
 #include "App/Managers/TransportController.h"
 
@@ -134,6 +135,7 @@ namespace iotsmartsys
                 core::WiFiManager wifi_;
                 app::ProvisioningController provisioningController_;
                 app::DeviceStateManager deviceStateManager_;
+                app::DeviceRegistrationManager deviceRegistrationManager_;
                 app::ConnectivityBootstrap connectivityBootstrap_;
 
                 core::ICapability *capSlots_[8] = {};
@@ -158,6 +160,7 @@ namespace iotsmartsys
                 app::FactoryResetButtonController factoryResetButtonController_;
                 app::CapabilityController capabilityController_;
                 app::TransportController transportController_;
+                bool transportStarted_{false};
                 core::SerialTransportChannel *uart_;
         };
 } // namespace iotsmartsys

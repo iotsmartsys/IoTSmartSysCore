@@ -327,6 +327,12 @@ namespace iotsmartsys::core::settings
 
     void SettingsManager::syncFromApi()
     {
+        if (_fetcher.isRunning())
+        {
+            _logger->warn("[SettingsManager] syncFromApi() skipped: fetch already running.");
+            return;
+        }
+
         {
             _settingsGate.setLevel(SettingsReadyLevel::Syncing, iotsmartsys::core::common::StateResult::Ok);
         }
@@ -349,14 +355,15 @@ namespace iotsmartsys::core::settings
         // Keep pointer valid while the async fetcher runs.
         req.url = _syncUrlBuffer.c_str();
 
-        // Optional headers (example). If you don't need them, leave empty.
-        static HttpHeader headers[] = {
-            {"x-api-key", _current.api.key.c_str()},
-            {"client_id", _current.clientId},
-            {"Authorization", _current.api.basic_auth.c_str()},
-        };
-        req.headers = headers;
-        req.headers_count = sizeof(headers) / sizeof(headers[0]);
+        _syncApiKeyBuffer = _current.api.key;
+        _syncClientIdBuffer = (_current.clientId != nullptr) ? _current.clientId : "";
+        _syncAuthBuffer = _current.api.basic_auth;
+
+        _syncHeaders[0] = {"x-api-key", _syncApiKeyBuffer.c_str()};
+        _syncHeaders[1] = {"client_id", _syncClientIdBuffer.c_str()};
+        _syncHeaders[2] = {"Authorization", _syncAuthBuffer.c_str()};
+        req.headers = _syncHeaders.data();
+        req.headers_count = _syncHeaders.size();
 
         req.connect_timeout_ms = 3000;
         req.read_timeout_ms = 6000;

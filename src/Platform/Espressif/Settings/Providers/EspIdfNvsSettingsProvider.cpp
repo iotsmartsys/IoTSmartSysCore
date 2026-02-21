@@ -221,11 +221,16 @@ namespace iotsmartsys::platform::espressif
         dst.firmware.update = src.firmware.update;
 
         // wifi
-        dst.wifi.ssid = toString(src.wifi.ssid);        
+        dst.wifi.ssid = toString(src.wifi.ssid);
         dst.wifi.password = toString(src.wifi.password);
 
-        // api
+// api
+#ifdef IOTSMARTSYS_API_URL
+        dst.api.url = IOTSMARTSYS_API_URL;
+#else
         dst.api.url = toString(src.api.url);
+#endif
+
         dst.api.key = toString(src.api.key);
         dst.api.basic_auth = toString(src.api.basic_auth);
         switch (src.logLevel)
