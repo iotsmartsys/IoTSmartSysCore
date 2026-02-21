@@ -26,8 +26,8 @@ namespace iotsmartsys::app
         }
         else
         {
-            topic = "device/" + std::string(safeClientId) + "/command";
         }
+        topic = "device/" + std::string(safeClientId) + "/command";
 
         mqtt_.subscribe(topic.c_str());
         mqtt_.setOnConnected(onConnected, ctx);

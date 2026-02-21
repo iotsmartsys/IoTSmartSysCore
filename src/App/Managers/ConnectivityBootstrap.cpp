@@ -33,7 +33,7 @@ namespace iotsmartsys::app
 
         logSettingsSummary(outSettings);
 
-        serviceManager_.setLogLevel(outSettings.logLevel);
+        // serviceManager_.setLogLevel(outSettings.logLevel);
 
         if (outSettings.isValidWifiConfig() && !outSettings.in_config_mode && outSettings.isValidApiConfig())
         {

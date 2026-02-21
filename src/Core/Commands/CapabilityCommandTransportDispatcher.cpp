@@ -16,10 +16,11 @@ namespace iotsmartsys::core
 
     bool CapabilityCommandTransportDispatcher::dispatchMessage(const TransportMessageView &msg)
     {
+        _logger.info("Received message on topic: %s", msg.topic);
         iotsmartsys::core::DeviceCommand *cmd = _commandParser.parseCommand(msg.payload, msg.payloadLen);
         if (!cmd)
         {
-           // _logger.error("Failed to parse MQTT message payload.");
+           _logger.error("Failed to parse MQTT message payload.");
             return false;
         }
 

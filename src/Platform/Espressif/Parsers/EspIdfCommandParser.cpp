@@ -174,7 +174,7 @@ namespace iotsmartsys::platform::espressif
     {
         if (!jsonPayload || payloadLen == 0)
         {
-           // _logger.error("Failed to parse JSON payload: empty payload.");
+           _logger.error("Failed to parse JSON payload: empty payload.");
             return nullptr;
         }
 
@@ -187,10 +187,11 @@ namespace iotsmartsys::platform::espressif
         const bool okDev = tryExtractJsonStringField(jsonPayload, payloadLen, "device_id", deviceId);
         const bool okVal = tryExtractJsonStringField(jsonPayload, payloadLen, "value", value);
         const bool okTyp = tryExtractJsonStringField(jsonPayload, payloadLen, "type", type);
+        _logger.info("Parsed command - capability_name: %s, device_id: %s, value: %s, type: %s", capabilityName.c_str(), deviceId.c_str(), value.c_str(), type.c_str());
 
         if (!okCap || !okDev || !okVal)
         {
-           // _logger.error("Failed to parse JSON payload: missing required fields.");
+           _logger.error("Failed to parse JSON payload: missing required fields.");
             return nullptr;
         }
 
