@@ -6,7 +6,7 @@
 
 namespace iotsmartsys::platform::arduino
 {
-    DHTSensor::DHTSensor(int pin) : pin(pin)
+    DHTSensor::DHTSensor(int pin, long readIntervalMs) : pin(pin), readIntervalMs_(readIntervalMs)
     {
         // Default to DHT11; using the wrong sensor type causes NaN reads.
         dht = new DHT(pin, DHT11);
@@ -22,8 +22,14 @@ namespace iotsmartsys::platform::arduino
 
     void DHTSensor::handle()
     {
-        float temperature = readTemperatureCelsius();
-        float humidity = getHumidityPercentage();
+        if (lastStateReadMillis_ != 0 && (millis() - lastStateReadMillis_) < readIntervalMs_)
+        {
+            // not time to read yet
+            return;
+        }
+
+        float temperature = dht->readTemperature();
+        float humidity = dht->readHumidity();
 
         // consider it a state change when either value shifts
         if (!hasReading_ || fabs(temperature - lastTemperatureC_) > 0.01f || fabs(humidity - lastHumidity_) > 0.01f)
@@ -37,20 +43,12 @@ namespace iotsmartsys::platform::arduino
 
     float DHTSensor::readTemperatureCelsius()
     {
-        if (dht)
-        {
-            return dht->readTemperature();
-        }
-        return -180.0f;
+        return lastTemperatureC_;
     }
 
     float DHTSensor::getHumidityPercentage()
     {
-        if (dht)
-        {
-            return dht->readHumidity();
-        }
-        return -180.0f;
+        return lastHumidity_;
     }
 
     long DHTSensor::lastStateReadMillis() const

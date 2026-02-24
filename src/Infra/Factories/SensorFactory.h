@@ -29,7 +29,7 @@ namespace iotsmartsys::infra::factories
         /// @brief Creates a DHT sensor.
         /// @param gpio The GPIO pin to which the sensor is connected.
         /// @return A unique pointer to the created DHT sensor.
-        std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio);
+        std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio, const long readIntervalMs = 60000);
 #endif
 
         /// @brief Creates a luminosity sensor.

@@ -50,9 +50,9 @@ namespace iotsmartsys::infra::factories
     }
 
 #if IOTSMARTSYS_SENSORS_ENABLED && defined(DHT_SENSOR_ENABLED)
-    std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> SensorFactory::createDHTSensor(const int gpio)
+    std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> SensorFactory::createDHTSensor(const int gpio, long readIntervalMs)
     {
-        return std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor>(new iotsmartsys::platform::arduino::DHTSensor(gpio));
+        return std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor>(new iotsmartsys::platform::arduino::DHTSensor(gpio, readIntervalMs));
     }
 #endif
 
@@ -102,8 +102,8 @@ namespace iotsmartsys::infra::factories
         hxCfg.variationTolerance = cfg.variationTolerance;
         hxCfg.readOfTimesIntervalMs = cfg.readOfTimesIntervalMs;
         hxCfg.readType = (cfg.readType == core::GlpMeterReadType::INTERVAL)
-                           ? HX711WeightMeter::ReadType::INTERVAL
-                           : HX711WeightMeter::ReadType::CONTINUOUS;
+                             ? HX711WeightMeter::ReadType::INTERVAL
+                             : HX711WeightMeter::ReadType::CONTINUOUS;
 
         return std::unique_ptr<HX711WeightMeter>(new HX711WeightMeter(hxCfg));
 #else

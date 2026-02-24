@@ -11,7 +11,7 @@ namespace iotsmartsys::platform::arduino
     class DHTSensor : public core::ITemperatureSensor, public core::IHumiditySensor
     {
     public:
-        DHTSensor(int pin);
+        DHTSensor(int pin, long readIntervalMs = 60000);
         void setup() override;
         void handle() override;
         float readTemperatureCelsius() override;
@@ -21,6 +21,7 @@ namespace iotsmartsys::platform::arduino
     private:
         int pin;
         DHT *dht = nullptr;
+        long readIntervalMs_{60000};
         float lastTemperatureC_{0.0f};
         float lastHumidity_{0.0f};
         long lastStateReadMillis_{0};
