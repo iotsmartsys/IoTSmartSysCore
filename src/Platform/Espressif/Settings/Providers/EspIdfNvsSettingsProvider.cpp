@@ -32,6 +32,7 @@ namespace iotsmartsys::platform::espressif
             char announce_topic[128];
             char command_topic[128];
             char notify_topic[128];
+            char profile[16];
         };
 
         struct LegacyStoredFirmwareConfigV3
@@ -258,7 +259,7 @@ namespace iotsmartsys::platform::espressif
         dst.mqtt.announce_topic = toStdString(src.mqtt.announce_topic);
         dst.mqtt.command_topic = toStdString(src.mqtt.command_topic);
         dst.mqtt.notify_topic = toStdString(src.mqtt.notify_topic);
-        dst.mqtt.profile = "primary";
+        dst.mqtt.profile = toStdString(src.mqtt.profile);
 
         dst.firmware.url = toStdString(src.firmware.url);
         dst.firmware.manifest = toStdString(src.firmware.manifest);
@@ -404,6 +405,7 @@ namespace iotsmartsys::platform::espressif
 
         applyMqttConfig(src.mqtt.primary, dst.mqtt.primary);
         applyMqttConfig(src.mqtt.secondary, dst.mqtt.secondary);
+        applyMqttConfig(src.mqtt.tertiary, dst.mqtt.tertiary);
 
         // topics
         copyStrIfNotEmpty(dst.mqtt.announce_topic, sizeof(dst.mqtt.announce_topic), src.mqtt.announce_topic);
@@ -443,7 +445,7 @@ namespace iotsmartsys::platform::espressif
         dst.in_config_mode = (src.in_config_mode != 0);
         dst.device_registered = (src.device_registered != 0);
 
-        // MQTT primary
+    // MQTT primary
         dst.mqtt.primary.host = toString(src.mqtt.primary.host);
         dst.mqtt.primary.port = static_cast<int>(src.mqtt.primary.port);
         dst.mqtt.primary.user = toString(src.mqtt.primary.user);
@@ -458,6 +460,14 @@ namespace iotsmartsys::platform::espressif
         dst.mqtt.secondary.password = toString(src.mqtt.secondary.password);
         dst.mqtt.secondary.protocol = toString(src.mqtt.secondary.protocol);
         dst.mqtt.secondary.ttl = static_cast<int>(src.mqtt.secondary.ttl);
+
+    // MQTT tertiary
+    dst.mqtt.tertiary.host = toString(src.mqtt.tertiary.host);
+    dst.mqtt.tertiary.port = static_cast<int>(src.mqtt.tertiary.port);
+    dst.mqtt.tertiary.user = toString(src.mqtt.tertiary.user);
+    dst.mqtt.tertiary.password = toString(src.mqtt.tertiary.password);
+    dst.mqtt.tertiary.protocol = toString(src.mqtt.tertiary.protocol);
+    dst.mqtt.tertiary.ttl = static_cast<int>(src.mqtt.tertiary.ttl);
 
         // topics
         dst.mqtt.announce_topic = toString(src.mqtt.announce_topic);

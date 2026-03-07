@@ -49,6 +49,7 @@ namespace iotsmartsys::platform::espressif
         {
             StoredMqttConfig primary;
             StoredMqttConfig secondary;
+            StoredMqttConfig tertiary;
             char announce_topic[128];
             char command_topic[128];
             char notify_topic[128];

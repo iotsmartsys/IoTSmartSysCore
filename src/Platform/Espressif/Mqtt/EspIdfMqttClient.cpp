@@ -1,6 +1,7 @@
 #ifdef ESP32
 #include "EspIdfMqttClient.h"
 #include "Infra/Certs/LetsEncryptISRGRootX1.h"
+#include "esp_log.h"
 #include <cstring>
 extern "C"
 {
@@ -38,11 +39,18 @@ namespace iotsmartsys::platform::espressif
 
     bool EspIdfMqttClient::begin(const iotsmartsys::core::TransportConfig &cfg)
     {
-       // _logger.info("[MQTT DBG] EspIdfMqttClient::begin()...");
         if (_client)
             return true;
 
-       // _logger.info("[MQTT DBG] Preparing esp_mqtt_client_config_t...");
+        // Enable verbose TLS and transport logs to help debug handshake issues.
+        // These will print to serial (monitor) and can be removed after diagnosis.
+        esp_log_level_set("esp_tls", ESP_LOG_DEBUG);
+        esp_log_level_set("esp-tls-mbedtls", ESP_LOG_DEBUG);
+        esp_log_level_set("esp-tls", ESP_LOG_DEBUG);
+        esp_log_level_set("TRANSPORT_WS", ESP_LOG_DEBUG);
+        esp_log_level_set("TRANSPORT_BASE", ESP_LOG_DEBUG);
+        esp_log_level_set("MQTT_CLIENT", ESP_LOG_DEBUG);
+        esp_log_level_set("esp_crt_bundle", ESP_LOG_DEBUG);
 
         esp_mqtt_client_config_t c{};
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
@@ -55,7 +63,6 @@ namespace iotsmartsys::platform::espressif
         if (isSecureUri(cfg.uri))
         {
             c.broker.verification.certificate = ISRG_ROOT_X1_PEM;
-            c.broker.verification.crt_bundle_attach = arduino_esp_crt_bundle_attach;
             c.broker.verification.skip_cert_common_name_check = false;
         }
 #else
@@ -68,7 +75,6 @@ namespace iotsmartsys::platform::espressif
         if (isSecureUri(cfg.uri))
         {
             c.cert_pem = ISRG_ROOT_X1_PEM;
-            c.crt_bundle_attach = arduino_esp_crt_bundle_attach;
             c.skip_cert_common_name_check = false;
         }
 #endif
@@ -168,14 +174,12 @@ namespace iotsmartsys::platform::espressif
 
     esp_err_t EspIdfMqttClient::eventHandlerBridge(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
     {
-        // event_data is actually an esp_mqtt_event_handle_t when called by the mqtt client
         esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
         if (!event)
             return ESP_OK;
 
         auto *self = static_cast<EspIdfMqttClient *>(handler_arg);
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
-        // ensure user_context inside the event points to our object (handler_arg)
         event->user_context = handler_arg;
         return EspIdfMqttClient::eventHandlerThunk(event);
 #else
@@ -207,10 +211,8 @@ namespace iotsmartsys::platform::espressif
         {
             if (_onMsg)
             {
-                // topic/payload não são null-terminated!
-                // você pode passar como view (len) e deixar o Router interpretar.
                 iotsmartsys::core::TransportMessageView mv{};
-                mv.topic = event->topic; // cuidado: não é NUL-terminated, mas dá pra usar com len se quiser copiar
+                mv.topic = event->topic;
                 mv.payload = event->data;
                 mv.payloadLen = (std::size_t)event->data_len;
                 mv.retain = event->retain;

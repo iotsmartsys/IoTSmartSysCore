@@ -81,15 +81,13 @@ namespace iotsmartsys::app
         subscribe(cfg.subscribeTopic);
 
         const char *uriSafe = cfg.uri ? cfg.uri : "(null)";
-        // _logger.info("MQTT", "Initializing MQTT client uri='%s'", uriSafe);
+
         _client.setOnMessage(&MqttService::onMessageThunk, this);
         _client.setOnConnected(&MqttService::onConnectedThunk, this);
         _client.setOnDisconnected(&MqttService::onDisconnectedThunk, this);
         // _logger.info("MQTT", "MQTT client initialized.");
         const bool clientInitOk = _client.begin(_cfg);
 
-        // _logger.info("MQTT", "Scheduling initial connection...");
-        // No connect immediately; await handle() calls
         _state = State::BackoffWaiting;
         const uint32_t now = _time ? _time->nowMs() : 0;
         _offlineSinceMs = now;
@@ -438,31 +436,25 @@ namespace iotsmartsys::app
             return;
         }
 
-        const bool wantsSecondary = (settings.mqtt.profile == "secondary");
-        const core::settings::MqttConfig *selectedProfile = &settings.mqtt.primary;
-        if (wantsSecondary && settings.mqtt.secondary.isValid())
+        const core::settings::MqttConfig &selectedProfile = settings.mqtt.getCurrentProfile();
+
+        const std::string proto = selectedProfile.protocol.empty() ? std::string("mqtt") : selectedProfile.protocol;
+        std::string host = selectedProfile.host.empty() ? std::string() : selectedProfile.host;
+        const int port = (selectedProfile.port > 0) ? selectedProfile.port : 1883;
+
+        // Allow users to provide a websocket path in the host field (e.g. "mqtt.iotsmartsys.tech/mqtt").
+        // In that case split host and path so TLS SNI/host remains correct and the path is appended to the URI.
+        std::string wsPath;
+        const auto slashPos = host.find('/');
+        if (slashPos != std::string::npos)
         {
-            selectedProfile = &settings.mqtt.secondary;
-        }
-        else if (wantsSecondary && !settings.mqtt.secondary.isValid())
-        {
-            _logger.warn("MQTT", "mqtt.profile=secondary but secondary broker is invalid. Falling back to primary.");
-        }
-        else if (!settings.mqtt.profile.empty() && settings.mqtt.profile != "primary")
-        {
-            _logger.warn("MQTT", "mqtt.profile='%s' is unsupported. Falling back to primary.", settings.mqtt.profile.c_str());
+            wsPath = host.substr(slashPos); // includes leading '/'
+            host = host.substr(0, slashPos);
         }
 
-        // Build persistent strings inside the service so we don't point to
-        // temporaries owned by the local 'settings' object (that would dangle
-        // after this function returns). Use a full URI (protocol://host:port)
-        // if possible.
-        const std::string proto = selectedProfile->protocol.empty() ? std::string("mqtt") : selectedProfile->protocol;
-        const std::string host = selectedProfile->host.empty() ? std::string() : selectedProfile->host;
-        const int port = (selectedProfile->port > 0) ? selectedProfile->port : 1883;
         if (!host.empty())
         {
-            _uriStr = proto + "://" + host + ":" + std::to_string(port);
+            _uriStr = proto + "://" + host + ":" + std::to_string(port) + wsPath;
         }
         else
         {
@@ -476,8 +468,8 @@ namespace iotsmartsys::app
             return;
         }
 
-        _usernameStr = selectedProfile->user;
-        _passwordStr = selectedProfile->password;
+        _usernameStr = selectedProfile.user;
+        _passwordStr = selectedProfile.password;
         _clientIdStr = settings.clientId ? settings.clientId : std::string();
 
         // Point _cfg members to the service-owned strings (stable storage)
@@ -485,8 +477,8 @@ namespace iotsmartsys::app
         _cfg.username = _usernameStr.empty() ? nullptr : _usernameStr.c_str();
         _cfg.password = _passwordStr.empty() ? nullptr : _passwordStr.c_str();
         _cfg.clientId = _clientIdStr.empty() ? nullptr : _clientIdStr.c_str();
-        _cfg.keepAliveSec = selectedProfile->keepAliveSec;
-        _cfg.cleanSession = selectedProfile->cleanSession;
+        _cfg.keepAliveSec = selectedProfile.keepAliveSec;
+        _cfg.cleanSession = selectedProfile.cleanSession;
 
         if (!_clientInitialized)
         {

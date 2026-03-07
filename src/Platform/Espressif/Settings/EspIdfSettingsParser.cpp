@@ -67,22 +67,99 @@ namespace iotsmartsys::platform::espressif
     {
         out.profile = "primary";
 
-        // primary required
-        StateResult err = parseMqttConfig(ext, "mqtt.primary", out.primary, /*allowTtl*/ false);
-        if (err != StateResult::Ok) return err;
+        // Try multiple payload shapes for mqtt settings to be resilient to API changes:
+        // 1) new/old style: mqtt.primary / mqtt.secondary
+        // 2) single mqtt object: mqtt { host:..., port:... }
+        // 3) top-level primary / secondary objects: primary { ... } or secondary { ... }
+        // If only secondary is present (legacy case shown by server), treat it as the active profile.
 
-        // secondary optional
-        // detect presence by trying to get host
         std::string tmp;
-        if (ext.getString("mqtt.secondary.host", tmp))
+        bool matched = false;
+        StateResult err = StateResult::InvalidState;
+
+        // Attempt 1: mqtt.primary (preferred/original)
+        err = parseMqttConfig(ext, "mqtt.primary", out.primary, /*allowTtl*/ false);
+        if (err == StateResult::Ok)
         {
-            err = parseMqttConfig(ext, "mqtt.secondary", out.secondary, /*allowTtl*/ true);
-            if (err != StateResult::Ok) return err;
+            matched = true;
+            // parse secondary if present
+            if (ext.getString("mqtt.secondary.host", tmp))
+            {
+                err = parseMqttConfig(ext, "mqtt.secondary", out.secondary, /*allowTtl*/ true);
+                if (err != StateResult::Ok) return err;
+            }
+            else
+            {
+                out.secondary = MqttConfig{};
+            }
+            // parse tertiary if present
+            if (ext.getString("mqtt.tertiary.host", tmp))
+            {
+                err = parseMqttConfig(ext, "mqtt.tertiary", out.tertiary, /*allowTtl*/ true);
+                if (err != StateResult::Ok) return err;
+            }
+            else
+            {
+                out.tertiary = MqttConfig{};
+            }
         }
-        else
+
+        // Attempt 2: single mqtt object at 'mqtt'
+        if (!matched && ext.getString("mqtt.host", tmp))
         {
-            out.secondary = MqttConfig{};
+            err = parseMqttConfig(ext, "mqtt", out.primary, /*allowTtl*/ false);
+            if (err == StateResult::Ok)
+            {
+                matched = true;
+                out.secondary = MqttConfig{};
+                out.tertiary = MqttConfig{};
+            }
         }
+
+        // Attempt 3: top-level 'primary' or 'secondary' objects
+        if (!matched && ext.getString("primary.host", tmp))
+        {
+            err = parseMqttConfig(ext, "primary", out.primary, /*allowTtl*/ false);
+            if (err == StateResult::Ok)
+            {
+                matched = true;
+                if (ext.getString("secondary.host", tmp))
+                {
+                    err = parseMqttConfig(ext, "secondary", out.secondary, /*allowTtl*/ true);
+                    if (err != StateResult::Ok) return err;
+                }
+                else
+                {
+                    out.secondary = MqttConfig{};
+                }
+                // try tertiary at top-level
+                if (ext.getString("tertiary.host", tmp))
+                {
+                    err = parseMqttConfig(ext, "tertiary", out.tertiary, /*allowTtl*/ true);
+                    if (err != StateResult::Ok) return err;
+                }
+                else
+                {
+                    out.tertiary = MqttConfig{};
+                }
+            }
+        }
+
+        // Attempt 4: only 'secondary' present at top-level (server may return only one profile named 'secondary')
+        if (!matched && ext.getString("secondary.host", tmp))
+        {
+            err = parseMqttConfig(ext, "secondary", out.primary, /*allowTtl*/ true);
+            if (err == StateResult::Ok)
+            {
+                matched = true;
+                out.secondary = MqttConfig{};
+                out.profile = "secondary";
+                out.tertiary = MqttConfig{};
+            }
+        }
+
+        if (!matched)
+            return StateResult::InvalidState;
 
         // topics optional
         if (ext.getString("mqtt.topic.announce", tmp)) out.announce_topic = tmp;
