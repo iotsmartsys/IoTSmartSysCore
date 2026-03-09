@@ -1,8 +1,10 @@
 #ifdef ESP32
 #include "EspIdfMqttClient.h"
+#include "Infra/Certs/EmqxslCa.h"
 #include "Infra/Certs/LetsEncryptISRGRootX1.h"
 #include "esp_log.h"
 #include <cstring>
+#include <string>
 extern "C"
 {
 #include "esp_crt_bundle.h"
@@ -12,6 +14,11 @@ namespace iotsmartsys::platform::espressif
 {
     namespace
     {
+        const char *safeCstr(const char *value)
+        {
+            return value ? value : "";
+        }
+
         bool isSecureUri(const char *uri)
         {
             if (!uri)
@@ -19,6 +26,59 @@ namespace iotsmartsys::platform::espressif
                 return false;
             }
             return (std::strncmp(uri, "mqtts://", 8) == 0) || (std::strncmp(uri, "wss://", 6) == 0);
+        }
+
+        std::string extractHostFromUri(const char *uri)
+        {
+            if (!uri)
+            {
+                return std::string();
+            }
+
+            const char *schemeEnd = std::strstr(uri, "://");
+            const char *hostStart = schemeEnd ? (schemeEnd + 3) : uri;
+            if (!hostStart || *hostStart == '\0')
+            {
+                return std::string();
+            }
+
+            const char *hostEnd = hostStart;
+            while (*hostEnd && *hostEnd != ':' && *hostEnd != '/')
+            {
+                ++hostEnd;
+            }
+            return std::string(hostStart, (std::size_t)(hostEnd - hostStart));
+        }
+
+        bool endsWith(const std::string &value, const char *suffix)
+        {
+            if (!suffix)
+            {
+                return false;
+            }
+            const std::size_t suffixLen = std::strlen(suffix);
+            if (value.size() < suffixLen)
+            {
+                return false;
+            }
+            return std::memcmp(value.data() + (value.size() - suffixLen), suffix, suffixLen) == 0;
+        }
+
+        const char *selectServerCaForUri(const char *uri)
+        {
+            if (!isSecureUri(uri))
+            {
+                return nullptr;
+            }
+
+            const std::string host = extractHostFromUri(uri);
+            if (host == "emqxsl.com" || endsWith(host, ".emqxsl.com"))
+            {
+                return EMQXSL_CA_PEM;
+            }
+
+            // Default CA used by existing HiveMQ/Let's Encrypt endpoints.
+            return ISRG_ROOT_X1_PEM;
         }
     } // namespace
 
@@ -29,18 +89,43 @@ namespace iotsmartsys::platform::espressif
 
     EspIdfMqttClient::~EspIdfMqttClient()
     {
-        if (_client)
+        destroyClient();
+    }
+
+    void EspIdfMqttClient::destroyClient()
+    {
+        if (!_client)
         {
-            esp_mqtt_client_stop(_client);
-            esp_mqtt_client_destroy(_client);
-            _client = nullptr;
+            return;
         }
+        esp_mqtt_client_stop(_client);
+        esp_mqtt_client_destroy(_client);
+        _client = nullptr;
+        _connected = false;
+    }
+
+    bool EspIdfMqttClient::hasConfigChanged(const iotsmartsys::core::TransportConfig &cfg) const
+    {
+        return _cfgUri != safeCstr(cfg.uri) ||
+               _cfgClientId != safeCstr(cfg.clientId) ||
+               _cfgUsername != safeCstr(cfg.username) ||
+               _cfgPassword != safeCstr(cfg.password) ||
+               _cfgKeepAliveSec != cfg.keepAliveSec ||
+               _cfgCleanSession != cfg.cleanSession;
     }
 
     bool EspIdfMqttClient::begin(const iotsmartsys::core::TransportConfig &cfg)
     {
+        if (_client && hasConfigChanged(cfg))
+        {
+            _logger.info("MQTT", "Reinitializing MQTT client due to config/profile change.");
+            destroyClient();
+        }
+
         if (_client)
+        {
             return true;
+        }
 
         // Enable verbose TLS and transport logs to help debug handshake issues.
         // These will print to serial (monitor) and can be removed after diagnosis.
@@ -52,6 +137,15 @@ namespace iotsmartsys::platform::espressif
         esp_log_level_set("MQTT_CLIENT", ESP_LOG_DEBUG);
         esp_log_level_set("esp_crt_bundle", ESP_LOG_DEBUG);
 
+        const char *serverCa = selectServerCaForUri(cfg.uri);
+        const std::string host = extractHostFromUri(cfg.uri);
+        if (serverCa)
+        {
+            _logger.info("MQTT", "TLS CA selected: %s (host=%s)",
+                         (serverCa == EMQXSL_CA_PEM) ? "EMQXSL" : "ISRG_ROOT_X1",
+                         host.c_str());
+        }
+
         esp_mqtt_client_config_t c{};
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
         c.broker.address.uri = cfg.uri;
@@ -60,9 +154,9 @@ namespace iotsmartsys::platform::espressif
         c.credentials.authentication.password = cfg.password;
         c.session.keepalive = cfg.keepAliveSec;
         c.session.disable_clean_session = cfg.cleanSession ? 0 : 1;
-        if (isSecureUri(cfg.uri))
+        if (serverCa)
         {
-            c.broker.verification.certificate = ISRG_ROOT_X1_PEM;
+            c.broker.verification.certificate = serverCa;
             c.broker.verification.skip_cert_common_name_check = false;
         }
 #else
@@ -72,9 +166,9 @@ namespace iotsmartsys::platform::espressif
         c.password = cfg.password;
         c.keepalive = cfg.keepAliveSec;
         c.disable_clean_session = cfg.cleanSession ? 0 : 1;
-        if (isSecureUri(cfg.uri))
+        if (serverCa)
         {
-            c.cert_pem = ISRG_ROOT_X1_PEM;
+            c.cert_pem = serverCa;
             c.skip_cert_common_name_check = false;
         }
 #endif
@@ -96,6 +190,12 @@ namespace iotsmartsys::platform::espressif
         _clientIdStr = cfg.clientId ? cfg.clientId : "";
         _brokerStr = cfg.uri ? cfg.uri : "";
         _keepAliveSec = cfg.keepAliveSec;
+        _cfgUri = safeCstr(cfg.uri);
+        _cfgClientId = safeCstr(cfg.clientId);
+        _cfgUsername = safeCstr(cfg.username);
+        _cfgPassword = safeCstr(cfg.password);
+        _cfgKeepAliveSec = cfg.keepAliveSec;
+        _cfgCleanSession = cfg.cleanSession;
 
         return true;
     }
@@ -206,6 +306,24 @@ namespace iotsmartsys::platform::espressif
             _connected = false;
             if (_onDisconnected)
                 _onDisconnected(_onDisconnectedUser);
+            break;
+        case MQTT_EVENT_ERROR:
+            if (event->error_handle)
+            {
+                const auto *err = event->error_handle;
+                _logger.error(
+                    "MQTT",
+                    "MQTT_EVENT_ERROR: type=%d tls_esp=0x%x tls_stack=0x%x sock_errno=%d conn_rc=%d",
+                    (int)err->error_type,
+                    (unsigned int)err->esp_tls_last_esp_err,
+                    (unsigned int)err->esp_tls_stack_err,
+                    (int)err->esp_transport_sock_errno,
+                    (int)err->connect_return_code);
+            }
+            else
+            {
+                _logger.error("MQTT", "MQTT_EVENT_ERROR without error_handle");
+            }
             break;
         case MQTT_EVENT_DATA:
         {

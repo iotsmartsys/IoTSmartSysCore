@@ -36,6 +36,8 @@ namespace iotsmartsys::platform::espressif
         const char *getName() const override { return _clientIdStr.c_str(); }
 
     private:
+        bool hasConfigChanged(const iotsmartsys::core::TransportConfig &cfg) const;
+        void destroyClient();
         static esp_err_t eventHandlerThunk(esp_mqtt_event_handle_t event);
         // bridge para o esp_event_handler_t (usado por esp_mqtt_client_register_event em algumas IDFs)
         static esp_err_t eventHandlerBridge(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
@@ -55,6 +57,12 @@ namespace iotsmartsys::platform::espressif
         std::string _clientIdStr;
         std::string _brokerStr;
         uint16_t _keepAliveSec{0};
+        std::string _cfgUri;
+        std::string _cfgClientId;
+        std::string _cfgUsername;
+        std::string _cfgPassword;
+        uint16_t _cfgKeepAliveSec{0};
+        bool _cfgCleanSession{true};
     };
 
 } // namespace iotsmartsys::platform::esp32

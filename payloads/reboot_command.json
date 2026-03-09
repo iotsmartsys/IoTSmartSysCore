@@ -1,0 +1,6 @@
+{
+  "device_id": "esp32s3-08267C",
+  "capability_name": "system",
+  "type": "SYSTEM",
+  "value": "REBOOT"
+}

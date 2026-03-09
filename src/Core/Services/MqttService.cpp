@@ -12,6 +12,10 @@
 
 namespace iotsmartsys::app
 {
+    namespace
+    {
+        constexpr uint32_t BrokerFallbackAttemptThreshold = 3;
+    }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     MqttService<MaxTopics, QueueLen, MaxPayload>::MqttService(iotsmartsys::core::IMqttClient &client,
@@ -65,6 +69,8 @@ namespace iotsmartsys::app
         _settingsReady = false;
         _lastSettingsReady = false;
         _lastStatusLogAtMs = 0;
+        _fallbackBrokerActive = false;
+        _activeProfileName.clear();
         // _logger.debug("MQTT", "Subscribing to SettingsGate for SettingsReady events...");
 
         const auto gateSubErr = _settingsGate.runWhenReady(
@@ -197,6 +203,9 @@ namespace iotsmartsys::app
             {
                 markDisconnected(MqttDisconnectReason::ConnectTimeout, now);
                 _reconnectStats.connectTimeoutsTotal++;
+                _logger.info("MQTT", "Connect timeout after 15s. profile='%s' uri='%s'.",
+                             _activeProfileName.c_str(),
+                             _cfg.uri ? _cfg.uri : "(null)");
                 scheduleRetry();
             }
             break;
@@ -210,7 +219,9 @@ namespace iotsmartsys::app
             if (!_client.isConnected())
             {
                 markDisconnected(MqttDisconnectReason::ConnectionLost, now);
-                _logger.warn("MQTT", "Disconnected");
+                _logger.info("MQTT", "Disconnected. profile='%s' uri='%s'.",
+                             _activeProfileName.c_str(),
+                             _cfg.uri ? _cfg.uri : "(null)");
                 {
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();
                     gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
@@ -400,6 +411,7 @@ namespace iotsmartsys::app
             _reconnectStats.reconnectsTotal++;
             _offlineSinceMs = 0;
         }
+        _fallbackBrokerActive = false;
 
         if (_policy.clearQueueOnReconnect && _qCount > 0)
         {
@@ -436,7 +448,62 @@ namespace iotsmartsys::app
             return;
         }
 
-        const core::settings::MqttConfig &selectedProfile = settings.mqtt.getCurrentProfile();
+        std::string selectedProfileName{"primary"};
+        if (settings.mqtt.profile == "tertiary" && settings.mqtt.tertiary.isValid())
+        {
+            selectedProfileName = "tertiary";
+        }
+        else if (settings.mqtt.profile == "secondary" && settings.mqtt.secondary.isValid())
+        {
+            selectedProfileName = "secondary";
+        }
+
+        const auto resolveProfileByName = [&](const std::string &name) -> const core::settings::MqttConfig &
+        {
+            if (name == "tertiary")
+            {
+                return settings.mqtt.tertiary;
+            }
+            if (name == "secondary")
+            {
+                return settings.mqtt.secondary;
+            }
+            return settings.mqtt.primary;
+        };
+
+        std::string targetProfileName = selectedProfileName;
+        if (_attempt >= BrokerFallbackAttemptThreshold)
+        {
+            if (selectedProfileName != "primary" && settings.mqtt.primary.isValid())
+            {
+                targetProfileName = "primary";
+            }
+            else if (selectedProfileName != "secondary" && settings.mqtt.secondary.isValid())
+            {
+                targetProfileName = "secondary";
+            }
+            else if (selectedProfileName != "tertiary" && settings.mqtt.tertiary.isValid())
+            {
+                targetProfileName = "tertiary";
+            }
+        }
+
+        const bool fallbackActive = targetProfileName != selectedProfileName;
+        if (fallbackActive && !_fallbackBrokerActive)
+        {
+            _logger.info("MQTT", "Selected profile '%s' failed %lu times. Switching to fallback profile '%s'.",
+                         selectedProfileName.c_str(),
+                         (unsigned long)_attempt,
+                         targetProfileName.c_str());
+        }
+        else if (!fallbackActive && _fallbackBrokerActive)
+        {
+            _logger.info("MQTT", "Returning to selected profile '%s'.", selectedProfileName.c_str());
+        }
+        _fallbackBrokerActive = fallbackActive;
+        _activeProfileName = targetProfileName;
+
+        const core::settings::MqttConfig &selectedProfile = resolveProfileByName(targetProfileName);
 
         const std::string proto = selectedProfile.protocol.empty() ? std::string("mqtt") : selectedProfile.protocol;
         std::string host = selectedProfile.host.empty() ? std::string() : selectedProfile.host;
@@ -463,6 +530,7 @@ namespace iotsmartsys::app
 
         if (_uriStr.empty())
         {
+            _logger.info("MQTT", "Skipping connect: empty broker host for profile '%s'.", _activeProfileName.c_str());
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;
@@ -482,14 +550,26 @@ namespace iotsmartsys::app
 
         if (!_clientInitialized)
         {
-            const bool clientInitOk = begin(_cfg, _policy);
-            if (!clientInitOk)
+            // First-time service init (time provider, callbacks, subscriptions, state machine).
+            const bool serviceInitOk = begin(_cfg, _policy);
+            if (!serviceInitOk)
             {
                 markDisconnected(MqttDisconnectReason::ClientInitFailed, _time ? _time->nowMs() : 0);
                 scheduleRetry();
                 return;
             }
             _clientInitialized = true;
+        }
+        else
+        {
+            // Reapply client config on each attempt so profile fallback can switch URI/credentials.
+            const bool clientInitOk = _client.begin(_cfg);
+            if (!clientInitOk)
+            {
+                markDisconnected(MqttDisconnectReason::ClientInitFailed, _time ? _time->nowMs() : 0);
+                scheduleRetry();
+                return;
+            }
         }
 
         // Gate redundante (segurança): nunca tenta MQTT sem Wi-Fi + IP
@@ -507,7 +587,11 @@ namespace iotsmartsys::app
         _state = State::Connecting;
         // _logger.debug("MQTT", "Starting connection attempt %lu", (unsigned long)(_attempt + 1));
         _nextActionAtMs = (_time ? _time->nowMs() : 0) + 15000; // soft-timeout de conexão
-                                                                // _logger.info("MQTT", "Connecting (attempt=%lu)", (unsigned long)(_attempt + 1));
+        _logger.info("MQTT", "Connecting (attempt=%lu, profile='%s', uri='%s', fallback=%s).",
+                     (unsigned long)(_attempt + 1),
+                     _activeProfileName.c_str(),
+                     _cfg.uri ? _cfg.uri : "(null)",
+                     _fallbackBrokerActive ? "true" : "false");
         _client.start();
     }
 
@@ -527,6 +611,12 @@ namespace iotsmartsys::app
         }
         _state = State::BackoffWaiting;
         _nextActionAtMs = now + backoff;
+        _logger.info("MQTT", "Retry scheduled (attempt=%lu, backoff=%lums, reason='%s', profile='%s', uri='%s').",
+                     (unsigned long)(_attempt + 1),
+                     (unsigned long)backoff,
+                     disconnectReasonToStr(_reconnectStats.lastDisconnectReason),
+                     _activeProfileName.c_str(),
+                     _cfg.uri ? _cfg.uri : "(null)");
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>

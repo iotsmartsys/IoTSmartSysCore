@@ -147,6 +147,7 @@ namespace iotsmartsys::app
         std::string _usernameStr;
         std::string _passwordStr;
         std::string _clientIdStr;
+        std::string _activeProfileName;
         RetryPolicy _policy{};
 
         State _state{State::Idle};
@@ -156,6 +157,7 @@ namespace iotsmartsys::app
         uint32_t _lastStatusLogAtMs{0};
         uint32_t _statusLogEveryMs{5000};
         bool _clientInitialized{false};
+        bool _fallbackBrokerActive{false};
 
         
         const char *_publishTopic{nullptr};

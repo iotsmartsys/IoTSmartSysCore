@@ -187,11 +187,19 @@ namespace iotsmartsys::platform::espressif
         const bool okDev = tryExtractJsonStringField(jsonPayload, payloadLen, "device_id", deviceId);
         const bool okVal = tryExtractJsonStringField(jsonPayload, payloadLen, "value", value);
         const bool okTyp = tryExtractJsonStringField(jsonPayload, payloadLen, "type", type);
-        _logger.info("Parsed command - capability_name: %s, device_id: %s, value: %s, type: %s", capabilityName.c_str(), deviceId.c_str(), value.c_str(), type.c_str());
+        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s'",
+                     capabilityName.c_str(),
+                     deviceId.c_str(),
+                     value.c_str(),
+                     type.c_str());
 
         if (!okCap || !okDev || !okVal)
         {
-           _logger.error("Failed to parse JSON payload: missing required fields.");
+            _logger.error("CMD", "Failed to parse JSON: missing required fields (cap=%s dev=%s val=%s typ=%s).",
+                          okCap ? "ok" : "missing",
+                          okDev ? "ok" : "missing",
+                          okVal ? "ok" : "missing",
+                          okTyp ? "ok" : "missing");
             return nullptr;
         }
 
