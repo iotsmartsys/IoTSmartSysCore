@@ -7,6 +7,56 @@ using namespace iotsmartsys::core::common;
 
 namespace iotsmartsys::core::settings
 {
+    namespace
+    {
+        constexpr const char *kDefaultDeviceSettingsEndpoint = "devices/:device_id/settings";
+
+        bool endsWith(const std::string &value, const std::string &suffix)
+        {
+            return value.size() >= suffix.size() &&
+                   value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+        }
+
+        void trimTrailingSlashes(std::string &value)
+        {
+            while (!value.empty() && value.back() == '/')
+            {
+                value.pop_back();
+            }
+        }
+
+        std::string buildSettingsUrl(const Settings &settings)
+        {
+            if (settings.api.url.empty())
+            {
+                return {};
+            }
+
+            std::string url = settings.api.url;
+            if (url.find(":device_id") != std::string::npos || endsWith(url, "/settings"))
+            {
+                return url;
+            }
+
+            trimTrailingSlashes(url);
+
+#ifdef IOTSMARTSYS_API_DEVICE_SETTINGS_ENDPOINT
+            constexpr const char *endpoint = IOTSMARTSYS_API_DEVICE_SETTINGS_ENDPOINT;
+#else
+            constexpr const char *endpoint = kDefaultDeviceSettingsEndpoint;
+#endif
+
+            if (endpoint == nullptr || *endpoint == '\0')
+            {
+                return url;
+            }
+
+            url += "/";
+            url += endpoint;
+            return url;
+        }
+    }
+
     SettingsManager::SettingsManager(core::providers::ISettingsProvider &provider,
                                      ISettingsFetcher &fetcher,
                                      ISettingsParser &parser,
@@ -344,7 +394,7 @@ namespace iotsmartsys::core::settings
             _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
             return;
         }
-        _syncUrlBuffer = _current.api.url;
+        _syncUrlBuffer = buildSettingsUrl(_current);
         const auto deviceIdPlaceholder = std::string(":device_id");
         const auto placeholderPos = _syncUrlBuffer.find(deviceIdPlaceholder);
         if (placeholderPos != std::string::npos && _current.clientId != nullptr)

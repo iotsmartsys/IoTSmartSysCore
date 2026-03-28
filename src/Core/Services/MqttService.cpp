@@ -530,7 +530,7 @@ namespace iotsmartsys::app
 
         if (_uriStr.empty())
         {
-            _logger.info("MQTT", "Skipping connect: empty broker host for profile '%s'.", _activeProfileName.c_str());
+            _logger.debug("MQTT", "Skipping connect: empty broker host for profile '%s'.", _activeProfileName.c_str());
             _state = State::Idle;
             _nextActionAtMs = 0;
             return;

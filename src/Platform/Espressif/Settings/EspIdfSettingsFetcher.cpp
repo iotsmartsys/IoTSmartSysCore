@@ -8,10 +8,13 @@
 #include <cstring>
 #include <algorithm>
 #include <ctime>
+#include <string>
+#include "Infra/Certs/GoogleTrustServicesGTSRootR4.h"
 #include "Infra/Certs/LetsEncryptISRGRootX1.h"
 
 extern "C"
 {
+#include "esp_err.h"
 #include "esp_log.h"
 #include "esp_random.h"
 #include "esp_crt_bundle.h"
@@ -28,6 +31,61 @@ namespace iotsmartsys::platform::espressif
     {
         const std::time_t now = std::time(nullptr);
         return now >= kMinValidEpoch;
+    }
+
+    static std::string extractHostFromUrl(const char *url)
+    {
+        if (!url)
+        {
+            return std::string();
+        }
+
+        const char *schemeEnd = std::strstr(url, "://");
+        const char *hostStart = schemeEnd ? (schemeEnd + 3) : url;
+        if (!hostStart || *hostStart == '\0')
+        {
+            return std::string();
+        }
+
+        const char *hostEnd = hostStart;
+        while (*hostEnd && *hostEnd != ':' && *hostEnd != '/' && *hostEnd != '?')
+        {
+            ++hostEnd;
+        }
+
+        return std::string(hostStart, static_cast<std::size_t>(hostEnd - hostStart));
+    }
+
+    static bool hostMatches(const std::string &host, const char *suffix)
+    {
+        if (!suffix)
+        {
+            return false;
+        }
+
+        const std::size_t suffixLen = std::strlen(suffix);
+        if (host.size() < suffixLen)
+        {
+            return false;
+        }
+
+        return host.compare(host.size() - suffixLen, suffixLen, suffix) == 0;
+    }
+
+    static const char *selectServerCaForUrl(const char *url)
+    {
+        const std::string host = extractHostFromUrl(url);
+        if (host.empty())
+        {
+            return ISRG_ROOT_X1_PEM;
+        }
+
+        if (host == "api.iotsmartsys.tech" || hostMatches(host, ".iotsmartsys.tech"))
+        {
+            return GTS_ROOT_R4_PEM;
+        }
+
+        return ISRG_ROOT_X1_PEM;
     }
 
     static StateResult map_esp_err(esp_err_t e)
@@ -228,8 +286,12 @@ namespace iotsmartsys::platform::espressif
                 return ESP_ERR_TIMEOUT;
             }
 
-            cfg.cert_pem = ISRG_ROOT_X1_PEM;
+            cfg.cert_pem = selectServerCaForUrl(_req.url);
             cfg.crt_bundle_attach = nullptr;
+            const std::string host = extractHostFromUrl(_req.url);
+            _logger.info("SettingsFetcher", "HTTPS trust source: pinned CA for host=%s (%s).",
+                         host.c_str(),
+                         (cfg.cert_pem == GTS_ROOT_R4_PEM) ? "GTS_ROOT_R4" : "ISRG_ROOT_X1");
             cfg.skip_cert_common_name_check = false;
         }
         cfg.method = HTTP_METHOD_GET;
@@ -267,6 +329,11 @@ namespace iotsmartsys::platform::espressif
         if (err != ESP_OK)
         {
             out_http_status = esp_http_client_get_status_code(_client);
+            _logger.error("SettingsFetcher", "HTTP perform failed: %s (%d), status=%d, url=%s",
+                          esp_err_to_name(err),
+                          (int)err,
+                          out_http_status,
+                          _req.url ? _req.url : "");
             return err;
         }
 

@@ -20,6 +20,20 @@ namespace iotsmartsys::app
         constexpr uint32_t kMaxRetryMs = 60000;
         constexpr uint32_t kHttpTimeoutMs = 7000;
         constexpr const char *kFixedLastActive = "14/02/2026 20:17:23";
+
+        bool endsWith(const std::string &value, const std::string &suffix)
+        {
+            return value.size() >= suffix.size() &&
+                   value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+        }
+
+        void trimTrailingSlashes(std::string &value)
+        {
+            while (!value.empty() && value.back() == '/')
+            {
+                value.pop_back();
+            }
+        }
     }
 
     DeviceRegistrationManager::DeviceRegistrationManager(core::ILogger &logger,
@@ -186,9 +200,17 @@ namespace iotsmartsys::app
             resolved.erase(simpleSuffixPos);
         }
 
-        while (!resolved.empty() && resolved.back() == '/')
+        trimTrailingSlashes(resolved);
+
+        if (endsWith(resolved, "/devices/:device_id"))
         {
-            resolved.pop_back();
+            resolved.erase(resolved.size() - std::string("/devices/:device_id").size());
+            trimTrailingSlashes(resolved);
+        }
+
+        if (!endsWith(resolved, "/devices"))
+        {
+            resolved += "/devices";
         }
 
         return resolved;
