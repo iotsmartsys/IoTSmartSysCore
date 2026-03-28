@@ -2,7 +2,7 @@
 
 namespace iotsmartsys::core
 {
-    AirConditionerCapability::AirConditionerCapability(IIRCommandSensor &sensor, IAirConditionerInterpreter &interpreter, ICapabilityEventSink *event_sink)
+    AirConditionerCapability::AirConditionerCapability(IIRCommandSensor &sensor, IRCommandInterpreter &interpreter, ICapabilityEventSink *event_sink)
         : ICapability(event_sink, AIR_CONDITIONER_TYPE, "OFF"), sensor(sensor), interpreter(interpreter)
     {
         // Initialization code if needed
@@ -12,10 +12,10 @@ namespace iotsmartsys::core
     {
         sensor.handle();
 
-        IRCommand command = sensor.readCommand();
+        IRCommand &command = sensor.readCommand();
         if (command.triggered)
         {
-            sensor.readed();
+            command.readed();
             std::string interpretedValue = interpreter.interpret(command);
             updateState(interpretedValue);
             logger.info("AirConditionerCapability state updated to: %s", interpretedValue.c_str());

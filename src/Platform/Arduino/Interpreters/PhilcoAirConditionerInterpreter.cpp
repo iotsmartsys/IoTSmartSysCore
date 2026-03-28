@@ -2,8 +2,7 @@
 
 namespace iotsmartsys::core
 {
-    PhilcoAirConditionerInterpreter::PhilcoAirConditionerInterpreter(AirConditionerModel model)
-        : IAirConditionerInterpreter(model), model(model)
+    PhilcoAirConditionerInterpreter::PhilcoAirConditionerInterpreter()
     {
     }
 

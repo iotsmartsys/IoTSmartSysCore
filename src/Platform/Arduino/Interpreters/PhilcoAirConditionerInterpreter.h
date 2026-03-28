@@ -1,19 +1,17 @@
 #pragma once
 #include <Arduino.h>
-#include "Contracts/Interpreters/IAirConditionerInterpreter.h"
+#include "Contracts/Interpreters/IRCommandInterpreter.h"
 
 namespace iotsmartsys::core
 {
-    class PhilcoAirConditionerInterpreter : public IAirConditionerInterpreter
+    class PhilcoAirConditionerInterpreter : public IRCommandInterpreter
     {
     public:
-        PhilcoAirConditionerInterpreter(AirConditionerModel model);
+        PhilcoAirConditionerInterpreter();
         ~PhilcoAirConditionerInterpreter() override = default;
 
         std::string interpret(const IRCommand &command) override;
 
-    private:
-        AirConditionerModel model;
     };
 
 } // namespace iotsmartsys::core

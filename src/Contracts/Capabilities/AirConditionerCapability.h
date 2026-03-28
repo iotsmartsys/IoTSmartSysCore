@@ -2,21 +2,21 @@
 
 #include "ICapability.h"
 #include "Contracts/Sensors/IIRCommandSensor.h"
-#include "Contracts/Interpreters/IAirConditionerInterpreter.h"
+#include "Contracts/Interpreters/IRCommandInterpreter.h"
 
 namespace iotsmartsys::core
 {
     class AirConditionerCapability : public ICapability
     {
     public:
-        AirConditionerCapability(IIRCommandSensor &sensor, IAirConditionerInterpreter &interpreter, ICapabilityEventSink *event_sink);
+        AirConditionerCapability(IIRCommandSensor &sensor, IRCommandInterpreter &interpreter, ICapabilityEventSink *event_sink);
 
         void setup() override;
         void handle() override;
 
     private:
         IIRCommandSensor &sensor;
-        IAirConditionerInterpreter &interpreter;
+        IRCommandInterpreter &interpreter;
     };
 
 } // namespace iotsmartsys::core

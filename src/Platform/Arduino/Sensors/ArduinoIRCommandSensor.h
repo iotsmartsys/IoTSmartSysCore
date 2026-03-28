@@ -6,13 +6,13 @@
 #endif
 #include "Contracts/Sensors/IIRCommandSensor.h"
 
-#ifdef IR_REMOTE_ESP8266
+#if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
 #include <IRrecv.h>
 #endif
 
 namespace iotsmartsys::platform::arduino
 {
-#ifdef IR_REMOTE_ESP8266
+#if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
     class ArduinoIRCommandSensor : public iotsmartsys::core::IIRCommandSensor
     {
     public:
@@ -22,7 +22,7 @@ namespace iotsmartsys::platform::arduino
         void setup() override;
         void handle() override;
 
-        iotsmartsys::core::IRCommand readCommand() const override;
+        iotsmartsys::core::IRCommand &readCommand() override { return lastCommand; }
         void readed() override;
         long lastStateReadMillis() const override;
 
@@ -44,9 +44,12 @@ namespace iotsmartsys::platform::arduino
         explicit ArduinoIRCommandSensor(int) {}
         void setup() override {}
         void handle() override {}
-        iotsmartsys::core::IRCommand readCommand() const override { return iotsmartsys::core::IRCommand{false, 0, ""}; }
+        iotsmartsys::core::IRCommand &readCommand() override { return stubCommand; }
         void readed() override {}
         long lastStateReadMillis() const override { return 0; }
+
+    private:
+        iotsmartsys::core::IRCommand stubCommand{false, 0, ""};
     };
 #endif
 

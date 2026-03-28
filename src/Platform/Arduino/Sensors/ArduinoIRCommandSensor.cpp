@@ -1,4 +1,4 @@
-#ifdef IR_REMOTE_ESP8266
+#if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
 #include <Arduino.h>
 
 #include "ArduinoIRCommandSensor.h"
@@ -9,6 +9,11 @@
 
 namespace iotsmartsys::platform::arduino
 {
+    namespace
+    {
+        constexpr uint64_t kNecRepeatCode = 0xFFFFFFFFFFFFFFFFULL;
+    }
+
     ArduinoIRCommandSensor::ArduinoIRCommandSensor(int pin)
         : lastCommand(*(new iotsmartsys::core::IRCommand{false, 0, ""})), irPin(pin), lastState(0), lastSendEvent(0), lastStateReadMillis_(0)
     {
@@ -35,9 +40,15 @@ namespace iotsmartsys::platform::arduino
 
         if (irrecv->decode(&results))
         {
-
-            core::Log::get().debug("Código recebido: 0x");
             uint64_t currentValue = results.value;
+            String decodedType = typeToString(results.decode_type);
+
+            if (results.decode_type == decode_type_t::NEC && currentValue == kNecRepeatCode)
+            {
+                core::Log::get().debug("Ignoring NEC repeat frame.");
+                irrecv->resume();
+                return;
+            }
 
             core::Log::get().debug("Código recebido: 0x");
             // Format the value as hexadecimal without using Arduino::String
@@ -56,6 +67,7 @@ namespace iotsmartsys::platform::arduino
             bool stateChanged = (currentValue != lastCommand.code) || !lastCommand.triggered;
             lastCommand.triggered = true;
             lastCommand.code = currentValue;
+            lastCommand.type = decodedType.c_str();
             if (stateChanged)
             {
                 lastStateReadMillis_ = millis();
@@ -63,11 +75,6 @@ namespace iotsmartsys::platform::arduino
 
             irrecv->resume();
         }
-    }
-
-    iotsmartsys::core::IRCommand ArduinoIRCommandSensor::readCommand() const
-    {
-        return lastCommand;
     }
 
     void ArduinoIRCommandSensor::readed()

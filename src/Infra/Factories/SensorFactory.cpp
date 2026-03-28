@@ -112,4 +112,14 @@ namespace iotsmartsys::infra::factories
 #endif
     }
 
+    std::unique_ptr<core::IIRCommandSensor> SensorFactory::createIRCommandSensor(int pin)
+    {
+#if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
+        return std::unique_ptr<core::IIRCommandSensor>(new iotsmartsys::platform::arduino::ArduinoIRCommandSensor(pin));
+#else
+        (void)pin;
+        return nullptr;
+#endif
+    }
+
 } // namespace iotsmartsys::infra::factories

@@ -9,6 +9,10 @@
 #include "Platform/Arduino/Sensors/DHTSensor.h"
 #endif
 
+#if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
+#include "Platform/Arduino/Sensors/ArduinoIRCommandSensor.h"
+#endif
+
 namespace iotsmartsys::infra::factories
 {
     using namespace iotsmartsys::core;
@@ -52,6 +56,11 @@ namespace iotsmartsys::infra::factories
         std::unique_ptr<core::IGlpSensor> createGlpSensor(int pinAO, int pinDO) override;
 
         std::unique_ptr<core::IGlpMeter> createGlpMeter(const core::GlpMeterCreationConfig &cfg) override;
+
+        /// @brief Creates an IR command sensor.
+        /// @param pin The GPIO pin to which the sensor is connected.
+        /// @return A unique pointer to the created IR command sensor.
+        std::unique_ptr<core::IIRCommandSensor> createIRCommandSensor(int pin) override;
 
     private:
         ILogger &_logger;

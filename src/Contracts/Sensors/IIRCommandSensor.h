@@ -9,6 +9,7 @@ namespace iotsmartsys::core
         bool triggered;
         uint64_t code;
         std::string type;
+        void readed() { triggered = false; }
     };
 
     class IIRCommandSensor : public IHardwareAdapter
@@ -21,7 +22,7 @@ namespace iotsmartsys::core
         virtual void handle() = 0;
 
         // returns last received command
-        virtual IRCommand readCommand() const = 0;
+        virtual IRCommand &readCommand() = 0;
         // marks the last command as read
         virtual void readed() = 0;
     };
