@@ -91,6 +91,9 @@ namespace iotsmartsys
 
     void SmartSysApp::applySettingsToRuntime(const iotsmartsys::core::settings::Settings &)
     {
+        logger_.warn("SettingsManager", "Runtime settings changed; restarting device to apply updated configuration.");
+        mqtt_.stop();
+        delay(250);
         systemCommandProcessor_.restartSafely();
     }
 
@@ -164,7 +167,10 @@ namespace iotsmartsys
         {
             settings_ = newSettings;
             applySettingsToRuntime(newSettings);
+            return;
         }
+
+        logger_.info("SettingsManager", "Settings update callback invoked with no runtime changes.");
     }
 
     void SmartSysApp::setup()

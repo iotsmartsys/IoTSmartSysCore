@@ -70,7 +70,11 @@ namespace iotsmartsys::app
         _lastSettingsReady = false;
         _lastStatusLogAtMs = 0;
         _fallbackBrokerActive = false;
-        _activeProfileName.clear();
+        _clientDisconnectObserved.store(false, std::memory_order_release);
+        if (_activeProfileName.empty())
+        {
+            _activeProfileName = "primary";
+        }
         // _logger.debug("MQTT", "Subscribing to SettingsGate for SettingsReady events...");
 
         const auto gateSubErr = _settingsGate.runWhenReady(
@@ -102,18 +106,66 @@ namespace iotsmartsys::app
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
+    void MqttService<MaxTopics, QueueLen, MaxPayload>::stop()
+    {
+        _logger.info("MQTT", "Stopping MQTT client. state=%s profile='%s' uri='%s'.",
+                     stateToStr(_state),
+                     _activeProfileName.c_str(),
+                     _cfg.uri ? _cfg.uri : "(null)");
+
+        _clientDisconnectObserved.store(false, std::memory_order_release);
+        _client.stop();
+
+        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+        gate.clearBits(iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+
+        const uint32_t now = _time ? _time->nowMs() : 0;
+        markDisconnected(MqttDisconnectReason::NetworkGateClosed, now);
+        _state = State::Idle;
+        _nextActionAtMs = 0;
+    }
+
+    template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
     void MqttService<MaxTopics, QueueLen, MaxPayload>::handle()
     {
         const uint32_t now = _time ? _time->nowMs() : 0;
 
         auto &gate = iotsmartsys::core::ConnectivityGate::instance();
         const bool networkReady = gate.isNetworkReady();
+        auto *settingsGate = &_settingsGate;
+        _settingsReady = settingsGate->level() >= iotsmartsys::core::settings::SettingsReadyLevel::Available;
         const bool canConnect = networkReady && _settingsReady;
+
+        if (_clientDisconnectObserved.exchange(false, std::memory_order_acq_rel))
+        {
+            _logger.warn("MQTT", "Disconnected event observed. state=%s profile='%s' uri='%s'.",
+                         stateToStr(_state),
+                         _activeProfileName.c_str(),
+                         _cfg.uri ? _cfg.uri : "(null)");
+            if (_state == State::Online || _state == State::Connecting)
+            {
+                markDisconnected(MqttDisconnectReason::ConnectionLost, now);
+                scheduleRetry();
+                return;
+            }
+        }
 
         // Snapshot periódico para diagnosticar facilmente "por que não conectou"
         if (_statusLogEveryMs && (_lastStatusLogAtMs == 0 || (now - _lastStatusLogAtMs) >= _statusLogEveryMs))
         {
             _lastStatusLogAtMs = now;
+            if (_state != State::Online)
+            {
+                const uint32_t retryInMs = (_nextActionAtMs > now) ? (_nextActionAtMs - now) : 0;
+                _logger.info("MQTT", "Status: state=%s networkReady=%s settingsReady=%s attempt=%lu nextRetryIn=%lums profile='%s' uri='%s'.",
+                             stateToStr(_state),
+                             networkReady ? "true" : "false",
+                             _settingsReady ? "true" : "false",
+                             (unsigned long)(_attempt + 1),
+                             (unsigned long)retryInMs,
+                             _activeProfileName.c_str(),
+                             _cfg.uri ? _cfg.uri : "(null)");
+            }
         }
 
         // Se os dois gates ficaram prontos enquanto está Idle, agenda conexão.
@@ -137,9 +189,6 @@ namespace iotsmartsys::app
             }
             _lastNetworkReady = networkReady;
         }
-
-        auto *settingsGate = &_settingsGate;
-        _settingsReady = settingsGate->level() >= iotsmartsys::core::settings::SettingsReadyLevel::Available;
 
         // Logs claros de transição de settings (evento latched)
         if (_settingsReady != _lastSettingsReady)
@@ -393,8 +442,8 @@ namespace iotsmartsys::app
         {
             _offlineSinceMs = now;
             _reconnectStats.disconnectsTotal++;
-            _reconnectStats.lastDisconnectReason = reason;
         }
+        _reconnectStats.lastDisconnectReason = reason;
     }
 
     template <std::size_t MaxTopics, std::size_t QueueLen, std::size_t MaxPayload>
@@ -745,6 +794,7 @@ namespace iotsmartsys::app
         auto *self = static_cast<MqttService *>(user);
         if (!self)
             return;
+        self->_clientDisconnectObserved.store(true, std::memory_order_release);
         if (self->_userDisconnectedCb)
             self->_userDisconnectedCb(self->_userDisconnectedUser);
     }

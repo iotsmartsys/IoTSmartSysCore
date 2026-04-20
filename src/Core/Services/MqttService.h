@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
+#include <atomic>
 
 #include "Contracts/Connectivity/ConnectivityGate.h"
 #include "Contracts/Settings/SettingsGate.h"
@@ -70,7 +71,7 @@ namespace iotsmartsys::app
         bool begin(const iotsmartsys::core::TransportConfig &cfg,
                    const RetryPolicy &policy);
         void start() override {}
-        void stop() override {}
+        void stop() override;
 
         void handle() override;
 
@@ -158,6 +159,7 @@ namespace iotsmartsys::app
         uint32_t _statusLogEveryMs{5000};
         bool _clientInitialized{false};
         bool _fallbackBrokerActive{false};
+        std::atomic<bool> _clientDisconnectObserved{false};
 
         
         const char *_publishTopic{nullptr};

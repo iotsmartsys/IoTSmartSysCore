@@ -55,6 +55,56 @@ namespace iotsmartsys::core::settings
             url += endpoint;
             return url;
         }
+
+        const char *stateResultToStr(StateResult result)
+        {
+            switch (result)
+            {
+            case StateResult::Ok:
+                return "Ok";
+            case StateResult::InvalidArg:
+                return "InvalidArg";
+            case StateResult::InvalidState:
+                return "InvalidState";
+            case StateResult::NoMem:
+                return "NoMem";
+            case StateResult::Timeout:
+                return "Timeout";
+            case StateResult::Cancelled:
+                return "Cancelled";
+            case StateResult::NotFound:
+                return "NotFound";
+            case StateResult::Overflow:
+                return "Overflow";
+            case StateResult::ParseError:
+                return "ParseError";
+            case StateResult::IoError:
+                return "IoError";
+            case StateResult::NotSupported:
+                return "NotSupported";
+            case StateResult::NetworkDown:
+                return "NetworkDown";
+            case StateResult::DnsFail:
+                return "DnsFail";
+            case StateResult::ConnectFail:
+                return "ConnectFail";
+            case StateResult::TlsFail:
+                return "TlsFail";
+            case StateResult::HttpError:
+                return "HttpError";
+            case StateResult::StorageCorrupt:
+                return "StorageCorrupt";
+            case StateResult::StorageVersionMismatch:
+                return "StorageVersionMismatch";
+            case StateResult::StorageWriteFail:
+                return "StorageWriteFail";
+            case StateResult::StorageReadFail:
+                return "StorageReadFail";
+            case StateResult::Unknown:
+            default:
+                return "Unknown";
+            }
+        }
     }
 
     SettingsManager::SettingsManager(core::providers::ISettingsProvider &provider,
@@ -85,6 +135,13 @@ namespace iotsmartsys::core::settings
             _has_current = true;
             _stats.cache_load_ok++;
             _state = SettingsManagerState::LoadedFromCache;
+            if (_logger)
+            {
+                _logger->info("SettingsManager", "Loaded settings from cache. mqttProfile='%s' mqttHost='%s' apiUrl='%s'.",
+                              _current.mqtt.profile.c_str(),
+                              _current.mqtt.primary.host.c_str(),
+                              _current.api.url.c_str());
+            }
         }
         else
         {
@@ -93,6 +150,12 @@ namespace iotsmartsys::core::settings
             _stats.last_err = perr;
             // Não muda _current se não carregou; pode continuar vazio
             _state = SettingsManagerState::Idle;
+            if (_logger)
+            {
+                _logger->warn("SettingsManager", "No cached settings loaded. err=%s(%d).",
+                              stateResultToStr(perr),
+                              (int)perr);
+            }
         }
 
         // Gate: Available somente quando cache (NVS) carregar OK.
@@ -218,7 +281,10 @@ namespace iotsmartsys::core::settings
     {
         if (pending.cancelled)
         {
-            // _logger->error("SettingsManager", "Settings fetch cancelled (branch)");
+            if (_logger)
+            {
+                _logger->warn("SettingsManager", "API refresh cancelled.");
+            }
             _stats.last_err = iotsmartsys::core::common::StateResult::InvalidState;
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Idle);
             _settingsGate.setLevel(SettingsReadyLevel::None, iotsmartsys::core::common::StateResult::InvalidState);
@@ -228,7 +294,14 @@ namespace iotsmartsys::core::settings
         // Falha de HTTP/transporte ou status != 2xx => mantém redundância (NVS/memória)
         if (pending.fetch_err != iotsmartsys::core::common::StateResult::Ok || pending.http_status < 200 || pending.http_status >= 300)
         {
-            // _logger->error("SettingsManager", "fetch failed: err=%d http=%d", (int)pending.fetch_err, pending.http_status);
+            if (_logger)
+            {
+                _logger->warn("SettingsManager", "API refresh failed. err=%s(%d) http=%d keepingCurrent=%s.",
+                              stateResultToStr(pending.fetch_err),
+                              (int)pending.fetch_err,
+                              pending.http_status,
+                              _has_current ? "true" : "false");
+            }
             updateStatsFail(pending.fetch_err, pending.http_status);
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Error);
 
@@ -243,7 +316,14 @@ namespace iotsmartsys::core::settings
 
         if (!pending.has_parsed)
         {
-            // _logger->error("SettingsManager", "parse failed: %d", (int)pending.parse_err);
+            if (_logger)
+            {
+                _logger->warn("SettingsManager", "API refresh parse failed. err=%s(%d) http=%d keepingCurrent=%s.",
+                              stateResultToStr(pending.parse_err),
+                              (int)pending.parse_err,
+                              pending.http_status,
+                              _has_current ? "true" : "false");
+            }
             _stats.parse_fail++;
             _stats.last_err = pending.parse_err;
             _stats.last_http_status = pending.http_status;
@@ -261,7 +341,12 @@ namespace iotsmartsys::core::settings
 
         if (changed)
         {
-            // _logger->info("SettingsManager", "fetched settings differ from current; updating in-memory and saving to NVS");
+            if (_logger)
+            {
+                _logger->info("SettingsManager", "API settings changed. Applying update and saving cache. mqttProfile='%s' mqttHost='%s'.",
+                              candidate.mqtt.profile.c_str(),
+                              candidate.mqtt.primary.host.c_str());
+            }
 
             _current = candidate;
             _has_current = true;
@@ -269,7 +354,13 @@ namespace iotsmartsys::core::settings
             const iotsmartsys::core::common::StateResult serr = _provider.save(_current);
             if (serr != iotsmartsys::core::common::StateResult::Ok)
             {
-                // _logger->error("SettingsManager", "nvs save failed: %d", (int)serr);
+                if (_logger)
+                {
+                    _logger->warn("SettingsManager", "API settings applied but cache save failed. err=%s(%d) http=%d.",
+                                  stateResultToStr(serr),
+                                  (int)serr,
+                                  pending.http_status);
+                }
                 _stats.nvs_save_fail++;
                 _stats.last_err = serr;
                 _stats.last_http_status = pending.http_status;
@@ -278,7 +369,12 @@ namespace iotsmartsys::core::settings
             }
             else
             {
-                // _logger->info("SettingsManager", "nvs save OK");
+                if (_logger)
+                {
+                    _logger->info("SettingsManager", "API settings applied and cache saved. http=%d callback=%s.",
+                                  pending.http_status,
+                                  _updated_cb ? "yes" : "no");
+                }
                 _stats.api_fetch_ok++;
                 _stats.last_err = iotsmartsys::core::common::StateResult::Ok;
                 _stats.last_http_status = pending.http_status;
@@ -287,7 +383,12 @@ namespace iotsmartsys::core::settings
         }
         else
         {
-            // _logger->info("SettingsManager", "fetched settings identical to current; skipping NVS save");
+            if (_logger)
+            {
+                _logger->info("SettingsManager", "API settings unchanged. Cache save skipped. http=%d callback=%s.",
+                              pending.http_status,
+                              _updated_cb ? "yes" : "no");
+            }
             if (!hadCurrent)
             {
                 _current = candidate;
@@ -303,12 +404,24 @@ namespace iotsmartsys::core::settings
         // _logger->info("SettingsManager", "signaling gate Synced");
         _settingsGate.setLevel(SettingsReadyLevel::Synced, iotsmartsys::core::common::StateResult::Ok);
 
+        if (_logger)
+        {
+            _logger->info("SettingsManager", "API refresh completed. changed=%s http=%d mqttProfile='%s' mqttHost='%s'.",
+                          changed ? "true" : "false",
+                          pending.http_status,
+                          _current.mqtt.profile.c_str(),
+                          _current.mqtt.primary.host.c_str());
+        }
+
         if (_updated_cb)
         {
+            if (_logger)
+            {
+                _logger->info("SettingsManager", "Invoking settings update callback. changed=%s.", changed ? "true" : "false");
+            }
             const Settings snapshot = _current;
             _updated_cb(snapshot, _updated_ctx);
         }
-        // _logger->info("SettingsManager", "onFetchCompleted() finished, callback invoked=%s", _updated_cb ? "true" : "false");
     }
 
     void SettingsManager::handle()
@@ -392,6 +505,7 @@ namespace iotsmartsys::core::settings
         if (_has_current == false)
         {
             _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
+            _settingsGate.setLevel(SettingsReadyLevel::None, iotsmartsys::core::common::StateResult::InvalidState);
             return;
         }
         _syncUrlBuffer = buildSettingsUrl(_current);
@@ -423,11 +537,19 @@ namespace iotsmartsys::core::settings
         const auto startErr = refreshFromApiAsync(req);
         if (startErr == StateResult::Ok)
         {
-            _logger->info("[SettingsManager] API refresh started.");
+            _logger->info("SettingsManager", "API refresh started. url='%s' maxAttempts=%u connectTimeout=%lums readTimeout=%lums.",
+                          req.url ? req.url : "",
+                          (unsigned int)req.max_attempts,
+                          (unsigned long)req.connect_timeout_ms,
+                          (unsigned long)req.read_timeout_ms);
         }
         else
         {
-            _logger->warn("[SettingsManager] Failed to start API refresh.");
+            _logger->warn("SettingsManager", "Failed to start API refresh. err=%s(%d) url='%s'.",
+                          stateResultToStr(startErr),
+                          (int)startErr,
+                          req.url ? req.url : "");
+            _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None, startErr);
         }
     }
 

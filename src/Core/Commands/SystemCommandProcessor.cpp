@@ -54,17 +54,20 @@ namespace iotsmartsys::core
 
     void SystemCommandProcessor::full_soft_powercycle_restart()
     {
+        _logger.warn("SystemCommandProcessor", "Restart requested. Stopping WiFi before esp_restart().");
+        delay(250);
+
         esp_wifi_stop();
         esp_wifi_deinit();
 
-        reset_all_gpio_safely();
-
+        _logger.warn("SystemCommandProcessor", "Calling esp_restart() now.");
+        delay(250);
         esp_restart();
     }
 
     void SystemCommandProcessor::restartSafely()
     {
-       // _logger.warn("SystemCommandProcessor: Performing safe restart.");
+        _logger.warn("SystemCommandProcessor", "Performing safe restart.");
         full_soft_powercycle_restart();
     }
 } // namespace iotsmartsys::core
