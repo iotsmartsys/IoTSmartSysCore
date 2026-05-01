@@ -206,6 +206,13 @@ namespace iotsmartsys
     {
         wifi_.handle();
 
+        deviceStateManager_.handle();
+        if (provisioningController_.isActive())
+        {
+            provisioningController_.handle();
+            return;
+        }
+        
         if (wifi_.isConnected() && !deviceRegistrationManager_.isRegistered())
         {
             deviceRegistrationManager_.handle();
@@ -218,11 +225,6 @@ namespace iotsmartsys
             transportStarted_ = true;
         }
 
-        deviceStateManager_.handle();
-        if (provisioningController_.isActive())
-        {
-            provisioningController_.handle();
-        }
 
         factoryResetButtonController_.handle();
 

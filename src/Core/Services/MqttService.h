@@ -156,7 +156,7 @@ namespace iotsmartsys::app
         uint32_t _nextActionAtMs{0};
         bool _lastNetworkReady{false};
         uint32_t _lastStatusLogAtMs{0};
-        uint32_t _statusLogEveryMs{5000};
+        uint32_t _statusLogEveryMs{1000};
         bool _clientInitialized{false};
         bool _fallbackBrokerActive{false};
         std::atomic<bool> _clientDisconnectObserved{false};

@@ -151,7 +151,7 @@ namespace iotsmartsys::app
         }
 
         // Snapshot periódico para diagnosticar facilmente "por que não conectou"
-        if (_statusLogEveryMs && (_lastStatusLogAtMs == 0 || (now - _lastStatusLogAtMs) >= _statusLogEveryMs))
+        if (_statusLogEveryMs && (now - _lastStatusLogAtMs) >= _statusLogEveryMs)
         {
             _lastStatusLogAtMs = now;
             if (_state != State::Online)

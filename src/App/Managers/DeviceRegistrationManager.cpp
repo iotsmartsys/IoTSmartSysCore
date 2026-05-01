@@ -69,8 +69,18 @@ namespace iotsmartsys::app
 
         if (settings.device_registered)
         {
-            registered_ = true;
-            return;
+            if (settings.mqtt.isValid())
+            {
+                registered_ = true;
+                if (!cachedRegisteredLogged_)
+                {
+                    logger_.info("DeviceRegistration", "Device already marked as registered in cache.");
+                    cachedRegisteredLogged_ = true;
+                }
+                return;
+            }
+
+            logger_.warn("DeviceRegistration", "Cached registration flag is set, but MQTT settings are invalid. Registration will be retried.");
         }
 
         if (!settings.api.isValid())
@@ -117,6 +127,10 @@ namespace iotsmartsys::app
             logger_.warn("DeviceRegistration", "Could not resolve registration URL from API URL.");
             return false;
         }
+
+        logger_.info("DeviceRegistration", "Attempting device registration. url='%s' deviceId='%s'.",
+                     registrationUrl.c_str(),
+                     deviceId.c_str());
 
         const std::string payload = buildPayload(
             deviceId,

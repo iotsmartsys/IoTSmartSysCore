@@ -182,7 +182,7 @@ namespace iotsmartsys::platform::espressif
         if (update == "auto")
         {
             if (!ext.getString("firmware.url", url) || url.empty()) return StateResult::InvalidState;
-            if (!ext.getString("firmware.manifest", manifest) || manifest.empty()) return StateResult::InvalidState;
+            (void)ext.getString("firmware.manifest", manifest);
         }
 
         if (ext.getBool("firmware.verifysha256", verify)) {}

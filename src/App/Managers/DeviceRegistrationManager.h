@@ -38,6 +38,7 @@ namespace iotsmartsys::app
         bool registered_{false};
         bool missingHttpClientLogged_{false};
         bool invalidApiLogged_{false};
+        bool cachedRegisteredLogged_{false};
         uint8_t failures_{0};
         uint32_t nextAttemptAtMs_{0};
     };
