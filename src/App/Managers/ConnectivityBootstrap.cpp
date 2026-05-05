@@ -50,6 +50,7 @@ namespace iotsmartsys::app
     {
         logger_.info("---------------------------------------------------------");
         logger_.info("[SettingsManager]", " Firmware Update Mode: %s", settings.firmware.update.c_str());
+        logger_.info("[SettingsManager]", " Firmware Manifest: %s", settings.firmware.manifest.c_str());
         logger_.info("[SettingsManager]", " OTA URL: %s", settings.firmware.url.c_str());
         logger_.info("[SettingsManager]", " OTA Version: %s", getBuildIdentifier());
         logger_.info("[SettingsManager]", "Library Version: %s", IOTSMARTSYSCORE_VERSION);

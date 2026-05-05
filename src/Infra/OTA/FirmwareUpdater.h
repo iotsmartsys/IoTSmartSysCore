@@ -10,12 +10,20 @@ using namespace iotsmartsys::core;
 
 namespace iotsmartsys::ota
 {
+    enum class FirmwareUpdateCheckResult
+    {
+        NoUpdate,
+        UpdateStarted,
+        ManifestNotFound,
+        ManifestFetchFailed
+    };
+
     class FirmwareUpdater
     {
     public:
         FirmwareUpdater(ILogger &logger, IFirmwareManifestParser &manifestParser);
 
-        void checkAndUpdate(settings::FirmwareConfig currentSettings);
+        FirmwareUpdateCheckResult checkAndUpdate(settings::FirmwareConfig currentSettings);
         bool hasCheckedForUpdate() const { return _updateHasChecked; }
 
     private:
@@ -25,6 +33,7 @@ namespace iotsmartsys::ota
         std::string _baseUrl;
         bool _useHttps;
         bool _verifySha256;
+        int _lastManifestHttpStatus{-1};
         IFirmwareManifestParser &_manifestParser;
         ManifestInfo fetchManifest();
         bool isRemoteNewer(const ManifestInfo &manifest);

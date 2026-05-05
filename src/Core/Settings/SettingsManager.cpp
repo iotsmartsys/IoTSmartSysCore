@@ -3,6 +3,8 @@
 #include "Contracts/Providers/ServiceProvider.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
 
+#include <cstring>
+
 using namespace iotsmartsys::core::common;
 
 namespace iotsmartsys::core::settings
@@ -54,6 +56,34 @@ namespace iotsmartsys::core::settings
             url += "/";
             url += endpoint;
             return url;
+        }
+
+        const char *compiledEnvironmentId()
+        {
+#ifdef IOTSMARTSYS_ENV_ID
+            return IOTSMARTSYS_ENV_ID;
+#else
+            return "";
+#endif
+        }
+
+        std::string resolveFirmwareManifest(std::string manifest)
+        {
+            static constexpr const char *kEnvIdPlaceholder = "{env_id}";
+            const char *envId = compiledEnvironmentId();
+            if (!envId || envId[0] == '\0')
+            {
+                return manifest;
+            }
+
+            std::size_t pos = 0;
+            while ((pos = manifest.find(kEnvIdPlaceholder, pos)) != std::string::npos)
+            {
+                manifest.replace(pos, std::strlen(kEnvIdPlaceholder), envId);
+                pos += std::strlen(envId);
+            }
+
+            return manifest;
         }
 
         const char *stateResultToStr(StateResult result)
@@ -265,6 +295,7 @@ namespace iotsmartsys::core::settings
             const iotsmartsys::core::common::StateResult perr = _parser.parse(res.body, parsed);
             if (perr == iotsmartsys::core::common::StateResult::Ok)
             {
+                parsed.firmware.manifest = resolveFirmwareManifest(parsed.firmware.manifest);
                 pending.has_parsed = true;
                 pending.parsed = parsed;
             }

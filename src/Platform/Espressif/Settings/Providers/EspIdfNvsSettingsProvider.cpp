@@ -120,6 +120,34 @@ namespace iotsmartsys::platform::espressif
             LegacyStoredWifiConfigV4 wifi;
             LegacyStoredApiConfigV4 api;
         };
+
+        const char *compiledEnvironmentId()
+        {
+#ifdef IOTSMARTSYS_ENV_ID
+            return IOTSMARTSYS_ENV_ID;
+#else
+            return "";
+#endif
+        }
+
+        std::string resolveFirmwareManifest(std::string manifest)
+        {
+            static constexpr const char *kEnvIdPlaceholder = "{env_id}";
+            const char *envId = compiledEnvironmentId();
+            if (!envId || envId[0] == '\0')
+            {
+                return manifest;
+            }
+
+            std::size_t pos = 0;
+            while ((pos = manifest.find(kEnvIdPlaceholder, pos)) != std::string::npos)
+            {
+                manifest.replace(pos, std::strlen(kEnvIdPlaceholder), envId);
+                pos += std::strlen(envId);
+            }
+
+            return manifest;
+        }
     } // namespace
 
     static const char *clientIdPrefix()
@@ -262,7 +290,7 @@ namespace iotsmartsys::platform::espressif
         dst.mqtt.profile = toStdString(src.mqtt.profile);
 
         dst.firmware.url = toStdString(src.firmware.url);
-        dst.firmware.manifest = toStdString(src.firmware.manifest);
+        dst.firmware.manifest = resolveFirmwareManifest(toStdString(src.firmware.manifest));
         dst.firmware.verify_sha256 = (src.firmware.verify_sha256 != 0);
         dst.firmware.update = toStdString(src.firmware.update);
 
@@ -334,7 +362,7 @@ namespace iotsmartsys::platform::espressif
         }
 
         dst.firmware.url = toStdString(src.firmware.url);
-        dst.firmware.manifest = toStdString(src.firmware.manifest);
+        dst.firmware.manifest = resolveFirmwareManifest(toStdString(src.firmware.manifest));
         dst.firmware.verify_sha256 = (src.firmware.verify_sha256 != 0);
         dst.firmware.update = toStdString(src.firmware.update);
 
@@ -481,7 +509,7 @@ namespace iotsmartsys::platform::espressif
 
         // firmware
         dst.firmware.url = toString(src.firmware.url);
-        dst.firmware.manifest = toString(src.firmware.manifest);
+        dst.firmware.manifest = resolveFirmwareManifest(toString(src.firmware.manifest));
         dst.firmware.verify_sha256 = (src.firmware.verify_sha256 != 0);
         dst.firmware.update = toString(src.firmware.update);
         dst.firmware.update = src.firmware.update;

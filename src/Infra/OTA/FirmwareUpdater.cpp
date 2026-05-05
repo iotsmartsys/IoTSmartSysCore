@@ -77,6 +77,7 @@ namespace iotsmartsys::ota
         _logger.info("FW-OTA", "Baixando manifest em: %s", manifestUrl.c_str());
 
         std::string payload;
+        _lastManifestHttpStatus = -1;
 
         for (int attempt = 1; attempt <= FW_OTA_MAX_HTTP_RETRIES; ++attempt)
         {
@@ -101,6 +102,7 @@ namespace iotsmartsys::ota
                 else
                 {
                     int httpCode = http.GET();
+                    _lastManifestHttpStatus = httpCode;
                     if (httpCode == HTTP_CODE_OK)
                     {
                         payload = http.getString().c_str();
@@ -108,9 +110,13 @@ namespace iotsmartsys::ota
                         break;
                     }
 
-                    // _logger.error("FW-OTA", "Erro ao baixar manifest (HTTPS). HTTP code: %d", httpCode);
+                    _logger.warn("FW-OTA", "Erro ao baixar manifest (HTTPS). HTTP code: %d", httpCode);
                     // _logger.error("FW-OTA", " (%s)", http.errorToString(httpCode).c_str());
                     http.end();
+                    if (httpCode == HTTP_CODE_NOT_FOUND)
+                    {
+                        break;
+                    }
                 }
             }
             else
@@ -125,6 +131,7 @@ namespace iotsmartsys::ota
                 else
                 {
                     int httpCode = http.GET();
+                    _lastManifestHttpStatus = httpCode;
                     if (httpCode == HTTP_CODE_OK)
                     {
                         payload = http.getString().c_str();
@@ -132,13 +139,17 @@ namespace iotsmartsys::ota
                         break;
                     }
 
-                    // _logger.error("FW-OTA", "Erro ao baixar manifest (HTTP). HTTP code: %d", httpCode);
+                    _logger.warn("FW-OTA", "Erro ao baixar manifest (HTTP). HTTP code: %d", httpCode);
                     // _logger.error("FW-OTA", " (%s)", http.errorToString(httpCode).c_str());
                     http.end();
+                    if (httpCode == HTTP_CODE_NOT_FOUND)
+                    {
+                        break;
+                    }
                 }
             }
 
-            if (attempt < FW_OTA_MAX_HTTP_RETRIES)
+            if (_lastManifestHttpStatus != HTTP_CODE_NOT_FOUND && attempt < FW_OTA_MAX_HTTP_RETRIES)
             {
                 // _logger.info("FW-OTA", "Tentando novamente fetch do manifest (tentativa %d)...", attempt + 1);
                 delay(500);
@@ -417,7 +428,7 @@ namespace iotsmartsys::ota
         return true;
     }
 
-    void FirmwareUpdater::checkAndUpdate(settings::FirmwareConfig currentSettings)
+    FirmwareUpdateCheckResult FirmwareUpdater::checkAndUpdate(settings::FirmwareConfig currentSettings)
     {
         configure(currentSettings.manifest,
                   currentSettings.url,
@@ -426,15 +437,20 @@ namespace iotsmartsys::ota
         ManifestInfo manifest = fetchManifest();
         if (!manifest.valid)
         {
-            return;
+            _updateHasChecked = true;
+            if (_lastManifestHttpStatus == HTTP_CODE_NOT_FOUND)
+            {
+                return FirmwareUpdateCheckResult::ManifestNotFound;
+            }
+            return FirmwareUpdateCheckResult::ManifestFetchFailed;
         }
 
         if (!isRemoteNewer(manifest))
         {
             _updateHasChecked = true;
-            return;
+            return FirmwareUpdateCheckResult::NoUpdate;
         }
 
-        performOta(manifest);
+        return performOta(manifest) ? FirmwareUpdateCheckResult::UpdateStarted : FirmwareUpdateCheckResult::ManifestFetchFailed;
     }
 };

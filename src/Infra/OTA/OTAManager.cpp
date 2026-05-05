@@ -70,6 +70,10 @@ void OTAManager::handle()
        // _logger.debug("[OTA Manager]", "Firmware Update Method: %s", currentSettings.firmware.update.c_str());
 
         firmwareSettings = currentSettings.firmware;
+        if (_fallbackToOtaRuntime && firmwareSettings.update == "auto")
+        {
+            firmwareSettings.update = "ota";
+        }
     }
     else
     {
@@ -110,5 +114,13 @@ void OTAManager::update(FirmwareConfig firmwareSettings)
         return;
     }
 
-    _firmwareUpdater.checkAndUpdate(firmwareSettings);
+    const FirmwareUpdateCheckResult result = _firmwareUpdater.checkAndUpdate(firmwareSettings);
+    if (result != FirmwareUpdateCheckResult::ManifestNotFound)
+    {
+        return;
+    }
+
+    firmwareSettings.update = "ota";
+    _fallbackToOtaRuntime = true;
+    _logger.warn("FW-OTA", "Manifest não encontrado (404). Alternando para firmware.update='ota' somente em tempo de execução.");
 }
