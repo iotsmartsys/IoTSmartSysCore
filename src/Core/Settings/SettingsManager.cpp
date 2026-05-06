@@ -86,6 +86,15 @@ namespace iotsmartsys::core::settings
             return manifest;
         }
 
+        void applyCompiledWifiOverride(Settings &settings)
+        {
+#if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
+            settings.wifi.ssid = WIFI_SSID;
+            settings.wifi.password = WIFI_PASSWORD;
+            settings.in_config_mode = false;
+#endif
+        }
+
         const char *stateResultToStr(StateResult result)
         {
             switch (result)
@@ -296,6 +305,7 @@ namespace iotsmartsys::core::settings
             if (perr == iotsmartsys::core::common::StateResult::Ok)
             {
                 parsed.firmware.manifest = resolveFirmwareManifest(parsed.firmware.manifest);
+                applyCompiledWifiOverride(parsed);
                 pending.has_parsed = true;
                 pending.parsed = parsed;
             }

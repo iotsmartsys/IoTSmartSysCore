@@ -31,5 +31,7 @@ namespace iotsmartsys::app
         core::SystemCommandProcessor &systemCommandProcessor_;
         core::IHardwareAdapterFactory &factory_;
         core::IInputHardwareAdapter *button_{nullptr};
+        bool buttonWasActive_{false};
+        bool resetTriggered_{false};
     };
 } // namespace iotsmartsys::app

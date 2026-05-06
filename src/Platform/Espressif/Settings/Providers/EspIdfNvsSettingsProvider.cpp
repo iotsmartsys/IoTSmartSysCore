@@ -148,6 +148,15 @@ namespace iotsmartsys::platform::espressif
 
             return manifest;
         }
+
+        void applyCompiledWifiOverride(core::settings::Settings &settings)
+        {
+#if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
+            settings.wifi.ssid = WIFI_SSID;
+            settings.wifi.password = WIFI_PASSWORD;
+            settings.in_config_mode = false;
+#endif
+        }
     } // namespace
 
     static const char *clientIdPrefix()
@@ -608,6 +617,7 @@ namespace iotsmartsys::platform::espressif
                 return iotsmartsys::core::common::StateResult::StorageVersionMismatch;
 
             fromStored(stored, out);
+            applyCompiledWifiOverride(out);
             return iotsmartsys::core::common::StateResult::Ok;
         }
 
@@ -624,6 +634,7 @@ namespace iotsmartsys::platform::espressif
 
             fromLegacyStoredV4(legacy, out);
             ensureClientId(out);
+            applyCompiledWifiOverride(out);
             return iotsmartsys::core::common::StateResult::Ok;
         }
 
@@ -638,6 +649,7 @@ namespace iotsmartsys::platform::espressif
 
         fromLegacyStoredV3(legacy, out);
         ensureClientId(out);
+        applyCompiledWifiOverride(out);
         return iotsmartsys::core::common::StateResult::Ok;
     }
 

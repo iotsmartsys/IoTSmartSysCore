@@ -1,5 +1,6 @@
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Connectivity/ConnectivityGate.h"
+#include <cstring>
 #include <ctime>
 
 namespace iotsmartsys::core
@@ -20,6 +21,7 @@ namespace iotsmartsys::core
 
         _cfg = cfg;
         _attempt = 0;
+        _associated = false;
         _gotIp = false;
         _state = WiFiState::Connecting;
         _nextActionAtMs = 0;
@@ -30,10 +32,14 @@ namespace iotsmartsys::core
                            iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
         }
 
-        _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t)
-                                { this->onWiFiEvent(event); });
+        _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info)
+                                { this->onWiFiEvent(event, info); });
 
         WiFi.mode(WIFI_STA);
+        WiFi.persistent(_cfg.persistent);
+        WiFi.setSleep(false);
+        WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+        WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
         WiFi.setAutoReconnect(_cfg.autoReconnect);
 
         startConnect();
@@ -69,12 +75,35 @@ namespace iotsmartsys::core
                 _macAddress = WiFi.macAddress().c_str();
                 _ipAddress = WiFi.localIP().toString().c_str();
                 _signalStrength = String(WiFi.RSSI()).c_str();
-                _log.info("WIFI", "Connected. IP=%s", _ipAddress.c_str());
+                _lastRoamCheckMs = now;
+                _log.info("WIFI", "Connected. IP=%s BSSID=%s RSSI=%d",
+                          _ipAddress.c_str(),
+                          WiFi.BSSIDstr().c_str(),
+                          WiFi.RSSI());
                 {
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();
                     gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                                  iotsmartsys::core::ConnectivityGate::IP_READY);
 
+                }
+            }
+            else if (_associated && _nextActionAtMs != 0 && now >= _nextActionAtMs)
+            {
+                if (_dhcpWaitExtensions == 0)
+                {
+                    _dhcpWaitExtensions++;
+                    _nextActionAtMs = now + _cfg.dhcpTimeoutMs;
+                    _log.warn("WIFI", "Associated with AP but still waiting for IP. Extending DHCP wait by %lu ms. BSSID=%s RSSI=%d",
+                              (unsigned long)_cfg.dhcpTimeoutMs,
+                              WiFi.BSSIDstr().c_str(),
+                              WiFi.RSSI());
+                }
+                else
+                {
+                    _log.warn("WIFI", "DHCP timeout after association. Retrying WiFi connection. BSSID=%s RSSI=%d",
+                              WiFi.BSSIDstr().c_str(),
+                              WiFi.RSSI());
+                    scheduleRetry();
                 }
             }
             else if (_nextActionAtMs != 0 && now >= _nextActionAtMs)
@@ -112,6 +141,22 @@ namespace iotsmartsys::core
                 }
                 scheduleRetry();
             }
+
+            if (_cfg.meshRoaming && now - _lastRoamCheckMs >= _cfg.roamCheckIntervalMs)
+            {
+                _lastRoamCheckMs = now;
+                const int8_t rssi = WiFi.RSSI();
+                _signalStrength = String(rssi).c_str();
+                if (rssi <= _cfg.roamRssiThreshold)
+                {
+                    _log.warn("WIFI", "RSSI=%d below threshold=%d. Re-selecting best mesh AP.",
+                              rssi,
+                              _cfg.roamRssiThreshold);
+                    WiFi.disconnect(false, false);
+                    delay(100);
+                    startConnect();
+                }
+            }
             break;
         }
     }
@@ -124,7 +169,9 @@ namespace iotsmartsys::core
             return;
         }
 
+        _associated = false;
         _gotIp = false;
+        _dhcpWaitExtensions = 0;
 
         {
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
@@ -137,12 +184,28 @@ namespace iotsmartsys::core
 
         // timeout “soft”: se passar, entra em retry (sem bloquear)
         const uint32_t now = (_timeProvider ? _timeProvider->nowMs() : millis());
-        _nextActionAtMs = now + 5000; // 5s
+        _nextActionAtMs = now + _cfg.connectTimeoutMs;
 
         _log.info("WIFI", "Connecting to SSID=%s (attempt=%lu)", _cfg.ssid, (unsigned long)(_attempt + 1));
 
-        // WiFi.disconnect(true); // limpa estado anterior
-        WiFi.begin(_cfg.ssid, _cfg.password);
+        WiFi.disconnect(false, false);
+        delay(50);
+        selectBestAccessPoint();
+        _nextActionAtMs = (_timeProvider ? _timeProvider->nowMs() : millis()) + _cfg.connectTimeoutMs;
+        if (_hasTargetBssid)
+        {
+            _log.info("WIFI", "Selected BSSID=%02X:%02X:%02X:%02X:%02X:%02X channel=%ld RSSI=%ld",
+                      _targetBssid[0], _targetBssid[1], _targetBssid[2],
+                      _targetBssid[3], _targetBssid[4], _targetBssid[5],
+                      (long)_targetChannel,
+                      (long)_targetRssi);
+            WiFi.begin(_cfg.ssid, _cfg.password, _targetChannel, _targetBssid);
+        }
+        else
+        {
+            _log.warn("WIFI", "No scanned AP found for SSID=%s. Falling back to generic connect.", _cfg.ssid);
+            WiFi.begin(_cfg.ssid, _cfg.password);
+        }
     }
 
     void WiFiManager::scheduleRetry()
@@ -155,7 +218,13 @@ namespace iotsmartsys::core
         _nextActionAtMs = now + backoff;
         _state = WiFiState::BackoffWaiting;
 
-        _log.warn("WIFI", "Retry in %lu ms (attempt=%lu)", (unsigned long)backoff, (unsigned long)_attempt);
+        const wl_status_t status = WiFi.status();
+        _log.warn("WIFI", "Retry in %lu ms (attempt=%lu status=%s reason=%u/%s)",
+                  (unsigned long)backoff,
+                  (unsigned long)_attempt,
+                  statusToString(status),
+                  (unsigned)_lastDisconnectReason,
+                  disconnectReasonToString(_lastDisconnectReason));
     }
 
     uint32_t WiFiManager::computeBackoffMs() const
@@ -184,18 +253,65 @@ namespace iotsmartsys::core
         return base + jitter;
     }
 
-    void WiFiManager::onWiFiEvent(WiFiEvent_t event)
+    bool WiFiManager::selectBestAccessPoint()
+    {
+        _hasTargetBssid = false;
+        _targetChannel = 0;
+        _targetRssi = -127;
+        std::memset(_targetBssid, 0, sizeof(_targetBssid));
+
+        const int n = WiFi.scanNetworks(false, false, false, 120, 0, _cfg.ssid);
+        if (n <= 0)
+        {
+            WiFi.scanDelete();
+            return false;
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            if (WiFi.SSID(i) != _cfg.ssid)
+            {
+                continue;
+            }
+
+            const int32_t rssi = WiFi.RSSI(i);
+            if (!_hasTargetBssid || rssi > _targetRssi)
+            {
+                uint8_t *bssid = WiFi.BSSID(i);
+                if (!bssid)
+                {
+                    continue;
+                }
+
+                std::memcpy(_targetBssid, bssid, sizeof(_targetBssid));
+                _targetChannel = WiFi.channel(i);
+                _targetRssi = rssi;
+                _hasTargetBssid = true;
+            }
+        }
+
+        WiFi.scanDelete();
+        return _hasTargetBssid;
+    }
+
+    void WiFiManager::onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info)
     {
         auto &gate = iotsmartsys::core::ConnectivityGate::instance();
 
         switch (event)
         {
         case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+            _associated = true;
+            _lastDisconnectReason = 0;
+            _log.info("WIFI", "Associated with AP.");
+            _nextActionAtMs = (_timeProvider ? _timeProvider->nowMs() : millis()) + _cfg.dhcpTimeoutMs;
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
             break;
 
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            _associated = true;
             _gotIp = true;
+            _lastDisconnectReason = 0;
             startTimeSync();
 
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
@@ -203,7 +319,13 @@ namespace iotsmartsys::core
             break;
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+            _associated = false;
             _gotIp = false;
+            _lastDisconnectReason = info.wifi_sta_disconnected.reason;
+            _log.warn("WIFI", "Disconnected. reason=%u/%s status=%s",
+                      (unsigned)_lastDisconnectReason,
+                      disconnectReasonToString(_lastDisconnectReason),
+                      statusToString(WiFi.status()));
 
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                            iotsmartsys::core::ConnectivityGate::IP_READY |
@@ -213,6 +335,40 @@ namespace iotsmartsys::core
         default:
             break;
         }
+    }
+
+    const char *WiFiManager::statusToString(wl_status_t status)
+    {
+        switch (status)
+        {
+        case WL_IDLE_STATUS:
+            return "IDLE";
+        case WL_NO_SSID_AVAIL:
+            return "NO_SSID";
+        case WL_SCAN_COMPLETED:
+            return "SCAN_COMPLETED";
+        case WL_CONNECTED:
+            return "CONNECTED";
+        case WL_CONNECT_FAILED:
+            return "CONNECT_FAILED";
+        case WL_CONNECTION_LOST:
+            return "CONNECTION_LOST";
+        case WL_DISCONNECTED:
+            return "DISCONNECTED";
+        default:
+            return "UNKNOWN";
+        }
+    }
+
+    const char *WiFiManager::disconnectReasonToString(uint8_t reason)
+    {
+        if (reason == 0)
+        {
+            return "NONE";
+        }
+
+        const char *name = WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(reason));
+        return (name && name[0] != '\0') ? name : "UNKNOWN";
     }
 
     std::vector<std::string> WiFiManager::getAvailableSSIDs()

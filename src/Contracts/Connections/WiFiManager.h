@@ -25,8 +25,13 @@ namespace iotsmartsys::core
         uint32_t initialBackoffMs = 1000;
         uint32_t maxBackoffMs = 60000;
         uint32_t jitterMs = 250;
+        uint32_t connectTimeoutMs = 15000;
+        uint32_t dhcpTimeoutMs = 45000;
         uint8_t maxFastRetries = 5;
         uint32_t reconnectMinUptimeMs = 3000;
+        uint32_t roamCheckIntervalMs = 30000;
+        int8_t roamRssiThreshold = -75;
+        bool meshRoaming = true;
 
         bool persistent = false;
         bool autoReconnect = false;
@@ -70,10 +75,13 @@ namespace iotsmartsys::core
         void startConnect();
         void scheduleRetry();
         uint32_t computeBackoffMs() const;
+        bool selectBestAccessPoint();
         void startTimeSync();
         bool isSystemTimeValid() const;
 
-        void onWiFiEvent(WiFiEvent_t event);
+        void onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
+        static const char *statusToString(wl_status_t status);
+        static const char *disconnectReasonToString(uint8_t reason);
         WiFiEventId_t _eventId{};
 
     private:
@@ -88,8 +96,16 @@ namespace iotsmartsys::core
 
         uint32_t _attempt{0};
         uint32_t _nextActionAtMs{0};
+        uint32_t _lastRoamCheckMs{0};
+        uint8_t _lastDisconnectReason{0};
+        uint8_t _dhcpWaitExtensions{0};
+        uint8_t _targetBssid[6]{};
+        int32_t _targetChannel{0};
+        int32_t _targetRssi{-127};
+        bool _hasTargetBssid{false};
 
         uint32_t _connectedAtMs{0};
+        bool _associated{false};
         bool _gotIp{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
         bool _ntpSyncStarted{false};

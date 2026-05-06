@@ -22,10 +22,10 @@ namespace iotsmartsys::app
 
         releaseButton();
 
-        void *mem = malloc(factory_.outputAdapterSize());
+        void *mem = malloc(factory_.inputAdapterSize());
         if (!mem)
         {
-           //  logger_.error("Failed to allocate memory for factory reset button adapter.");
+            logger_.error("FactoryReset", "Failed to allocate memory for button adapter.");
             return;
         }
 
@@ -33,6 +33,11 @@ namespace iotsmartsys::app
                                        activeLow ? core::HardwareDigitalLogic::LOW_IS_ON : core::HardwareDigitalLogic::HIGH_IS_ON,
                                        core::InputPullMode::PULL_UP);
         button_->setup();
+        buttonWasActive_ = false;
+        resetTriggered_ = false;
+        logger_.info("FactoryReset", "Configured button on GPIO=%d active=%s hold=15000ms.",
+                     pin,
+                     activeLow ? "LOW" : "HIGH");
     }
 
     void FactoryResetButtonController::handle()
@@ -43,9 +48,24 @@ namespace iotsmartsys::app
         }
 
         button_->handle();
-        if (button_->digitalActive() && millis() - button_->lastStateReadMillis() > 15000)
+        const bool active = button_->digitalActive();
+        if (!active)
         {
-           //  logger_.warn("Factory reset button pressed. Clearing settings and restarting...");
+            buttonWasActive_ = false;
+            resetTriggered_ = false;
+            return;
+        }
+
+        if (!buttonWasActive_)
+        {
+            buttonWasActive_ = true;
+            logger_.warn("FactoryReset", "Button hold started. Keep pressed for 15s to clear settings.");
+        }
+
+        if (!resetTriggered_ && millis() - button_->lastStateReadMillis() > 15000)
+        {
+            resetTriggered_ = true;
+            logger_.warn("FactoryReset", "Hold threshold reached. Clearing settings and restarting.");
             settingsManager_.clear();
             delay(2000);
             systemCommandProcessor_.restartSafely();
@@ -59,7 +79,10 @@ namespace iotsmartsys::app
             return;
         }
 
-        factory_.outputAdapterDestructor()(button_);
+        factory_.inputAdapterDestructor()(button_);
+        free(button_);
         button_ = nullptr;
+        buttonWasActive_ = false;
+        resetTriggered_ = false;
     }
 } // namespace iotsmartsys::app
