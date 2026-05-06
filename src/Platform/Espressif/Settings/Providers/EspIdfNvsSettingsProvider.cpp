@@ -2,6 +2,7 @@
 #include "EspIdfNvsSettingsProvider.h"
 
 #ifdef ESP32
+#include "Config/WifiCredentials.h"
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
 
@@ -151,6 +152,14 @@ namespace iotsmartsys::platform::espressif
 
         void applyCompiledWifiOverride(core::settings::Settings &settings)
         {
+            if (iotsmartsys::config::hasWifiCredentials())
+            {
+                settings.wifi.ssid = iotsmartsys::config::kWifiCredentials[0].ssid;
+                settings.wifi.password = iotsmartsys::config::kWifiCredentials[0].password;
+                settings.in_config_mode = false;
+                return;
+            }
+
 #if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
             settings.wifi.ssid = WIFI_SSID;
             settings.wifi.password = WIFI_PASSWORD;

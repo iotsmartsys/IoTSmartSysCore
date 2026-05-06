@@ -4,5 +4,8 @@
 .vscode/launch.json
 .vscode/ipch
 private.ini
+wifi_credentials.ini
+configs/wifi_credentials.ini
+src/Config/WifiCredentials.generated.h
 *main.cpp
 *.exclude

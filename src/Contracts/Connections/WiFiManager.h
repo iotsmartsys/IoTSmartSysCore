@@ -97,11 +97,14 @@ namespace iotsmartsys::core
         uint32_t _attempt{0};
         uint32_t _nextActionAtMs{0};
         uint32_t _lastRoamCheckMs{0};
+        uint16_t _credentialAttemptIndex{0};
         uint8_t _lastDisconnectReason{0};
         uint8_t _dhcpWaitExtensions{0};
         uint8_t _targetBssid[6]{};
         int32_t _targetChannel{0};
         int32_t _targetRssi{-127};
+        std::string _targetSsid;
+        std::string _targetPassword;
         bool _hasTargetBssid{false};
 
         uint32_t _connectedAtMs{0};
