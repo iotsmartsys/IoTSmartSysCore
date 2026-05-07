@@ -124,7 +124,8 @@ namespace iotsmartsys::core
                 _ipAddress = WiFi.localIP().toString().c_str();
                 _signalStrength = String(WiFi.RSSI()).c_str();
                 _lastRoamCheckMs = now;
-                _log.info("WIFI", "Connected. IP=%s BSSID=%s RSSI=%d",
+                _log.info("WIFI", "Connected. SSID=%s IP=%s BSSID=%s RSSI=%d",
+                          _ssid.c_str(),
                           _ipAddress.c_str(),
                           WiFi.BSSIDstr().c_str(),
                           WiFi.RSSI());
