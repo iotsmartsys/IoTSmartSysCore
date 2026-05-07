@@ -5,6 +5,7 @@
 #include <atomic>
 #include <array>
 #include "Contracts/Common/StateResult.h"
+#include "Contracts/Providers/Time.h"
 
 #include "Contracts/Settings/Settings.h"
 #include "Contracts/Settings/ISettingsFetcher.h"
@@ -114,6 +115,8 @@ namespace iotsmartsys::core::settings
         std::array<HttpHeader, 3> _syncHeaders{};
 
         void syncFromApi();
+        void resetApiRetryBackoff();
+        void scheduleApiRetryBackoff();
 
         struct PendingSettingsUpdate
         {
@@ -131,5 +134,7 @@ namespace iotsmartsys::core::settings
         PendingSettingsUpdate _pendingUpdate{};
         std::atomic<bool> _hasPending{false};
         std::atomic<std::uint32_t> _pendingSeq{0};
+        std::uint8_t _apiSyncFailures{0};
+        std::uint64_t _nextApiSyncAtMs{0};
     };
 } // namespace iotsmartsys::core::settings

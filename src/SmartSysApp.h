@@ -2,6 +2,7 @@
 
 #include "pins.h"
 #include <Arduino.h>
+#include <atomic>
 #include <memory>
 #include <string>
 #include "Config/BuildConfig.h"
@@ -116,6 +117,13 @@ namespace iotsmartsys
                 static void onSettingsUpdatedThunk(const core::settings::Settings &newSettings, void *ctx);
                 void onSettingsUpdated(const core::settings::Settings &newSettings);
                 void applySettingsToRuntime(const core::settings::Settings &settings);
+                bool hasOperationalMqttConfig() const;
+                void startRuntimeTasks();
+                void handleTransportWork();
+                void networkTaskLoop();
+                void transportTaskLoop();
+                static void networkTaskEntry(void *ctx);
+                static void transportTaskEntry(void *ctx);
 
                 core::ServiceManager &serviceManager_;
                 core::ILogger &logger_;
@@ -161,6 +169,11 @@ namespace iotsmartsys
                 app::CapabilityController capabilityController_;
                 app::TransportController transportController_;
                 bool transportStarted_{false};
+                std::atomic<bool> runtimeTasksEnabled_{false};
+                bool networkTaskStarted_{false};
+                bool transportTaskStarted_{false};
+                TaskHandle_t networkTask_{nullptr};
+                TaskHandle_t transportTask_{nullptr};
                 core::SerialTransportChannel *uart_;
         };
 } // namespace iotsmartsys

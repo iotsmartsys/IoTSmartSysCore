@@ -36,6 +36,13 @@ namespace iotsmartsys::app
         }
     }
 
+    struct DeviceRegistrationManager::RegistrationTaskContext
+    {
+        DeviceRegistrationManager *self{nullptr};
+        core::settings::Settings settings{};
+        std::string deviceId{};
+    };
+
     DeviceRegistrationManager::DeviceRegistrationManager(core::ILogger &logger,
                                                          core::settings::SettingsManager &settingsManager,
                                                          core::WiFiManager &wifi,
@@ -49,7 +56,14 @@ namespace iotsmartsys::app
 
     void DeviceRegistrationManager::handle()
     {
+        completeRegistrationIfReady();
+
         if (registered_ || !wifi_.isConnected())
+        {
+            return;
+        }
+
+        if (registrationTaskRunning_)
         {
             return;
         }
@@ -104,18 +118,93 @@ namespace iotsmartsys::app
             return;
         }
 
-        if (tryRegister(settings, deviceId))
+        startRegistrationTask(settings, deviceId);
+    }
+
+    void DeviceRegistrationManager::completeRegistrationIfReady()
+    {
+        if (!registrationTaskCompleted_.exchange(false, std::memory_order_acq_rel))
         {
-            if (markRegisteredInCache(settings))
+            return;
+        }
+
+        registrationTaskRunning_ = false;
+        const bool succeeded = registrationTaskSucceeded_.load(std::memory_order_acquire);
+        if (succeeded)
+        {
+            if (markRegisteredInCache(registrationSettingsSnapshot_))
             {
                 registered_ = true;
+                failures_ = 0;
                 logger_.info("DeviceRegistration", "Device registered successfully.");
                 return;
             }
             logger_.warn("DeviceRegistration", "Registration succeeded but could not persist registration flag.");
         }
 
-        scheduleRetry(nowMs);
+        scheduleRetry(millis());
+    }
+
+    void DeviceRegistrationManager::startRegistrationTask(const core::settings::Settings &settings, const std::string &deviceId)
+    {
+#if IOTSMARTSYS_HAS_HTTP_CLIENT
+        auto *ctx = new RegistrationTaskContext();
+        if (!ctx)
+        {
+            scheduleRetry(millis());
+            return;
+        }
+
+        ctx->self = this;
+        ctx->settings = settings;
+        ctx->deviceId = deviceId;
+        registrationSettingsSnapshot_ = settings;
+        registrationTaskSucceeded_.store(false, std::memory_order_release);
+        registrationTaskCompleted_.store(false, std::memory_order_release);
+
+        BaseType_t ok = xTaskCreate(&DeviceRegistrationManager::registrationTaskEntry,
+                                    "device_register",
+                                    6144,
+                                    ctx,
+                                    4,
+                                    nullptr);
+        if (ok == pdPASS)
+        {
+            registrationTaskRunning_ = true;
+            return;
+        }
+
+        delete ctx;
+        logger_.warn("DeviceRegistration", "Registration task creation failed. Retrying later.");
+        scheduleRetry(millis());
+#else
+        (void)settings;
+        (void)deviceId;
+        if (!missingHttpClientLogged_)
+        {
+            logger_.warn("DeviceRegistration", "HTTPClient is not available in this build. Device registration disabled.");
+            missingHttpClientLogged_ = true;
+        }
+        scheduleRetry(millis());
+#endif
+    }
+
+    void DeviceRegistrationManager::registrationTaskEntry(void *arg)
+    {
+        auto *ctx = static_cast<RegistrationTaskContext *>(arg);
+        if (!ctx || !ctx->self)
+        {
+            delete ctx;
+            vTaskDelete(nullptr);
+            return;
+        }
+
+        DeviceRegistrationManager *self = ctx->self;
+        const bool succeeded = self->tryRegister(ctx->settings, ctx->deviceId);
+        self->registrationTaskSucceeded_.store(succeeded, std::memory_order_release);
+        self->registrationTaskCompleted_.store(true, std::memory_order_release);
+        delete ctx;
+        vTaskDelete(nullptr);
     }
 
     bool DeviceRegistrationManager::tryRegister(const core::settings::Settings &settings, const std::string &deviceId)

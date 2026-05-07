@@ -11,6 +11,16 @@
 #include <memory>
 namespace iotsmartsys
 {
+    namespace
+    {
+        constexpr uint32_t kNetworkTaskIntervalMs = 50;
+        constexpr uint32_t kTransportTaskIntervalMs = 20;
+        constexpr uint32_t kNetworkTaskStackWords = 4096;
+        constexpr uint32_t kTransportTaskStackWords = 6144;
+        constexpr UBaseType_t kNetworkTaskPriority = 4;
+        constexpr UBaseType_t kTransportTaskPriority = 4;
+    }
+
     SmartSysApp::SmartSysApp()
         : serviceManager_(core::ServiceManager::init()),
           logger_(serviceManager_.logger()),
@@ -169,6 +179,7 @@ namespace iotsmartsys
         logger_.info("---------------------------------------------------------");
 
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
+        iotsmartsys::core::ConnectivityGate::init(latch_);
 
         const auto path = connectivityBootstrap_.run(settings_);
         if (path == app::ConnectivityBootstrap::BootPath::Provisioning)
@@ -177,19 +188,21 @@ namespace iotsmartsys
             return;
         }
 
-        iotsmartsys::core::ConnectivityGate::init(latch_);
-
         capabilityController_.setup(builder_);
         transportController_.addDispatcher(*capabilityController_.dispatcher());
         transportController_.configureMqtt(
             deviceIdentityProvider_.getDeviceID().c_str(),
             &SmartSysApp::onMqttConnectedThunk,
             this);
+        startRuntimeTasks();
     }
 
     void SmartSysApp::handle()
     {
-        wifi_.handle();
+        if (!networkTaskStarted_)
+        {
+            wifi_.handle();
+        }
 
         deviceStateManager_.handle();
         if (provisioningController_.isActive())
@@ -197,10 +210,92 @@ namespace iotsmartsys
             provisioningController_.handle();
             return;
         }
-        
+
+        factoryResetButtonController_.handle();
+
+        if (!transportTaskStarted_)
+        {
+            handleTransportWork();
+        }
+
+        capabilityController_.handle();
+#if IOTSMARTSYS_OTA_ENABLED
+        if (otaManager_)
+        {
+            otaManager_->handle();
+        }
+#endif
+    }
+
+    bool SmartSysApp::hasOperationalMqttConfig() const
+    {
+        core::settings::Settings currentSettings;
+        if (!settingsManager_.copyCurrent(currentSettings))
+        {
+            return false;
+        }
+
+        return currentSettings.isValidWifiConfig() && currentSettings.mqtt.isValid();
+    }
+
+    void SmartSysApp::startRuntimeTasks()
+    {
+        if (runtimeTasksEnabled_.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        runtimeTasksEnabled_.store(true, std::memory_order_release);
+
+        BaseType_t networkOk = xTaskCreate(&SmartSysApp::networkTaskEntry,
+                                           "iot_network",
+                                           kNetworkTaskStackWords,
+                                           this,
+                                           kNetworkTaskPriority,
+                                           &networkTask_);
+        if (networkOk == pdPASS)
+        {
+            networkTaskStarted_ = true;
+        }
+        else
+        {
+            networkTask_ = nullptr;
+            logger_.warn("Runtime", "Network task creation failed. WiFi will run in main loop.");
+        }
+
+        BaseType_t transportOk = xTaskCreate(&SmartSysApp::transportTaskEntry,
+                                             "iot_transport",
+                                             kTransportTaskStackWords,
+                                             this,
+                                             kTransportTaskPriority,
+                                             &transportTask_);
+        if (transportOk == pdPASS)
+        {
+            transportTaskStarted_ = true;
+        }
+        else
+        {
+            transportTask_ = nullptr;
+            logger_.warn("Runtime", "Transport task creation failed. MQTT/settings will run in main loop.");
+        }
+
+        if (!networkTaskStarted_ && !transportTaskStarted_)
+        {
+            runtimeTasksEnabled_.store(false, std::memory_order_release);
+        }
+    }
+
+    void SmartSysApp::handleTransportWork()
+    {
+        settingsManager_.handle();
+
         if (wifi_.isConnected() && !deviceRegistrationManager_.isRegistered())
         {
             deviceRegistrationManager_.handle();
+        }
+
+        if (!deviceRegistrationManager_.isRegistered() && !hasOperationalMqttConfig())
+        {
             return;
         }
 
@@ -210,18 +305,57 @@ namespace iotsmartsys
             transportStarted_ = true;
         }
 
-
-        factoryResetButtonController_.handle();
-
-        capabilityController_.handle();
-#if IOTSMARTSYS_OTA_ENABLED
-        if (otaManager_)
-        {
-            otaManager_->handle();
-        }
-#endif
-        settingsManager_.handle();
         transportController_.handle();
+    }
+
+    void SmartSysApp::networkTaskLoop()
+    {
+        while (runtimeTasksEnabled_.load(std::memory_order_acquire))
+        {
+            if (!provisioningController_.isActive())
+            {
+                wifi_.handle();
+            }
+            vTaskDelay(pdMS_TO_TICKS(kNetworkTaskIntervalMs));
+        }
+
+        networkTaskStarted_ = false;
+        networkTask_ = nullptr;
+    }
+
+    void SmartSysApp::transportTaskLoop()
+    {
+        while (runtimeTasksEnabled_.load(std::memory_order_acquire))
+        {
+            if (!provisioningController_.isActive())
+            {
+                handleTransportWork();
+            }
+            vTaskDelay(pdMS_TO_TICKS(kTransportTaskIntervalMs));
+        }
+
+        transportTaskStarted_ = false;
+        transportTask_ = nullptr;
+    }
+
+    void SmartSysApp::networkTaskEntry(void *ctx)
+    {
+        auto *self = static_cast<SmartSysApp *>(ctx);
+        if (self)
+        {
+            self->networkTaskLoop();
+        }
+        vTaskDelete(nullptr);
+    }
+
+    void SmartSysApp::transportTaskEntry(void *ctx)
+    {
+        auto *self = static_cast<SmartSysApp *>(ctx);
+        if (self)
+        {
+            self->transportTaskLoop();
+        }
+        vTaskDelete(nullptr);
     }
 
     void SmartSysApp::onMqttConnectedThunk(void *ctx, const core::TransportConnectedView &info)

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <atomic>
 
 #include "Contracts/Connections/WiFiManager.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
@@ -21,6 +22,11 @@ namespace iotsmartsys::app
         bool isRegistered() const { return registered_; }
 
     private:
+        struct RegistrationTaskContext;
+        static void registrationTaskEntry(void *arg);
+        void startRegistrationTask(const core::settings::Settings &settings, const std::string &deviceId);
+        void completeRegistrationIfReady();
+
         bool tryRegister(const core::settings::Settings &settings, const std::string &deviceId);
         std::string resolveRegistrationUrl(const std::string &apiUrl) const;
         static std::string buildPayload(const std::string &deviceId,
@@ -36,6 +42,10 @@ namespace iotsmartsys::app
         core::IDeviceIdentityProvider &deviceIdentityProvider_;
 
         bool registered_{false};
+        bool registrationTaskRunning_{false};
+        std::atomic<bool> registrationTaskCompleted_{false};
+        std::atomic<bool> registrationTaskSucceeded_{false};
+        core::settings::Settings registrationSettingsSnapshot_{};
         bool missingHttpClientLogged_{false};
         bool invalidApiLogged_{false};
         bool cachedRegisteredLogged_{false};

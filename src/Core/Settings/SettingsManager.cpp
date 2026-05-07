@@ -13,6 +13,8 @@ namespace iotsmartsys::core::settings
     namespace
     {
         constexpr const char *kDefaultDeviceSettingsEndpoint = "devices/:device_id/settings";
+        constexpr std::uint32_t kApiSyncInitialBackoffMs = 5000;
+        constexpr std::uint32_t kApiSyncMaxBackoffMs = 60000;
 
         bool endsWith(const std::string &value, const std::string &suffix)
         {
@@ -337,7 +339,9 @@ namespace iotsmartsys::core::settings
             }
             _stats.last_err = iotsmartsys::core::common::StateResult::InvalidState;
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Idle);
-            _settingsGate.setLevel(SettingsReadyLevel::None, iotsmartsys::core::common::StateResult::InvalidState);
+            _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None,
+                                   iotsmartsys::core::common::StateResult::InvalidState);
+            scheduleApiRetryBackoff();
             return;
         }
 
@@ -359,8 +363,9 @@ namespace iotsmartsys::core::settings
             const auto gateErr = (pending.fetch_err != iotsmartsys::core::common::StateResult::Ok)
                                      ? pending.fetch_err
                                      : iotsmartsys::core::common::StateResult::InvalidState;
-            // _logger->error("SettingsManager", "signaling gate error %d", (int)gateErr);
-            _settingsGate.setLevel(SettingsReadyLevel::None, gateErr);
+            // Keep cached settings usable for MQTT while API sync keeps retrying.
+            _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None, gateErr);
+            scheduleApiRetryBackoff();
             return;
         }
 
@@ -378,7 +383,8 @@ namespace iotsmartsys::core::settings
             _stats.last_err = pending.parse_err;
             _stats.last_http_status = pending.http_status;
             setState(_has_current ? SettingsManagerState::Ready : SettingsManagerState::Error);
-            _settingsGate.setLevel(SettingsReadyLevel::None, pending.parse_err);
+            _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None, pending.parse_err);
+            scheduleApiRetryBackoff();
             return;
         }
 
@@ -453,6 +459,7 @@ namespace iotsmartsys::core::settings
         // Gate: Synced quando veio da API (fetch + parse OK) e foi aplicado em memória.
         // _logger->info("SettingsManager", "signaling gate Synced");
         _settingsGate.setLevel(SettingsReadyLevel::Synced, iotsmartsys::core::common::StateResult::Ok);
+        resetApiRetryBackoff();
 
         if (_logger)
         {
@@ -499,7 +506,8 @@ namespace iotsmartsys::core::settings
 
         auto &gate = iotsmartsys::core::ConnectivityGate::instance();
         const bool networkReady = gate.isNetworkReady();
-        if (_settingsGate.level() == SettingsReadyLevel::Available && networkReady)
+        const std::uint64_t nowMs = iotsmartsys::core::Time::get().nowMs();
+        if (_settingsGate.level() == SettingsReadyLevel::Available && networkReady && nowMs >= _nextApiSyncAtMs)
         {
             this->syncFromApi();
         }
@@ -556,6 +564,7 @@ namespace iotsmartsys::core::settings
         {
             _logger->warn("[SettingsManager] syncFromApi() no current settings, cannot sync.");
             _settingsGate.setLevel(SettingsReadyLevel::None, iotsmartsys::core::common::StateResult::InvalidState);
+            scheduleApiRetryBackoff();
             return;
         }
         _syncUrlBuffer = buildSettingsUrl(_current);
@@ -600,7 +609,40 @@ namespace iotsmartsys::core::settings
                           (int)startErr,
                           req.url ? req.url : "");
             _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None, startErr);
+            scheduleApiRetryBackoff();
         }
+    }
+
+    void SettingsManager::resetApiRetryBackoff()
+    {
+        _apiSyncFailures = 0;
+        _nextApiSyncAtMs = 0;
+    }
+
+    void SettingsManager::scheduleApiRetryBackoff()
+    {
+        if (_apiSyncFailures < 15)
+        {
+            ++_apiSyncFailures;
+        }
+
+        std::uint32_t delayMs = kApiSyncInitialBackoffMs;
+        for (std::uint8_t i = 1; i < _apiSyncFailures; ++i)
+        {
+            if (delayMs >= (kApiSyncMaxBackoffMs / 2))
+            {
+                delayMs = kApiSyncMaxBackoffMs;
+                break;
+            }
+            delayMs *= 2;
+        }
+
+        if (delayMs > kApiSyncMaxBackoffMs)
+        {
+            delayMs = kApiSyncMaxBackoffMs;
+        }
+
+        _nextApiSyncAtMs = iotsmartsys::core::Time::get().nowMs() + delayMs;
     }
 
     void SettingsManager::clear()
