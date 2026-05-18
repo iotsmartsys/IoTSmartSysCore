@@ -56,6 +56,13 @@ namespace iotsmartsys::infra::factories
     }
 #endif
 
+#if IOTSMARTSYS_SENSORS_ENABLED
+    std::unique_ptr<iotsmartsys::platform::arduino::SensorUltrassonicHCSR04> SensorFactory::createUltrassonicHCSR04Sensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance)
+    {
+        return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(triggerPin, echoPin, minDistance, maxDistance));
+    }
+#endif
+
     std::unique_ptr<iotsmartsys::core::ILuminositySensor> SensorFactory::createLuminositySensor(const int gpioSDA, const int gpioSCL)
     {
 #if IOTSMARTSYS_SENSORS_ENABLED

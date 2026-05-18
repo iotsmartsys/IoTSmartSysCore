@@ -239,7 +239,7 @@ namespace iotsmartsys::app
                 markConnected(now);
                 _state = State::Online;
                 _attempt = 0;
-                _logger.info("MQTT", "host='%s' connected in %ums", _cfg.uri ? _cfg.uri : "(null)", now - _offlineSinceMs);
+                _logger.info("MQTT", "host='%s' connected in %lums", _cfg.uri ? _cfg.uri : "(null)", (unsigned long)(now - _offlineSinceMs));
                 _logger.info("MQTT", "Online");
                 {
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();

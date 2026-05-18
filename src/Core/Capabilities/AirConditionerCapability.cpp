@@ -18,7 +18,7 @@ namespace iotsmartsys::core
             command.readed();
             std::string interpretedValue = interpreter.interpret(command);
             updateState(interpretedValue);
-            logger.info("AirConditionerCapability state updated to: %s", interpretedValue.c_str());
+            logger.info("AIR", "AirConditionerCapability state updated to: %s", interpretedValue.c_str());
         }
     }
 

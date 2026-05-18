@@ -7,6 +7,9 @@
 // Safe GPIO pins for ESP32-C6 module
 #define ESP32_GPIO04 4
 #define ESP32_GPIO05 5
+#define ESP32_GPIO09 9
+
+#define ESP32_BOOT_PIN ESP32_GPIO09
 
 // RX and TX
 #define ESP32_UART0_RX ESP32_GPIO04

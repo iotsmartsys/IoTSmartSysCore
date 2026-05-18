@@ -6,7 +6,7 @@
 
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/DHTSensor.h"
-#include "Platform/Arduino/Sensors/DHTSensor.h"
+#include "Platform/Arduino/Sensors/SensorUltrassonicHCSR04.h"
 #endif
 
 #if defined(IR_REMOTE_ESP8266_ENABLED) && IR_REMOTE_ESP8266_ENABLED == 1
@@ -34,6 +34,16 @@ namespace iotsmartsys::infra::factories
         /// @param gpio The GPIO pin to which the sensor is connected.
         /// @return A unique pointer to the created DHT sensor.
         std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio, const long readIntervalMs = 60000);
+#endif
+
+#if IOTSMARTSYS_SENSORS_ENABLED
+        /// @brief Creates an HC-SR04 ultrasonic distance sensor.
+        /// @param triggerPin The GPIO pin for the trigger.
+        /// @param echoPin The GPIO pin for the echo.
+        /// @param minDistance The minimum accepted distance for the sensor.
+        /// @param maxDistance The maximum accepted distance for the sensor.
+        /// @return A unique pointer to the created HC-SR04 sensor.
+        std::unique_ptr<iotsmartsys::platform::arduino::SensorUltrassonicHCSR04> createUltrassonicHCSR04Sensor(const int triggerPin, const int echoPin, long minDistance = 0, long maxDistance = 400);
 #endif
 
         /// @brief Creates a luminosity sensor.

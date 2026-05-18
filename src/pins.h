@@ -8,7 +8,7 @@
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 #elif CONFIG_IDF_TARGET_ESP32
 #include "Platform/Espressif/Pinouts/ESP32_WROOM_32_Pinouts.h"
-#elif CONFIG_IDF_TARGET_ESP32_C6
+#elif CONFIG_IDF_TARGET_ESP32C6
 #include "Platform/Espressif/Pinouts/ESP32_C6_Pinouts.h"
 #elif CONFIG_IDF_TARGET_ESP32C3
 #include "Platform/Espressif/Pinouts/ESP32_C3_Pinouts.h"
