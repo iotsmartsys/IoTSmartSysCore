@@ -36,16 +36,6 @@ namespace iotsmartsys::infra::factories
         std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio, const long readIntervalMs = 60000);
 #endif
 
-#if IOTSMARTSYS_SENSORS_ENABLED
-        /// @brief Creates an HC-SR04 ultrasonic distance sensor.
-        /// @param triggerPin The GPIO pin for the trigger.
-        /// @param echoPin The GPIO pin for the echo.
-        /// @param minDistance The minimum accepted distance for the sensor.
-        /// @param maxDistance The maximum accepted distance for the sensor.
-        /// @return A unique pointer to the created HC-SR04 sensor.
-        std::unique_ptr<iotsmartsys::platform::arduino::SensorUltrassonicHCSR04> createUltrassonicHCSR04Sensor(const int triggerPin, const int echoPin, long minDistance = 0, long maxDistance = 400);
-#endif
-
         /// @brief Creates a luminosity sensor.
         /// @return A unique pointer to the created luminosity sensor.
         std::unique_ptr<iotsmartsys::core::ILuminositySensor> createLuminositySensor(const int gpioSDA, const int gpioSCL) override;
@@ -72,6 +62,9 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created IR command sensor.
         std::unique_ptr<core::IIRCommandSensor> createIRCommandSensor(int pin) override;
 
+        /// @brief Creates a distance sensor.
+        /// @param cfg The configuration for the distance sensor.
+        /// @return A unique pointer to the created distance sensor.
         std::unique_ptr<core::IDistanceSensor> createDistanceSensor(const core::DistanceSensorConfig &cfg) override;
 
     private:
