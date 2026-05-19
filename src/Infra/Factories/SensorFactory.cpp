@@ -59,7 +59,18 @@ namespace iotsmartsys::infra::factories
 #if IOTSMARTSYS_SENSORS_ENABLED
     std::unique_ptr<iotsmartsys::platform::arduino::SensorUltrassonicHCSR04> SensorFactory::createUltrassonicHCSR04Sensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance)
     {
-        return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(triggerPin, echoPin, minDistance, maxDistance));
+        SensorUltrassonicHCSR04Config ultrasonicCfg;
+        ultrasonicCfg.triggerPin = triggerPin;
+        ultrasonicCfg.echoPin = echoPin;
+        ultrasonicCfg.minDistance = minDistance;
+        ultrasonicCfg.maxDistance = maxDistance;
+        return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(ultrasonicCfg));
+    }
+
+    std::unique_ptr<core::IDistanceSensor> SensorFactory::createDistanceSensor(const DistanceSensorConfig &cfg)
+    {
+        const auto &ultrasonicCfg = static_cast<const iotsmartsys::platform::arduino::SensorUltrassonicHCSR04Config &>(cfg);
+        return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(ultrasonicCfg));
     }
 #endif
 
@@ -77,7 +88,12 @@ namespace iotsmartsys::infra::factories
     std::unique_ptr<iotsmartsys::core::IWaterLevelSensor> SensorFactory::createWaterLevelSensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance, WaterLevelRecipentType recipentType)
     {
 #if IOTSMARTSYS_SENSORS_ENABLED
-        return std::unique_ptr<ArduinoUltrassonicWaterLevelSensor>(new ArduinoUltrassonicWaterLevelSensor(new SensorUltrassonicHCSR04(triggerPin, echoPin, minDistance, maxDistance), recipentType));
+        iotsmartsys::platform::arduino::SensorUltrassonicHCSR04Config ultrasonicCfg;
+        ultrasonicCfg.triggerPin = triggerPin;
+        ultrasonicCfg.echoPin = echoPin;
+        ultrasonicCfg.minDistance = minDistance;
+        ultrasonicCfg.maxDistance = maxDistance;
+        return std::unique_ptr<ArduinoUltrassonicWaterLevelSensor>(new ArduinoUltrassonicWaterLevelSensor(new SensorUltrassonicHCSR04(ultrasonicCfg), recipentType));
 #else
         (void)triggerPin;
         (void)echoPin;

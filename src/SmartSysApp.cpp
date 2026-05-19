@@ -119,22 +119,7 @@ namespace iotsmartsys
 
         const auto mqttQueueStats = mqtt_.offlineQueueStats();
         const auto mqttReconnectStats = mqtt_.reconnectStats();
-        // const std::string mqttQueueDepth = std::to_string(mqtt_.queuedCount());
-        // const std::string mqttQueuedTotal = std::to_string(mqttQueueStats.enqueued);
-        // const std::string mqttDrainedTotal = std::to_string(mqttQueueStats.drained);
-        // const std::string mqttDropQueueFull = std::to_string(mqttQueueStats.droppedQueueFull);
-        // const std::string mqttDropPayloadTooBig = std::to_string(mqttQueueStats.droppedPayloadTooBig);
-        // const std::string mqttDropTopicTooLong = std::to_string(mqttQueueStats.droppedTopicTooLong);
-        // const std::string mqttDropInvalidTopic = std::to_string(mqttQueueStats.droppedInvalidTopic);
-        // const std::string mqttDisconnectsTotal = std::to_string(mqttReconnectStats.disconnectsTotal);
-        // const std::string mqttReconnectsTotal = std::to_string(mqttReconnectStats.reconnectsTotal);
-        // const std::string mqttConnectTimeoutsTotal = std::to_string(mqttReconnectStats.connectTimeoutsTotal);
-        // const std::string mqttLastOfflineMs = std::to_string(mqttReconnectStats.lastOfflineMs);
-        // const std::string mqttMaxOfflineMs = std::to_string(mqttReconnectStats.maxOfflineMs);
-        // const std::string mqttLastBackoffMs = std::to_string(mqttReconnectStats.lastBackoffMs);
-        // const std::string mqttLastAttemptCount = std::to_string(mqttReconnectStats.lastAttemptCount);
-        // const std::string mqttLastDisconnectReason = app::MqttService<12, 16, 256>::disconnectReasonToStr(mqttReconnectStats.lastDisconnectReason);
-
+        
         builder.withDeviceId(info.clientId)
             .withBroker(info.broker)
             .withVersion(IOTSMARTSYSCORE_VERSION)
@@ -143,6 +128,7 @@ namespace iotsmartsys
             .withProperty(Property("wifi_signal", wifi_.getSignalStrength()))
             .withIpAddress(wifi_.getIpAddress())
             .withMacAddress(wifi_.getMacAddress());
+            // .withChipModel(wifi_.getChipModel());
 
         std::string payload = builder.build();
 
@@ -424,10 +410,10 @@ namespace iotsmartsys
         return builder_.addHumiditySensor(cfg);
     }
 
-    /// @brief Adds a new height water level capability to the application.
-    iotsmartsys::core::HeightWaterLevelCapability *SmartSysApp::addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
+    /// @brief Adds a new distance sensor capability to the application.
+    iotsmartsys::core::DistanceCapability *SmartSysApp::addDistanceCapability(iotsmartsys::app::DistanceCapabilityConfig cfg)
     {
-        return builder_.addWaterHeight(cfg);
+        return builder_.addDistance(cfg);
     }
 
     /// @brief Adds a new LED capability to the application.

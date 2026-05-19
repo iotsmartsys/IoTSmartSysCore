@@ -2,14 +2,16 @@
 
 #include <Arduino.h>
 
-#if __has_include(<HTTPClient.h>)
-#define IOTSMARTSYS_HAS_HTTP_CLIENT 1
-#include <HTTPClient.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiClientSecure.h>
+#if defined(ESP32) && __has_include("esp_http_client.h")
+#define IOTSMARTSYS_HAS_ESP_HTTP_CLIENT 1
+#include "Infra/Certs/GoogleTrustServicesGTSRootR4.h"
+extern "C"
+{
+#include "esp_err.h"
+#include "esp_http_client.h"
+}
 #else
-#define IOTSMARTSYS_HAS_HTTP_CLIENT 0
+#define IOTSMARTSYS_HAS_ESP_HTTP_CLIENT 0
 #endif
 
 namespace iotsmartsys::app
@@ -147,7 +149,7 @@ namespace iotsmartsys::app
 
     void DeviceRegistrationManager::startRegistrationTask(const core::settings::Settings &settings, const std::string &deviceId)
     {
-#if IOTSMARTSYS_HAS_HTTP_CLIENT
+#if IOTSMARTSYS_HAS_ESP_HTTP_CLIENT
         auto *ctx = new RegistrationTaskContext();
         if (!ctx)
         {
@@ -182,7 +184,7 @@ namespace iotsmartsys::app
         (void)deviceId;
         if (!missingHttpClientLogged_)
         {
-            logger_.warn("DeviceRegistration", "HTTPClient is not available in this build. Device registration disabled.");
+            logger_.warn("DeviceRegistration", "esp_http_client is not available in this build. Device registration disabled.");
             missingHttpClientLogged_ = true;
         }
         scheduleRetry(millis());
@@ -209,7 +211,7 @@ namespace iotsmartsys::app
 
     bool DeviceRegistrationManager::tryRegister(const core::settings::Settings &settings, const std::string &deviceId)
     {
-#if IOTSMARTSYS_HAS_HTTP_CLIENT
+#if IOTSMARTSYS_HAS_ESP_HTTP_CLIENT
         const std::string registrationUrl = resolveRegistrationUrl(settings.api.url);
         if (registrationUrl.empty())
         {
@@ -226,39 +228,42 @@ namespace iotsmartsys::app
             wifi_.getMacAddress() ? wifi_.getMacAddress() : "",
             wifi_.getIpAddress() ? wifi_.getIpAddress() : "");
 
-        HTTPClient http;
-        http.setTimeout(kHttpTimeoutMs);
-
         const bool useHttps = registrationUrl.rfind("https://", 0) == 0;
-        bool beginOk = false;
 
-        WiFiClient httpClient;
-        WiFiClientSecure httpsClient;
-
+        esp_http_client_config_t config = {};
+        config.url = registrationUrl.c_str();
+        config.method = HTTP_METHOD_POST;
+        config.timeout_ms = kHttpTimeoutMs;
         if (useHttps)
         {
-            httpsClient.setInsecure();
-            beginOk = http.begin(httpsClient, String(registrationUrl.c_str()));
-        }
-        else
-        {
-            beginOk = http.begin(httpClient, String(registrationUrl.c_str()));
+            config.cert_pem = GTS_ROOT_R4_PEM;
+            config.skip_cert_common_name_check = false;
         }
 
-        if (!beginOk)
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+        if (!client)
         {
-            logger_.warn("DeviceRegistration", "Failed to initialize HTTP client for URL: %s", registrationUrl.c_str());
-            http.end();
+            logger_.warn("DeviceRegistration", "Failed to initialize esp_http_client for URL: %s", registrationUrl.c_str());
             return false;
         }
 
-        http.addHeader("Content-Type", "application/json");
-        http.addHeader("x-api-key", settings.api.key.c_str());
-        http.addHeader("Authorization", settings.api.basic_auth.c_str());
+        esp_http_client_set_header(client, "Content-Type", "application/json");
+        esp_http_client_set_header(client, "x-api-key", settings.api.key.c_str());
+        esp_http_client_set_header(client, "Authorization", settings.api.basic_auth.c_str());
+        esp_http_client_set_post_field(client, payload.c_str(), static_cast<int>(payload.length()));
 
-        const int statusCode = http.POST(String(payload.c_str()));
-        const String response = http.getString();
-        http.end();
+        const esp_err_t err = esp_http_client_perform(client);
+        const int statusCode = esp_http_client_get_status_code(client);
+        esp_http_client_cleanup(client);
+
+        if (err != ESP_OK)
+        {
+            logger_.warn("DeviceRegistration", "Registration request failed. err=%s(%d) HTTP %d.",
+                         esp_err_to_name(err),
+                         static_cast<int>(err),
+                         statusCode);
+            return false;
+        }
 
         if (statusCode == 201 || statusCode == 409)
         {
@@ -266,14 +271,14 @@ namespace iotsmartsys::app
             return true;
         }
 
-        logger_.warn("DeviceRegistration", "Registration failed. HTTP %d, response: %s", statusCode, response.c_str());
+        logger_.warn("DeviceRegistration", "Registration failed. HTTP %d.", statusCode);
         return false;
 #else
         (void)settings;
         (void)deviceId;
         if (!missingHttpClientLogged_)
         {
-            logger_.warn("DeviceRegistration", "HTTPClient is not available in this build. Device registration disabled.");
+            logger_.warn("DeviceRegistration", "esp_http_client is not available in this build. Device registration disabled.");
             missingHttpClientLogged_ = true;
         }
         return false;

@@ -26,6 +26,7 @@ namespace iotsmartsys::app
         AnnouncePayloadBuilder &withProperty(const Property &property);
         AnnouncePayloadBuilder &withIpAddress(const char *ipAddress);
         AnnouncePayloadBuilder &withMacAddress(const char *macAddress);
+        AnnouncePayloadBuilder &withChipModel(const char *chipModel);
 
         std::string build();
 

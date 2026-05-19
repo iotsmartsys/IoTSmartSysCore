@@ -5,6 +5,7 @@
 #include "Config/WifiCredentials.h"
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
+#include "Platform/Espressif/Providers/DeviceIdentityProvider.h"
 
 #include <cstdio>
 #include "esp_system.h"
@@ -168,48 +169,17 @@ namespace iotsmartsys::platform::espressif
         }
     } // namespace
 
-    static const char *clientIdPrefix()
-    {
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-        return "esp32s3";
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-        return "esp32c3";
-#elif defined(CONFIG_IDF_TARGET_ESP32C2)
-        return "esp32c2";
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
-        return "esp32c6";
-#elif defined(CONFIG_IDF_TARGET_ESP32H2)
-        return "esp32h2";
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-        return "esp32s2";
-#elif defined(CONFIG_IDF_TARGET_ESP32)
-        return "esp32";
-#else
-        return "esp";
-#endif
-    }
-
     // Storage estável para Settings::clientId (const char*) sem heap.
     // Se você tiver vários devices/tasks chamando load(), isso ainda é ok se for só “um clientId por firmware”.
     static char s_clientId[32] = {0};
 
     static void ensureClientId(iotsmartsys::core::settings::Settings &dst)
     {
-        // Se já veio preenchido, não sobrescreve.
-        // if (dst.clientId != nullptr && dst.clientId[0] != '\0')
-        //     return;
-
-        uint8_t mac[6] = {0};
-        esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
-        if (err != ESP_OK)
-        {
-            // fallback: base mac
-            (void)esp_base_mac_addr_get(mac);
-        }
-
-        // últimos 3 bytes => 6 dígitos hex
-        std::snprintf(s_clientId, sizeof(s_clientId), "%s-%02X%02X%02X",
-                      clientIdPrefix(), mac[3], mac[4], mac[5]);
+        iotsmartsys::platform::espressif::providers::DeviceIdentityProvider identityProvider;
+        const std::string deviceId = identityProvider.getDeviceID();
+        const std::size_t n = std::min(sizeof(s_clientId) - 1, deviceId.size());
+        std::memcpy(s_clientId, deviceId.data(), n);
+        s_clientId[n] = '\0';
 
         dst.clientId = s_clientId;
     }

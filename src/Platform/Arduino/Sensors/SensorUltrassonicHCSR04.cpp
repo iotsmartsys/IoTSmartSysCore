@@ -5,23 +5,18 @@
 
 namespace iotsmartsys::platform::arduino
 {
-
-#define SENSORULTRASSONIC_HC_SR04_TIMEOUT 30000
-#define SENSORULTRASSONIC_HC_SR04_SOUND_SPEED 0.0343
-#define TIME_TOLERANCE_MEASURE 3 * 1000
-#define DISTANCE_SUDDEN_CHANGE_THRESHOLD_CM 10.0f
-
-    SensorUltrassonicHCSR04::SensorUltrassonicHCSR04(int trigPin, int echoPin)
+    SensorUltrassonicHCSR04::SensorUltrassonicHCSR04(SensorUltrassonicHCSR04Config cfg)
+        : trigPin(cfg.triggerPin),
+          echoPin(cfg.echoPin),
+          minDistance(cfg.minDistance),
+          maxDistance(cfg.maxDistance),
+          timeOutMeasureUs(cfg.timeOutMeasureUs),
+          soundSpeedCmPerUs(cfg.soundSpeedCmPerUs),
+          timeToleranceMeasureMs(cfg.timeToleranceMeasureMs),
+          distanceSuddenChangeThresholdCm(cfg.distanceSuddenChangeThresholdCm)
     {
-        this->trigPin = trigPin;
-        this->echoPin = echoPin;
-    }
-
-    SensorUltrassonicHCSR04::SensorUltrassonicHCSR04(int trigPin, int echoPin, long minDistance, long maxDistance)
-        : SensorUltrassonicHCSR04(trigPin, echoPin)
-    {
-        this->minDistance = minDistance;
-        this->maxDistance = maxDistance;
+        minDistanceCm = cfg.minDistance;
+        maxDistanceCm = cfg.maxDistance;
     }
 
     void SensorUltrassonicHCSR04::setup()
@@ -30,15 +25,10 @@ namespace iotsmartsys::platform::arduino
         pinMode(echoPin, INPUT);
     }
 
-    float SensorUltrassonicHCSR04::getDistanceCm() const
-    {
-        return distanceCm;
-    }
-
-    void SensorUltrassonicHCSR04::measureDistance()
+    void SensorUltrassonicHCSR04::handleSensor()
     {
         unsigned long currentTime = millis();
-        if (lastMeasurementTime != 0 && currentTime - lastMeasurementTime < TIME_TOLERANCE_MEASURE)
+        if (lastMeasurementTime != 0 && currentTime - lastMeasurementTime < timeToleranceMeasureMs)
         {
             return;
         }
@@ -49,20 +39,22 @@ namespace iotsmartsys::platform::arduino
         digitalWrite(trigPin, HIGH);
         delayMicroseconds(10);
         digitalWrite(trigPin, LOW);
-        duration = pulseIn(echoPin, HIGH, SENSORULTRASSONIC_HC_SR04_TIMEOUT);
+        duration = pulseIn(echoPin, HIGH, timeOutMeasureUs);
         if (duration == 0)
         {
             return;
         }
 
-        float distanceCmCurrentRead = duration * SENSORULTRASSONIC_HC_SR04_SOUND_SPEED / 2;
+        float distanceCmCurrentRead = duration * soundSpeedCmPerUs / 2;
 
         if (distanceCmCurrentRead >= minDistance && distanceCmCurrentRead <= maxDistance)
         {
-            if (distanceCm > 0.0f && fabsf(distanceCmCurrentRead - distanceCm) >= DISTANCE_SUDDEN_CHANGE_THRESHOLD_CM)
+            if (distanceCm > 0.0f && fabsf(distanceCmCurrentRead - distanceCm) >= distanceSuddenChangeThresholdCm)
             {
                 resetReadings(distanceCmCurrentRead);
                 this->distanceCm = distanceCmCurrentRead;
+                actualDistanceCm = distanceCm;
+                lastStateReadMillis_ = currentTime;
                 return;
             }
 
@@ -78,16 +70,23 @@ namespace iotsmartsys::platform::arduino
             if (distanceCm == 0 || fabsf(distanceCmAverage - distanceCm) >= 2.0f)
             {
                 distanceCm = distanceCmAverage;
+                actualDistanceCm = distanceCm;
+                lastStateReadMillis_ = currentTime;
             }
         }
     }
 
-    bool SensorUltrassonicHCSR04::distanceIsLessOrEqualThan(float distanceCompare) const
+    long SensorUltrassonicHCSR04::lastStateReadMillis() const
+    {
+        return lastStateReadMillis_;
+    }
+
+    bool SensorUltrassonicHCSR04::isLessOrEqualThan(float distanceCompare) const
     {
         return distanceCm > 0 && distanceCm <= distanceCompare;
     }
 
-    bool SensorUltrassonicHCSR04::distanceIsGreaterOrEqualThan(float distanceCompare) const
+    bool SensorUltrassonicHCSR04::isGreaterOrEqualThan(float distanceCompare) const
     {
         return distanceCm > 0 && distanceCm >= distanceCompare;
     }

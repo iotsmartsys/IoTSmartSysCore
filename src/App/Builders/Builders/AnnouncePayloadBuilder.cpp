@@ -107,6 +107,12 @@ namespace iotsmartsys::app
         return withProperty(Property("build", build));
     }
 
+    AnnouncePayloadBuilder &AnnouncePayloadBuilder::withChipModel(const char *chipModel)
+    {
+        return withProperty(Property("chip_model", chipModel));
+    }
+    
+
     AnnouncePayloadBuilder &AnnouncePayloadBuilder::withProperty(const Property &property)
     {
         for (const auto &prop : properties)

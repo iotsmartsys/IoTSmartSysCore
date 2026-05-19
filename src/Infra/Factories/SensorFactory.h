@@ -72,6 +72,8 @@ namespace iotsmartsys::infra::factories
         /// @return A unique pointer to the created IR command sensor.
         std::unique_ptr<core::IIRCommandSensor> createIRCommandSensor(int pin) override;
 
+        std::unique_ptr<core::IDistanceSensor> createDistanceSensor(const core::DistanceSensorConfig &cfg) override;
+
     private:
         ILogger &_logger;
     };

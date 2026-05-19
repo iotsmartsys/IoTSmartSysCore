@@ -59,8 +59,8 @@ namespace iotsmartsys::platform::arduino
 
     void ArduinoUltrassonicWaterLevelSensor::handleSensor()
     {
-        sr04Sensor->measureDistance();
-        float distanceCm = sr04Sensor->getDistanceCm();
+        sr04Sensor->handleSensor();
+        float distanceCm = sr04Sensor->getActualDistanceCm();
 
         if (distanceCm < distanceToSensorCM)
             {

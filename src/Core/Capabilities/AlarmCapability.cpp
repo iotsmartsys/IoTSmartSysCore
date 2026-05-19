@@ -2,8 +2,9 @@
 
 namespace iotsmartsys::core
 {
-    AlarmCapability::AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+    AlarmCapability::AlarmCapability(long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapter, event_sink, ALARM_ACTUATOR_TYPE, ALARM_OFF),
+          ringDuration(ringDurationMs),
           stateOn(1),
           stateOff(0),
           lastRing(0),
@@ -15,7 +16,7 @@ namespace iotsmartsys::core
 
     void AlarmCapability::handle()
     {
-        if (poweredOn)
+        if (poweredOn && ringDuration > 0)
         {
             ring();
         }
@@ -49,6 +50,7 @@ namespace iotsmartsys::core
     void AlarmCapability::powerOn()
     {
         poweredOn = true;
+        command_hardware_adapter.applyCommand(POWER_ON_COMMAND);
     }
 
     void AlarmCapability::applyCommand(CapabilityCommand command)
@@ -65,9 +67,6 @@ namespace iotsmartsys::core
         {
             toggle();
         }
-        else
-        {
-        }
     }
 
     void AlarmCapability::powerOff()
@@ -79,7 +78,7 @@ namespace iotsmartsys::core
     void AlarmCapability::toggle()
     {
         if (poweredOn)
-        
+
         {
             powerOff();
         }

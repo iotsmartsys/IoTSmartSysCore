@@ -64,7 +64,6 @@ namespace iotsmartsys::core
 #define DOOR_SENSOR_OPEN "open"
 #define DOOR_SENSOR_CLOSED "closed"
 #define DOOR_SENSOR_TYPE "Door Sensor"
-#define HEIGHT_WATER_LEVEL_SENSOR_TYPE "Distance Sensor"
 #define HUMIDITY_SENSOR_TYPE "Humidity Sensor"
 #define IR_TYPE "IR Command"
 #define PROXIMITY_DETECTED "detected"

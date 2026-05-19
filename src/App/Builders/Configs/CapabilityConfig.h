@@ -3,6 +3,7 @@
 #include "HardwareConfig.h"
 #include "Core/Models/DigitalLogic.h"
 #include "Contracts/Sensors/IWaterLevelSensor.h"
+#include "Contracts/Sensors/IDistanceSensor.h"
 #include "Contracts/Sensors/ITemperatureSensor.h"
 #include "Contracts/Sensors/IHumiditySensor.h"
 #include "Contracts/Sensors/IGlpSensor.h"
@@ -23,6 +24,7 @@ namespace iotsmartsys::app
     {
     public:
         using HardwareConfig::HardwareConfig;
+        long ringDurationMs = 500;
     };
 
     class DoorSensorConfig : public HardwareConfig
@@ -80,6 +82,12 @@ namespace iotsmartsys::app
     {
     public:
         iotsmartsys::core::IWaterLevelSensor *sensor{nullptr};
+    };
+
+    class DistanceCapabilityConfig : public HardwareConfig
+    {
+    public:
+        iotsmartsys::core::IDistanceSensor *sensor{nullptr};
     };
 
     class GlpSensorConfig : public HardwareConfig

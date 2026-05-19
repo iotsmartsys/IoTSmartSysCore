@@ -24,7 +24,7 @@
 #include "Contracts/Capabilities/WaterLevelLitersCapability.h"
 #include "Contracts/Capabilities/TemperatureSensorCapability.h"
 #include "Contracts/Capabilities/HumiditySensorCapability.h"
-#include "Contracts/Capabilities/HeightWaterLevelCapability.h"
+#include "Contracts/Capabilities/DistanceCapability.h"
 #include "Contracts/Capabilities/GlpSensorCapability.h"
 #include "Contracts/Capabilities/GlpMeterKgCapability.h"
 #include "Contracts/Capabilities/GlpMeterPercentCapability.h"
@@ -79,7 +79,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::TemperatureSensorCapability *addTemperatureSensor(const TemperatureSensorConfig &cfg);
         iotsmartsys::core::TouchButtonCapability *addTouchButton(const TouchButtonConfig &cfg);
         iotsmartsys::core::HumiditySensorCapability *addHumiditySensor(const HumiditySensorConfig &cfg);
-        iotsmartsys::core::HeightWaterLevelCapability *addWaterHeight(const WaterLevelSensorConfig &cfg);
+        iotsmartsys::core::DistanceCapability *addDistance(const DistanceCapabilityConfig &cfg);
         iotsmartsys::core::GlpSensorCapability *addGlpSensor(const GlpSensorConfig &cfg);
         iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercent(const GlpMeterConfig &cfg);
         iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKg(const GlpMeterConfig &cfg);

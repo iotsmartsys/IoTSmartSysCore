@@ -9,11 +9,13 @@ namespace iotsmartsys::core
     class AlarmCapability : public ICommandCapability
     {
     public:
-        AlarmCapability(ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        AlarmCapability(long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         virtual void handle() override;
 
         bool isActivated();
+        bool isOn() const { return poweredOn; }
+        bool isOff() const { return !poweredOn; }
 
         void ring();
         void setRingDuration(int duration);
@@ -28,7 +30,9 @@ namespace iotsmartsys::core
         unsigned long lastRing;
         bool poweredOn;
         bool lastState;
-        int ringDuration = 500;
+
+    public:
+        long ringDuration = 500;
 
         void toggle();
     };

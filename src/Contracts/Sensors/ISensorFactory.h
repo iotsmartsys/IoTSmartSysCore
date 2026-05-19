@@ -10,6 +10,7 @@
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
 #include "Contracts/Sensors/IGlpMeter.h"
 #include "Contracts/Sensors/IIRCommandSensor.h"
+#include "Contracts/Sensors/IDistanceSensor.h"
 
 namespace iotsmartsys::core
 {
@@ -41,6 +42,7 @@ namespace iotsmartsys::core
         virtual std::unique_ptr<IGlpSensor> createGlpSensor(int pinAO, int pinDO) = 0;
         virtual std::unique_ptr<IGlpMeter> createGlpMeter(const GlpMeterCreationConfig &cfg) = 0;
         virtual std::unique_ptr<IIRCommandSensor> createIRCommandSensor(int pin) = 0;
+        virtual std::unique_ptr<IDistanceSensor> createDistanceSensor(const DistanceSensorConfig &cfg) = 0;
     };
 
 } // namespace iotsmartsys::core

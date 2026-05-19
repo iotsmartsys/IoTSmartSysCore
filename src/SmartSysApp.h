@@ -94,7 +94,7 @@ namespace iotsmartsys
                 iotsmartsys::core::GlpMeterPercentCapability *addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig cfg);
                 iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig cfg);
                 iotsmartsys::core::HumiditySensorCapability *addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig cfg);
-                iotsmartsys::core::HeightWaterLevelCapability *addHeightWaterLevelCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
+                iotsmartsys::core::DistanceCapability *addDistanceCapability(iotsmartsys::app::DistanceCapabilityConfig cfg);
                 iotsmartsys::core::LEDCapability *addLedCapability(iotsmartsys::app::LightConfig cfg);
                 iotsmartsys::core::PirSensorCapability *addPirSensorCapability(iotsmartsys::app::PirSensorConfig cfg);
                 iotsmartsys::core::PushButtonCapability *addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg);

@@ -1,27 +1,34 @@
 #pragma once
 
-#include <Arduino.h>
+#include "Contracts/Sensors/IDistanceSensor.h"
 
 namespace iotsmartsys::platform::arduino
 {
 
-#define SENSORULTRASSONIC_HC_SR04_TIMEOUT 30000
-#define SENSORULTRASSONIC_HC_SR04_SOUND_SPEED 0.0343
-#define TIME_TOLERANCE_MEASURE 3 * 1000
+    struct SensorUltrassonicHCSR04Config : public core::DistanceSensorConfig
+    {
+        int triggerPin = -1;
+        int echoPin = -1;
+        long minDistance = 0;
+        long maxDistance = 1000;
+        long timeOutMeasureUs = 30000;
+        float soundSpeedCmPerUs = 0.0343f;
+        long timeToleranceMeasureMs = 3000;
+        float distanceSuddenChangeThresholdCm = 10.0f;
+    };
 
-    class SensorUltrassonicHCSR04
+    class SensorUltrassonicHCSR04 : public core::IDistanceSensor
     {
 
     public:
-        SensorUltrassonicHCSR04(int trigPin, int echoPin);
-        SensorUltrassonicHCSR04(int trigPin, int echoPin, long minDistance, long maxDistance);
+        SensorUltrassonicHCSR04(SensorUltrassonicHCSR04Config cfg);
 
-        void setup();
+        void setup() override;
+        void handleSensor() override;
+        long lastStateReadMillis() const override;
 
-        float getDistanceCm() const;
-        bool distanceIsLessOrEqualThan(float distanceCompare) const;
-        bool distanceIsGreaterOrEqualThan(float distanceCompare) const;
-        void measureDistance();
+        bool isLessOrEqualThan(float distanceCompare) const;
+        bool isGreaterOrEqualThan(float distanceCompare) const;
 
     private:
         int trigPin;
@@ -31,6 +38,11 @@ namespace iotsmartsys::platform::arduino
         unsigned long lastMeasurementTime = 0;
         long minDistance = 2;
         long maxDistance = 400;
+        long timeOutMeasureUs = 30000;
+        float soundSpeedCmPerUs = 0.0343f;
+        long timeToleranceMeasureMs = 3000;
+        float distanceSuddenChangeThresholdCm = 10.0f;
+        long lastStateReadMillis_ = 0;
 
         static const int BUFFER_SIZE = 5;
         float lastReadings[BUFFER_SIZE] = {0};

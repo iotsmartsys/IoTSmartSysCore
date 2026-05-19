@@ -309,7 +309,7 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
-        return createCapability<iotsmartsys::core::AlarmCapability>(*hardwareAdapter, &_eventSink);
+        return createCapability<iotsmartsys::core::AlarmCapability>(cfg.ringDurationMs, *hardwareAdapter, &_eventSink);
     }
 
     // --------------------------- addDoorSensor ---------------------------
@@ -437,14 +437,14 @@ namespace iotsmartsys::app
             &_eventSink);
     }
 
-    // --------------------------- addWaterHeight ---------------------------
-    iotsmartsys::core::HeightWaterLevelCapability *CapabilitiesBuilder::addWaterHeight(const WaterLevelSensorConfig &cfg)
+    // --------------------------- addDistance ---------------------------
+    iotsmartsys::core::DistanceCapability *CapabilitiesBuilder::addDistance(const DistanceCapabilityConfig &cfg)
     {
         if (!cfg.sensor)
             return nullptr;
 
-        return createCapability<iotsmartsys::core::HeightWaterLevelCapability>(
-            *static_cast<iotsmartsys::core::IWaterLevelSensor *>(cfg.sensor),
+        return createCapability<iotsmartsys::core::DistanceCapability>(
+            *static_cast<iotsmartsys::core::IDistanceSensor *>(cfg.sensor),
             &_eventSink);
     }
 
