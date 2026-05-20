@@ -20,6 +20,9 @@ namespace iotsmartsys::core
             CapabilityCommand capabilityCmd;
             capabilityCmd.capability_name = command.capability_name.c_str();
             capabilityCmd.value = command.value.c_str();
+            capabilityCmd.args1 = command.args1.c_str();
+            capabilityCmd.args1value = command.args1value.c_str();
+
             cap->applyCommand(capabilityCmd);
             return true;
         }

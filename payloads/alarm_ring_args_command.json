@@ -1,0 +1,8 @@
+{
+  "device_id": "esp32s3-08267C",
+  "capability_name": "alarm_1",
+  "type": "CAPABILITY",
+  "value": "ring",
+  "args1": "duration",
+  "args1value": "250"
+}

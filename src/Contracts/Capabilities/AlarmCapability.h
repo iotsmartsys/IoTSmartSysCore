@@ -5,6 +5,8 @@
 
 namespace iotsmartsys::core
 {
+    #define ALARM_RING "ring"
+    #define ALARM_RING_DURATION "duration"
 
     class AlarmCapability : public ICommandCapability
     {

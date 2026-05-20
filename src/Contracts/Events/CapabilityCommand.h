@@ -10,6 +10,9 @@ namespace iotsmartsys::core
     public:
         const char *capability_name;
         const char *value;
+        const char *args1;
+        const char *args1value;
+        const char *args3;
 
         bool isToggle() const
         {

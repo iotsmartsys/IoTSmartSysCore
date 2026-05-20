@@ -67,6 +67,21 @@ namespace iotsmartsys::core
         {
             toggle();
         }
+        else
+        {
+            if (strcmp(command.value, ALARM_RING) == 0)
+            {
+                if (strcmp(command.args1, ALARM_RING_DURATION) == 0)
+                {
+                    int duration = atoi(command.args1value);
+                    setRingDuration(duration);
+                }
+                else
+                {
+                    ring();
+                }
+            }
+        }
     }
 
     void AlarmCapability::powerOff()
