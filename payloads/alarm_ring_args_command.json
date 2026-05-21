@@ -3,6 +3,10 @@
   "capability_name": "alarm_1",
   "type": "CAPABILITY",
   "value": "ring",
-  "args1": "duration",
-  "args1value": "250"
+  "args": [
+    {
+      "key": "duration",
+      "value": "250"
+    }
+  ]
 }

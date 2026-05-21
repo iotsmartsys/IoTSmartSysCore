@@ -56,6 +56,7 @@ namespace iotsmartsys::core
     void AlarmCapability::applyCommand(CapabilityCommand command)
     {
         logger.info("AlarmCapability", " received command: %s", command.value);
+        applyArgs(command.args);
         if (command.isPowerOn())
         {
             powerOn();
@@ -68,25 +69,17 @@ namespace iotsmartsys::core
         {
             toggle();
         }
-        else
-        {
-            logger.warn("AlarmCapability", " received unsupported command: %s", command.value);
-            if (strcmp(command.value, ALARM_RING) == 0)
-            {
-                logger.info("AlarmCapability", " received ring command");
-                if (strcmp(command.args1, ALARM_RING_DURATION) == 0)
-                {
-                    logger.info("AlarmCapability", " received ring duration command");
-                    int duration = atoi(command.args1value);
+    }
 
-                    setRingDuration(duration);
-                    logger.info("AlarmCapability", " ring duration set to: %d", duration);
-                    powerOn();
-                }
-                else
-                {
-                    ring();
-                }
+    void AlarmCapability::applyArgs(std::vector<std::pair<const char *, const char *>> args)
+    {
+        for (const auto &arg : args)
+        {
+            if (strcmp(arg.first, ALARM_RING_DURATION) == 0)
+            {
+                int duration = atoi(arg.second);
+                setRingDuration(duration);
+                logger.info("AlarmCapability", " ring duration set to: %d", duration);
             }
         }
     }

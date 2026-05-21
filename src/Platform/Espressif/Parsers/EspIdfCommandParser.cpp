@@ -170,6 +170,90 @@ namespace iotsmartsys::platform::espressif
         return true;
     }
 
+    bool EspIdfCommandParser::tryExtractJsonArgs(const char *json, size_t len, std::vector<std::pair<std::string, std::string>> &out) const
+    {
+        out.clear();
+
+        if (!json || len == 0)
+            return false;
+
+        const char *end = json + len;
+        const char *p = findKeyValueStart(json, end, "args");
+        if (!p)
+            return false;
+
+        p = skipWhitespace(p, end);
+        if (!p || p >= end || *p != '[')
+            return false;
+
+        ++p;
+        bool inString = false;
+        bool escaped = false;
+        int objectDepth = 0;
+        const char *objectStart = nullptr;
+
+        while (p < end)
+        {
+            const char c = *p;
+
+            if (inString)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (c == '\\')
+                {
+                    escaped = true;
+                }
+                else if (c == '"')
+                {
+                    inString = false;
+                }
+                ++p;
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inString = true;
+            }
+            else if (c == '{')
+            {
+                if (objectDepth == 0)
+                    objectStart = p;
+                objectDepth++;
+            }
+            else if (c == '}')
+            {
+                if (objectDepth > 0)
+                {
+                    objectDepth--;
+                    if (objectDepth == 0 && objectStart)
+                    {
+                        std::string key;
+                        std::string value;
+                        const size_t objectLen = (size_t)((p + 1) - objectStart);
+                        if (tryExtractJsonStringField(objectStart, objectLen, "key", key) &&
+                            tryExtractJsonStringField(objectStart, objectLen, "value", value))
+                        {
+                            out.emplace_back(key, value);
+                        }
+                        objectStart = nullptr;
+                    }
+                }
+            }
+            else if (c == ']' && objectDepth == 0)
+            {
+                return true;
+            }
+
+            ++p;
+        }
+
+        return false;
+    }
+
     iotsmartsys::core::DeviceCommand *EspIdfCommandParser::parseCommand(const char *jsonPayload, size_t payloadLen)
     {
         if (!jsonPayload || payloadLen == 0)
@@ -184,6 +268,7 @@ namespace iotsmartsys::platform::espressif
         std::string type;
         std::string args1;
         std::string args1value;
+        std::vector<std::pair<std::string, std::string>> args;
 
         const bool okCap = tryExtractJsonStringField(jsonPayload, payloadLen, "capability_name", capabilityName);
         const bool okDev = tryExtractJsonStringField(jsonPayload, payloadLen, "device_id", deviceId);
@@ -191,12 +276,14 @@ namespace iotsmartsys::platform::espressif
         const bool okTyp = tryExtractJsonStringField(jsonPayload, payloadLen, "type", type);
         const bool okArgs1 = tryExtractJsonStringField(jsonPayload, payloadLen, "args1", args1);
         const bool okArgs1Value = tryExtractJsonStringField(jsonPayload, payloadLen, "args1value", args1value);
+        const bool okArgs = tryExtractJsonArgs(jsonPayload, payloadLen, args);
 
-        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s' args1='%s' args1value='%s'.",
+        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s' args_count=%u args1='%s' args1value='%s'.",
                       okCap ? capabilityName.c_str() : "(missing)",
                       okDev ? deviceId.c_str() : "(missing)",
                       okVal ? value.c_str() : "(missing)",
                       okTyp ? type.c_str() : "(missing)",
+                      okArgs ? (unsigned)args.size() : 0,
                       okArgs1 ? args1.c_str() : "(missing)",
                       okArgs1Value ? args1value.c_str() : "(missing)");
 
@@ -215,8 +302,7 @@ namespace iotsmartsys::platform::espressif
         outCmd->device_id = deviceId.c_str();
         outCmd->value = value.c_str();
         outCmd->type = okTyp ? type.c_str() : iotsmartsys::core::CommandTypeStrings::CAPABILITY_STR;
-        outCmd->args1 = okArgs1 ? args1.c_str() : "";
-        outCmd->args1value = okArgs1Value ? args1value.c_str() : "";
+        outCmd->args = args;
 
         return outCmd;
     }

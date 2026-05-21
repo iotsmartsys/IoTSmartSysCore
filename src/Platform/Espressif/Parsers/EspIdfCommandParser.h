@@ -4,6 +4,8 @@
 #include "Contracts/Logging/ILogger.h"
 #include <string>
 #include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace iotsmartsys::platform::espressif
 {
@@ -20,5 +22,6 @@ namespace iotsmartsys::platform::espressif
         const char *parseJsonString(const char *p, const char *end, std::string &out) const;
         void unescapeJsonStringInPlace(std::string &s) const;
         bool tryExtractJsonStringField(const char *json, size_t len, const char *key, std::string &out) const;
+        bool tryExtractJsonArgs(const char *json, size_t len, std::vector<std::pair<std::string, std::string>> &out) const;
     };
 }

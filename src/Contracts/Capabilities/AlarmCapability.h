@@ -37,5 +37,7 @@ namespace iotsmartsys::core
         long ringDuration = 500;
 
         void toggle();
+
+        void applyArgs(std::vector<std::pair<const char *, const char *>> args);
     };
 }

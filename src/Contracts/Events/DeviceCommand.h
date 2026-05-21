@@ -1,7 +1,9 @@
 #pragma once
 
-#include <string>
 #include <cctype>
+#include <string>
+#include <utility>
+#include <vector>
 #include "Contracts/Commands/CommandTypes.h"
 #include "Contracts/Commands/SystemCommands.h"
 
@@ -14,8 +16,7 @@ namespace iotsmartsys::core
         std::string device_id;
         std::string value;
         std::string type;
-        std::string args1;
-        std::string args1value;
+        std::vector<std::pair<std::string, std::string>> args;
 
         const CommandTypes getCommandType() const
         {

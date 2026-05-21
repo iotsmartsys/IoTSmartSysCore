@@ -2,17 +2,31 @@
 
 #include "Contracts/Capabilities/ICapabilityType.h"
 #include <cstring>
+#include <utility>
+#include <vector>
 
 namespace iotsmartsys::core
 {
     class CapabilityCommand
     {
     public:
-        const char *capability_name;
-        const char *value;
-        const char *args1;
-        const char *args1value;
-        const char *args3;
+        const char *capability_name = "";
+        const char *value = "";
+        std::vector<std::pair<const char *, const char *>> args;
+
+        const char *getArgValue(const char *key) const
+        {
+            if (!key)
+                return nullptr;
+
+            for (const auto &arg : args)
+            {
+                if (arg.first && std::strcmp(arg.first, key) == 0)
+                    return arg.second ? arg.second : "";
+            }
+
+            return nullptr;
+        }
 
         bool isToggle() const
         {
