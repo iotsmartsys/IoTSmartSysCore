@@ -56,27 +56,15 @@ namespace iotsmartsys::infra::factories
     }
 #endif
 
-#if IOTSMARTSYS_SENSORS_ENABLED
-    std::unique_ptr<iotsmartsys::platform::arduino::SensorUltrassonicHCSR04> SensorFactory::createUltrassonicHCSR04Sensor(const int triggerPin, const int echoPin, long minDistance, long maxDistance)
-    {
-        SensorUltrassonicHCSR04Config ultrasonicCfg;
-        ultrasonicCfg.triggerPin = triggerPin;
-        ultrasonicCfg.echoPin = echoPin;
-        ultrasonicCfg.minDistance = minDistance;
-        ultrasonicCfg.maxDistance = maxDistance;
-        return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(ultrasonicCfg));
-    }
-
     std::unique_ptr<core::IDistanceSensor> SensorFactory::createDistanceSensor(const DistanceSensorConfig &cfg)
     {
         const auto &ultrasonicCfg = static_cast<const iotsmartsys::platform::arduino::SensorUltrassonicHCSR04Config &>(cfg);
         return std::unique_ptr<SensorUltrassonicHCSR04>(new SensorUltrassonicHCSR04(ultrasonicCfg));
     }
-#endif
 
     std::unique_ptr<iotsmartsys::core::ILuminositySensor> SensorFactory::createLuminositySensor(const int gpioSDA, const int gpioSCL)
     {
-#if IOTSMARTSYS_SENSORS_ENABLED
+#if BH1750_ENABLED
         return std::unique_ptr<Bh1750LuminositySensor>(new Bh1750LuminositySensor(gpioSDA, gpioSCL));
 #else
         (void)gpioSDA;

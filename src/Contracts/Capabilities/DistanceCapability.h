@@ -8,7 +8,7 @@ namespace iotsmartsys::core
     class DistanceCapability : public ICapability
     {
     public:
-        DistanceCapability(IDistanceSensor &sensor, ICapabilityEventSink *event_sink);
+        DistanceCapability(std::string capability_name, IDistanceSensor &sensor, ICapabilityEventSink *event_sink);
 
         void handle() override;
         float getDistanceCm() const;

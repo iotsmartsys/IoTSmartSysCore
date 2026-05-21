@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    AlarmCapability::AlarmCapability(long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(hardwareAdapter, event_sink, ALARM_ACTUATOR_TYPE, ALARM_OFF),
+    AlarmCapability::AlarmCapability(std::string capability_name, long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
+        : ICommandCapability(hardwareAdapter, event_sink, capability_name, ALARM_ACTUATOR_TYPE, ALARM_OFF),
           ringDuration(ringDurationMs),
           stateOn(1),
           stateOff(0),
@@ -55,6 +55,7 @@ namespace iotsmartsys::core
 
     void AlarmCapability::applyCommand(CapabilityCommand command)
     {
+        logger.info("AlarmCapability", " received command: %s", command.value);
         if (command.isPowerOn())
         {
             powerOn();
@@ -69,12 +70,18 @@ namespace iotsmartsys::core
         }
         else
         {
+            logger.warn("AlarmCapability", " received unsupported command: %s", command.value);
             if (strcmp(command.value, ALARM_RING) == 0)
             {
+                logger.info("AlarmCapability", " received ring command");
                 if (strcmp(command.args1, ALARM_RING_DURATION) == 0)
                 {
+                    logger.info("AlarmCapability", " received ring duration command");
                     int duration = atoi(command.args1value);
+
                     setRingDuration(duration);
+                    logger.info("AlarmCapability", " ring duration set to: %d", duration);
+                    powerOn();
                 }
                 else
                 {

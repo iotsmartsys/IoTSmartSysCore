@@ -11,7 +11,7 @@ namespace iotsmartsys::core
     class AlarmCapability : public ICommandCapability
     {
     public:
-        AlarmCapability(long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
+        AlarmCapability(std::string capability_name, long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink);
 
         virtual void handle() override;
 

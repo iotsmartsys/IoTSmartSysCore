@@ -182,16 +182,23 @@ namespace iotsmartsys::platform::espressif
         std::string deviceId;
         std::string value;
         std::string type;
+        std::string args1;
+        std::string args1value;
 
         const bool okCap = tryExtractJsonStringField(jsonPayload, payloadLen, "capability_name", capabilityName);
         const bool okDev = tryExtractJsonStringField(jsonPayload, payloadLen, "device_id", deviceId);
         const bool okVal = tryExtractJsonStringField(jsonPayload, payloadLen, "value", value);
         const bool okTyp = tryExtractJsonStringField(jsonPayload, payloadLen, "type", type);
-        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s'",
-                     capabilityName.c_str(),
-                     deviceId.c_str(),
-                     value.c_str(),
-                     type.c_str());
+        const bool okArgs1 = tryExtractJsonStringField(jsonPayload, payloadLen, "args1", args1);
+        const bool okArgs1Value = tryExtractJsonStringField(jsonPayload, payloadLen, "args1value", args1value);
+
+        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s' args1='%s' args1value='%s'.",
+                      okCap ? capabilityName.c_str() : "(missing)",
+                      okDev ? deviceId.c_str() : "(missing)",
+                      okVal ? value.c_str() : "(missing)",
+                      okTyp ? type.c_str() : "(missing)",
+                      okArgs1 ? args1.c_str() : "(missing)",
+                      okArgs1Value ? args1value.c_str() : "(missing)");
 
         if (!okCap || !okDev || !okVal)
         {
@@ -208,6 +215,8 @@ namespace iotsmartsys::platform::espressif
         outCmd->device_id = deviceId.c_str();
         outCmd->value = value.c_str();
         outCmd->type = okTyp ? type.c_str() : iotsmartsys::core::CommandTypeStrings::CAPABILITY_STR;
+        outCmd->args1 = okArgs1 ? args1.c_str() : "";
+        outCmd->args1value = okArgs1Value ? args1value.c_str() : "";
 
         return outCmd;
     }

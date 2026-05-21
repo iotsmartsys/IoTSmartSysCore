@@ -309,7 +309,12 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
-        return createCapability<iotsmartsys::core::AlarmCapability>(cfg.ringDurationMs, *hardwareAdapter, &_eventSink);
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        return createCapability<iotsmartsys::core::AlarmCapability>(
+            name,
+            cfg.ringDurationMs,
+            *hardwareAdapter,
+            &_eventSink);
     }
 
     // --------------------------- addDoorSensor ---------------------------
@@ -443,7 +448,9 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::DistanceCapability>(
+            name,
             *static_cast<iotsmartsys::core::IDistanceSensor *>(cfg.sensor),
             &_eventSink);
     }

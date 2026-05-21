@@ -2,8 +2,8 @@
 
 namespace iotsmartsys::core
 {
-    DistanceCapability::DistanceCapability(IDistanceSensor &sensor, ICapabilityEventSink *event_sink)
-        : ICapability(event_sink, DISTANCE_SENSOR_TYPE, "0"), sensor(sensor), distanceCm(0.0f), lastDistanceCm(0.0f), lastCheckMillis(0)
+    DistanceCapability::DistanceCapability(std::string capability_name, IDistanceSensor &sensor, ICapabilityEventSink *event_sink)
+        : ICapability(event_sink, capability_name, DISTANCE_SENSOR_TYPE, "0"), sensor(sensor), distanceCm(0.0f), lastDistanceCm(0.0f), lastCheckMillis(0)
     {
     }
 

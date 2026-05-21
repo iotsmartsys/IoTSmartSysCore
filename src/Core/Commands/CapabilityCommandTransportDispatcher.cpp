@@ -47,10 +47,12 @@ namespace iotsmartsys::core
             _logger.warn("CMD", "Promoted command to SYSTEM (value='%s').", command.value.c_str());
         }
 
-        _logger.info("CMD", "Dispatching command type='%s' value='%s' capability='%s'.",
+        _logger.info("CMD", "Dispatching command type='%s' value='%s' capability='%s' args1='%s' args1value='%s'.",
                      CommandTypeUtils::toString(cmdType),
                      command.value.c_str(),
-                     command.capability_name.c_str());
+                     command.capability_name.c_str(),
+                     command.args1.c_str(),
+                     command.args1value.c_str());
 
         ICommandProcessor *processor = _commandProcessorFactory.createProcessor(cmdType);
         if (processor)
