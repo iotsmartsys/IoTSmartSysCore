@@ -42,6 +42,11 @@ namespace iotsmartsys::core
         {
             return strcmp(value, POWER_OFF_COMMAND) == 0;
         }
+
+        bool isCommand(const char *cmd) const
+        {
+            return strcmp(value, cmd) == 0;
+        }
     };
 
 }
