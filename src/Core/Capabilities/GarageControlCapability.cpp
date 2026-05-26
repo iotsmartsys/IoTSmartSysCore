@@ -3,20 +3,26 @@
 
 namespace iotsmartsys::core
 {
-    GarageControlCapability::GarageControlCapability(std::string capability_name, long ringDurationMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, ICapabilityEventSink *event_sink)
+    GarageControlCapability::GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, ""),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
           hardwareAdapterLock(hardwareAdapterLock),
           hardwareAdapterClose(hardwareAdapterClose),
           opened(false),
           locked(true),
-          currentState(nullptr),
-          lastState(nullptr)
+          currentState(GARAGE_STATE_CLOSED),
+          lastState(nullptr),
+          debounceTimeMs(debounceTimeMs)
     {
     }
 
     void GarageControlCapability::handle()
     {
+        if (currentState == nullptr)
+        {
+            return;
+        }
+
         if (lastState == nullptr || strcmp(currentState, lastState) != 0)
         {
             updateState(currentState);
@@ -98,7 +104,7 @@ namespace iotsmartsys::core
     void GarageControlCapability::simulatePressCommand(ICommandHardwareAdapter &adapter)
     {
         adapter.applyCommand(POWER_ON_COMMAND);
-        delay(50);
+        delay(debounceTimeMs);
         adapter.applyCommand(POWER_OFF_COMMAND);
     }
 

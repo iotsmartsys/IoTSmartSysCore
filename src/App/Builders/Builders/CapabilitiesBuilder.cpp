@@ -511,4 +511,34 @@ namespace iotsmartsys::app
             &_eventSink);
     }
 
+    // --------------------------- addGarageControlCapability ---------------------------
+    iotsmartsys::core::GarageControlCapability *CapabilitiesBuilder::addGarageControlCapability(const GarageControlConfig &cfg)
+    {
+        auto *hardwareAdapterOpen = createOutputAdapter(cfg.GPIO_OPEN, true);
+        if (!hardwareAdapterOpen)
+            return nullptr;
+
+        auto *hardwareAdapterClose = createOutputAdapter(cfg.GPIO_CLOSE, true);
+        if (!hardwareAdapterClose)
+            return nullptr;
+
+        auto *hardwareAdapterLock = createOutputAdapter(cfg.GPIO_LOCK, true);
+        if (!hardwareAdapterLock)
+            return nullptr;
+
+        auto *hardwareAdapterStopUnlock = createOutputAdapter(cfg.GPIO_STOP_UNLOCK, true);
+        if (!hardwareAdapterStopUnlock)
+            return nullptr;
+
+        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        return createCapability<iotsmartsys::core::GarageControlCapability>(
+            name,
+            cfg.debounceTimeMs,
+            *hardwareAdapterOpen,
+            *hardwareAdapterClose,
+            *hardwareAdapterLock,
+            *hardwareAdapterStopUnlock,
+            &_eventSink);
+    }
+
 } // namespace iotsmartsys::app

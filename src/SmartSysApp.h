@@ -108,6 +108,7 @@ namespace iotsmartsys
                 iotsmartsys::core::WaterLevelPercentCapability *addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg);
                 iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg);
                 iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
+                iotsmartsys::core::GarageControlCapability *addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg);
 
         private:
                 static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);

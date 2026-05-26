@@ -119,7 +119,7 @@ namespace iotsmartsys
 
         const auto mqttQueueStats = mqtt_.offlineQueueStats();
         const auto mqttReconnectStats = mqtt_.reconnectStats();
-        
+
         builder.withDeviceId(info.clientId)
             .withBroker(info.broker)
             .withVersion(IOTSMARTSYSCORE_VERSION)
@@ -128,7 +128,7 @@ namespace iotsmartsys
             .withProperty(Property("wifi_signal", wifi_.getSignalStrength()))
             .withIpAddress(wifi_.getIpAddress())
             .withMacAddress(wifi_.getMacAddress());
-            // .withChipModel(wifi_.getChipModel());
+        // .withChipModel(wifi_.getChipModel());
 
         std::string payload = builder.build();
 
@@ -492,6 +492,12 @@ namespace iotsmartsys
     iotsmartsys::core::LuminosityCapability *SmartSysApp::addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg)
     {
         return builder_.addLuminosityCapability(cfg);
+    }
+
+    /// @brief Adds a new garage control capability to the application.
+    iotsmartsys::core::GarageControlCapability *SmartSysApp::addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg)
+    {
+        return builder_.addGarageControlCapability(cfg);
     }
 
 } // namespace iotsmartsys

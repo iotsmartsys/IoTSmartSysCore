@@ -5,7 +5,7 @@
 
 namespace iotsmartsys::core
 {
-#define GARAGE_ACTUATOR_TYPE "Garage Control"
+#define GARAGE_ACTUATOR_TYPE "Garage Door"
 
 // Commands
 #define GARAGE_COMMAND_OPEN "open"
@@ -22,7 +22,7 @@ namespace iotsmartsys::core
     class GarageControlCapability : public ICommandCapability
     {
     public:
-        GarageControlCapability(std::string capability_name, long ringDurationMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, ICapabilityEventSink *event_sink);
+        GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, ICapabilityEventSink *event_sink);
 
         virtual void handle() override;
 
@@ -41,8 +41,9 @@ namespace iotsmartsys::core
     private:
         bool opened;
         bool locked;
-        char *currentState;
+        const char *currentState;
         char *lastState;
+        long debounceTimeMs;
 
         ICommandHardwareAdapter &hardwareAdapterStopUnlock;
         ICommandHardwareAdapter &hardwareAdapterLock;

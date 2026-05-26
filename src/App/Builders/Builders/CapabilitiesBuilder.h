@@ -31,6 +31,7 @@
 #include "Contracts/Capabilities/OperationalColorSensorCapability.h"
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
 #include "Contracts/Capabilities/LuminosityCapability.h"
+#include "Contracts/Capabilities/GarageControlCapability.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
@@ -85,6 +86,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::GlpMeterKgCapability *addGlpMeterKg(const GlpMeterConfig &cfg);
         iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensor(const OperationalColorSensorConfig &cfg);
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
+        iotsmartsys::core::GarageControlCapability *addGarageControlCapability(const GarageControlConfig &cfg);
 
     private:
         iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;

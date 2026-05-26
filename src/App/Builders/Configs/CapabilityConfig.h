@@ -33,7 +33,6 @@ namespace iotsmartsys::app
         using HardwareConfig::HardwareConfig;
 
         bool highIsOn = false;
-
     };
 
     class PirSensorConfig : public InputHardwareConfig
@@ -102,7 +101,6 @@ namespace iotsmartsys::app
         iotsmartsys::core::IGlpMeter *sensor{nullptr};
         float variationTolerance = 0.5f; // in kilograms
         float maxKgExpected = 0.0f;
-        
     };
 
     class OperationalColorSensorConfig : public InputHardwareConfig
@@ -131,5 +129,14 @@ namespace iotsmartsys::app
         iotsmartsys::core::ILuminositySensor *sensor{nullptr};
         long readIntervalMs = 60000;
         float variationTolerance = 2.0f; // in lux
+    };
+
+    class GarageControlConfig : public InputHardwareConfig
+    {
+    public:
+        int GPIO_OPEN;
+        int GPIO_CLOSE;
+        int GPIO_LOCK;
+        int GPIO_STOP_UNLOCK;
     };
 } // namespace iotsmartsys::app
