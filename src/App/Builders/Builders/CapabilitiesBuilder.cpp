@@ -530,14 +530,22 @@ namespace iotsmartsys::app
         if (!hardwareAdapterStopUnlock)
             return nullptr;
 
+        auto *hardwareAdapterOpenSensor = createInputAdapter(cfg.GPIO_OPEN_SENSOR);
+        if (!hardwareAdapterOpenSensor)
+            return nullptr;
+
+        auto *hardwareAdapterCloseSensor = createInputAdapter(cfg.GPIO_CLOSE_SENSOR);
+        if (!hardwareAdapterCloseSensor)
+            return nullptr;
+
         auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::GarageControlCapability>(
             name,
             cfg.debounceTimeMs,
             *hardwareAdapterOpen,
             *hardwareAdapterClose,
-            *hardwareAdapterLock,
             *hardwareAdapterStopUnlock,
+            *hardwareAdapterLock,
             &_eventSink);
     }
 

@@ -3,11 +3,14 @@
 
 namespace iotsmartsys::core
 {
-    GarageControlCapability::GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, ICapabilityEventSink *event_sink)
+    GarageControlCapability::GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock,
+                                                     IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, ""),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
           hardwareAdapterLock(hardwareAdapterLock),
           hardwareAdapterClose(hardwareAdapterClose),
+          hardwareAdapterSensorOpen(openSensorAdapter),
+          hardwareAdapterSensorClose(closeSensorAdapter),
           opened(false),
           locked(true),
           currentState(GARAGE_STATE_CLOSED),
@@ -34,19 +37,19 @@ namespace iotsmartsys::core
 
     void GarageControlCapability::open()
     {
-        unlock();
+        // unlock();
         simulatePressCommand(command_hardware_adapter);
     }
 
     void GarageControlCapability::close()
     {
-        unlock();
+        // unlock();
         simulatePressCommand(hardwareAdapterClose);
     }
 
     void GarageControlCapability::lock()
     {
-        stop();
+        // stop();
         simulatePressCommand(hardwareAdapterLock);
         locked = true;
     }
@@ -65,6 +68,7 @@ namespace iotsmartsys::core
     void GarageControlCapability::applyCommand(CapabilityCommand command)
     {
         logger.info("GarageControlCapability", " received command: %s", command.value);
+        actualReceivedCommand = command.value;
         applyArgs(command.args);
         if (command.isCommand(GARAGE_COMMAND_OPEN))
         {
@@ -74,7 +78,11 @@ namespace iotsmartsys::core
         {
             close();
         }
-        else if (command.isCommand(GARAGE_COMMAND_UNLOCK))
+        else if (command.isCommand(GARAGE_COMMAND_LOCK))
+        {
+            lock();
+        }
+        else if (command.isCommand(GARAGE_COMMAND_UNLOCK) || command.isCommand(GARAGE_COMMAND_STOP_UNLOCK))
         {
             unlock();
         }
@@ -104,8 +112,43 @@ namespace iotsmartsys::core
     void GarageControlCapability::simulatePressCommand(ICommandHardwareAdapter &adapter)
     {
         adapter.applyCommand(POWER_ON_COMMAND);
+        logger.info("GarageControlCapability", "Simulating press command on adapter debounce time: %ld ms", debounceTimeMs);
         delay(debounceTimeMs);
         adapter.applyCommand(POWER_OFF_COMMAND);
     }
 
+    void GarageControlCapability::handleSensorState()
+    {
+        if(hardwareAdapterSensorOpen)
+        {
+            sensorStateOpen = hardwareAdapterSensorOpen->digitalActive();
+        }
+        if(hardwareAdapterSensorClose)
+        {
+            sensorStateClose = hardwareAdapterSensorClose->digitalActive();
+        }
+
+        if(!sensorStateClose && !sensorStateOpen)
+        {
+            currentState = GARAGE_STATE_OPENING;
+            opened = false;
+        }
+        
+        if(sensorStateOpen && !sensorStateClose && 
+            actualReceivedCommand != nullptr && 
+            strcmp(actualReceivedCommand, GARAGE_COMMAND_CLOSE) == 0 &&
+            currentState != GARAGE_STATE_CLOSING)
+        {
+            currentState = GARAGE_STATE_CLOSING;
+            opened = true;
+        }
+        else if(sensorStateClose && !sensorStateOpen && 
+            actualReceivedCommand != nullptr && 
+            strcmp(actualReceivedCommand, GARAGE_COMMAND_OPEN) == 0 &&
+            currentState != GARAGE_STATE_OPENING)
+        {
+            currentState = GARAGE_STATE_OPENED;
+            opened = true;
+        }
+    }
 }
