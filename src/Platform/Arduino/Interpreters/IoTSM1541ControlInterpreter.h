@@ -18,6 +18,9 @@ namespace iotsmartsys::platform::arduino
     struct IoTSM1541ControlInterpreterConstants
     {
         static constexpr const char *POWER_COMMAND = "Power";
+        static constexpr const char *ON_COMMAND = "On";
+        static constexpr const char *OFF_COMMAND = "Off";
+        static constexpr const char *ON_OFF_COMMAND = "On_Off";
         static constexpr const char *COMMAND_1 = "Command 1";
         static constexpr const char *COMMAND_2 = "Command 2";
         static constexpr const char *COMMAND_3 = "Command 3";

@@ -33,7 +33,9 @@ namespace iotsmartsys::platform::arduino
         decode_results results;
         int irPin;
         uint64_t lastState;
+        uint64_t activeCommandCode;
         long lastSendEvent;
+        uint32_t lastFrameAtMs;
         long lastStateReadMillis_{0};
     };
 #else

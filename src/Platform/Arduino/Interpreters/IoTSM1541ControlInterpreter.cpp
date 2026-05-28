@@ -11,6 +11,7 @@ namespace iotsmartsys::platform::arduino
         switch (command.code)
         {
         case 0xFFA25D:
+        case 0x20DF10EF:
             return IoTSM1541ControlInterpreterConstants::POWER_COMMAND;
         case 0xFF629D:
             return IoTSM1541ControlInterpreterConstants::COMMAND_1;
