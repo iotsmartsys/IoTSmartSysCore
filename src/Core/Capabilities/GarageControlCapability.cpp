@@ -5,22 +5,38 @@ namespace iotsmartsys::core
 {
     GarageControlCapability::GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock,
                                                      IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, ""),
+        : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, GARAGE_STATE_UNKNOWN),
+          currentState(GARAGE_STATE_UNKNOWN),
+          lastState(nullptr),
+          debounceTimeMs(debounceTimeMs),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
           hardwareAdapterLock(hardwareAdapterLock),
           hardwareAdapterClose(hardwareAdapterClose),
           hardwareAdapterSensorOpen(openSensorAdapter),
-          hardwareAdapterSensorClose(closeSensorAdapter),
-          opened(false),
-          locked(true),
-          currentState(GARAGE_STATE_CLOSED),
-          lastState(nullptr),
-          debounceTimeMs(debounceTimeMs)
+          hardwareAdapterSensorClose(closeSensorAdapter)
     {
+    }
+
+    void GarageControlCapability::setup()
+    {
+        command_hardware_adapter.setup();
+        hardwareAdapterClose.setup();
+        hardwareAdapterStopUnlock.setup();
+        hardwareAdapterLock.setup();
+
+        if (hardwareAdapterSensorOpen)
+        {
+            hardwareAdapterSensorOpen->setup();
+        }
+        if (hardwareAdapterSensorClose)
+        {
+            hardwareAdapterSensorClose->setup();
+        }
     }
 
     void GarageControlCapability::handle()
     {
+        handleSensorState();
         if (currentState == nullptr)
         {
             return;
@@ -28,30 +44,25 @@ namespace iotsmartsys::core
 
         if (lastState == nullptr || strcmp(currentState, lastState) != 0)
         {
+            logger.info("GarageControlCapability", "State changed from '%s' to '%s'", lastState ? lastState : "(none)", currentState);
             updateState(currentState);
-            if (lastState)
-                free(lastState);
-            lastState = strdup(currentState);
+            lastState = currentState;
         }
     }
 
     void GarageControlCapability::open()
     {
-        // unlock();
         simulatePressCommand(command_hardware_adapter);
     }
 
     void GarageControlCapability::close()
     {
-        // unlock();
         simulatePressCommand(hardwareAdapterClose);
     }
 
     void GarageControlCapability::lock()
     {
-        // stop();
         simulatePressCommand(hardwareAdapterLock);
-        locked = true;
     }
 
     void GarageControlCapability::unlock()
@@ -62,13 +73,10 @@ namespace iotsmartsys::core
     void GarageControlCapability::stop()
     {
         simulatePressCommand(hardwareAdapterStopUnlock);
-        locked = false;
     }
 
     void GarageControlCapability::applyCommand(CapabilityCommand command)
     {
-        logger.info("GarageControlCapability", " received command: %s", command.value);
-        actualReceivedCommand = command.value;
         applyArgs(command.args);
         if (command.isCommand(GARAGE_COMMAND_OPEN))
         {
@@ -90,16 +98,6 @@ namespace iotsmartsys::core
         {
             stop();
         }
-        else if (command.isCommand(DOOR_SENSOR_CLOSED))
-        {
-            currentState = GARAGE_STATE_CLOSED;
-            opened = false;
-        }
-        else if (command.isCommand(DOOR_SENSOR_OPEN))
-        {
-            currentState = DOOR_SENSOR_OPEN;
-            opened = true;
-        }
     }
 
     void GarageControlCapability::applyArgs(std::vector<std::pair<const char *, const char *>> args)
@@ -119,36 +117,63 @@ namespace iotsmartsys::core
 
     void GarageControlCapability::handleSensorState()
     {
-        if(hardwareAdapterSensorOpen)
+        if (hardwareAdapterSensorOpen)
         {
-            sensorStateOpen = hardwareAdapterSensorOpen->digitalActive();
-        }
-        if(hardwareAdapterSensorClose)
-        {
-            sensorStateClose = hardwareAdapterSensorClose->digitalActive();
+            int currentOpenCompletedState = hardwareAdapterSensorOpen->readDigitalState();
+            if (currentOpenCompletedState != sensorOpenCompletedActualState)
+            {
+                sensorOpenCompletedActualState = currentOpenCompletedState;
+            }
         }
 
-        if(!sensorStateClose && !sensorStateOpen)
+        if (hardwareAdapterSensorClose)
         {
-            currentState = GARAGE_STATE_OPENING;
-            opened = false;
+            int currentCloseState = hardwareAdapterSensorClose->readDigitalState();
+            if (sensorCloseActualState != currentCloseState)
+            {
+                sensorCloseActualState = currentCloseState;
+            }
         }
-        
-        if(sensorStateOpen && !sensorStateClose && 
-            actualReceivedCommand != nullptr && 
-            strcmp(actualReceivedCommand, GARAGE_COMMAND_CLOSE) == 0 &&
-            currentState != GARAGE_STATE_CLOSING)
+
+        if (!sensorStateInitialized)
         {
-            currentState = GARAGE_STATE_CLOSING;
-            opened = true;
+            sensorStateInitialized = true;
+            return;
         }
-        else if(sensorStateClose && !sensorStateOpen && 
-            actualReceivedCommand != nullptr && 
-            strcmp(actualReceivedCommand, GARAGE_COMMAND_OPEN) == 0 &&
-            currentState != GARAGE_STATE_OPENING)
+
+        if (isClosed())
         {
-            currentState = GARAGE_STATE_OPENED;
-            opened = true;
+            if (strcmp(currentState, GARAGE_STATE_CLOSED) != 0)
+                setCurrentState(GARAGE_STATE_CLOSED);
+        }
+        else if (isOpen())
+        {
+            if (strcmp(currentState, GARAGE_STATE_OPENED) != 0)
+                setCurrentState(GARAGE_STATE_OPENED);
+        }
+        else
+        {
+            if (isOpening())
+            {
+                setCurrentState(GARAGE_STATE_OPENING);
+            }
+            else if (isClosing())
+            {
+                setCurrentState(GARAGE_STATE_CLOSING);
+            }
         }
     }
+
+    /// @brief
+    /// @return
+    bool GarageControlCapability::isOpening()
+    {
+        return (strcmp(currentState, GARAGE_STATE_CLOSED) == 0 && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+    }
+
+    bool GarageControlCapability::isClosing()
+    {
+        return (strcmp(currentState, GARAGE_STATE_OPENED) == 0 && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+    }
+
 }

@@ -3,7 +3,7 @@
 namespace iotsmartsys::core
 {
     AlarmCapability::AlarmCapability(std::string capability_name, long ringDurationMs, ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : ICommandCapability(hardwareAdapter, event_sink, capability_name, ALARM_ACTUATOR_TYPE, ALARM_OFF),
+        : ICommandCapability(hardwareAdapter, event_sink, capability_name, ALARM_ACTUATOR_TYPE, STATE_OFF),
           ringDuration(ringDurationMs),
           stateOn(1),
           stateOff(0),
@@ -23,7 +23,7 @@ namespace iotsmartsys::core
 
         if (lastState != poweredOn)
         {
-            updateState(poweredOn ? ALARM_ON : ALARM_OFF);
+            updateState(poweredOn ? STATE_ON : STATE_OFF);
             lastState = poweredOn;
         }
     }

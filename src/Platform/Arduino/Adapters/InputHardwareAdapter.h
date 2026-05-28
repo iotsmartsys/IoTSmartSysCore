@@ -72,6 +72,11 @@ namespace iotsmartsys::platform::arduino
             }
         }
 
+        int32_t readDigitalState() override
+        {
+            return digitalRead(pin);
+        }
+
     private:
         long lastStateReadMillis_{0};
         int lastState_{-1};

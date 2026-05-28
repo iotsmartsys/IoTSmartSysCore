@@ -530,13 +530,21 @@ namespace iotsmartsys::app
         if (!hardwareAdapterStopUnlock)
             return nullptr;
 
-        auto *hardwareAdapterOpenSensor = createInputAdapter(cfg.GPIO_OPEN_SENSOR);
-        if (!hardwareAdapterOpenSensor)
-            return nullptr;
+        iotsmartsys::core::IInputHardwareAdapter *hardwareAdapterOpenSensor = nullptr;
+        if (cfg.GPIO_OPEN_SENSOR > -1)
+        {
+            hardwareAdapterOpenSensor = createInputAdapter(cfg.GPIO_OPEN_SENSOR, iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON, iotsmartsys::core::InputPullMode::PULL_UP);
+            if (!hardwareAdapterOpenSensor)
+                return nullptr;
+        }
 
-        auto *hardwareAdapterCloseSensor = createInputAdapter(cfg.GPIO_CLOSE_SENSOR);
-        if (!hardwareAdapterCloseSensor)
-            return nullptr;
+        iotsmartsys::core::IInputHardwareAdapter *hardwareAdapterCloseSensor = nullptr;
+        if (cfg.GPIO_CLOSE_SENSOR > -1)
+        {
+            hardwareAdapterCloseSensor = createInputAdapter(cfg.GPIO_CLOSE_SENSOR, iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON, iotsmartsys::core::InputPullMode::PULL_UP);
+            if (!hardwareAdapterCloseSensor)
+                return nullptr;
+        }
 
         auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::GarageControlCapability>(
@@ -546,6 +554,8 @@ namespace iotsmartsys::app
             *hardwareAdapterClose,
             *hardwareAdapterStopUnlock,
             *hardwareAdapterLock,
+            hardwareAdapterOpenSensor,
+            hardwareAdapterCloseSensor,
             &_eventSink);
     }
 

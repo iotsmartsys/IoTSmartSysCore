@@ -48,10 +48,11 @@ namespace iotsmartsys::core
 #define POWER_ON_COMMAND "on"
 #define POWER_OFF_COMMAND "off"
 
+#define STATE_OFF "off"
+#define STATE_ON "on"
+
 #define AIR_CONDITIONER_TYPE "Air Conditioner"
 #define AIR_HUMIDIFIER_TYPE "Air Humidifier"
-#define ALARM_ON "on"
-#define ALARM_OFF "off"
 #define ALARM_ACTUATOR_TYPE "Alarm Actuator"
 #define BATTERY_LEVEL_TYPE "Battery Level (%)"
 #define LIGHT_SENSOR_TYPE "Light Sensor"
@@ -69,11 +70,7 @@ namespace iotsmartsys::core
 #define PROXIMITY_DETECTED "detected"
 #define PROXIMITY_NO_DETECTED "undetected"
 #define PROXIMITY_SENSOR_TYPE "Proximity Sensor"
-#define LED_STATE_ON "on"
-#define LED_STATE_OFF "off"
 #define LED_ACTUATOR_TYPE "LED Actuator"
-#define LIGHT_STATE_ON "on"
-#define LIGHT_STATE_OFF "off"
 #define LIGHT_ACTUATOR_TYPE "Light Actuator"
 #define LIGHT_SENSOR_TYPE "Light Sensor"
 #define OPERATIONAL_COLOR_SENSOR_NORMAL "Normal"
@@ -84,12 +81,8 @@ namespace iotsmartsys::core
 #define PIR_NO_DETECTED "undetected"
 #define PIR_SENSOR_TYPE "Motion Sensor"
 
-#define LIGHT_STATE_ON "on"
-#define LIGHT_STATE_OFF "off"
 #define LIGHT_ACTUATOR_TYPE "Light Actuator"
 
-#define SWITCH_STATE_ON POWER_ON_COMMAND
-#define SWITCH_STATE_OFF POWER_OFF_COMMAND
 #define SWITCH_TYPE "Switch"
 #define SWITCH_PLUG_TYPE "Switch Plug"
 

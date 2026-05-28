@@ -4,7 +4,7 @@ namespace iotsmartsys::core
 {
     LightCapability::LightCapability(const char *name,
                                      ICommandHardwareAdapter &hardwareAdapter, ICapabilityEventSink *event_sink)
-        : BinaryCommandCapability(hardwareAdapter, event_sink, name, LIGHT_ACTUATOR_TYPE, SWITCH_STATE_OFF, SWITCH_STATE_ON)
+        : BinaryCommandCapability(hardwareAdapter, event_sink, name, LIGHT_ACTUATOR_TYPE, STATE_OFF, STATE_ON)
     {
     }
 

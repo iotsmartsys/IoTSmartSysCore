@@ -27,11 +27,11 @@ namespace iotsmartsys::platform::arduino
 
         bool applyCommand(const core::IHardwareCommand &command) override
         {
-            if (command.isEqualTo(SWITCH_STATE_ON))
+            if (command.isEqualTo(STATE_ON))
             {
                 pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
             }
-            else if (command.isEqualTo(SWITCH_STATE_OFF))
+            else if (command.isEqualTo(STATE_OFF))
             {
                 pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH;
             }
@@ -51,12 +51,12 @@ namespace iotsmartsys::platform::arduino
         // Primary implementation using C-string to match core::ICommandHardwareAdapter
         bool applyCommand(const char *value) override
         {
-            if (strcmp(value, SWITCH_STATE_ON) == 0)
+            if (strcmp(value, STATE_ON) == 0)
             {
                 // pinState = (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW;
                 digitalWrite(pin, (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW);
             }
-            else if (strcmp(value, SWITCH_STATE_OFF) == 0)
+            else if (strcmp(value, STATE_OFF) == 0)
             {
                 digitalWrite(pin, (logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? LOW : HIGH);
             }
@@ -78,7 +78,7 @@ namespace iotsmartsys::platform::arduino
 
         std::string getStateValue() override
         {
-            return (digitalRead(pin) == ((logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? SWITCH_STATE_ON : SWITCH_STATE_OFF;
+            return (digitalRead(pin) == ((logic == iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON) ? HIGH : LOW)) ? STATE_ON : STATE_OFF;
         }
 
         core::IHardwareState getState() override

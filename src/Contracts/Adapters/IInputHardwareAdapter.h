@@ -27,5 +27,6 @@ namespace iotsmartsys::core
         virtual void setup() override = 0;
         virtual int32_t readInput() = 0;
         virtual bool digitalActive() = 0;
+        virtual int32_t readDigitalState() = 0;
     };
 } // namespace iotsmartsys::core

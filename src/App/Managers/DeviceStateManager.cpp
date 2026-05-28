@@ -82,7 +82,7 @@ namespace iotsmartsys::app
         {
             if (nowMs - lastToggleMs_ >= onMs)
             {
-                led->applyCommand(SWITCH_STATE_OFF);
+                led->applyCommand(STATE_OFF);
                 ledOn_ = false;
                 lastToggleMs_ = nowMs;
                 blinkCount_++;
@@ -102,7 +102,7 @@ namespace iotsmartsys::app
 
         if (nowMs - lastToggleMs_ >= offMs)
         {
-            led->applyCommand(SWITCH_STATE_ON);
+            led->applyCommand(STATE_ON);
             ledOn_ = true;
             lastToggleMs_ = nowMs;
         }
@@ -137,7 +137,7 @@ namespace iotsmartsys::app
             return;
         }
 
-        led->applyCommand(SWITCH_STATE_ON);
+        led->applyCommand(STATE_ON);
         ledOn_ = true;
     }
 
