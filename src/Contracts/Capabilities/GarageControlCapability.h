@@ -49,6 +49,7 @@ namespace iotsmartsys::core
         void applyCommand(CapabilityCommand command) override;
 
     private:
+        bool locked = false;
         const char *currentState;
         const char *lastState;
         long debounceTimeMs;

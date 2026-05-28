@@ -63,16 +63,26 @@ namespace iotsmartsys::core
     void GarageControlCapability::lock()
     {
         simulatePressCommand(hardwareAdapterLock);
+        locked = true;
+
+        String stateWithoutLock = String(currentState) + "_lock";
+        setCurrentState(stateWithoutLock.c_str());
+        updateState(stateWithoutLock.c_str());
     }
 
     void GarageControlCapability::unlock()
     {
         stop();
+        locked = false;
     }
-
+    
     void GarageControlCapability::stop()
     {
         simulatePressCommand(hardwareAdapterStopUnlock);
+        String stateWithoutLock = currentState;
+        stateWithoutLock.replace("_lock", "");
+        setCurrentState(stateWithoutLock.c_str());
+        updateState(stateWithoutLock.c_str());
     }
 
     void GarageControlCapability::applyCommand(CapabilityCommand command)
