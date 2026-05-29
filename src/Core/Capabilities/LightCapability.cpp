@@ -10,14 +10,8 @@ namespace iotsmartsys::core
 
     void LightCapability::toggle()
     {
-        if (isOn())
-        {
-            turnOff();
-        }
-        else
-        {
-            turnOn();
-        }
+        logger.debug("LightCapability", "Toggling");
+        BinaryCommandCapability::toggle();
     }
 
     void LightCapability::turnOn()

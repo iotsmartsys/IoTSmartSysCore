@@ -126,10 +126,7 @@ namespace iotsmartsys::core
 
         void toggle()
         {
-            if (isOn())
-                turnOff();
-            else
-                turnOn();
+            applyCommand(CapabilityCommand{type.c_str(), TOGGLE_COMMAND});
         }
 
         void turnOn()
