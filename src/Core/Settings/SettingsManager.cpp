@@ -224,6 +224,10 @@ namespace iotsmartsys::core::settings
 
         // fetcher já roda em task própria; aqui retorna rápido
         const StateResult r = _fetcher.start(req, &SettingsManager::onFetchCompletedStatic, this);
+        if (r != StateResult::Ok)
+        {
+            _state = _has_current ? SettingsManagerState::Ready : SettingsManagerState::Error;
+        }
         return r;
     }
 

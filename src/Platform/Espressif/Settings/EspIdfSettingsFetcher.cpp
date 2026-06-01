@@ -325,10 +325,13 @@ namespace iotsmartsys::platform::espressif
         }
 
         // perform (bloqueia só a task do fetcher)
-        esp_err_t err = esp_http_client_perform(_client);
+        const esp_err_t err = esp_http_client_perform(_client);
+        out_http_status = esp_http_client_get_status_code(_client);
+        esp_http_client_cleanup(_client);
+        _client = nullptr;
+
         if (err != ESP_OK)
         {
-            out_http_status = esp_http_client_get_status_code(_client);
             _logger.error("SettingsFetcher", "HTTP perform failed: %s (%d), status=%d, url=%s",
                           esp_err_to_name(err),
                           (int)err,
@@ -337,7 +340,6 @@ namespace iotsmartsys::platform::espressif
             return err;
         }
 
-        out_http_status = esp_http_client_get_status_code(_client);
         return ESP_OK;
     }
 

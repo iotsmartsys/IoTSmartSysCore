@@ -38,3 +38,37 @@ utest:
 	clear
 	clear
 	pio test -e esp32s3_test --filter test_temperature
+
+erase:
+# 	clear
+# 	clear
+	@PORTS="$$(pio device list --serial --json-output | python3 -c 'import json, sys; print("\n".join(device["port"] for device in json.load(sys.stdin)))')"; \
+	if [ -z "$$PORTS" ]; then \
+		echo "Nenhuma porta serial encontrada."; \
+		exit 1; \
+	fi; \
+	echo "Portas seriais disponíveis:"; \
+	printf '%s\n' "$$PORTS" | awk '{ printf "  %d) %s\n", NR, $$0 }'; \
+	printf "Escolha a porta do ESP32: "; \
+	read CHOICE; \
+	case "$$CHOICE" in \
+		''|*[!0-9]*) echo "Opção inválida."; exit 1 ;; \
+	esac; \
+	PORT="$$(printf '%s\n' "$$PORTS" | sed -n "$${CHOICE}p")"; \
+	if [ -z "$$PORT" ]; then \
+		echo "Opção inválida."; \
+		exit 1; \
+	fi; \
+	echo "Apagando a flash do ESP32 usando o ambiente padrão do PlatformIO em $$PORT..."; \
+	for ATTEMPT in 1 2 3; do \
+		echo "Tentativa $$ATTEMPT de 3..."; \
+		if pio run -t erase --upload-port "$$PORT"; then \
+			exit 0; \
+		fi; \
+		if [ "$$ATTEMPT" -lt 3 ]; then \
+			echo "Falha ao apagar. Tentando novamente..."; \
+			sleep 1; \
+		fi; \
+	done; \
+	echo "Não foi possível apagar a flash após 3 tentativas."; \
+	exit 1

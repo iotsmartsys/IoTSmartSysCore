@@ -275,6 +275,13 @@ namespace iotsmartsys
     {
         settingsManager_.handle();
 
+        // Avoid overlapping TLS handshakes on constrained ESP32 heaps.
+        // The settings refresh must finish before registration or MQTT starts.
+        if (settingsManager_.state() == core::settings::SettingsManagerState::FetchingFromApi)
+        {
+            return;
+        }
+
         if (wifi_.isConnected() && !deviceRegistrationManager_.isRegistered())
         {
             deviceRegistrationManager_.handle();
