@@ -33,8 +33,8 @@ namespace iotsmartsys::core
         virtual void setup() override;
         virtual void handle() override;
 
-        bool isOpen() const { return sensorOpenCompletedActualState == 0 && sensorCloseActualState == 1; }
-        bool isClosed() const { return sensorCloseActualState == 0 && sensorOpenCompletedActualState == 1; }
+        bool isOpen() const { return sensorOpenCompletedActualState == 0; }
+        bool isClosed() const { return sensorCloseActualState == 0; }
 
         void open();
         void close();
