@@ -73,9 +73,11 @@ namespace iotsmartsys::core
     void GarageControlCapability::unlock()
     {
         stop();
+        delay(500);
+        stop();
         locked = false;
     }
-    
+
     void GarageControlCapability::stop()
     {
         simulatePressCommand(hardwareAdapterStopUnlock);
