@@ -12,7 +12,10 @@ namespace iotsmartsys::core::settings
 {
     namespace
     {
-        constexpr const char *kDefaultDeviceSettingsEndpoint = "devices/:device_id/settings";
+        constexpr const char *kDefaultDeviceSettingsEndpoint =
+            "devices/:device_id/settings?prefix_auto_format_properties_json=mqtt,firmware,wifi&use_key_value=no";
+        constexpr const char *kDefaultSettingsQuery =
+            "prefix_auto_format_properties_json=mqtt,firmware,wifi&use_key_value=no";
         constexpr std::uint32_t kApiSyncInitialBackoffMs = 5000;
         constexpr std::uint32_t kApiSyncMaxBackoffMs = 60000;
 
@@ -30,6 +33,16 @@ namespace iotsmartsys::core::settings
             }
         }
 
+        std::string appendDefaultSettingsQueryIfNeeded(std::string url)
+        {
+            if (url.find('?') == std::string::npos && endsWith(url, "/settings"))
+            {
+                url += "?";
+                url += kDefaultSettingsQuery;
+            }
+            return url;
+        }
+
         std::string buildSettingsUrl(const Settings &settings)
         {
             if (settings.api.url.empty())
@@ -40,7 +53,7 @@ namespace iotsmartsys::core::settings
             std::string url = settings.api.url;
             if (url.find(":device_id") != std::string::npos || endsWith(url, "/settings"))
             {
-                return url;
+                return appendDefaultSettingsQueryIfNeeded(url);
             }
 
             trimTrailingSlashes(url);
@@ -91,10 +104,19 @@ namespace iotsmartsys::core::settings
 
         void applyCompiledWifiOverride(Settings &settings)
         {
+            if (settings.wifi.isValid())
+            {
+                settings.wifi.syncSelectedLegacyFields();
+                return;
+            }
+
             if (iotsmartsys::config::hasWifiCredentials())
             {
                 settings.wifi.ssid = iotsmartsys::config::kWifiCredentials[0].ssid;
                 settings.wifi.password = iotsmartsys::config::kWifiCredentials[0].password;
+                settings.wifi.primary.ssid = settings.wifi.ssid;
+                settings.wifi.primary.password = settings.wifi.password;
+                settings.wifi.profile = "primary";
                 settings.in_config_mode = false;
                 return;
             }
@@ -102,6 +124,9 @@ namespace iotsmartsys::core::settings
 #if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
             settings.wifi.ssid = WIFI_SSID;
             settings.wifi.password = WIFI_PASSWORD;
+            settings.wifi.primary.ssid = settings.wifi.ssid;
+            settings.wifi.primary.password = settings.wifi.password;
+            settings.wifi.profile = "primary";
             settings.in_config_mode = false;
 #endif
         }
@@ -403,9 +428,11 @@ namespace iotsmartsys::core::settings
         {
             if (_logger)
             {
-                _logger->info("SettingsManager", "API settings changed. Applying update and saving cache. mqttProfile='%s' mqttHost='%s'.",
+                _logger->info("SettingsManager", "API settings changed. Applying update and saving cache. mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s'.",
                               candidate.mqtt.profile.c_str(),
-                              candidate.mqtt.primary.host.c_str());
+                              candidate.mqtt.primary.host.c_str(),
+                              candidate.wifi.profile.c_str(),
+                              candidate.wifi.ssid.c_str());
             }
 
             _current = candidate;
@@ -467,11 +494,13 @@ namespace iotsmartsys::core::settings
 
         if (_logger)
         {
-            _logger->info("SettingsManager", "API refresh completed. changed=%s http=%d mqttProfile='%s' mqttHost='%s'.",
+            _logger->info("SettingsManager", "API refresh completed. changed=%s http=%d mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s'.",
                           changed ? "true" : "false",
                           pending.http_status,
                           _current.mqtt.profile.c_str(),
-                          _current.mqtt.primary.host.c_str());
+                          _current.mqtt.primary.host.c_str(),
+                          _current.wifi.profile.c_str(),
+                          _current.wifi.ssid.c_str());
         }
 
         if (_updated_cb)

@@ -86,7 +86,7 @@ namespace iotsmartsys::core::settings
 
         bool isValidWifiConfig() const
         {
-            return (wifi.ssid.empty() == false && wifi.password.empty() == false);
+            return wifi.isValid();
         }
 
         bool isValidApiConfig() const

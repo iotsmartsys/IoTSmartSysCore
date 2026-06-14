@@ -179,10 +179,12 @@ namespace iotsmartsys::platform::espressif
         std::string url, manifest;
         bool verify = false;
 
+        (void)ext.getString("firmware.url", url);
+        (void)ext.getString("firmware.manifest", manifest);
+
         if (update == "auto")
         {
-            if (!ext.getString("firmware.url", url) || url.empty()) return StateResult::InvalidState;
-            (void)ext.getString("firmware.manifest", manifest);
+            if (url.empty()) return StateResult::InvalidState;
         }
 
         if (ext.getBool("firmware.verifysha256", verify)) {}
@@ -197,8 +199,25 @@ namespace iotsmartsys::platform::espressif
     static StateResult parseWifi(const iotsmartsys::platform::common::json::JsonPathExtractor &ext, WifiConfig &out)
     {
         std::string tmp;
+
+        (void)ext.getString("wifi.profile", out.profile);
+        if (out.profile.empty())
+        {
+            out.profile = "primary";
+        }
+
+        (void)ext.getString("wifi.primary.ssid", out.primary.ssid);
+        (void)ext.getString("wifi.primary.password", out.primary.password);
+        (void)ext.getString("wifi.secondary.ssid", out.secondary.ssid);
+        (void)ext.getString("wifi.secondary.password", out.secondary.password);
+        (void)ext.getString("wifi.tertiary.ssid", out.tertiary.ssid);
+        (void)ext.getString("wifi.tertiary.password", out.tertiary.password);
+
+        // Legacy shape used by provisioning/cache before WiFi profiles existed.
         (void)ext.getString("wifi.ssid", out.ssid);
         (void)ext.getString("wifi.password", out.password);
+
+        out.syncSelectedLegacyFields();
         return StateResult::Ok;
     }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -20,6 +21,13 @@ namespace iotsmartsys::core
     {
         const char *ssid = nullptr;
         const char *password = nullptr;
+        struct Credential
+        {
+            const char *ssid = nullptr;
+            const char *password = nullptr;
+        };
+        Credential credentials[3]{};
+        std::size_t credentialCount = 0;
 
         // retry policy
         uint32_t initialBackoffMs = 1000;
@@ -41,8 +49,48 @@ namespace iotsmartsys::core
             if (!s.isValidWifiConfig())
                 return false;
 
-            ssid = s.wifi.ssid.c_str();
-            password = s.wifi.password.c_str();
+            credentialCount = 0;
+            const auto append = [this](const core::settings::WifiProfileConfig &profile)
+            {
+                if (!profile.isValid() || credentialCount >= 3)
+                {
+                    return;
+                }
+
+                credentials[credentialCount].ssid = profile.ssid.c_str();
+                credentials[credentialCount].password = profile.password.c_str();
+                credentialCount++;
+            };
+
+            if (s.wifi.profile == "tertiary")
+            {
+                append(s.wifi.tertiary);
+                append(s.wifi.primary);
+                append(s.wifi.secondary);
+            }
+            else if (s.wifi.profile == "secondary")
+            {
+                append(s.wifi.secondary);
+                append(s.wifi.primary);
+                append(s.wifi.tertiary);
+            }
+            else
+            {
+                append(s.wifi.primary);
+                append(s.wifi.secondary);
+                append(s.wifi.tertiary);
+            }
+
+            if (credentialCount == 0)
+            {
+                ssid = s.wifi.ssid.c_str();
+                password = s.wifi.password.c_str();
+            }
+            else
+            {
+                ssid = credentials[0].ssid;
+                password = credentials[0].password;
+            }
             return true;
         }
     };

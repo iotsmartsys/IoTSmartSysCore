@@ -55,6 +55,7 @@ namespace iotsmartsys::app
         logger_.info("[SettingsManager]", " OTA Version: %s", getBuildIdentifier());
         logger_.info("[SettingsManager]", "Library Version: %s", IOTSMARTSYSCORE_VERSION);
         logger_.info("[SettingsManager]", "Log Level: %s", settings.logLevelStr());
+        logger_.info("[SettingsManager]", "WiFi Profile: %s", settings.wifi.profile.c_str());
         logger_.info("[SettingsManager]", "WiFi SSID: %s", settings.wifi.ssid.c_str());
         #if IOTSMARTSYS_REDACT_SECRETS
         //  logger_.info("[SettingsManager]", "WiFi Password: <redacted>");

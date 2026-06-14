@@ -33,6 +33,11 @@ namespace iotsmartsys::core
                 return iotsmartsys::config::kWifiCredentialCount;
             }
 
+            if (cfg.credentialCount > 0)
+            {
+                return cfg.credentialCount;
+            }
+
             return (cfg.ssid && cfg.ssid[0]) ? 1 : 0;
         }
 
@@ -43,6 +48,11 @@ namespace iotsmartsys::core
                 return iotsmartsys::config::kWifiCredentials[index].ssid;
             }
 
+            if (cfg.credentialCount > 0)
+            {
+                return cfg.credentials[index].ssid;
+            }
+
             return cfg.ssid;
         }
 
@@ -51,6 +61,11 @@ namespace iotsmartsys::core
             if (iotsmartsys::config::hasWifiCredentials())
             {
                 return iotsmartsys::config::kWifiCredentials[index].password;
+            }
+
+            if (cfg.credentialCount > 0)
+            {
+                return cfg.credentials[index].password;
             }
 
             return cfg.password;
@@ -324,8 +339,11 @@ namespace iotsmartsys::core
         }
 
         const std::size_t fallbackIndex = _credentialAttemptIndex % credentialCount;
-        _targetSsid = configuredSsid(_cfg, fallbackIndex);
-        _targetPassword = configuredPassword(_cfg, fallbackIndex);
+        const char *targetSsid = configuredSsid(_cfg, fallbackIndex);
+        const char *targetPassword = configuredPassword(_cfg, fallbackIndex);
+
+        _targetSsid = targetSsid ? targetSsid : "";
+        _targetPassword = targetPassword ? targetPassword : "";
 
         const int n = WiFi.scanNetworks(false, false, false, 120);
         if (n <= 0)
@@ -337,29 +355,24 @@ namespace iotsmartsys::core
         std::vector<WifiConnectCandidate> candidates;
         for (int i = 0; i < n; ++i)
         {
-            for (std::size_t credentialIndex = 0; credentialIndex < credentialCount; ++credentialIndex)
+            if (!sameSsid(WiFi.SSID(i), targetSsid))
             {
-                const char *ssid = configuredSsid(_cfg, credentialIndex);
-                if (!sameSsid(WiFi.SSID(i), ssid))
-                {
-                    continue;
-                }
-
-                uint8_t *bssid = WiFi.BSSID(i);
-                if (!bssid)
-                {
-                    continue;
-                }
-
-                WifiConnectCandidate candidate{};
-                candidate.ssid = ssid;
-                candidate.password = configuredPassword(_cfg, credentialIndex);
-                std::memcpy(candidate.bssid, bssid, sizeof(candidate.bssid));
-                candidate.channel = WiFi.channel(i);
-                candidate.rssi = WiFi.RSSI(i);
-                candidates.push_back(candidate);
-                break;
+                continue;
             }
+
+            uint8_t *bssid = WiFi.BSSID(i);
+            if (!bssid)
+            {
+                continue;
+            }
+
+            WifiConnectCandidate candidate{};
+            candidate.ssid = targetSsid;
+            candidate.password = targetPassword;
+            std::memcpy(candidate.bssid, bssid, sizeof(candidate.bssid));
+            candidate.channel = WiFi.channel(i);
+            candidate.rssi = WiFi.RSSI(i);
+            candidates.push_back(candidate);
         }
 
         if (!candidates.empty())
@@ -367,7 +380,7 @@ namespace iotsmartsys::core
             std::sort(candidates.begin(), candidates.end(), [](const WifiConnectCandidate &a, const WifiConnectCandidate &b)
                       { return a.rssi > b.rssi; });
 
-            const WifiConnectCandidate &selected = candidates[_credentialAttemptIndex % candidates.size()];
+            const WifiConnectCandidate &selected = candidates[0];
             _targetSsid = selected.ssid;
             _targetPassword = selected.password ? selected.password : "";
             std::memcpy(_targetBssid, selected.bssid, sizeof(_targetBssid));

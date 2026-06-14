@@ -31,7 +31,7 @@ namespace iotsmartsys::platform::espressif
         static constexpr const char *NVS_NAMESPACE = "iotsys";
         static constexpr const char *NVS_KEY = "settings";
 
-        static constexpr std::uint32_t STORAGE_VERSION = 5;
+        static constexpr std::uint32_t STORAGE_VERSION = 6;
 
         // --- POD storage model (persistível) ---
 
@@ -66,6 +66,13 @@ namespace iotsmartsys::platform::espressif
 
         struct StoredWifiConfig
         {
+            char primary_ssid[64];
+            char primary_password[64];
+            char secondary_ssid[64];
+            char secondary_password[64];
+            char tertiary_ssid[64];
+            char tertiary_password[64];
+            char profile[16];
             char ssid[64];
             char password[64];
         };
