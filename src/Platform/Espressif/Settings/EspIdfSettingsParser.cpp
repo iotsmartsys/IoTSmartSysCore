@@ -257,6 +257,12 @@ namespace iotsmartsys::platform::espressif
         bool icm = false;
         if (ext.getBool("in_config_mode", icm)) out.in_config_mode = icm;
 
+        int collectIntervalMetrics = 0;
+        if (ext.getInt("collect_interval_metrics", collectIntervalMetrics) && collectIntervalMetrics > 0)
+        {
+            out.collect_interval_metrics = collectIntervalMetrics;
+        }
+
         // prefix_auto_format_properies_json -- ignored (kept parity with previous behaviour)
 
         // log_level optional

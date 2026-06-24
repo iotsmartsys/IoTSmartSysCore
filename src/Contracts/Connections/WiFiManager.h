@@ -118,6 +118,10 @@ namespace iotsmartsys::core
         const char *getMacAddress() const;
         const char *getSsid() const;
         const char *getSignalStrength() const;
+        int32_t getRssi() const;
+        uint32_t getLastDisconnectedAtMs() const;
+        uint8_t getLastDisconnectReason() const;
+        uint32_t getConnectionCount() const;
 
     private:
         void startConnect();
@@ -156,6 +160,8 @@ namespace iotsmartsys::core
         bool _hasTargetBssid{false};
 
         uint32_t _connectedAtMs{0};
+        uint32_t _lastDisconnectedAtMs{0};
+        uint32_t _connectionCount{0};
         bool _associated{false};
         bool _gotIp{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};

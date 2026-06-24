@@ -2,6 +2,7 @@
 #include "EspIdfNvsSettingsProvider.h"
 
 #ifdef ESP32
+#include "Config/BuildConfig.h"
 #include "Config/WifiCredentials.h"
 #include "Contracts/Common/StateResult.h"
 #include "Contracts/Providers/ServiceProvider.h"
@@ -176,6 +177,68 @@ namespace iotsmartsys::platform::espressif
             LegacyStoredFirmwareConfigV5 firmware;
             LegacyStoredWifiConfigV5 wifi;
             LegacyStoredApiConfigV5 api;
+        };
+
+        struct LegacyStoredMqttConfigV6
+        {
+            char host[128];
+            std::int32_t port;
+            char user[64];
+            char password[64];
+            char protocol[8];
+            std::int32_t ttl;
+        };
+
+        struct LegacyStoredMqttSettingsV6
+        {
+            LegacyStoredMqttConfigV6 primary;
+            LegacyStoredMqttConfigV6 secondary;
+            LegacyStoredMqttConfigV6 tertiary;
+            char announce_topic[128];
+            char command_topic[128];
+            char notify_topic[128];
+            char profile[16];
+        };
+
+        struct LegacyStoredFirmwareConfigV6
+        {
+            char url[128];
+            char manifest[160];
+            std::uint8_t verify_sha256;
+            char update[8];
+        };
+
+        struct LegacyStoredWifiConfigV6
+        {
+            char primary_ssid[64];
+            char primary_password[64];
+            char secondary_ssid[64];
+            char secondary_password[64];
+            char tertiary_ssid[64];
+            char tertiary_password[64];
+            char profile[16];
+            char ssid[64];
+            char password[64];
+        };
+
+        struct LegacyStoredApiConfigV6
+        {
+            char url[128];
+            char key[128];
+            char basic_auth[160];
+        };
+
+        struct LegacyStoredSettingsV6
+        {
+            std::uint32_t version;
+            std::uint8_t in_config_mode;
+            std::uint8_t device_registered;
+            std::int32_t logLevel;
+
+            LegacyStoredMqttSettingsV6 mqtt;
+            LegacyStoredFirmwareConfigV6 firmware;
+            LegacyStoredWifiConfigV6 wifi;
+            LegacyStoredApiConfigV6 api;
         };
 
         const char *compiledEnvironmentId()
@@ -537,6 +600,93 @@ namespace iotsmartsys::platform::espressif
         }
     }
 
+    static void fromLegacyStoredV6(const LegacyStoredSettingsV6 &src, core::settings::Settings &dst)
+    {
+        const auto toStdString = [](const char *value) -> std::string
+        {
+            return (value && *value) ? std::string(value) : std::string();
+        };
+
+        dst.in_config_mode = (src.in_config_mode != 0);
+        dst.device_registered = (src.device_registered != 0);
+
+        dst.mqtt.primary.host = toStdString(src.mqtt.primary.host);
+        dst.mqtt.primary.port = static_cast<int>(src.mqtt.primary.port);
+        dst.mqtt.primary.user = toStdString(src.mqtt.primary.user);
+        dst.mqtt.primary.password = toStdString(src.mqtt.primary.password);
+        dst.mqtt.primary.protocol = toStdString(src.mqtt.primary.protocol);
+        dst.mqtt.primary.ttl = static_cast<int>(src.mqtt.primary.ttl);
+
+        dst.mqtt.secondary.host = toStdString(src.mqtt.secondary.host);
+        dst.mqtt.secondary.port = static_cast<int>(src.mqtt.secondary.port);
+        dst.mqtt.secondary.user = toStdString(src.mqtt.secondary.user);
+        dst.mqtt.secondary.password = toStdString(src.mqtt.secondary.password);
+        dst.mqtt.secondary.protocol = toStdString(src.mqtt.secondary.protocol);
+        dst.mqtt.secondary.ttl = static_cast<int>(src.mqtt.secondary.ttl);
+
+        dst.mqtt.tertiary.host = toStdString(src.mqtt.tertiary.host);
+        dst.mqtt.tertiary.port = static_cast<int>(src.mqtt.tertiary.port);
+        dst.mqtt.tertiary.user = toStdString(src.mqtt.tertiary.user);
+        dst.mqtt.tertiary.password = toStdString(src.mqtt.tertiary.password);
+        dst.mqtt.tertiary.protocol = toStdString(src.mqtt.tertiary.protocol);
+        dst.mqtt.tertiary.ttl = static_cast<int>(src.mqtt.tertiary.ttl);
+
+        dst.mqtt.announce_topic = toStdString(src.mqtt.announce_topic);
+        dst.mqtt.command_topic = toStdString(src.mqtt.command_topic);
+        dst.mqtt.notify_topic = toStdString(src.mqtt.notify_topic);
+        dst.mqtt.profile = toStdString(src.mqtt.profile);
+        if (dst.mqtt.profile.empty())
+        {
+            dst.mqtt.profile = "primary";
+        }
+
+        dst.firmware.url = toStdString(src.firmware.url);
+        dst.firmware.manifest = resolveFirmwareManifest(toStdString(src.firmware.manifest));
+        dst.firmware.verify_sha256 = (src.firmware.verify_sha256 != 0);
+        dst.firmware.update = toStdString(src.firmware.update);
+
+        dst.wifi.primary.ssid = toStdString(src.wifi.primary_ssid);
+        dst.wifi.primary.password = toStdString(src.wifi.primary_password);
+        dst.wifi.secondary.ssid = toStdString(src.wifi.secondary_ssid);
+        dst.wifi.secondary.password = toStdString(src.wifi.secondary_password);
+        dst.wifi.tertiary.ssid = toStdString(src.wifi.tertiary_ssid);
+        dst.wifi.tertiary.password = toStdString(src.wifi.tertiary_password);
+        dst.wifi.profile = toStdString(src.wifi.profile);
+        dst.wifi.ssid = toStdString(src.wifi.ssid);
+        dst.wifi.password = toStdString(src.wifi.password);
+        dst.wifi.syncSelectedLegacyFields();
+
+#ifdef IOTSMARTSYS_API_URL
+        dst.api.url = IOTSMARTSYS_API_URL;
+#else
+        dst.api.url = toStdString(src.api.url);
+#endif
+        dst.api.key = toStdString(src.api.key);
+        dst.api.basic_auth = toStdString(src.api.basic_auth);
+
+        switch (src.logLevel)
+        {
+        case 0:
+            dst.logLevel = iotsmartsys::core::LogLevel::Error;
+            break;
+        case 1:
+            dst.logLevel = iotsmartsys::core::LogLevel::Warn;
+            break;
+        case 2:
+            dst.logLevel = iotsmartsys::core::LogLevel::Info;
+            break;
+        case 3:
+            dst.logLevel = iotsmartsys::core::LogLevel::Debug;
+            break;
+        case 4:
+            dst.logLevel = iotsmartsys::core::LogLevel::Trace;
+            break;
+        default:
+            dst.logLevel = iotsmartsys::core::LogLevel::Error;
+            break;
+        }
+    }
+
     void EspIdfNvsSettingsProvider::toStored(const core::settings::Settings &src, StoredSettings &dst, const StoredSettings *existing)
     {
 
@@ -554,6 +704,7 @@ namespace iotsmartsys::platform::espressif
         dst.in_config_mode = src.in_config_mode ? 1 : 0;
         dst.device_registered = src.device_registered ? 1 : 0;
         dst.logLevel = static_cast<int>(src.logLevel);
+        dst.collect_interval_metrics = static_cast<std::int32_t>(src.collect_interval_metrics);
 
         auto applyMqttConfig = [&](const core::settings::MqttConfig &srcCfg, StoredMqttConfig &dstCfg)
         {
@@ -618,6 +769,10 @@ namespace iotsmartsys::platform::espressif
         auto &logger = *iotsmartsys::core::ServiceProvider::instance().logger();
         dst.in_config_mode = (src.in_config_mode != 0);
         dst.device_registered = (src.device_registered != 0);
+        if (src.collect_interval_metrics > 0)
+        {
+            dst.collect_interval_metrics = src.collect_interval_metrics;
+        }
 
     // MQTT primary
         dst.mqtt.primary.host = toString(src.mqtt.primary.host);
@@ -720,6 +875,7 @@ namespace iotsmartsys::platform::espressif
 
         return (err == ESP_OK &&
                 (required == sizeof(StoredSettings) ||
+                 required == sizeof(LegacyStoredSettingsV6) ||
                  required == sizeof(LegacyStoredSettingsV5) ||
                  required == sizeof(LegacyStoredSettingsV4) ||
                  required == sizeof(LegacyStoredSettingsV3)));
@@ -744,6 +900,7 @@ namespace iotsmartsys::platform::espressif
         }
 
         if (required != sizeof(StoredSettings) &&
+            required != sizeof(LegacyStoredSettingsV6) &&
             required != sizeof(LegacyStoredSettingsV5) &&
             required != sizeof(LegacyStoredSettingsV4) &&
             required != sizeof(LegacyStoredSettingsV3))
@@ -764,6 +921,23 @@ namespace iotsmartsys::platform::espressif
                 return iotsmartsys::core::common::StateResult::StorageVersionMismatch;
 
             fromStored(stored, out);
+            applyCompiledWifiOverride(out);
+            return iotsmartsys::core::common::StateResult::Ok;
+        }
+
+        if (required == sizeof(LegacyStoredSettingsV6))
+        {
+            LegacyStoredSettingsV6 legacy{};
+            err = nvs_get_blob(h, NVS_KEY, &legacy, &required);
+            nvs_close(h);
+            if (err != ESP_OK)
+                return map_esp_err(err);
+
+            if (legacy.version != 6)
+                return iotsmartsys::core::common::StateResult::StorageVersionMismatch;
+
+            fromLegacyStoredV6(legacy, out);
+            ensureClientId(out);
             applyCompiledWifiOverride(out);
             return iotsmartsys::core::common::StateResult::Ok;
         }
@@ -909,9 +1083,34 @@ namespace iotsmartsys::platform::espressif
         // so we can persist WiFi-only fields on first boot. Use heap allocation to avoid
         // exhausting the FreeRTOS task stack.
         StoredSettings *stored = new StoredSettings();
-        size_t required = sizeof(StoredSettings);
-        err = nvs_get_blob(h, NVS_KEY, stored, &required);
-        if (err != ESP_OK || required != sizeof(StoredSettings))
+        size_t required = 0;
+        err = nvs_get_blob(h, NVS_KEY, nullptr, &required);
+        if (err == ESP_OK && required == sizeof(StoredSettings))
+        {
+            err = nvs_get_blob(h, NVS_KEY, stored, &required);
+            if (err != ESP_OK || stored->version != STORAGE_VERSION)
+            {
+                std::memset(stored, 0, sizeof(*stored));
+                stored->version = STORAGE_VERSION;
+            }
+        }
+        else if (err == ESP_OK && required == sizeof(LegacyStoredSettingsV6))
+        {
+            LegacyStoredSettingsV6 legacy{};
+            err = nvs_get_blob(h, NVS_KEY, &legacy, &required);
+            if (err == ESP_OK && legacy.version == 6)
+            {
+                core::settings::Settings migrated{};
+                fromLegacyStoredV6(legacy, migrated);
+                toStored(migrated, *stored, nullptr);
+            }
+            else
+            {
+                std::memset(stored, 0, sizeof(*stored));
+                stored->version = STORAGE_VERSION;
+            }
+        }
+        else
         {
             // No existing blob or invalid size: create a new default-stored object.
 

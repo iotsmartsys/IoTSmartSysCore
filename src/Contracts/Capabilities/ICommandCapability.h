@@ -75,10 +75,11 @@ namespace iotsmartsys::core
 
         virtual void handle() override
         {
-            logger.info("ICommandCapability", "Handling capability value: %s", command_hardware_adapter.getStateValue());
-            if (command_hardware_adapter.getStateValue() != value)
+            const std::string stateValue = command_hardware_adapter.getStateValue();
+            logger.info("ICommandCapability", "Handling capability value: %s", stateValue.c_str());
+            if (stateValue != value)
             {
-                updateState(command_hardware_adapter.getStateValue());
+                updateState(stateValue);
             }
         }
 

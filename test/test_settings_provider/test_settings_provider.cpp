@@ -8,14 +8,17 @@ extern "C" {
 
 #include "Platform/Espressif/Settings/EspIdfSettingsParser.h"
 #include "Platform/Espressif/Settings/Providers/EspIdfNvsSettingsProvider.h"
+#include "Contracts/Common/StateResult.h"
 #include "Contracts/Settings/Settings.h"
 
+using iotsmartsys::core::common::StateResult;
 using iotsmartsys::core::settings::Settings;
 using iotsmartsys::platform::espressif::EspIdfSettingsParser;
 using iotsmartsys::platform::espressif::EspIdfNvsSettingsProvider;
 
 static const char* kJson = R"json(
 {
+  "collect_interval_metrics": 120000,
   "mqtt": {
     "primary": {
       "host": "192.168.0.222",
@@ -65,10 +68,12 @@ void test_settings_parse_save_load_roundtrip()
 
     // 1) Parse
     Settings parsed;
-    const esp_err_t perr = parser.parse(kJson, parsed);
-    TEST_ASSERT_EQUAL(ESP_OK, perr);
+    const StateResult perr = parser.parse(kJson, parsed);
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(perr));
 
     // 2) Valida parse (campos críticos)
+    TEST_ASSERT_EQUAL_INT(120000, parsed.collect_interval_metrics);
+
     TEST_ASSERT_EQUAL_STRING("192.168.0.222", parsed.mqtt.primary.host.c_str());
     TEST_ASSERT_EQUAL_INT(1883, parsed.mqtt.primary.port);
     TEST_ASSERT_EQUAL_STRING("0bb1a826899f4e26a51ea006e0a3419a", parsed.mqtt.primary.user.c_str());
@@ -89,18 +94,20 @@ void test_settings_parse_save_load_roundtrip()
     TEST_ASSERT_EQUAL_STRING("https://iotsmartsys.tailb602a3.ts.net/s3", parsed.firmware.url.c_str());
     TEST_ASSERT_EQUAL_STRING("/firmwares/SmartHome-Firmwares/glp_meter_esp32/latest.json", parsed.firmware.manifest.c_str());
     TEST_ASSERT_TRUE(parsed.firmware.verify_sha256);
-    TEST_ASSERT_EQUAL_STRING("AUTO", parsed.firmware.getUpdateString().c_str()); // do seu model
+    TEST_ASSERT_EQUAL_STRING("auto", parsed.firmware.update.c_str());
 
     // 3) Save
-    TEST_ASSERT_EQUAL(ESP_OK, provider.save(parsed));
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(provider.save(parsed)));
     TEST_ASSERT_TRUE(provider.exists());
 
     // 4) Load
     Settings loaded;
-    const esp_err_t lerr = provider.load(loaded);
-    TEST_ASSERT_EQUAL(ESP_OK, lerr);
+    const StateResult lerr = provider.load(loaded);
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(lerr));
 
     // 5) Compara alguns campos (roundtrip)
+    TEST_ASSERT_EQUAL_INT(parsed.collect_interval_metrics, loaded.collect_interval_metrics);
+
     TEST_ASSERT_EQUAL_STRING(parsed.mqtt.primary.host.c_str(), loaded.mqtt.primary.host.c_str());
     TEST_ASSERT_EQUAL_INT(parsed.mqtt.primary.port, loaded.mqtt.primary.port);
     TEST_ASSERT_EQUAL_STRING(parsed.mqtt.primary.user.c_str(), loaded.mqtt.primary.user.c_str());
@@ -121,10 +128,10 @@ void test_settings_parse_save_load_roundtrip()
     TEST_ASSERT_EQUAL_STRING(parsed.firmware.url.c_str(), loaded.firmware.url.c_str());
     TEST_ASSERT_EQUAL_STRING(parsed.firmware.manifest.c_str(), loaded.firmware.manifest.c_str());
     TEST_ASSERT_EQUAL(parsed.firmware.verify_sha256, loaded.firmware.verify_sha256);
-    TEST_ASSERT_EQUAL_STRING(parsed.firmware.getUpdateString().c_str(), loaded.firmware.getUpdateString().c_str());
+    TEST_ASSERT_EQUAL_STRING(parsed.firmware.update.c_str(), loaded.firmware.update.c_str());
 
     // 6) Erase
-    TEST_ASSERT_EQUAL(ESP_OK, provider.erase());
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(provider.erase()));
     TEST_ASSERT_FALSE(provider.exists());
 }
 

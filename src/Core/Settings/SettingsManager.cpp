@@ -212,10 +212,11 @@ namespace iotsmartsys::core::settings
             _state = SettingsManagerState::LoadedFromCache;
             if (_logger)
             {
-                _logger->info("SettingsManager", "Loaded settings from cache. mqttProfile='%s' mqttHost='%s' apiUrl='%s'.",
+                _logger->info("SettingsManager", "Loaded settings from cache. mqttProfile='%s' mqttHost='%s' apiUrl='%s' collectIntervalMetrics=%ld.",
                               _current.mqtt.profile.c_str(),
                               _current.mqtt.primary.host.c_str(),
-                              _current.api.url.c_str());
+                              _current.api.url.c_str(),
+                              _current.collect_interval_metrics);
             }
         }
         else
@@ -428,11 +429,12 @@ namespace iotsmartsys::core::settings
         {
             if (_logger)
             {
-                _logger->info("SettingsManager", "API settings changed. Applying update and saving cache. mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s'.",
+                _logger->info("SettingsManager", "API settings changed. Applying update and saving cache. mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s' collectIntervalMetrics=%ld.",
                               candidate.mqtt.profile.c_str(),
                               candidate.mqtt.primary.host.c_str(),
                               candidate.wifi.profile.c_str(),
-                              candidate.wifi.ssid.c_str());
+                              candidate.wifi.ssid.c_str(),
+                              candidate.collect_interval_metrics);
             }
 
             _current = candidate;
@@ -494,13 +496,14 @@ namespace iotsmartsys::core::settings
 
         if (_logger)
         {
-            _logger->info("SettingsManager", "API refresh completed. changed=%s http=%d mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s'.",
+            _logger->info("SettingsManager", "API refresh completed. changed=%s http=%d mqttProfile='%s' mqttHost='%s' wifiProfile='%s' wifiSsid='%s' collectIntervalMetrics=%ld.",
                           changed ? "true" : "false",
                           pending.http_status,
                           _current.mqtt.profile.c_str(),
                           _current.mqtt.primary.host.c_str(),
                           _current.wifi.profile.c_str(),
-                          _current.wifi.ssid.c_str());
+                          _current.wifi.ssid.c_str(),
+                          _current.collect_interval_metrics);
         }
 
         if (_updated_cb)

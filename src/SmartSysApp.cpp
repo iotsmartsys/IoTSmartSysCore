@@ -7,8 +7,14 @@
 #include "Platform/Espressif/Parsers/EspIdFirmwareManifestParser.h"
 #endif
 
+#include <cmath>
 #include <cstdio>
 #include <memory>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_attr.h"
+#include "esp_freertos_hooks.h"
 namespace iotsmartsys
 {
     namespace
@@ -19,6 +25,58 @@ namespace iotsmartsys
         constexpr uint32_t kTransportTaskStackWords = 6144;
         constexpr UBaseType_t kNetworkTaskPriority = 4;
         constexpr UBaseType_t kTransportTaskPriority = 4;
+        constexpr const char *kMetricsTopic = "device/metrics";
+        volatile uint32_t gCpuTotalTicks[portNUM_PROCESSORS]{};
+        volatile uint32_t gCpuIdleTicks[portNUM_PROCESSORS]{};
+        TaskHandle_t gIdleTaskHandles[portNUM_PROCESSORS]{};
+
+        void IRAM_ATTR cpuUsageTickHook()
+        {
+            const BaseType_t core = xPortGetCoreID();
+            if (core < 0 || core >= portNUM_PROCESSORS)
+            {
+                return;
+            }
+
+            gCpuTotalTicks[core]++;
+            if (xTaskGetCurrentTaskHandleForCPU(core) == gIdleTaskHandles[core])
+            {
+                gCpuIdleTicks[core]++;
+            }
+        }
+
+        void appendJsonString(std::string &out, const char *value)
+        {
+            out.push_back('"');
+            if (value)
+            {
+                for (const char *p = value; *p; ++p)
+                {
+                    switch (*p)
+                    {
+                    case '"':
+                        out += "\\\"";
+                        break;
+                    case '\\':
+                        out += "\\\\";
+                        break;
+                    case '\n':
+                        out += "\\n";
+                        break;
+                    case '\r':
+                        out += "\\r";
+                        break;
+                    case '\t':
+                        out += "\\t";
+                        break;
+                    default:
+                        out.push_back(*p);
+                        break;
+                    }
+                }
+            }
+            out.push_back('"');
+        }
     }
 
     SmartSysApp::SmartSysApp()
@@ -164,6 +222,7 @@ namespace iotsmartsys
         logger_.info("App", "Device ID: %s", deviceIdentityProvider_.getDeviceID().c_str());
         logger_.info("---------------------------------------------------------");
 
+        registerCpuUsageHooks();
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
@@ -299,6 +358,166 @@ namespace iotsmartsys
         }
 
         transportController_.handle();
+        publishMetricsIfDue();
+    }
+
+    void SmartSysApp::publishMetricsIfDue()
+    {
+        core::settings::Settings currentSettings;
+        if (!settingsManager_.copyCurrent(currentSettings))
+        {
+            return;
+        }
+
+        if (currentSettings.collect_interval_metrics <= 0)
+        {
+            return;
+        }
+
+        const uint32_t now = millis();
+        const uint32_t intervalMs = static_cast<uint32_t>(currentSettings.collect_interval_metrics);
+        if (lastMetricsPublishAtMs_ != 0 && static_cast<uint32_t>(now - lastMetricsPublishAtMs_) < intervalMs)
+        {
+            return;
+        }
+
+        if (!mqtt_.isConnected())
+        {
+            return;
+        }
+
+        publishMetrics(currentSettings);
+        lastMetricsPublishAtMs_ = now;
+    }
+
+    void SmartSysApp::publishMetrics(const core::settings::Settings &settings)
+    {
+        const std::string payload = buildMetricsPayload(settings);
+        mqtt_.publish(kMetricsTopic, payload.c_str(), payload.length(), false);
+    }
+
+    std::string SmartSysApp::buildMetricsPayload(const core::settings::Settings &settings)
+    {
+        (void)settings;
+        std::string payload;
+        payload.reserve(320);
+
+        payload += "{\"device_id\":";
+        appendJsonString(payload, deviceIdentityProvider_.getDeviceID().c_str());
+        payload += ",\"uptime_ms\":";
+        payload += std::to_string(millis());
+        payload += ",\"cpu_cores\":";
+        payload += std::to_string(ESP.getChipCores());
+        payload += ",\"cpu_percent\":";
+        char cpuUsageBuf[16];
+        std::snprintf(cpuUsageBuf, sizeof(cpuUsageBuf), "%.1f", calculateCpuPercentUsage());
+        payload += cpuUsageBuf;
+
+        const uint32_t heapFree = ESP.getFreeHeap();
+        const uint32_t heapSize = ESP.getHeapSize();
+        const float heapPercentUsage = heapSize > 0
+                                           ? (100.0f * static_cast<float>(heapSize - heapFree) / static_cast<float>(heapSize))
+                                           : 0.0f;
+
+        payload += ",\"memory_percent\":";
+        char percentBuf[16];
+        std::snprintf(percentBuf, sizeof(percentBuf), "%.1f", heapPercentUsage);
+        payload += percentBuf;
+        payload += ",\"temperature_c\":";
+
+        const float temperature = temperatureRead();
+        if (std::isnan(temperature))
+        {
+            payload += "null";
+        }
+        else
+        {
+            char tempBuf[16];
+            std::snprintf(tempBuf, sizeof(tempBuf), "%.2f", temperature);
+            payload += tempBuf;
+        }
+
+        payload += ",\"frequency_mhz\":";
+        payload += std::to_string(ESP.getCpuFreqMHz());
+        payload += ",\"network\":{\"rssi\":";
+        payload += std::to_string(wifi_.getRssi());
+        payload += ",\"last_desconnected\":";
+        payload += std::to_string(wifi_.getLastDisconnectedAtMs());
+        payload += ",\"desconnected_rason\":";
+        payload += std::to_string(wifi_.getLastDisconnectReason());
+        payload += ",\"connection_count\":";
+        payload += std::to_string(wifi_.getConnectionCount());
+        payload += "}}";
+
+        return payload;
+    }
+
+    void SmartSysApp::registerCpuUsageHooks()
+    {
+        if (cpuUsageHooksRegistered_)
+        {
+            return;
+        }
+
+        bool allRegistered = true;
+        for (UBaseType_t core = 0; core < portNUM_PROCESSORS; ++core)
+        {
+            gIdleTaskHandles[core] = xTaskGetIdleTaskHandleForCPU(core);
+            const esp_err_t err = esp_register_freertos_tick_hook_for_cpu(cpuUsageTickHook, core);
+            if (err != ESP_OK)
+            {
+                allRegistered = false;
+                logger_.warn("Metrics", "Failed to register CPU usage tick hook for core %u: %d", (unsigned)core, (int)err);
+            }
+        }
+
+        cpuUsageHooksRegistered_ = allRegistered;
+    }
+
+    float SmartSysApp::calculateCpuPercentUsage()
+    {
+        uint32_t totalRunTime = 0;
+        uint32_t idleRunTime = 0;
+        for (UBaseType_t core = 0; core < portNUM_PROCESSORS; ++core)
+        {
+            totalRunTime += gCpuTotalTicks[core];
+            idleRunTime += gCpuIdleTicks[core];
+        }
+
+        if (totalRunTime == 0)
+        {
+            return 0.0f;
+        }
+
+        if (!hasCpuSample_)
+        {
+            lastCpuTotalRunTime_ = totalRunTime;
+            lastCpuIdleRunTime_ = idleRunTime;
+            hasCpuSample_ = true;
+            return 0.0f;
+        }
+
+        const uint32_t totalDelta = totalRunTime - lastCpuTotalRunTime_;
+        const uint32_t idleDelta = idleRunTime - lastCpuIdleRunTime_;
+        lastCpuTotalRunTime_ = totalRunTime;
+        lastCpuIdleRunTime_ = idleRunTime;
+
+        if (totalDelta == 0)
+        {
+            return 0.0f;
+        }
+
+        const float idlePercent = 100.0f * static_cast<float>(idleDelta) / static_cast<float>(totalDelta);
+        float usagePercent = 100.0f - idlePercent;
+        if (usagePercent < 0.0f)
+        {
+            usagePercent = 0.0f;
+        }
+        else if (usagePercent > 100.0f)
+        {
+            usagePercent = 100.0f;
+        }
+        return usagePercent;
     }
 
     void SmartSysApp::networkTaskLoop()

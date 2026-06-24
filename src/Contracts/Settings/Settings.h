@@ -12,6 +12,7 @@ namespace iotsmartsys::core::settings
     {
         bool in_config_mode{false};
         bool device_registered{false};
+        long collect_interval_metrics{60000}; // 60 seconds
 
         const char *clientId;
         LogLevel logLevel{LogLevel::Info};
@@ -55,6 +56,11 @@ namespace iotsmartsys::core::settings
             if (logLevel != other.logLevel)
             {
                 logLevel = other.logLevel;
+                _is_changed = true;
+            }
+            if (collect_interval_metrics != other.collect_interval_metrics)
+            {
+                collect_interval_metrics = other.collect_interval_metrics;
                 _is_changed = true;
             }
             if (api.hasChanged(other.api) && other.api.isValid())

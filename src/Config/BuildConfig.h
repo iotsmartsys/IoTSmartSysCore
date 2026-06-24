@@ -40,6 +40,10 @@
 #endif
 #endif
 
+#ifndef IOTSMARTSYS_API_URL
+#define IOTSMARTSYS_API_URL "https://api.iotsmartsys.tech/devices/api/v1/devices/:device_id/settings"
+#endif
+
 #ifndef IOTSMARTSYS_REDACT_SECRETS
 #if IOTSMARTSYS_MINIMAL
 #define IOTSMARTSYS_REDACT_SECRETS 1

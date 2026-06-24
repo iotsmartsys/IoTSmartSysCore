@@ -411,6 +411,7 @@ namespace iotsmartsys::core
             _associated = true;
             _gotIp = true;
             _lastDisconnectReason = 0;
+            _connectionCount++;
             startTimeSync();
 
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
@@ -421,6 +422,7 @@ namespace iotsmartsys::core
             _associated = false;
             _gotIp = false;
             _lastDisconnectReason = info.wifi_sta_disconnected.reason;
+            _lastDisconnectedAtMs = (_timeProvider ? _timeProvider->nowMs() : millis());
             _log.warn("WIFI", "Disconnected. reason=%u/%s status=%s",
                       (unsigned)_lastDisconnectReason,
                       disconnectReasonToString(_lastDisconnectReason),
@@ -509,6 +511,26 @@ namespace iotsmartsys::core
     const char *WiFiManager::getSignalStrength() const
     {
         return _signalStrength.c_str();
+    }
+
+    int32_t WiFiManager::getRssi() const
+    {
+        return isConnected() ? WiFi.RSSI() : 0;
+    }
+
+    uint32_t WiFiManager::getLastDisconnectedAtMs() const
+    {
+        return _lastDisconnectedAtMs;
+    }
+
+    uint8_t WiFiManager::getLastDisconnectReason() const
+    {
+        return _lastDisconnectReason;
+    }
+
+    uint32_t WiFiManager::getConnectionCount() const
+    {
+        return _connectionCount;
     }
 
     void WiFiManager::startTimeSync()

@@ -121,6 +121,11 @@ namespace iotsmartsys
                 bool hasOperationalMqttConfig() const;
                 void startRuntimeTasks();
                 void handleTransportWork();
+                void publishMetricsIfDue();
+                void publishMetrics(const core::settings::Settings &settings);
+                std::string buildMetricsPayload(const core::settings::Settings &settings);
+                void registerCpuUsageHooks();
+                float calculateCpuPercentUsage();
                 void networkTaskLoop();
                 void transportTaskLoop();
                 static void networkTaskEntry(void *ctx);
@@ -173,6 +178,11 @@ namespace iotsmartsys
                 std::atomic<bool> runtimeTasksEnabled_{false};
                 bool networkTaskStarted_{false};
                 bool transportTaskStarted_{false};
+                uint32_t lastMetricsPublishAtMs_{0};
+                uint32_t lastCpuTotalRunTime_{0};
+                uint32_t lastCpuIdleRunTime_{0};
+                bool hasCpuSample_{false};
+                bool cpuUsageHooksRegistered_{false};
                 TaskHandle_t networkTask_{nullptr};
                 TaskHandle_t transportTask_{nullptr};
                 core::SerialTransportChannel *uart_;
