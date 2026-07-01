@@ -7,7 +7,7 @@ namespace iotsmartsys::core
                                                      IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink)
         : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, GARAGE_STATE_UNKNOWN),
           currentState(GARAGE_STATE_UNKNOWN),
-          lastState(nullptr),
+          lastState(""),
           debounceTimeMs(debounceTimeMs),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
           hardwareAdapterLock(hardwareAdapterLock),
@@ -37,15 +37,15 @@ namespace iotsmartsys::core
     void GarageControlCapability::handle()
     {
         handleSensorState();
-        if (currentState == nullptr)
+        if (currentState.empty())
         {
             return;
         }
 
-        if (lastState == nullptr || strcmp(currentState, lastState) != 0)
+        if (currentState != lastState)
         {
-            logger.info("GarageControlCapability", "State changed from '%s' to '%s'", lastState ? lastState : "(none)", currentState);
-            updateState(currentState);
+            logger.info("GarageControlCapability", "State changed from '%s' to '%s'", lastState.empty() ? "(none)" : lastState.c_str(), currentState.c_str());
+            updateState(currentState.c_str());
             lastState = currentState;
         }
     }
@@ -53,11 +53,19 @@ namespace iotsmartsys::core
     void GarageControlCapability::open()
     {
         simulatePressCommand(command_hardware_adapter);
+        if (!isOpen())
+        {
+            setCurrentState(GARAGE_STATE_OPENING);
+        }
     }
 
     void GarageControlCapability::close()
     {
         simulatePressCommand(hardwareAdapterClose);
+        if (!isClosed())
+        {
+            setCurrentState(GARAGE_STATE_CLOSING);
+        }
     }
 
     void GarageControlCapability::lock()
@@ -65,9 +73,9 @@ namespace iotsmartsys::core
         simulatePressCommand(hardwareAdapterLock);
         locked = true;
 
-        String stateWithoutLock = String(currentState) + "_lock";
+        String stateWithoutLock = String(currentState.c_str()) + "_lock";
         setCurrentState(stateWithoutLock.c_str());
-        updateState(stateWithoutLock.c_str());
+        updateState(currentState.c_str());
     }
 
     void GarageControlCapability::unlock()
@@ -81,10 +89,10 @@ namespace iotsmartsys::core
     void GarageControlCapability::stop()
     {
         simulatePressCommand(hardwareAdapterStopUnlock);
-        String stateWithoutLock = currentState;
+        String stateWithoutLock = currentState.c_str();
         stateWithoutLock.replace("_lock", "");
         setCurrentState(stateWithoutLock.c_str());
-        updateState(stateWithoutLock.c_str());
+        updateState(currentState.c_str());
     }
 
     void GarageControlCapability::applyCommand(CapabilityCommand command)
@@ -153,23 +161,26 @@ namespace iotsmartsys::core
             return;
         }
 
-        if (isClosed())
+        const bool currentlyOpening = isCurrentState(GARAGE_STATE_OPENING);
+        const bool currentlyClosing = isCurrentState(GARAGE_STATE_CLOSING);
+
+        if (isClosed() && !currentlyOpening)
         {
-            if (strcmp(currentState, GARAGE_STATE_CLOSED) != 0)
+            if (!isCurrentState(GARAGE_STATE_CLOSED))
                 setCurrentState(GARAGE_STATE_CLOSED);
         }
-        else if (isOpen())
+        else if (isOpen() && !currentlyClosing)
         {
-            if (strcmp(currentState, GARAGE_STATE_OPENED) != 0)
+            if (!isCurrentState(GARAGE_STATE_OPENED))
                 setCurrentState(GARAGE_STATE_OPENED);
         }
         else
         {
-            if (isOpening())
+            if (currentlyOpening || isOpening())
             {
                 setCurrentState(GARAGE_STATE_OPENING);
             }
-            else if (isClosing())
+            else if (currentlyClosing || isClosing())
             {
                 setCurrentState(GARAGE_STATE_CLOSING);
             }
@@ -180,12 +191,14 @@ namespace iotsmartsys::core
     /// @return
     bool GarageControlCapability::isOpening()
     {
-        return (strcmp(currentState, GARAGE_STATE_CLOSED) == 0 && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+        return isCurrentState(GARAGE_STATE_OPENING) ||
+               (isCurrentState(GARAGE_STATE_CLOSED) && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
     }
 
     bool GarageControlCapability::isClosing()
     {
-        return (strcmp(currentState, GARAGE_STATE_OPENED) == 0 && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+        return isCurrentState(GARAGE_STATE_CLOSING) ||
+               (isCurrentState(GARAGE_STATE_OPENED) && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
     }
 
 }

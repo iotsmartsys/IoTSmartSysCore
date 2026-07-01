@@ -50,8 +50,8 @@ namespace iotsmartsys::core
 
     private:
         bool locked = false;
-        const char *currentState;
-        const char *lastState;
+        std::string currentState;
+        std::string lastState;
         long debounceTimeMs;
         int sensorOpenCompletedActualState = -1;
         int sensorCloseActualState = -1;
@@ -66,7 +66,8 @@ namespace iotsmartsys::core
 
         void simulatePressCommand(ICommandHardwareAdapter &adapter);
         void handleSensorState();
-        void setCurrentState(const char *newState) { currentState = newState; }
+        bool isCurrentState(const char *state) const { return currentState == state; }
+        void setCurrentState(const char *newState) { currentState = newState ? newState : ""; }
 
     public:
         void applyArgs(std::vector<std::pair<const char *, const char *>> args);
