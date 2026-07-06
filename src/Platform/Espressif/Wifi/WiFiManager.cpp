@@ -111,6 +111,16 @@ namespace iotsmartsys::core
         {
             return passwordForConfiguredSsid(cfg, ssid) != nullptr;
         }
+
+        bool isZeroIp(const IPAddress &ip)
+        {
+            return ip == IPAddress(0, 0, 0, 0);
+        }
+
+        bool hasUsableDns()
+        {
+            return !isZeroIp(WiFi.dnsIP(0)) || !isZeroIp(WiFi.dnsIP(1));
+        }
     }
 
     WiFiManager::WiFiManager(iotsmartsys::core::ILogger &log)
@@ -132,7 +142,8 @@ namespace iotsmartsys::core
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                            iotsmartsys::core::ConnectivityGate::IP_READY |
-                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
         }
 
         _eventId = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info)
@@ -205,9 +216,18 @@ namespace iotsmartsys::core
                 }
                 else
                 {
-                    _log.warn("WIFI", "DHCP timeout after association. Retrying WiFi connection. BSSID=%s RSSI=%d",
+                    _log.warn("WIFI", "WIFI_STATE=DHCP_TIMEOUT BSSID=%s RSSI=%d NETWORK_READY=false",
                               WiFi.BSSIDstr().c_str(),
                               WiFi.RSSI());
+                    {
+                        auto &gate = iotsmartsys::core::ConnectivityGate::instance();
+                        gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
+                                       iotsmartsys::core::ConnectivityGate::IP_READY |
+                                       iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED |
+                                       iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
+                    }
+                    WiFi.disconnect(false, false);
+                    delay(100);
                     scheduleRetry();
                 }
             }
@@ -241,7 +261,8 @@ namespace iotsmartsys::core
                     auto &gate = iotsmartsys::core::ConnectivityGate::instance();
                     gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                                    iotsmartsys::core::ConnectivityGate::IP_READY |
-                                   iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                                   iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED |
+                                   iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
                     
                 }
                 scheduleRetry();
@@ -261,6 +282,14 @@ namespace iotsmartsys::core
                                   _cfg.roamRssiThreshold,
                                   (unsigned long)(now - _lastRssiRoamAttemptMs),
                                   (unsigned long)_cfg.roamCooldownMs);
+                        break;
+                    }
+
+                    if (iotsmartsys::core::ConnectivityGate::instance().isSet(iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY))
+                    {
+                        _log.warn("WIFI", "RSSI=%d below threshold=%d, but application network operation is active. Keeping current connection.",
+                                  rssi,
+                                  _cfg.roamRssiThreshold);
                         break;
                     }
 
@@ -301,7 +330,8 @@ namespace iotsmartsys::core
             auto &gate = iotsmartsys::core::ConnectivityGate::instance();
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                            iotsmartsys::core::ConnectivityGate::IP_READY |
-                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
         }
 
         _state = WiFiState::Connecting;
@@ -616,6 +646,12 @@ namespace iotsmartsys::core
         _log.info("WIFI", "DNS_SERVER index=0 ip=%s", dns0Text.c_str());
         _log.info("WIFI", "DNS_SERVER index=1 ip=%s", dns1Text.c_str());
 
+        if (!hasUsableDns())
+        {
+            _log.warn("WIFI", "DNS_SERVER invalid (0.0.0.0). DNS_TEST skipped. NETWORK_READY=false");
+            return;
+        }
+
         IPAddress resolvedIp;
         const int resolved = WiFi.hostByName("api.iotsmartsys.tech", resolvedIp);
         const String resolvedText = resolvedIp.toString();
@@ -632,22 +668,39 @@ namespace iotsmartsys::core
         {
         case ARDUINO_EVENT_WIFI_STA_CONNECTED:
             _associated = true;
+            _gotIp = false;
             _lastDisconnectReason = 0;
-            _log.info("WIFI", "Associated with AP.");
+            _log.info("WIFI", "WIFI_STATE=ASSOCIATED BSSID=%s RSSI=%d NETWORK_READY=false",
+                      WiFi.BSSIDstr().c_str(),
+                      WiFi.RSSI());
             _nextActionAtMs = (_timeProvider ? _timeProvider->nowMs() : millis()) + _cfg.dhcpTimeoutMs;
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
+            gate.clearBits(iotsmartsys::core::ConnectivityGate::IP_READY |
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
             break;
 
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             _associated = true;
-            _gotIp = true;
             _lastDisconnectReason = 0;
+            logDnsDiagnostics();
+            if (!hasUsableDns())
+            {
+                _gotIp = false;
+                _log.warn("WIFI", "WIFI_STATE=GOT_IP dnsReady=false NETWORK_READY=false");
+                gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED);
+                gate.clearBits(iotsmartsys::core::ConnectivityGate::IP_READY |
+                               iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                break;
+            }
+
+            _gotIp = true;
             _connectionCount++;
             startTimeSync();
-            logDnsDiagnostics();
 
             gate.setBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                          iotsmartsys::core::ConnectivityGate::IP_READY);
+            _log.info("WIFI", "WIFI_STATE=GOT_IP ip=%s dnsReady=true NETWORK_READY=true",
+                      WiFi.localIP().toString().c_str());
             break;
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
@@ -662,7 +715,8 @@ namespace iotsmartsys::core
 
             gate.clearBits(iotsmartsys::core::ConnectivityGate::WIFI_CONNECTED |
                            iotsmartsys::core::ConnectivityGate::IP_READY |
-                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED);
+                           iotsmartsys::core::ConnectivityGate::MQTT_CONNECTED |
+                           iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
             break;
 
         default:

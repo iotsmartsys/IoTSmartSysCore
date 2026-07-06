@@ -136,5 +136,6 @@ namespace iotsmartsys::core::settings
         std::atomic<std::uint32_t> _pendingSeq{0};
         std::uint8_t _apiSyncFailures{0};
         std::uint64_t _nextApiSyncAtMs{0};
+        std::uint64_t _lastNetworkNotReadyLogAtMs{0};
     };
 } // namespace iotsmartsys::core::settings

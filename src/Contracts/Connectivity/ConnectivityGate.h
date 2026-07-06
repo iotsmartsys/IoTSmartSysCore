@@ -12,6 +12,7 @@ namespace iotsmartsys::core
         static constexpr uint32_t WIFI_CONNECTED = (1u << 0);
         static constexpr uint32_t IP_READY = (1u << 1);
         static constexpr uint32_t MQTT_CONNECTED = (1u << 2);
+        static constexpr uint32_t APP_NETWORK_BUSY = (1u << 3);
 
         static constexpr uint32_t NETWORK_READY_BITS = WIFI_CONNECTED | IP_READY;
 

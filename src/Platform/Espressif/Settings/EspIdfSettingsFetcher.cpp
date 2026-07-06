@@ -4,6 +4,7 @@
 
 #include "Platform/Espressif/Settings/EspIdfSettingsFetcher.h"
 #include "Contracts/Common/StateResult.h"
+#include "Contracts/Connectivity/ConnectivityGate.h"
 
 #include <cstring>
 #include <algorithm>
@@ -31,6 +32,11 @@ namespace iotsmartsys::platform::espressif
     {
         const std::time_t now = std::time(nullptr);
         return now >= kMinValidEpoch;
+    }
+
+    static bool isNetworkReady()
+    {
+        return iotsmartsys::core::ConnectivityGate::instance().isNetworkReady();
     }
 
     static std::string extractHostFromUrl(const char *url)
@@ -258,6 +264,8 @@ namespace iotsmartsys::platform::espressif
 
     void EspIdfSettingsFetcher::run()
     {
+        iotsmartsys::core::ConnectivityGate::instance().setBits(iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
+
         int http_status = -1;
         esp_err_t lastErr = ESP_FAIL;
         const std::string primaryUrl = _req.url ? _req.url : "";
@@ -272,6 +280,13 @@ namespace iotsmartsys::platform::espressif
                 {
                     break;
                 }
+                if (!isNetworkReady())
+                {
+                    _logger.warn("SettingsFetcher", "HTTP_FALLBACK skipped: network not ready. ConnectivityGate.bits=0x%08lx.",
+                                 (unsigned long)iotsmartsys::core::ConnectivityGate::instance().bits());
+                    finishAndCallback(StateResult::NetworkDown, -1, false);
+                    return;
+                }
                 _logger.warn("SettingsFetcher", "HTTPS_PRIMARY failed by transport err=%s(%d) status=%d. Trying HTTP_FALLBACK.",
                              esp_err_to_name(lastErr),
                              static_cast<int>(lastErr),
@@ -283,6 +298,16 @@ namespace iotsmartsys::platform::espressif
 
             for (std::uint8_t attempt = 1; attempt <= _req.max_attempts; ++attempt)
             {
+                if (!isNetworkReady())
+                {
+                    _logger.warn("SettingsFetcher", "API request aborted before protocol=%s attempt=%u: network not ready. ConnectivityGate.bits=0x%08lx.",
+                                 protocolLabel,
+                                 (unsigned)attempt,
+                                 (unsigned long)iotsmartsys::core::ConnectivityGate::instance().bits());
+                    finishAndCallback(StateResult::NetworkDown, -1, false);
+                    return;
+                }
+
                 if (_cancel)
                 {
                     finishAndCallback(StateResult::InvalidState, -1, true);
@@ -526,6 +551,8 @@ namespace iotsmartsys::platform::espressif
 
     void EspIdfSettingsFetcher::finishAndCallback(iotsmartsys::core::common::StateResult err, int http_status, bool cancelled)
     {
+        iotsmartsys::core::ConnectivityGate::instance().clearBits(iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
+
         SettingsFetchResult r;
         r.err = err;
         r.http_status = http_status;

@@ -1,4 +1,5 @@
 #include "App/Managers/DeviceRegistrationManager.h"
+#include "Contracts/Connectivity/ConnectivityGate.h"
 
 #include <Arduino.h>
 #include <cstring>
@@ -288,6 +289,16 @@ namespace iotsmartsys::app
 
         auto performRegistration = [&](const std::string &url, const char *protocolLabel, esp_err_t &outErr, int &outStatus) -> bool
         {
+            if (!iotsmartsys::core::ConnectivityGate::instance().isNetworkReady())
+            {
+                logger_.warn("DeviceRegistration", "Registration request skipped using protocol=%s: network not ready. ConnectivityGate.bits=0x%08lx.",
+                             protocolLabel ? protocolLabel : "(null)",
+                             (unsigned long)iotsmartsys::core::ConnectivityGate::instance().bits());
+                outErr = ESP_ERR_INVALID_STATE;
+                outStatus = -1;
+                return false;
+            }
+
             const bool useHttps = url.rfind("https://", 0) == 0;
             esp_http_client_config_t config = {};
             config.url = url.c_str();
@@ -344,12 +355,13 @@ namespace iotsmartsys::app
         esp_err_t err = ESP_FAIL;
         int statusCode = -1;
         const char *primaryProtocol = startsWith(registrationUrl, "https://") ? "HTTPS_PRIMARY" : "HTTP_PRIMARY";
+        iotsmartsys::core::ConnectivityGate::instance().setBits(iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
         bool performed = performRegistration(registrationUrl, primaryProtocol, err, statusCode);
 
         if (!performed && shouldUseHttpFallback(err, statusCode, registrationUrl))
         {
             const std::string fallbackUrl = buildHttpFallbackUrl(registrationUrl);
-            if (!fallbackUrl.empty())
+            if (!fallbackUrl.empty() && iotsmartsys::core::ConnectivityGate::instance().isNetworkReady())
             {
                 logger_.warn("DeviceRegistration", "HTTPS_PRIMARY failed by transport err=%s(%d) status=%d. Trying HTTP_FALLBACK.",
                              esp_err_to_name(err),
@@ -357,7 +369,13 @@ namespace iotsmartsys::app
                              statusCode);
                 performed = performRegistration(fallbackUrl, "HTTP_FALLBACK", err, statusCode);
             }
+            else if (!iotsmartsys::core::ConnectivityGate::instance().isNetworkReady())
+            {
+                logger_.warn("DeviceRegistration", "HTTP_FALLBACK skipped: network not ready. ConnectivityGate.bits=0x%08lx.",
+                             (unsigned long)iotsmartsys::core::ConnectivityGate::instance().bits());
+            }
         }
+        iotsmartsys::core::ConnectivityGate::instance().clearBits(iotsmartsys::core::ConnectivityGate::APP_NETWORK_BUSY);
 
         if (!performed)
         {

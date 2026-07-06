@@ -550,6 +550,15 @@ namespace iotsmartsys::core::settings
         {
             this->syncFromApi();
         }
+        else if (_settingsGate.level() == SettingsReadyLevel::Available && !networkReady && nowMs >= _nextApiSyncAtMs)
+        {
+            if (_logger && (nowMs - _lastNetworkNotReadyLogAtMs >= 10000))
+            {
+                _lastNetworkNotReadyLogAtMs = nowMs;
+                _logger->warn("SettingsManager", "API refresh skipped: network not ready. ConnectivityGate.bits=0x%08lx.",
+                              (unsigned long)gate.bits());
+            }
+        }
         //// _logger->info("SettingsManager", "_settingsGate.level() = %d e networkReady = %s (ConnectivityGate.bits=0x%08x)", (int)_settingsGate.level(), networkReady ? " conectado" : "não conectado", gate.bits());
     }
 
@@ -587,6 +596,17 @@ namespace iotsmartsys::core::settings
 
     void SettingsManager::syncFromApi()
     {
+        auto &networkGate = iotsmartsys::core::ConnectivityGate::instance();
+        if (!networkGate.isNetworkReady())
+        {
+            _logger->warn("SettingsManager", "API refresh skipped: network not ready. ConnectivityGate.bits=0x%08lx.",
+                          (unsigned long)networkGate.bits());
+            _settingsGate.setLevel(_has_current ? SettingsReadyLevel::Available : SettingsReadyLevel::None,
+                                   iotsmartsys::core::common::StateResult::NetworkDown);
+            scheduleApiRetryBackoff();
+            return;
+        }
+
         if (_fetcher.isRunning())
         {
             _logger->warn("[SettingsManager] syncFromApi() skipped: fetch already running.");
