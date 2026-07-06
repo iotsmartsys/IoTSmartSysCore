@@ -8,6 +8,7 @@ namespace iotsmartsys::core::provisioning
     {
         String ssid;
         String password;
+        String wifiProfile;
         String deviceApiKey;
         String basicAuth;
         String deviceApiUrl;

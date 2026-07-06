@@ -1,4 +1,5 @@
 #include "Platform/Arduino/Provisioning/ProvisioningJsonExtractor.h"
+#include "Platform/Common/Json/JsonPathExtractor.h"
 
 namespace iotsmartsys::core::provisioning
 {
@@ -175,6 +176,59 @@ namespace iotsmartsys::core::provisioning
         (void)tryExtractJsonStringField(trimmed, "device_api_key", out.deviceApiKey);
         (void)tryExtractJsonStringField(trimmed, "basic_auth", out.basicAuth);
         (void)tryExtractJsonStringField(trimmed, "device_api_url", out.deviceApiUrl);
+
+        iotsmartsys::platform::common::json::JsonPathExtractor ext(trimmed.c_str(), trimmed.length());
+
+        const auto assignIfFound = [&ext](const char *path, String &target)
+        {
+            std::string found;
+            if (ext.getString(path, found) && !found.empty())
+            {
+                target = found.c_str();
+                return true;
+            }
+            return false;
+        };
+
+        assignIfFound("wifi.profile", out.wifiProfile);
+        if (out.wifiProfile.length() == 0)
+        {
+            out.wifiProfile = "primary";
+        }
+
+        const auto readWifiProfile = [&assignIfFound](const char *profile, String &ssid, String &password)
+        {
+            String ssidPath = String("wifi.") + profile + ".ssid";
+            String passwordPath = String("wifi.") + profile + ".password";
+            const bool hasSsid = assignIfFound(ssidPath.c_str(), ssid);
+            const bool hasPassword = assignIfFound(passwordPath.c_str(), password);
+            return hasSsid || hasPassword;
+        };
+
+        bool selectedProfileFound = false;
+        if (out.wifiProfile == "secondary")
+        {
+            selectedProfileFound = readWifiProfile("secondary", out.ssid, out.password);
+        }
+        else if (out.wifiProfile == "tertiary")
+        {
+            selectedProfileFound = readWifiProfile("tertiary", out.ssid, out.password);
+        }
+        else
+        {
+            selectedProfileFound = readWifiProfile("primary", out.ssid, out.password);
+            out.wifiProfile = "primary";
+        }
+
+        if (!selectedProfileFound)
+        {
+            assignIfFound("wifi.ssid", out.ssid);
+            assignIfFound("wifi.password", out.password);
+        }
+
+        assignIfFound("api.key", out.deviceApiKey);
+        assignIfFound("api.basic_auth", out.basicAuth);
+        assignIfFound("api.url", out.deviceApiUrl);
 
         // If we didn't find anything, consider invalid JSON for our expected shape
         if (out.ssid.length() == 0 &&

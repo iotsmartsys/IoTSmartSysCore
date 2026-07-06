@@ -35,9 +35,10 @@ namespace iotsmartsys::platform::espressif
         static void taskEntry(void *arg);
 
         void run(); // executa o fetch (com retries)
-        esp_err_t performOnce(int &out_http_status);
+        esp_err_t performOnce(const char *url, const char *protocol_label, int &out_http_status);
 
         bool shouldRetry(esp_err_t err, int http_status, std::uint8_t attempt) const;
+        bool shouldUseHttpFallback(esp_err_t err, int http_status, const char *url) const;
         std::uint32_t computeBackoffMs(std::uint8_t attempt) const;
 
         // estado

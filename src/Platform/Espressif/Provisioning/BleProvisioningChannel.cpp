@@ -2,6 +2,8 @@
 #if defined(BLE_PROVISIONING_CHANNEL_ENABLE) && (BLE_PROVISIONING_CHANNEL_ENABLE != 0)
 #include "BleProvisioningChannel.h"
 
+#include "Platform/Arduino/Provisioning/ProvisioningJsonExtractor.h"
+
 #include <cstring>
 #include <string>
 #include <vector>
@@ -409,6 +411,7 @@ namespace iotsmartsys::core::provisioning
             DeviceConfig cfg;
             cfg.wifi.ssid = _wifiSsidStorage.c_str();
             cfg.wifi.password = _wifiPasswordStorage.c_str();
+            cfg.wifi.profile = _wifiProfileStorage.empty() ? nullptr : _wifiProfileStorage.c_str();
             cfg.deviceApiUrl = _deviceApiUrlStorage.empty() ? nullptr : _deviceApiUrlStorage.c_str();
             cfg.deviceApiKey = _deviceApiKeyStorage.empty() ? nullptr : _deviceApiKeyStorage.c_str();
             cfg.basicAuth = _basicAuthStorage.empty() ? nullptr : _basicAuthStorage.c_str();
@@ -424,6 +427,7 @@ namespace iotsmartsys::core::provisioning
     {
         _wifiSsidStorage.clear();
         _wifiPasswordStorage.clear();
+        _wifiProfileStorage.clear();
         _deviceApiUrlStorage.clear();
         _deviceApiKeyStorage.clear();
         _basicAuthStorage.clear();
@@ -434,6 +438,26 @@ namespace iotsmartsys::core::provisioning
         }
 
         std::string p(payload);
+        const char *first = payload;
+        while (*first == ' ' || *first == '\t' || *first == '\n' || *first == '\r')
+        {
+            ++first;
+        }
+
+        if (*first == '{')
+        {
+            ProvisioningJsonFields fields;
+            if (ProvisioningJsonExtractor::tryParse(String(payload), fields))
+            {
+                _wifiSsidStorage = fields.ssid.c_str();
+                _wifiPasswordStorage = fields.password.c_str();
+                _wifiProfileStorage = fields.wifiProfile.c_str();
+                _deviceApiUrlStorage = fields.deviceApiUrl.c_str();
+                _deviceApiKeyStorage = fields.deviceApiKey.c_str();
+                _basicAuthStorage = fields.basicAuth.c_str();
+                return;
+            }
+        }
 
         auto nextPart = [](const std::string &s, size_t &pos) -> std::string
         {
@@ -458,6 +482,7 @@ namespace iotsmartsys::core::provisioning
         _deviceApiUrlStorage = nextPart(p, pos);
         _deviceApiKeyStorage = nextPart(p, pos);
         _basicAuthStorage = nextPart(p, pos);
+        _wifiProfileStorage = "primary";
     }
 
     bool BleProvisioningChannel::initBleStack()

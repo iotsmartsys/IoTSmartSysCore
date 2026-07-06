@@ -99,9 +99,23 @@ namespace iotsmartsys::app
                                                   newSettings.in_config_mode = false;
                                                   newSettings.wifi.ssid = cfg.wifi.ssid ? cfg.wifi.ssid : "";
                                                   newSettings.wifi.password = cfg.wifi.password ? cfg.wifi.password : "";
-                                                  newSettings.wifi.primary.ssid = newSettings.wifi.ssid;
-                                                  newSettings.wifi.primary.password = newSettings.wifi.password;
-                                                  newSettings.wifi.profile = "primary";
+                                                  newSettings.wifi.profile = cfg.wifi.profile ? cfg.wifi.profile : "primary";
+                                                  if (newSettings.wifi.profile == "secondary")
+                                                  {
+                                                      newSettings.wifi.secondary.ssid = newSettings.wifi.ssid;
+                                                      newSettings.wifi.secondary.password = newSettings.wifi.password;
+                                                  }
+                                                  else if (newSettings.wifi.profile == "tertiary")
+                                                  {
+                                                      newSettings.wifi.tertiary.ssid = newSettings.wifi.ssid;
+                                                      newSettings.wifi.tertiary.password = newSettings.wifi.password;
+                                                  }
+                                                  else
+                                                  {
+                                                      newSettings.wifi.profile = "primary";
+                                                      newSettings.wifi.primary.ssid = newSettings.wifi.ssid;
+                                                      newSettings.wifi.primary.password = newSettings.wifi.password;
+                                                  }
                                                   newSettings.api.url = cfg.deviceApiUrl ? cfg.deviceApiUrl : "";
                                                   newSettings.api.key = cfg.deviceApiKey ? cfg.deviceApiKey : "";
                                                   newSettings.api.basic_auth = cfg.basicAuth ? cfg.basicAuth : "";

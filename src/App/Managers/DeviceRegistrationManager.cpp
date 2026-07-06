@@ -1,6 +1,7 @@
 #include "App/Managers/DeviceRegistrationManager.h"
 
 #include <Arduino.h>
+#include <cstring>
 
 #if defined(ESP32) && __has_include("esp_http_client.h")
 #define IOTSMARTSYS_HAS_ESP_HTTP_CLIENT 1
@@ -36,6 +37,63 @@ namespace iotsmartsys::app
                 value.pop_back();
             }
         }
+
+        const char *nullableString(const char *value)
+        {
+            return value ? value : "(null)";
+        }
+
+        bool startsWith(const std::string &value, const char *prefix)
+        {
+            return prefix && value.rfind(prefix, 0) == 0;
+        }
+
+        std::string extractHostFromUrl(const std::string &url)
+        {
+            const std::size_t schemePos = url.find("://");
+            const std::size_t hostStart = (schemePos == std::string::npos) ? 0 : schemePos + 3;
+            if (hostStart >= url.size() || url[hostStart] == ':')
+            {
+                return {};
+            }
+
+            const std::size_t hostEnd = url.find_first_of(":/?", hostStart);
+            return url.substr(hostStart, hostEnd == std::string::npos ? std::string::npos : hostEnd - hostStart);
+        }
+
+        std::string buildHttpFallbackUrl(const std::string &url)
+        {
+            if (!startsWith(url, "https://"))
+            {
+                return {};
+            }
+
+            if (extractHostFromUrl(url) != "api.iotsmartsys.tech")
+            {
+                return {};
+            }
+
+            std::string fallback = url;
+            fallback.replace(0, std::strlen("https://"), "http://");
+            return fallback;
+        }
+
+#if IOTSMARTSYS_HAS_ESP_HTTP_CLIENT
+        bool shouldUseHttpFallback(esp_err_t err, int statusCode, const std::string &url)
+        {
+            if (err == ESP_OK || statusCode > 0 || !startsWith(url, "https://"))
+            {
+                return false;
+            }
+
+            if (err == ESP_ERR_NO_MEM || err == ESP_ERR_INVALID_ARG || err == ESP_ERR_INVALID_STATE)
+            {
+                return false;
+            }
+
+            return true;
+        }
+#endif
     }
 
     struct DeviceRegistrationManager::RegistrationTaskContext
@@ -228,40 +286,81 @@ namespace iotsmartsys::app
             wifi_.getMacAddress() ? wifi_.getMacAddress() : "",
             wifi_.getIpAddress() ? wifi_.getIpAddress() : "");
 
-        const bool useHttps = registrationUrl.rfind("https://", 0) == 0;
-
-        esp_http_client_config_t config = {};
-        config.url = registrationUrl.c_str();
-        config.method = HTTP_METHOD_POST;
-        config.timeout_ms = kHttpTimeoutMs;
-        if (useHttps)
+        auto performRegistration = [&](const std::string &url, const char *protocolLabel, esp_err_t &outErr, int &outStatus) -> bool
         {
-            config.cert_pem = GTS_ROOT_R4_PEM;
-            config.skip_cert_common_name_check = false;
+            const bool useHttps = url.rfind("https://", 0) == 0;
+            esp_http_client_config_t config = {};
+            config.url = url.c_str();
+            config.method = HTTP_METHOD_POST;
+            config.timeout_ms = kHttpTimeoutMs;
+            if (useHttps)
+            {
+                config.cert_pem = GTS_ROOT_R4_PEM;
+                config.skip_cert_common_name_check = false;
+            }
+
+            logger_.info("DeviceRegistration", "Registration request protocol=%s url=%s",
+                         protocolLabel ? protocolLabel : "(null)",
+                         nullableString(config.url));
+            logger_.info("DeviceRegistration", "HTTP_CONFIG_FULL_URL url=%s", nullableString(config.url));
+            logger_.info("DeviceRegistration", "HTTP_CONFIG config.url=%s config.host=%s config.path=%s config.port=%d config.transport_type=%d",
+                         nullableString(config.url),
+                         nullableString(config.host),
+                         nullableString(config.path),
+                         static_cast<int>(config.port),
+                         static_cast<int>(config.transport_type));
+
+            esp_http_client_handle_t client = esp_http_client_init(&config);
+            if (!client)
+            {
+                logger_.warn("DeviceRegistration", "Failed to initialize esp_http_client for URL: %s", url.c_str());
+                outErr = ESP_ERR_NO_MEM;
+                outStatus = -1;
+                return false;
+            }
+
+            esp_http_client_set_header(client, "Content-Type", "application/json");
+            esp_http_client_set_header(client, "x-api-key", settings.api.key.c_str());
+            esp_http_client_set_header(client, "Authorization", settings.api.basic_auth.c_str());
+            esp_http_client_set_post_field(client, payload.c_str(), static_cast<int>(payload.length()));
+
+            outErr = esp_http_client_perform(client);
+            outStatus = esp_http_client_get_status_code(client);
+            esp_http_client_cleanup(client);
+
+            if (outErr != ESP_OK)
+            {
+                logger_.warn("DeviceRegistration", "Registration request failed using protocol=%s. err=%s(%d) HTTP %d.",
+                             protocolLabel ? protocolLabel : "(null)",
+                             esp_err_to_name(outErr),
+                             static_cast<int>(outErr),
+                             outStatus);
+                return false;
+            }
+
+            return true;
+        };
+
+        esp_err_t err = ESP_FAIL;
+        int statusCode = -1;
+        const char *primaryProtocol = startsWith(registrationUrl, "https://") ? "HTTPS_PRIMARY" : "HTTP_PRIMARY";
+        bool performed = performRegistration(registrationUrl, primaryProtocol, err, statusCode);
+
+        if (!performed && shouldUseHttpFallback(err, statusCode, registrationUrl))
+        {
+            const std::string fallbackUrl = buildHttpFallbackUrl(registrationUrl);
+            if (!fallbackUrl.empty())
+            {
+                logger_.warn("DeviceRegistration", "HTTPS_PRIMARY failed by transport err=%s(%d) status=%d. Trying HTTP_FALLBACK.",
+                             esp_err_to_name(err),
+                             static_cast<int>(err),
+                             statusCode);
+                performed = performRegistration(fallbackUrl, "HTTP_FALLBACK", err, statusCode);
+            }
         }
 
-        esp_http_client_handle_t client = esp_http_client_init(&config);
-        if (!client)
+        if (!performed)
         {
-            logger_.warn("DeviceRegistration", "Failed to initialize esp_http_client for URL: %s", registrationUrl.c_str());
-            return false;
-        }
-
-        esp_http_client_set_header(client, "Content-Type", "application/json");
-        esp_http_client_set_header(client, "x-api-key", settings.api.key.c_str());
-        esp_http_client_set_header(client, "Authorization", settings.api.basic_auth.c_str());
-        esp_http_client_set_post_field(client, payload.c_str(), static_cast<int>(payload.length()));
-
-        const esp_err_t err = esp_http_client_perform(client);
-        const int statusCode = esp_http_client_get_status_code(client);
-        esp_http_client_cleanup(client);
-
-        if (err != ESP_OK)
-        {
-            logger_.warn("DeviceRegistration", "Registration request failed. err=%s(%d) HTTP %d.",
-                         esp_err_to_name(err),
-                         static_cast<int>(err),
-                         statusCode);
             return false;
         }
 

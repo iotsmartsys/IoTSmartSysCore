@@ -38,7 +38,11 @@ namespace iotsmartsys::core
         uint8_t maxFastRetries = 5;
         uint32_t reconnectMinUptimeMs = 3000;
         uint32_t roamCheckIntervalMs = 30000;
+        uint32_t roamCooldownMs = 60000;
+        uint32_t roamScanCacheMaxAgeMs = 120000;
         int8_t roamRssiThreshold = -75;
+        int8_t roamCandidateMinRssi = -75;
+        int8_t roamMinImprovementDb = 8;
         bool meshRoaming = true;
 
         bool persistent = false;
@@ -128,13 +132,25 @@ namespace iotsmartsys::core
         void scheduleRetry();
         uint32_t computeBackoffMs() const;
         bool selectBestAccessPoint();
+        bool evaluateBetterAccessPoint(int32_t currentRssi);
+        void updateAccessPointCache(uint32_t nowMs);
         void startTimeSync();
         bool isSystemTimeValid() const;
+        void logDnsDiagnostics();
 
         void onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
         static const char *statusToString(wl_status_t status);
         static const char *disconnectReasonToString(uint8_t reason);
         WiFiEventId_t _eventId{};
+
+        struct ScannedAccessPoint
+        {
+            std::string ssid;
+            uint8_t bssid[6]{};
+            int32_t channel{0};
+            int32_t rssi{-127};
+            uint32_t lastSeenMs{0};
+        };
 
     private:
         iotsmartsys::core::ILogger &_log;
@@ -149,6 +165,7 @@ namespace iotsmartsys::core
         uint32_t _attempt{0};
         uint32_t _nextActionAtMs{0};
         uint32_t _lastRoamCheckMs{0};
+        uint32_t _lastRssiRoamAttemptMs{0};
         uint16_t _credentialAttemptIndex{0};
         uint8_t _lastDisconnectReason{0};
         uint8_t _dhcpWaitExtensions{0};
@@ -164,9 +181,11 @@ namespace iotsmartsys::core
         uint32_t _connectionCount{0};
         bool _associated{false};
         bool _gotIp{false};
+        bool _usePreparedTargetOnce{false};
         iotsmartsys::core::ITimeProvider *_timeProvider{nullptr};
         bool _ntpSyncStarted{false};
         bool _ntpSyncLogged{false};
+        std::vector<ScannedAccessPoint> _apCache;
 
     };
 

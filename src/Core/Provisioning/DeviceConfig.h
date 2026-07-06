@@ -19,6 +19,7 @@ namespace iotsmartsys::core::provisioning
     {
         const char *ssid = nullptr;
         const char *password = nullptr;
+        const char *profile = nullptr;
     };
 
     /// @brief Configuração completa de provisionamento do dispositivo.
