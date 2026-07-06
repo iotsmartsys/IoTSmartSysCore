@@ -41,7 +41,11 @@
 #endif
 
 #ifndef IOTSMARTSYS_API_URL
-#define IOTSMARTSYS_API_URL "https://api.iotsmartsys.tech/devices/api/v1/devices/:device_id/settings"
+#define IOTSMARTSYS_API_URL "https://api.iotsmartsys.tech/devices/api/v1/devices"
+#endif
+
+#ifndef IOTSMARTSYS_API_DEVICE_SETTINGS_ENDPOINT
+#define IOTSMARTSYS_API_DEVICE_SETTINGS_ENDPOINT "/:device_id/settings"
 #endif
 
 #ifndef IOTSMARTSYS_REDACT_SECRETS

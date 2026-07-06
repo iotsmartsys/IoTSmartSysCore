@@ -13,7 +13,7 @@ namespace iotsmartsys::core::settings
     namespace
     {
         constexpr const char *kDefaultDeviceSettingsEndpoint =
-            "devices/:device_id/settings?prefix_auto_format_properties_json=mqtt,firmware,wifi&use_key_value=no";
+            "/:device_id/settings?prefix_auto_format_properties_json=mqtt,firmware,wifi&use_key_value=no";
         constexpr const char *kDefaultSettingsQuery =
             "prefix_auto_format_properties_json=mqtt,firmware,wifi&use_key_value=no";
         constexpr std::uint32_t kApiSyncInitialBackoffMs = 5000;
@@ -69,9 +69,12 @@ namespace iotsmartsys::core::settings
                 return url;
             }
 
-            url += "/";
+            if (*endpoint != '/')
+            {
+                url += "/";
+            }
             url += endpoint;
-            return url;
+            return appendDefaultSettingsQueryIfNeeded(url);
         }
 
         const char *compiledEnvironmentId()
