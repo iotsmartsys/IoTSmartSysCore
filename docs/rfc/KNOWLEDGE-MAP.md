@@ -8,11 +8,11 @@
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM 1.4 | `docs/rfc/EKM-GUIDELINES.md` | Active | Validated |
+| Governança EKM 1.5 | `docs/rfc/EKM-GUIDELINES.md` | Active | Validated |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
-| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
+| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | In Progress |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -31,7 +31,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Primeiro recorte implementado e compilável; validação física pendente |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` pendentes de correção mecânica (`EKM-GAP-0007`) |
 
 ## 3. Lacunas
 
@@ -71,6 +71,18 @@ Revisar `docs/REPO_DOSSIER.md`, corrigir referências obsoletas e decidir se par
 
 Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_dht`, o uso privado da infraestrutura real e a compilação dos dois environments em CI. A especificação foi promovida para `Active`.
 
+### EKM-GAP-0007 — Conformidade dos exemplos com o pinout MCB R1
+
+**Estado:** Open
+
+Technical Readiness Review de `HWEX-018` a `HWEX-023` e `HWEX-DEC-005` concluída em 23/07/2026 com resultado `Implementable` (evidência em `EKM-CHG-0002`). `HWEX-018` e `HWEX-022` estão conformes. `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` não estão conformes: `basic_light` e `environment_dht` usam literais/macros próprias (`EXAMPLE_LIGHT_PIN=26`, `EXAMPLE_DHT_PIN=23`) em vez de `ITS_MCB01_RELAY_PIN` e `ITS_MCB01_TEMPERATURE_SENSOR_PIN`. A lacuna permanece `Open` até a correção mecânica ser aplicada e validada.
+
+### EKM-GAP-0008 — EKM Gate e garantias automatizadas
+
+**Estado:** Open
+
+Definir futuramente, em especificação própria, arquitetura, metadados, verificações, limites, adoção e critérios de validação de um `EKM Gate`. O mecanismo está apenas previsto; nenhuma garantia automática está implantada atualmente.
+
 ## 4. Baseline inicial
 
 - Branch: `main`.
@@ -83,3 +95,4 @@ Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_d
 ## 5. Evolução da governança
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
+- `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.

@@ -2,11 +2,11 @@
 
 **Status:** Active
 
-**Versão:** 1.1
+**Versão:** 1.2
 
-**Modelo EKM:** 1.4
+**Modelo EKM:** 1.5
 
-**Última atualização:** 22/07/2026
+**Última atualização:** 23/07/2026
 
 ## 1. Objetivo
 
@@ -36,7 +36,7 @@ Conflitos entre fontes normativas devem bloquear a mudança até reconciliação
 
 ## 3. Estados das especificações
 
-Cada especificação possui dois estados independentes.
+Cada especificação possui estados normativo, de implementação e de entrega independentes.
 
 ### 3.1 Estado normativo
 
@@ -59,6 +59,14 @@ Cada especificação possui dois estados independentes.
 - `Retired`: implementação deliberadamente removida.
 
 Alterar um estado exige evidência registrada no changelog.
+
+### 3.3 Estado da entrega
+
+- `Not Ready`: ainda não satisfaz todos os requisitos de integração.
+- `Ready for Integration`: implementação, validações e conhecimento estão reconciliados e podem seguir para PR/merge.
+- `Done`: a versão da especificação e sua implementação foram integradas à referência de produção.
+
+Neste projeto, a referência inicial de produção é a branch `main`. `Implemented` informa que o código foi produzido; `Validated`, que o comportamento foi comprovado; `Done`, que conhecimento e implementação chegaram à produção. Esses estados não são equivalentes.
 
 ## 4. Adoção em projeto legado
 
@@ -130,6 +138,19 @@ A análise não autoriza o executor a corrigir automaticamente a especificação
 
 Durante `Needs Clarification`, somente o registro da análise, a transação ou lacuna EKM e a correção normativa explicitamente aprovada podem ser alterados. Código, build, testes, automação e demais artefatos de implementação permanecem intocados.
 
+### 5.3 Evolução antes e depois da produção
+
+Antes de `Done`, a mesma especificação pode ser revisada, retornar a `Pending Review` ou `In Progress` e repetir a Technical Readiness Review.
+
+Após `Done`, a identidade formada por ID e versão é imutável. Seu conteúdo não pode ser reescrito para representar comportamento posterior. Evoluções devem ser novas especificações e declarar uma relação explícita:
+
+- `Amends`: complementa ou altera parte do comportamento;
+- `Supersedes`: substitui integralmente;
+- `Corrects`: corrige requisito ou comportamento defeituoso;
+- `Retires`: remove deliberadamente a funcionalidade.
+
+Eventos posteriores e mudanças de vigência são registrados no mapa e changelog, sem reescrever a especificação integrada. A fonte vigente é determinada pela especificação original combinada com suas relações ativas.
+
 ## 6. Transação EKM
 
 Toda mudança funcional ou normativa relevante usa um identificador `EKM-CHG-NNNN` e um destes estados:
@@ -160,7 +181,20 @@ Antes do encerramento, reconciliar separadamente:
 4. especificações e governança;
 5. todas as diferenças em relação ao worktree inicial.
 
-## 8. Definition of Done EKM
+## 8. Definition of Ready for Integration e Done
+
+Uma mudança funcional alcança `Ready for Integration` quando:
+
+- a Technical Readiness Review válida declarou a especificação `Implementable` antes da primeira alteração de implementação;
+- requisitos e critérios de aceite foram atendidos;
+- validações obrigatórias foram executadas com sucesso;
+- implementação e fontes de conhecimento foram reconciliadas;
+- mapa, lacunas, relatório e operações externas refletem o estado real;
+- não existe pendência obrigatória ou bloqueante.
+
+`Done` somente é alcançado quando a versão pronta e sua implementação são integradas à `main`, com evidência da integração. Validação pendente pode justificar `Implemented`, mas não `Ready for Integration` ou `Done` quando for critério obrigatório.
+
+## 9. Definition of Done da transação EKM
 
 Uma transação só pode ser `Closed` quando:
 
@@ -175,7 +209,24 @@ Uma transação só pode ser `Closed` quando:
 
 Build aprovado, isoladamente, não comprova conformidade EKM.
 
-## 9. Interrupções e regressões
+Para mudanças funcionais regidas pelo modelo 1.5, o encerramento requer `Done`. Transações exclusivamente investigativas ou de governança podem usar critério próprio aprovado, desde que não declarem entrega funcional.
+
+## 10. Automação e garantias previstas
+
+A EKM prevê um futuro mecanismo automatizado, denominado provisoriamente `EKM Gate`, para reduzir dependência de disciplina individual e proteger a integração à produção.
+
+O objetivo futuro é verificar automaticamente aspectos comprováveis, como estrutura, metadados, relações entre especificações, imutabilidade de versões em produção, evidência de Technical Readiness, rastreabilidade, transições de estado e reconciliação exigida antes do merge.
+
+O Gate e os mecanismos de Automação e Garantias estão em estado `Planned / Not Defined`:
+
+- arquitetura, formato de metadados, regras executáveis e implantação ainda não foram especificados;
+- não existe garantia automática vigente;
+- sua ausência não pode ser apresentada como validação nem bloquear retroativamente o processo manual atual;
+- completude semântica e decisões de intenção continuam sob responsabilidade humana, mesmo após futura automação.
+
+A implementação dependerá de especificação própria, validação experimental e integração deliberada às políticas da `main`.
+
+## 11. Interrupções e regressões
 
 Ao encontrar regressão, contradição ou perda de conhecimento:
 

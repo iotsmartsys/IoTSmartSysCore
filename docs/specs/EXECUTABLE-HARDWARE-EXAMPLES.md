@@ -6,11 +6,15 @@
 
 **Estado normativo:** Active
 
-**Estado da implementação:** Implemented
+**Estado da implementação:** In Progress
 
-**Versão:** 1.0
+**Estado da entrega:** Not Ready
 
-**Última atualização:** 22/07/2026
+**Technical readiness:** Implementable
+
+**Versão:** 1.1
+
+**Última atualização:** 23/07/2026
 
 ## 1. Objetivo
 
@@ -53,7 +57,7 @@ A seleção deve ocorrer em build time. O environment informa um identificador d
 
 Essa abordagem evita copiar arquivos antes do build, evita múltiplos `setup()`/`loop()` e preserva `src/main.cpp` como aplicação padrão do projeto.
 
-Os nomes finais de arquivos e macros podem ser ajustados na implementação, desde que o contrato de seleção permaneça equivalente e não dependa de edição manual de fontes.
+Os nomes finais de arquivos e macros próprios da infraestrutura de seleção podem ser ajustados na implementação, desde que o contrato permaneça equivalente e não dependa de edição manual de fontes. Símbolos oficiais de pinout da placa não podem ser substituídos, redefinidos ou inferidos pelo implementador.
 
 ## 5. Organização esperada
 
@@ -89,13 +93,19 @@ configs/
 - **HWEX-008:** nenhum exemplo pode exceder o limite intencional de oito capabilities.
 - **HWEX-009:** recursos que exigem chamadas periódicas próprias devem ser conduzidos no `loop()` antes ou junto de `app.handle()`, conforme seus contratos públicos.
 - **HWEX-010:** cada environment deve declarar ou herdar explicitamente placa, framework, flags e dependências necessárias.
-- **HWEX-011:** pinos e periféricos devem ser configuráveis pelo environment ou por uma configuração de hardware claramente localizada; não podem ficar ocultos em código sem documentação.
+- **HWEX-011:** pinos e periféricos devem vir do pinout oficial da board selecionada. Somente placas sem pinout normativo podem usar configuração explícita pelo environment ou por configuração de hardware claramente localizada.
 - **HWEX-012:** credenciais, tokens e endpoints privados não podem ser versionados nos exemplos.
 - **HWEX-013:** a ausência de uma configuração obrigatória deve causar erro de build compreensível, em vez de produzir firmware com valores perigosos ou silenciosos.
 - **HWEX-014:** o firmware deve registrar no boot o identificador do exemplo e as configurações de hardware relevantes, sem revelar segredos.
 - **HWEX-015:** cada exemplo deve possuir um procedimento de hardware com montagem, estímulo, comportamento esperado e evidência mínima.
 - **HWEX-016:** os exemplos devem poder ser compilados sem upload para detectar regressões de API.
 - **HWEX-017:** alteração de API pública deve atualizar os exemplos afetados na mesma transação EKM.
+- **HWEX-018:** environments `iotsmartsys_mcb_r1` devem importar automaticamente o pinout definido em `src/Platform/Espressif/Pinouts/SmartSys_MCB01_Pinouts.h` por meio da seleção da board; exemplos não podem incluir uma cópia ou uma definição paralela do pinout.
+- **HWEX-019:** código e configuração dos exemplos MCB R1 devem referenciar os símbolos semânticos oficiais do pinout, sem literais numéricos de GPIO para funções cobertas pelo arquivo.
+- **HWEX-020:** `basic_light` deve controlar a saída binária pelo símbolo `ITS_MCB01_RELAY_PIN`. `LED_BUILTIN` representa o LED da placa e não pode substituir o pino do relé.
+- **HWEX-021:** `environment_dht` deve usar `ITS_MCB01_TEMPERATURE_SENSOR_PIN` para o sinal do DHT11.
+- **HWEX-022:** environments baseados em `iotsmartsys_mcb_r1` e seus `build_flags` não podem redefinir `LED_BUILTIN`, `ITS_MCB01_RELAY_PIN`, `ITS_MCB01_TEMPERATURE_SENSOR_PIN` ou outro símbolo fornecido pelo pinout selecionado. Essa restrição não define o pinout do environment genérico `esp32_dev`.
+- **HWEX-023:** se a board selecionada não importar o pinout esperado ou não houver um símbolo inequívoco para a função demonstrada, a Technical Readiness Review deve resultar em `Needs Clarification`; o executor não pode escolher um GPIO por equivalência numérica ou conveniência.
 
 ## 7. Contrato de nomenclatura
 
@@ -155,6 +165,24 @@ Configurações comuns de placa devem ser reutilizadas por mais de um exemplo. P
 
 Um mesmo exemplo pode possuir environments para diferentes placas, desde que sua compatibilidade de pinos e periféricos seja comprovada.
 
+### 10.1 Contrato de pinout da MCB R1
+
+Para `iotsmartsys_mcb_r1`, a fonte normativa de GPIOs é:
+
+```text
+src/Platform/Espressif/Pinouts/SmartSys_MCB01_Pinouts.h
+```
+
+O arquivo é importado automaticamente pela infraestrutura da board selecionada. Exemplos devem consumir seus símbolos semânticos, mantendo separadas as funções físicas da placa:
+
+| Função | Símbolo obrigatório |
+|---|---|
+| LED integrado | `LED_BUILTIN` |
+| Saída binária/relé | `ITS_MCB01_RELAY_PIN` |
+| Sinal do DHT11 | `ITS_MCB01_TEMPERATURE_SENSOR_PIN` |
+
+Os valores numéricos resolvidos podem ser apresentados no README para montagem e diagnóstico, mas não substituem os símbolos no código ou na configuração. Alterar o arquivo oficial de pinout está fora do escopo desta especificação.
+
 ## 11. Segurança e operação
 
 - Saídas devem iniciar em estado seguro definido pelo exemplo.
@@ -205,8 +233,9 @@ O primeiro recorte de implementação deve validar a infraestrutura, não cobrir
 - **HWEX-DEC-002:** os primeiros exemplos são `basic_light` e `environment_dht`.
 - **HWEX-DEC-003:** os exemplos podem usar a infraestrutura externa real atual somente por configuração privada já existente; nenhum segredo pode ser incorporado ao código ou à configuração versionada.
 - **HWEX-DEC-004:** a matriz inicial de CI deve compilar, sem upload, `example_basic_light_mcb_r1` e `example_environment_dht_mcb_r1`.
+- **HWEX-DEC-005:** o pinout oficial importado pela board é a única autoridade para GPIOs da MCB R1; exemplos não podem redefini-lo ou inferir pinos alternativos.
 
-As decisões foram aprovadas pelo responsável humano em 22/07/2026.
+`HWEX-DEC-001` a `HWEX-DEC-004` foram aprovadas pelo responsável humano em 22/07/2026. `HWEX-DEC-005` foi aprovada em 23/07/2026 durante a reabertura normativa da especificação.
 
 ## 15. Fora de escopo
 
@@ -227,6 +256,9 @@ As decisões foram aprovadas pelo responsável humano em 22/07/2026.
 - pelo menos um exemplo é gravado e validado em ESP32;
 - inclusão de novo exemplo segue um padrão simples e documentado;
 - mapa, changelog e estados da especificação são reconciliados.
+- `basic_light` e `environment_dht` usam os símbolos oficiais exigidos por `HWEX-020` e `HWEX-021`;
+- nenhum environment baseado em `iotsmartsys_mcb_r1` ou respectivo `build_flag` redefine símbolos do pinout da MCB R1;
+- a seleção de `iotsmartsys_mcb_r1` torna os símbolos necessários disponíveis sem inclusão ou configuração paralela feita pelo exemplo.
 
 ## 17. Relações
 
@@ -234,3 +266,24 @@ As decisões foram aprovadas pelo responsável humano em 22/07/2026.
 - `CORE-RUNTIME-LIFECYCLE.md`;
 - `docs/rfc/KNOWLEDGE-MAP.md`;
 - `EKM-CHG-0002`.
+
+## 18. Technical Readiness Review
+
+**Resultado:** Implementable
+
+**Data:** 23/07/2026
+
+**Motivo:** a versão 1.1 adicionou o contrato normativo de pinout da MCB R1 após a primeira implementação. Esta análise confrontou integralmente `HWEX-018` a `HWEX-023` e `HWEX-DEC-005` com o worktree atual (`src/pins.h`, `src/SmartSysApp.h`, `src/Platform/Espressif/Pinouts/SmartSys_MCB01_Pinouts.h`, `boards/iotsmartsys_mcb_r1.json`, `configs/executable_examples.ini`, `examples/executable/basic_light/example.hpp`, `examples/executable/environment_dht/example.hpp`).
+
+**Evidência por requisito:**
+
+- `HWEX-018` — Conforme. `boards/iotsmartsys_mcb_r1.json` define `IOTSMARTSYS_MCB01=1` e `IOTSMARTSYS_BOARD_REV=1` via `extra_flags`; `src/pins.h` inclui `SmartSys_MCB01_Pinouts.h` sob essas macros; `src/SmartSysApp.h` inclui `pins.h`; ambos os exemplos incluem `SmartSysApp.h`. O pinout é importado automaticamente pela seleção da board, sem cópia paralela nos exemplos.
+- `HWEX-019` e `HWEX-020` — Não conforme. `configs/executable_examples.ini` define `-DEXAMPLE_LIGHT_PIN=26` e `examples/executable/basic_light/example.hpp` consome apenas `EXAMPLE_LIGHT_PIN`; o código e a configuração não referenciam `ITS_MCB01_RELAY_PIN`, usando um literal numérico para uma função coberta pelo pinout oficial.
+- `HWEX-021` — Não conforme. `configs/executable_examples.ini` define `-DEXAMPLE_DHT_PIN=23` e `examples/executable/environment_dht/example.hpp` consome apenas `EXAMPLE_DHT_PIN`; o código e a configuração não referenciam `ITS_MCB01_TEMPERATURE_SENSOR_PIN`.
+- `HWEX-022` — Conforme. Nenhum environment ou `build_flags` baseado em `iotsmartsys_mcb_r1` redefine `LED_BUILTIN`, `ITS_MCB01_RELAY_PIN`, `ITS_MCB01_TEMPERATURE_SENSOR_PIN` ou outro símbolo do pinout selecionado; a definição de `-DLED_BUILTIN=23` permanece isolada no environment genérico `esp32_dev`, conforme exceção prevista.
+- `HWEX-023` — Não acionado. A board importa o pinout esperado e existe símbolo inequívoco para cada função demonstrada (`ITS_MCB01_RELAY_PIN`, `ITS_MCB01_TEMPERATURE_SENSOR_PIN`); não há lacuna decisória a esclarecer.
+- `HWEX-DEC-005` — Não conforme na implementação atual pelo mesmo motivo de `HWEX-019` a `HWEX-021`: os exemplos não consomem o pinout oficial como autoridade única, embora também não o redefinam.
+
+**Conclusão:** os desvios identificados (`HWEX-019`, `HWEX-020`, `HWEX-021`, `HWEX-DEC-005`) não dependem de decisão ausente, contraditória ou insuficientemente especificada — o símbolo oficial exigido já existe e seu valor coincide com o literal hoje utilizado (26 e 23). A correção é mecânica: substituir os literais/macros próprios dos exemplos pelos símbolos oficiais no código e na configuração, sem alterar comportamento observável, API pública ou critério de aceite. Nenhum requisito obrigatório resultou em `Needs Clarification`.
+
+**Regra para retomada:** a correção identificada nesta análise ainda não foi aplicada. O próximo executor pode implementá-la nesta mesma unidade atômica, sem nova Technical Readiness Review, desde que preserve exatamente os símbolos e valores aqui confirmados.

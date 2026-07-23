@@ -19,6 +19,8 @@ Este repositório adota o EKM (Engineering Knowledge Management). Antes de alter
 - Não apague, condense ou reescreva conhecimento normativo sem declarar a mudança.
 - Toda alteração funcional deve possuir transação EKM `Open` antes da implementação e só pode ser `Closed` após reconciliação de código, especificações, mapa e validações.
 - Não transforme descoberta de implementação em decisão de produto, arquitetura, contrato, compatibilidade, persistência, segurança ou comportamento.
+- Neste projeto, `main` é a referência de produção. Não reescreva uma versão de especificação já integrada; crie uma nova especificação relacionada como `Amends`, `Supersedes`, `Corrects` ou `Retires`.
+- Não presuma que exista validação automática da EKM. O futuro `EKM Gate` está previsto, mas ainda não foi definido nem implantado.
 - Não execute `git add`, commit, tag, push, criação de branch ou PR sem autorização explícita.
 - Preserve alterações preexistentes e não relacionadas.
 

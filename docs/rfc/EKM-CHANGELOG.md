@@ -105,6 +105,44 @@ Especificar um catálogo de exemplos reais das capabilities e funcionalidades p�
 
 Implementação e validação dos requisitos da especificação, reconciliação das evidências e atualização do estado da implementação. A implementação automatizável foi concluída, mas a transação permanece `Open` até existir a evidência física exigida para promoção a `Validated`.
 
+### Reabertura do escopo normativo — 23/07/2026
+
+A especificação foi promovida para a versão 1.1 após confirmação de que `iotsmartsys_mcb_r1` possui pinout oficial importado automaticamente pela board. O estado da implementação retornou de `Implemented` para `In Progress` e a Technical Readiness Review passou a `Pending Review`.
+
+Novos requisitos:
+
+- `HWEX-018` a `HWEX-023`;
+- `HWEX-DEC-005`;
+- uso obrigatório de `ITS_MCB01_RELAY_PIN` em `basic_light`;
+- uso obrigatório de `ITS_MCB01_TEMPERATURE_SENSOR_PIN` em `environment_dht`;
+- proibição de literais e redefinições dos símbolos oficiais de pinout.
+
+Nenhuma conclusão foi antecipada sobre a conformidade da implementação existente. `EKM-GAP-0007` permanece `Open` até a análise técnica, eventual correção e validação.
+
+### Technical Readiness Review de HWEX-018 a HWEX-023 — 23/07/2026
+
+Análise integral executada sem alterar código, build ou configuração de implementação.
+
+**Resultado:** `Implementable`.
+
+**Evidências:**
+
+- `HWEX-018`: conforme — cadeia `boards/iotsmartsys_mcb_r1.json` (`IOTSMARTSYS_MCB01`, `IOTSMARTSYS_BOARD_REV`) → `src/pins.h` → `src/SmartSysApp.h` → exemplos importa o pinout automaticamente, sem cópia paralela;
+- `HWEX-019`, `HWEX-020`: não conforme — `configs/executable_examples.ini` define `-DEXAMPLE_LIGHT_PIN=26` (literal) e `examples/executable/basic_light/example.hpp` consome `EXAMPLE_LIGHT_PIN`, sem referenciar `ITS_MCB01_RELAY_PIN`;
+- `HWEX-021`: não conforme — `configs/executable_examples.ini` define `-DEXAMPLE_DHT_PIN=23` (literal) e `examples/executable/environment_dht/example.hpp` consome `EXAMPLE_DHT_PIN`, sem referenciar `ITS_MCB01_TEMPERATURE_SENSOR_PIN`;
+- `HWEX-022`: conforme — nenhum environment ou `build_flags` da MCB R1 redefine símbolos oficiais do pinout; `-DLED_BUILTIN=23` permanece isolado no environment genérico `esp32_dev`, exceção prevista pelo próprio requisito;
+- `HWEX-023`: não acionado — a board importa o pinout esperado e existe símbolo inequívoco para cada função demonstrada; não há lacuna decisória;
+- `HWEX-DEC-005`: não conforme na implementação atual pelo mesmo motivo de `HWEX-019` a `HWEX-021`, mas sem redefinição do pinout oficial.
+
+**Conclusão:** os desvios encontrados não exigem decisão ausente — o símbolo oficial já existe e seu valor coincide com o literal hoje usado (26 e 23). A correção é mecânica (substituir literais/macros próprias dos exemplos pelos símbolos oficiais), não altera comportamento observável, API pública ou critério de aceite, e está autorizada pelos requisitos já aprovados. Nenhum requisito resultou em `Needs Clarification`.
+
+**Estado após a revisão:**
+
+- `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md`: seção 18 atualizada para `Technical readiness: Implementable`;
+- estado da implementação da especificação permanece `In Progress` e o estado da entrega permanece `Not Ready` até a correção mecânica e a validação serem executadas;
+- `EKM-GAP-0007` permanece `Open`: a análise técnica foi concluída com resultado `Implementable`, mas a correção de `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` ainda não foi aplicada nem validada;
+- nenhum código, build, teste ou configuração de implementação foi alterado nesta etapa, conforme escopo solicitado.
+
 ## EKM-CHG-0003 — Technical Readiness e atomicidade
 
 **Estado:** Closed
@@ -139,3 +177,35 @@ Na implementação de `EXECUTABLE-HARDWARE-EXAMPLES.md`, o executor definiu `LED
 ### Encerramento
 
 A governança local foi promovida para o modelo EKM 1.4. Especificações existentes permanecem válidas, mas qualquer nova implementação ou retomada deve cumprir a análise de implementabilidade antes de alterar o repositório.
+
+## EKM-CHG-0004 — Produção imutável, Done e garantias futuras
+
+**Estado:** Open
+
+**Data:** 23/07/2026
+
+### Problema e decisões
+
+- especificações ainda não integradas podem precisar retornar a revisão ou progresso;
+- uma versão já integrada à `main` deve preservar a intenção histórica e não pode ser reescrita;
+- `Implemented`, `Validated` e entrega em produção representam fatos diferentes;
+- garantias EKM ainda dependem de disciplina e futuramente devem receber apoio automatizado.
+
+Foi decidido que:
+
+- `main` é a referência inicial de produção deste projeto;
+- versões em produção são imutáveis e mudanças posteriores usam novas especificações relacionadas por `Amends`, `Supersedes`, `Corrects` ou `Retires`;
+- o estado de entrega usa `Not Ready`, `Ready for Integration` e `Done`;
+- o `EKM Gate` e Automação e Garantias são previstos, porém permanecem `Planned / Not Defined`;
+- `EKM-GAP-0008` preserva o trabalho futuro sem afirmar que uma solução já existe.
+
+### Ativos alterados
+
+- `AGENTS.md`;
+- `docs/rfc/EKM-GUIDELINES.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Estado da entrega
+
+`Ready for Integration` após revisão documental e `git diff --check`. A transação permanece `Open` até integração à `main`, exercitando a Definition of Done do modelo 1.5.
