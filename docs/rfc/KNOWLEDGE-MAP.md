@@ -31,7 +31,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` pendentes de correção mecânica (`EKM-GAP-0007`) |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Pending Review`; revisão anterior invalidada por conflito normativo; desvios permanecem em `EKM-GAP-0007` |
 
 ## 3. Lacunas
 
@@ -75,7 +75,7 @@ Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_d
 
 **Estado:** Open
 
-Technical Readiness Review de `HWEX-018` a `HWEX-023` e `HWEX-DEC-005` concluída em 23/07/2026 com resultado `Implementable` (evidência em `EKM-CHG-0002`). `HWEX-018` e `HWEX-022` estão conformes. `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` não estão conformes: `basic_light` e `environment_dht` usam literais/macros próprias (`EXAMPLE_LIGHT_PIN=26`, `EXAMPLE_DHT_PIN=23`) em vez de `ITS_MCB01_RELAY_PIN` e `ITS_MCB01_TEMPERATURE_SENSOR_PIN`. A lacuna permanece `Open` até a correção mecânica ser aplicada e validada.
+A revisão de 23/07/2026 identificou corretamente os desvios de pinout, mas seu resultado `Implementable` foi invalidado por conflito normativo na regra de retomada. `Technical readiness` voltou para `Pending Review`. `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` permanecem não conformes, e a lacuna continua `Open` até nova revisão integral, correção autorizada e validação.
 
 ### EKM-GAP-0008 — EKM Gate e garantias automatizadas
 

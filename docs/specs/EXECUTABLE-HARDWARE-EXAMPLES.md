@@ -10,7 +10,7 @@
 
 **Estado da entrega:** Not Ready
 
-**Technical readiness:** Implementable
+**Technical readiness:** Pending Review
 
 **Versão:** 1.1
 
@@ -269,7 +269,9 @@ O primeiro recorte de implementação deve validar a infraestrutura, não cobrir
 
 ## 18. Technical Readiness Review
 
-**Resultado:** Implementable
+**Resultado:** Pending Review
+
+**Revisão anterior:** a análise de 23/07/2026 que declarou `Implementable` foi invalidada após a identificação de uma contradição entre sua regra de retomada e `AGENTS.md`/`EKM-GUIDELINES.md`. As evidências técnicas abaixo permanecem históricas e úteis, mas não autorizam implementação.
 
 **Data:** 23/07/2026
 
@@ -286,4 +288,4 @@ O primeiro recorte de implementação deve validar a infraestrutura, não cobrir
 
 **Conclusão:** os desvios identificados (`HWEX-019`, `HWEX-020`, `HWEX-021`, `HWEX-DEC-005`) não dependem de decisão ausente, contraditória ou insuficientemente especificada — o símbolo oficial exigido já existe e seu valor coincide com o literal hoje utilizado (26 e 23). A correção é mecânica: substituir os literais/macros próprios dos exemplos pelos símbolos oficiais no código e na configuração, sem alterar comportamento observável, API pública ou critério de aceite. Nenhum requisito obrigatório resultou em `Needs Clarification`.
 
-**Regra para retomada:** a correção identificada nesta análise ainda não foi aplicada. O próximo executor pode implementá-la nesta mesma unidade atômica, sem nova Technical Readiness Review, desde que preserve exatamente os símbolos e valores aqui confirmados.
+**Regra para retomada:** a correção identificada nesta análise ainda não foi aplicada. Antes de qualquer alteração de implementação, o próximo executor deve executar uma nova Technical Readiness Review integral contra o baseline atual. Somente um novo resultado `Implementable` autoriza a implementação.

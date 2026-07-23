@@ -143,6 +143,20 @@ Análise integral executada sem alterar código, build ou configuração de impl
 - `EKM-GAP-0007` permanece `Open`: a análise técnica foi concluída com resultado `Implementable`, mas a correção de `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` ainda não foi aplicada nem validada;
 - nenhum código, build, teste ou configuração de implementação foi alterado nesta etapa, conforme escopo solicitado.
 
+### Invalidação da Technical Readiness anterior — 23/07/2026
+
+A auditoria comparativa com diferentes agentes revelou que a especificação permitia ao próximo executor implementar “sem nova Technical Readiness Review”, em contradição com `AGENTS.md` e `EKM-GUIDELINES.md`.
+
+Decisão:
+
+- remover a dispensa de nova revisão;
+- retornar `Technical readiness` para `Pending Review`;
+- preservar a análise anterior apenas como evidência histórica, sem autoridade para iniciar implementação;
+- exigir nova revisão integral contra o baseline vigente antes de qualquer correção;
+- manter `EKM-CHG-0002` e `EKM-GAP-0007` abertos.
+
+Nenhum artefato de implementação foi alterado nesta correção normativa.
+
 ## EKM-CHG-0003 — Technical Readiness e atomicidade
 
 **Estado:** Closed
