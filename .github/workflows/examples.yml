@@ -1,0 +1,29 @@
+name: Build executable examples
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - example_basic_light_mcb_r1
+          - example_environment_dht_mcb_r1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PlatformIO CLI
+        run: pip install -U platformio
+      - name: Reject credentials in executable examples
+        run: |
+          if grep -RInEi '(password|passwd|api[_-]?key|token)[[:space:]]*[:=][[:space:]]*[^[:space:]]+' examples/executable configs/executable_examples.ini; then
+            echo "Potential credential found in executable example files"
+            exit 1
+          fi
+      - name: Build ${{ matrix.environment }}
+        run: pio run -e "${{ matrix.environment }}"

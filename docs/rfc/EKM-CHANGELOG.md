@@ -75,10 +75,67 @@ Especificar um catálogo de exemplos reais das capabilities e funcionalidades p�
 
 ### Estado documental
 
-- `EXECUTABLE-HARDWARE-EXAMPLES.md`: `Active` / `Not Started`;
+- `EXECUTABLE-HARDWARE-EXAMPLES.md`: `Active` / `Implemented`;
 - `EKM-GAP-0006`: `Closed`;
-- nenhuma implementação iniciada.
+- primeiro recorte implementado com runner único, perfil MCB R1, exemplos `basic_light` e `environment_dht`, environments estáveis e matriz de CI;
+- o build padrão foi preservado e sua flag de LED foi reconciliada com o `src/main.cpp` legado.
+
+### Requisitos implementados
+
+- `HWEX-001` a `HWEX-017`: atendidos no recorte aplicável por aplicações Arduino completas, seleção em build time, configuração explícita, documentação de hardware, CI e preservação da API pública;
+- `HWEX-DEC-001` a `HWEX-DEC-004`: materializados sem incorporar credenciais ou portas locais.
+
+### Evidências da implementação
+
+- resolução dos environments por `pio project config --json-output`: aprovada;
+- `pio run -e esp32_dev`: aprovado;
+- `pio run -e example_basic_light_mcb_r1`: aprovado;
+- `pio run -e example_environment_dht_mcb_r1`: aprovado;
+- inspeção de símbolos dos dois firmwares: exatamente um `setup()` e um `loop()` em cada um;
+- busca por indicadores de segredos no novo catálogo e configuração: nenhum resultado;
+- `git diff --check`: aprovado.
+
+### Validações pendentes
+
+- upload e validação manual em MCB R1 de pelo menos um exemplo;
+- confirmação em hardware do identificador/configuração no boot e dos estímulos documentados;
+- execução da matriz no GitHub Actions após integração.
 
 ### Critério de encerramento
 
-Implementação e validação dos requisitos da especificação, reconciliação das evidências e atualização do estado da implementação. A aprovação documental foi concluída, mas a transação permanece `Open` até essa fase.
+Implementação e validação dos requisitos da especificação, reconciliação das evidências e atualização do estado da implementação. A implementação automatizável foi concluída, mas a transação permanece `Open` até existir a evidência física exigida para promoção a `Validated`.
+
+## EKM-CHG-0003 — Technical Readiness e atomicidade
+
+**Estado:** Closed
+
+**Data:** 22/07/2026
+
+### Problema observado
+
+Na implementação de `EXECUTABLE-HARDWARE-EXAMPLES.md`, o executor definiu `LED_BUILTIN=23` para preservar o build padrão. A decisão foi tecnicamente coerente, mas a especificação não autorizava explicitamente escolher entre essa solução e outras alternativas possíveis. A descoberta ocorreu durante a implementação, quando o fluxo já havia começado.
+
+### Decisão
+
+- toda especificação deve passar por Technical Readiness Review integral antes de qualquer alteração de implementação;
+- o resultado é `Implementable` ou `Needs Clarification`;
+- uma lacuna relevante bloqueia atomicamente todos os itens do recorte;
+- a decisão ausente deve ser resolvida na especificação e a análise integral repetida;
+- o executor não pode converter inferência relevante em implementação.
+
+### Ativos alterados
+
+- `AGENTS.md`;
+- `docs/rfc/EKM-GUIDELINES.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Validação
+
+- consistência entre instrução de entrada, diretriz, mapa e histórico;
+- nenhuma especificação funcional, código, build, teste ou automação alterados;
+- `git diff --check` aprovado.
+
+### Encerramento
+
+A governança local foi promovida para o modelo EKM 1.4. Especificações existentes permanecem válidas, mas qualquer nova implementação ou retomada deve cumprir a análise de implementabilidade antes de alterar o repositório.

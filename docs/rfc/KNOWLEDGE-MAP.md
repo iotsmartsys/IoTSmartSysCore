@@ -8,11 +8,11 @@
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM | `docs/rfc/EKM-GUIDELINES.md` | Active | Validated |
+| Governança EKM 1.4 | `docs/rfc/EKM-GUIDELINES.md` | Active | Validated |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
-| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Not Started |
+| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -31,7 +31,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
-| Exemplos executáveis | Specified | `src/main.cpp`, `examples/`, `platformio.ini` | Infraestrutura especificada; implementação ainda não iniciada |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Primeiro recorte implementado e compilável; validação física pendente |
 
 ## 3. Lacunas
 
@@ -79,3 +79,7 @@ Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_d
 - Runtime suportado: Arduino sobre ESP32.
 - ESP8266: não suportado.
 - Release: tags na branch `main`, com publicação pelo GitHub Actions no PlatformIO.
+
+## 5. Evolução da governança
+
+- `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.

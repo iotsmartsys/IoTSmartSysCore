@@ -10,11 +10,15 @@ Este repositório adota o EKM (Engineering Knowledge Management). Antes de alter
 ## Regras obrigatórias
 
 - A especificação define o comportamento esperado; não invente contratos ausentes.
+- Antes de qualquer alteração de implementação, execute uma análise técnica integral de implementabilidade da especificação e registre o resultado como `Implementable` ou `Needs Clarification`.
+- Somente uma especificação `Implementable` pode entrar em implementação. Se qualquer requisito obrigatório exigir inferência relevante, não implemente nenhum item do recorte.
+- Em `Needs Clarification`, apresente as lacunas, evidências, decisões ausentes e o ajuste recomendado na própria especificação; aguarde aprovação e repita a análise integral.
+- Enquanto estiver em `Needs Clarification`, altere somente registros EKM e a especificação cuja correção tenha sido explicitamente aprovada.
 - Preserve APIs públicas e comportamentos normativos, salvo autorização explícita registrada em especificação.
 - Trate o worktree inicial, incluindo alterações não commitadas, como parte do baseline.
 - Não apague, condense ou reescreva conhecimento normativo sem declarar a mudança.
 - Toda alteração funcional deve possuir transação EKM `Open` antes da implementação e só pode ser `Closed` após reconciliação de código, especificações, mapa e validações.
-- Se surgir ambiguidade que exija decisão de produto ou arquitetura, registre o bloqueio e solicite decisão humana.
+- Não transforme descoberta de implementação em decisão de produto, arquitetura, contrato, compatibilidade, persistência, segurança ou comportamento.
 - Não execute `git add`, commit, tag, push, criação de branch ou PR sem autorização explícita.
 - Preserve alterações preexistentes e não relacionadas.
 

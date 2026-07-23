@@ -6,7 +6,7 @@
 
 **Estado normativo:** Active
 
-**Estado da implementação:** Not Started
+**Estado da implementação:** Implemented
 
 **Versão:** 1.0
 

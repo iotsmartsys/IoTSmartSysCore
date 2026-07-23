@@ -2,9 +2,9 @@
 
 **Status:** Active
 
-**Versão:** 1.0
+**Versão:** 1.1
 
-**Modelo EKM:** 1.3
+**Modelo EKM:** 1.4
 
 **Última atualização:** 22/07/2026
 
@@ -97,6 +97,39 @@ Uma especificação deve conter:
 
 Implementadores não podem preencher lacunas de produto ou arquitetura por suposição.
 
+### 5.1 Technical Readiness Review
+
+Antes de modificar código, build, testes, automação ou documentação de implementação, o executor deve analisar integralmente a especificação e seu baseline. A análise deve verificar, no mínimo:
+
+- clareza, consistência e testabilidade dos requisitos;
+- comportamento esperado, falhas, condições de borda e fora de escopo;
+- contratos e conhecimento que precisam ser preservados;
+- dependências, configurações e pré-condições;
+- compatibilidade, regressões e validações obrigatórias;
+- mudanças necessárias que não estejam explicitamente autorizadas.
+
+O resultado é binário:
+
+- `Implementable`: todos os requisitos obrigatórios podem ser implementados sem inferência relevante;
+- `Needs Clarification`: ao menos um requisito depende de decisão ausente, contraditória ou insuficientemente especificada.
+
+Inferência relevante é qualquer escolha capaz de alterar comportamento observável, produto, arquitetura, API, protocolo, persistência, concorrência, segurança, compatibilidade, configuração operacional ou critério de aceite. Decisões mecânicas e privadas somente são permitidas quando forem comprovadamente equivalentes e não modificarem esses aspectos.
+
+### 5.2 Atomicidade da implementação
+
+Uma especificação forma uma unidade atômica de implementação:
+
+1. nenhum artefato de implementação pode ser alterado antes do resultado `Implementable`;
+2. se qualquer requisito obrigatório resultar em `Needs Clarification`, nenhum item da especificação pode ser implementado;
+3. o executor deve registrar requisito afetado, evidência, lacuna ou conflito, decisão ausente, impacto das alternativas e ajuste recomendado na especificação;
+4. o ajuste deve ocorrer na fonte normativa e ser aprovado pelo responsável;
+5. após qualquer ajuste, a análise integral deve ser repetida;
+6. implementação parcial exige uma nova especificação ou divisão de escopo explicitamente aprovada, nunca decisão unilateral do executor.
+
+A análise não autoriza o executor a corrigir automaticamente a especificação nem a escolher uma alternativa. Sua finalidade é concentrar esclarecimentos antes da execução, permitindo que a implementação aprovada prossiga sem decisões normativas improvisadas.
+
+Durante `Needs Clarification`, somente o registro da análise, a transação ou lacuna EKM e a correção normativa explicitamente aprovada podem ser alterados. Código, build, testes, automação e demais artefatos de implementação permanecem intocados.
+
 ## 6. Transação EKM
 
 Toda mudança funcional ou normativa relevante usa um identificador `EKM-CHG-NNNN` e um destes estados:
@@ -107,6 +140,8 @@ Toda mudança funcional ou normativa relevante usa um identificador `EKM-CHG-NNN
 - `Closed`.
 
 Uma transação registra objetivo, baseline, fontes afetadas, requisitos, evidências, desvios e decisão de encerramento. Lacunas usam `EKM-GAP-NNNN` com os mesmos estados.
+
+A transação deve preservar o resultado e as evidências da Technical Readiness Review que autorizou a implementação.
 
 ## 7. Baseline e reconciliação
 
@@ -129,6 +164,7 @@ Antes do encerramento, reconciliar separadamente:
 
 Uma transação só pode ser `Closed` quando:
 
+- a Technical Readiness Review válida declarou a especificação `Implementable` antes da primeira alteração de implementação;
 - requisitos e escopo foram rastreados;
 - mudanças estão reconciliadas com as fontes normativas;
 - nenhuma decisão foi removida silenciosamente;
