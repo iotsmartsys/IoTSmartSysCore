@@ -12,6 +12,7 @@
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
+| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Not Started |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -30,6 +31,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
+| Exemplos executáveis | Specified | `src/main.cpp`, `examples/`, `platformio.ini` | Infraestrutura especificada; implementação ainda não iniciada |
 
 ## 3. Lacunas
 
@@ -62,6 +64,12 @@ Classificar formalmente o código preparatório para ESP-IDF e o código legado 
 **Estado:** Open
 
 Revisar `docs/REPO_DOSSIER.md`, corrigir referências obsoletas e decidir se partes devem migrar para especificações.
+
+### EKM-GAP-0006 — Catálogo inicial de exemplos
+
+**Estado:** Closed
+
+Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_dht`, o uso privado da infraestrutura real e a compilação dos dois environments em CI. A especificação foi promovida para `Active`.
 
 ## 4. Baseline inicial
 
