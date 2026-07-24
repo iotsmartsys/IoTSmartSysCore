@@ -157,6 +157,32 @@ Decisão:
 
 Nenhum artefato de implementação foi alterado nesta correção normativa.
 
+### Nova Technical Readiness Review integral — 23/07/2026
+
+**Baseline:** branch `implement_ekm`, commit `b90fe872ed70a6769bd278d3fa76b18f9d9b968a`, worktree inicial limpo.
+
+**Resultado:** `Implementable`.
+
+A especificação completa, suas relações normativas e a implementação vigente foram novamente analisadas antes de qualquer alteração de implementação. A cadeia de importação do pinout oficial foi confirmada e os símbolos `ITS_MCB01_RELAY_PIN` e `ITS_MCB01_TEMPERATURE_SENSOR_PIN` existem de forma inequívoca para as duas funções demonstradas.
+
+Os desvios de `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` admitem somente a correção já determinada pela versão 1.1: remover as macros locais com GPIOs literais e consumir diretamente os símbolos oficiais. Nenhuma inferência relevante, alteração de API pública, mudança de comportamento ou decisão adicional é necessária.
+
+**Escopo autorizado:** correção dos dois exemplos e de seus environments, reconciliação da documentação e execução das validações automatizáveis previstas. `EKM-CHG-0002` e `EKM-GAP-0007` permanecem `Open` durante a implementação e validação.
+
+### Resultado da correção de pinout — 23/07/2026
+
+- `basic_light` usa `ITS_MCB01_RELAY_PIN`;
+- `environment_dht` usa `ITS_MCB01_TEMPERATURE_SENSOR_PIN`;
+- `EXAMPLE_LIGHT_PIN`, `EXAMPLE_DHT_PIN` e seus literais foram removidos dos environments;
+- documentação dos exemplos reconciliada com a autoridade do pinout oficial;
+- nenhuma API pública, comportamento, pinout, credencial ou configuração privada foi alterada.
+
+**Validações aprovadas:** resolução do PlatformIO; builds `esp32_dev`, `example_basic_light_mcb_r1` e `example_environment_dht_mcb_r1`; um único `setup()`/`loop()` em cada ELF de exemplo; ausência de macros locais/redefinições de pinout; busca por indicadores de segredos; `git diff --check`.
+
+Os builds mantêm warnings preexistentes do framework Arduino e de flags C/C++, sem warning novo atribuído ao recorte. `EKM-GAP-0007` foi encerrada porque a não conformidade de pinout foi corrigida e validada estaticamente.
+
+`EXECUTABLE-HARDWARE-EXAMPLES.md` está `Implemented` / `Not Ready`. Upload e validação física em MCB R1 permanecem obrigatórios antes de `Validated`; por isso `EKM-CHG-0002` continua `Open`.
+
 ## EKM-CHG-0003 — Technical Readiness e atomicidade
 
 **Estado:** Closed

@@ -19,7 +19,7 @@ Cada environment herda o perfil `example_board_iotsmartsys_mcb_r1`, exclui apena
 
 1. crie `examples/executable/<id>/example.hpp` com um único `setup()`/`loop()` e um README completo;
 2. adicione um seletor mutuamente exclusivo em `src/ExecutableExampleRunner.cpp`;
-3. crie um environment estável em `configs/executable_examples.ini`, com pinos, dependências e flags explícitos;
+3. crie um environment estável em `configs/executable_examples.ini`, com dependências e flags explícitas; para placas com pinout normativo, use diretamente seus símbolos oficiais em vez de redefinir pinos no environment;
 4. adicione o environment à matriz de CI e execute seu procedimento de hardware.
 
 Propriedades locais como porta serial e toda credencial permanecem fora do catálogo versionado. Os exemplos legados nas demais pastas são apenas material histórico e não possuem o contrato executável deste catálogo.

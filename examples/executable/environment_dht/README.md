@@ -7,7 +7,7 @@ Demonstra `SensorFactory`, `addTemperatureSensorCapability()` e `addHumiditySens
 | DHT11 | MCB R1 | Configuração |
 |---|---:|---|
 | VCC | 3,3 V | alimentação |
-| DATA | GPIO 23 | `EXAMPLE_DHT_PIN` |
+| DATA | GPIO 23 | `ITS_MCB01_TEMPERATURE_SENSOR_PIN` |
 | GND | GND | referência |
 
 Ligação textual: `3V3 — DHT11 VCC`, `GPIO23 — DHT11 DATA`, `GND — DHT11 GND`. Use resistor pull-up de 4,7 kΩ a 10 kΩ entre DATA e 3,3 V se o módulo não o incluir. Não alimente o sinal com 5 V.
@@ -26,7 +26,7 @@ pio device monitor -e example_environment_dht_mcb_r1
 
 1. Faça a ligação com a placa desenergizada.
 2. Grave o firmware e abra o monitor a 115200 baud.
-3. Confirme `id=environment_dht`, `dht_model=DHT11`, GPIO 23 e intervalo de 2000 ms no boot.
+3. Confirme `id=environment_dht`, `dht_model=DHT11`, GPIO 23 resolvido pelo símbolo oficial `ITS_MCB01_TEMPERATURE_SENSOR_PIN` e intervalo de 2000 ms no boot.
 4. Conclua o provisioning, se necessário; estabilize o sensor e depois aqueça-o suavemente com a mão e aproxime uma fonte leve de umidade, sem molhá-lo.
 5. Observe e registre as atualizações das capabilities `environment_temperature` e `environment_humidity` na integração configurada.
 

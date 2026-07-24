@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include "SmartSysApp.h"
 
-#ifndef EXAMPLE_LIGHT_PIN
-#error "basic_light requires EXAMPLE_LIGHT_PIN to be defined by the PlatformIO environment"
+#ifndef ITS_MCB01_RELAY_PIN
+#error "basic_light requires the MCB R1 pinout symbol ITS_MCB01_RELAY_PIN"
 #endif
 
 #ifndef EXAMPLE_LIGHT_ACTIVE_HIGH
@@ -24,13 +24,16 @@ void setup()
 {
     Serial.begin(115200);
     Serial.printf("[example] id=basic_light board=%s light_pin=%d active_high=%d\n",
-                  EXAMPLE_BOARD_ID, EXAMPLE_LIGHT_PIN, EXAMPLE_LIGHT_ACTIVE_HIGH);
+                  EXAMPLE_BOARD_ID, ITS_MCB01_RELAY_PIN, EXAMPLE_LIGHT_ACTIVE_HIGH);
 
     iotsmartsys::app::LightConfig lightConfig{
-        EXAMPLE_LIGHT_PIN,
+        ITS_MCB01_RELAY_PIN,
         EXAMPLE_LIGHT_ACTIVE_HIGH != 0,
         "basic_light"};
     executable_example::app.addLightCapability(lightConfig);
+
+    executable_example::app.configureFactoryResetButton(iotsmartsys::app::PushButtonConfig{
+        ITS_MCB01_BOOT_PIN});
     executable_example::app.setup();
 }
 

@@ -8,8 +8,8 @@
 #error "environment_dht requires DHT_SENSOR_ENABLED"
 #endif
 
-#ifndef EXAMPLE_DHT_PIN
-#error "environment_dht requires EXAMPLE_DHT_PIN to be defined by the PlatformIO environment"
+#ifndef ITS_MCB01_TEMPERATURE_SENSOR_PIN
+#error "environment_dht requires the MCB R1 pinout symbol ITS_MCB01_TEMPERATURE_SENSOR_PIN"
 #endif
 
 #ifndef EXAMPLE_DHT_READ_INTERVAL_MS
@@ -35,11 +35,11 @@ void setup()
 {
     Serial.begin(115200);
     Serial.printf("[example] id=environment_dht board=%s dht_model=DHT11 dht_pin=%d read_interval_ms=%ld\n",
-                  EXAMPLE_BOARD_ID, EXAMPLE_DHT_PIN,
+                  EXAMPLE_BOARD_ID, ITS_MCB01_TEMPERATURE_SENSOR_PIN,
                   static_cast<long>(EXAMPLE_DHT_READ_INTERVAL_MS));
 
     executable_example::dhtSensor = executable_example::sensorFactory.createDHTSensor(
-        EXAMPLE_DHT_PIN, EXAMPLE_DHT_READ_INTERVAL_MS);
+        ITS_MCB01_TEMPERATURE_SENSOR_PIN, EXAMPLE_DHT_READ_INTERVAL_MS);
 
     iotsmartsys::app::TemperatureSensorConfig temperatureConfig;
     temperatureConfig.capability_name = "environment_temperature";

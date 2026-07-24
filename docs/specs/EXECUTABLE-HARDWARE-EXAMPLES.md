@@ -6,11 +6,11 @@
 
 **Estado normativo:** Active
 
-**Estado da implementação:** In Progress
+**Estado da implementação:** Implemented
 
 **Estado da entrega:** Not Ready
 
-**Technical readiness:** Pending Review
+**Technical readiness:** Implementable
 
 **Versão:** 1.1
 
@@ -269,7 +269,9 @@ O primeiro recorte de implementação deve validar a infraestrutura, não cobrir
 
 ## 18. Technical Readiness Review
 
-**Resultado:** Pending Review
+**Resultado:** Implementable
+
+**Revisão vigente:** 23/07/2026, executada integralmente contra o baseline `implement_ekm` / `b90fe872ed70a6769bd278d3fa76b18f9d9b968a`, com worktree inicial limpo.
 
 **Revisão anterior:** a análise de 23/07/2026 que declarou `Implementable` foi invalidada após a identificação de uma contradição entre sua regra de retomada e `AGENTS.md`/`EKM-GUIDELINES.md`. As evidências técnicas abaixo permanecem históricas e úteis, mas não autorizam implementação.
 
@@ -288,4 +290,29 @@ O primeiro recorte de implementação deve validar a infraestrutura, não cobrir
 
 **Conclusão:** os desvios identificados (`HWEX-019`, `HWEX-020`, `HWEX-021`, `HWEX-DEC-005`) não dependem de decisão ausente, contraditória ou insuficientemente especificada — o símbolo oficial exigido já existe e seu valor coincide com o literal hoje utilizado (26 e 23). A correção é mecânica: substituir os literais/macros próprios dos exemplos pelos símbolos oficiais no código e na configuração, sem alterar comportamento observável, API pública ou critério de aceite. Nenhum requisito obrigatório resultou em `Needs Clarification`.
 
-**Regra para retomada:** a correção identificada nesta análise ainda não foi aplicada. Antes de qualquer alteração de implementação, o próximo executor deve executar uma nova Technical Readiness Review integral contra o baseline atual. Somente um novo resultado `Implementable` autoriza a implementação.
+**Verificações da revisão vigente:** requisitos `HWEX-001` a `HWEX-023`, decisões `HWEX-DEC-001` a `HWEX-DEC-005`, critérios de aceite, condições de borda, fora de escopo, contratos de API e runtime e cadeia de importação do pinout foram confrontados com o baseline. Não foi encontrada ambiguidade ou mudança necessária fora da autorização normativa.
+
+**Autorização de implementação:** a revisão vigente confirma o resultado `Implementable` antes da primeira alteração de código, build, exemplos ou documentação de implementação. A correção autorizada é limitada a remover `EXAMPLE_LIGHT_PIN` e `EXAMPLE_DHT_PIN`, consumir diretamente `ITS_MCB01_RELAY_PIN` e `ITS_MCB01_TEMPERATURE_SENSOR_PIN` e reconciliar a documentação e as evidências afetadas.
+
+### 18.1 Reconciliação da implementação
+
+Após a autorização acima:
+
+- `basic_light` passou a validar e consumir diretamente `ITS_MCB01_RELAY_PIN`;
+- `environment_dht` passou a validar e consumir diretamente `ITS_MCB01_TEMPERATURE_SENSOR_PIN`;
+- `EXAMPLE_LIGHT_PIN` e `EXAMPLE_DHT_PIN`, juntamente com seus GPIOs literais, foram removidos dos environments;
+- os READMEs foram reconciliados com os símbolos oficiais, preservando os valores numéricos apenas como informação de montagem e diagnóstico;
+- `HWEX-011`, `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` estão conformes por inspeção e build.
+
+Validações automatizáveis aprovadas:
+
+- resolução da configuração por `pio project config --json-output`;
+- `pio run -e esp32_dev`;
+- `pio run -e example_basic_light_mcb_r1`;
+- `pio run -e example_environment_dht_mcb_r1`;
+- exatamente um símbolo `setup()` e um `loop()` em cada firmware de exemplo;
+- ausência das macros locais de pino e de redefinições dos símbolos oficiais nos examples/environments;
+- busca por indicadores de segredos no catálogo executável;
+- `git diff --check`.
+
+A validação física obrigatória permanece pendente. Por isso o estado é `Implemented`, não `Validated`, e a entrega permanece `Not Ready`.

@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 22/07/2026
+**Última atualização:** 23/07/2026
 
 ## 1. Fontes normativas
 
@@ -12,7 +12,7 @@
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
-| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | In Progress |
+| Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -31,7 +31,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Pending Review`; revisão anterior invalidada por conflito normativo; desvios permanecem em `EKM-GAP-0007` |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
 
 ## 3. Lacunas
 
@@ -73,9 +73,9 @@ Foram definidos `iotsmartsys_mcb_r1`, os exemplos `basic_light` e `environment_d
 
 ### EKM-GAP-0007 — Conformidade dos exemplos com o pinout MCB R1
 
-**Estado:** Open
+**Estado:** Closed
 
-A revisão de 23/07/2026 identificou corretamente os desvios de pinout, mas seu resultado `Implementable` foi invalidado por conflito normativo na regra de retomada. `Technical readiness` voltou para `Pending Review`. `HWEX-019`, `HWEX-020`, `HWEX-021` e `HWEX-DEC-005` permanecem não conformes, e a lacuna continua `Open` até nova revisão integral, correção autorizada e validação.
+Uma nova revisão integral válida declarou a especificação `Implementable` antes da correção. `basic_light` e `environment_dht` passaram a consumir diretamente `ITS_MCB01_RELAY_PIN` e `ITS_MCB01_TEMPERATURE_SENSOR_PIN`; macros locais e GPIOs literais foram removidos dos environments. Builds e verificações estáticas aprovaram a conformidade de pinout. A validação física geral da especificação permanece pendente em `EKM-CHG-0002`, mas não constitui lacuna do contrato de pinout.
 
 ### EKM-GAP-0008 — EKM Gate e garantias automatizadas
 
