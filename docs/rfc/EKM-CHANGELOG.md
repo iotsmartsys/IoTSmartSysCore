@@ -307,7 +307,7 @@ de aprovação.
 
 ## EKM-CHG-0006 — Adoção do modelo EKM 1.9
 
-**Estado:** Blocked
+**Estado:** Closed
 
 **Especificação relacionada:** Não aplicável
 
@@ -349,6 +349,45 @@ repositório de referência `EKM-guidelines`.
 
 ### Resultado
 
-A estrutura documental local adota o modelo EKM 1.9. A entrega permanece
-bloqueada até que o worktree preexistente seja resolvido e a mudança possa ser
-entregue conforme o novo contrato Git.
+A estrutura documental local adota o modelo EKM 1.9 e foi integrada à referência
+de produção. O worktree está limpo e o contrato Git passou a reger as tarefas
+seguintes.
+
+## EKM-CHG-0007 — Correção do estado do controle de garagem
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-GARAGE-CONTROL@0.1`
+
+**Objetivo:** Impedir que a `GarageControlCapability` permaneça em `opening` ou
+`closing` contra um fim de curso físico estável e eliminar transições causadas
+por bounce.
+
+### Decisões
+
+- estado terminal estável representa a evidência física e prevalece sobre a
+  intenção anterior do comando;
+- o movimento somente começa quando o sensor do extremo de origem é liberado de
+  forma estável;
+- sensores usam debounce separado, configurável e com default de 50 ms;
+- nomes públicos de comandos e estados são preservados;
+- autoria, análise de implementabilidade e implementação permanecem etapas
+  distintas.
+
+### Lacunas
+
+- `EKM-GAP-0009` permanece aberta até implementação, testes e validação física.
+
+### Evidências materiais
+
+- relato operacional e histórico de estados demonstram `closed → opening`
+  seguido de permanência incorreta em `opening`;
+- a implementação atual transforma o comando em estado de movimento e impede
+  `closed` enquanto `currentState` é `opening`;
+- `IOTSSC-GARAGE-CONTROL@0.1` registra requisitos, condições de borda e
+  critérios de aceite.
+
+### Resultado
+
+A especificação foi criada como `Proposed`, `Not Started`, `Not Ready` e
+`Pending Review`. Nenhum código, build ou teste foi alterado nesta etapa.

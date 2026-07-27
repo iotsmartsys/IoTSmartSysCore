@@ -13,6 +13,7 @@
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
+| Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Proposed | Not Started |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -22,7 +23,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Mapped | builders, adapters e contracts | Limite intencional de 8 |
+| Capabilities | Mapped | builders, adapters e contracts | Controle de garagem especificado incrementalmente; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -85,6 +86,15 @@ O modelo 1.9 não incorpora `EKM Gate`, orquestração ou garantias automatizada
 fluxo vigente. Qualquer adoção futura dependerá de nova decisão do Arquiteto e
 de evidência proporcional ao problema; nenhuma garantia automática está
 implantada atualmente.
+
+### EKM-GAP-0009 — Validação da máquina de estados da garagem
+
+**Estado:** Open
+
+A `GarageControlCapability` pode manter `opening` contra o sensor físico de
+fechamento. Encerrar após implementação conforme `IOTSSC-GARAGE-CONTROL`,
+testes automatizados das transições e validação física explicitamente
+registrada.
 
 ## 4. Baseline inicial
 
