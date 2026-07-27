@@ -2,13 +2,13 @@
 
 **Status:** Active
 
-**Última atualização:** 23/07/2026
+**Última atualização:** 26/07/2026
 
 ## 1. Fontes normativas
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM 1.5 | `docs/rfc/EKM-GUIDELINES.md` | Active | Validated |
+| Governança EKM 1.9 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -79,9 +79,12 @@ Uma nova revisão integral válida declarou a especificação `Implementable` an
 
 ### EKM-GAP-0008 — EKM Gate e garantias automatizadas
 
-**Estado:** Open
+**Estado:** Superseded
 
-Definir futuramente, em especificação própria, arquitetura, metadados, verificações, limites, adoção e critérios de validação de um `EKM Gate`. O mecanismo está apenas previsto; nenhuma garantia automática está implantada atualmente.
+O modelo 1.9 não incorpora `EKM Gate`, orquestração ou garantias automatizadas ao
+fluxo vigente. Qualquer adoção futura dependerá de nova decisão do Arquiteto e
+de evidência proporcional ao problema; nenhuma garantia automática está
+implantada atualmente.
 
 ## 4. Baseline inicial
 
@@ -96,3 +99,6 @@ Definir futuramente, em especificação própria, arquitetura, metadados, verifi
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.
+- `EKM-CHG-0005`: tornou a Technical Readiness Review cumulativa, exigiu matriz completa, separou revisão e implementação em execuções distintas e reservou ao arquiteto a autorização para implementar.
+- `EKM-CHG-0006`: adotou o modelo EKM 1.9, removeu controles universais sem
+  evidência de ganho e transferiu a linhagem técnica documental para o Git.

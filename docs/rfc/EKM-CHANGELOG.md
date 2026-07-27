@@ -220,7 +220,7 @@ A governança local foi promovida para o modelo EKM 1.4. Especificações existe
 
 ## EKM-CHG-0004 — Produção imutável, Done e garantias futuras
 
-**Estado:** Open
+**Estado:** Superseded
 
 **Data:** 23/07/2026
 
@@ -249,3 +249,106 @@ Foi decidido que:
 ### Estado da entrega
 
 `Ready for Integration` após revisão documental e `git diff --check`. A transação permanece `Open` até integração à `main`, exercitando a Definition of Done do modelo 1.5.
+
+Esta transação foi substituída por `EKM-CHG-0006` na adoção do modelo 1.9. A
+referência de produção, a preservação de versões concluídas e os estados de
+entrega permanecem vigentes; a previsão de um `EKM Gate` deixou de integrar o
+fluxo atual.
+
+## EKM-CHG-0005 — Revisão cumulativa e autorização humana para implementação
+
+**Estado:** Superseded
+
+**Data:** 23/07/2026
+
+### Problema observado
+
+A Technical Readiness Review de `AIR-CONDITIONER-PHILCO-EXAMPLE` encontrou corretamente a ausência da API pública presumida e bloqueou a implementação, mas encerrou a investigação após o primeiro impedimento. Permaneceram sem registro outras dimensões relevantes do mesmo recorte, como o estado normativo `Draft` e a implementação do ciclo de vida da `AirConditionerCapability`.
+
+O experimento também demonstrou que `Implementable` não deve funcionar como autorização produzida e consumida pelo próprio executor.
+
+### Decisão humana
+
+Foi aprovado um controle manual adequado ao estágio atual do projeto:
+
+- a revisão deve continuar após o primeiro bloqueio e classificar todos os requisitos e dimensões obrigatórias;
+- toda revisão deve possuir matriz de evidências com resultado individual;
+- Technical Readiness Review e implementação devem ocorrer em execuções separadas;
+- a execução da revisão deve encerrar sem alterar implementação, mesmo com resultado `Implementable`;
+- `Implementable` significa apto para aprovação humana;
+- somente aprovação explícita do arquiteto para a revisão e seu baseline autoriza a execução de implementação;
+- o executor deve reconfirmar especificação e baseline antes da primeira alteração;
+- mudança material invalida a autorização e exige nova revisão integral;
+- `Needs Clarification` deve ser reportado como bloqueio, nunca como implementação concluída.
+
+### Limites desta evolução
+
+- não foram introduzidos múltiplos agentes obrigatórios;
+- não foi criado pipeline CI/CD;
+- não foi definido nem implantado `EKM Gate`;
+- aprovação, reconfirmação e conferência das evidências permanecem manuais;
+- automação futura continua preservada em `EKM-GAP-0008`.
+
+### Ativos alterados
+
+- `AGENTS.md`;
+- `docs/rfc/EKM-GUIDELINES.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Resultado
+
+A governança local foi promovida para o modelo EKM 1.6. A transação permanece `Open` até integração à `main`, conforme as regras de produção e entrega vigentes.
+
+Esta transação foi substituída por `EKM-CHG-0006`. O modelo 1.9 preserva a
+autoridade humana, a análise de implementabilidade e a separação lógica das
+etapas, mas remove matriz universal, baseline documental e registro duplicado
+de aprovação.
+
+## EKM-CHG-0006 — Adoção do modelo EKM 1.9
+
+**Estado:** Blocked
+
+**Especificação relacionada:** Não aplicável
+
+**Objetivo:** Atualizar a governança local para o modelo EKM 1.9 publicado no
+repositório de referência `EKM-guidelines`.
+
+### Decisões
+
+- a ordem do Arquiteto por prompt ou pipeline define etapa e recorte;
+- implementação continua exigindo especificação `Implementable`;
+- análise de implementabilidade deixa de exigir matriz universal e baseline
+  documental;
+- Git volta a ser a fonte de commits, branches, diferenças e linhagem;
+- toda tarefa passa a exigir árvore limpa, resultado material, commit, push e
+  árvore limpa;
+- revisões adicionais deixam de ser etapa universal e ocorrem quando
+  solicitadas;
+- regras específicas confirmadas do IoTSmartSysCore permanecem nas diretrizes
+  locais;
+- `EKM Gate`, orquestração, locks e filas não integram o modelo vigente.
+
+### Lacunas
+
+- `EKM-GAP-0008` foi substituída: eventual automação futura requer nova decisão
+  baseada em evidência;
+- a adoção começou sobre alterações locais preexistentes da governança 1.6; o
+  contrato de árvore limpa do modelo 1.9 só poderá ser satisfeito após entrega
+  ou resolução explícita desse worktree.
+
+### Evidências materiais
+
+- `README.md`, `docs/EKM-METHOD.md`, `docs/GOVERNANCE.md`,
+  `docs/LEGACY-ADOPTION.md` e templates do repositório de referência foram
+  confrontados com `AGENTS.md` e os ativos EKM locais;
+- a governança local foi reduzida ao template 1.9 com regras específicas do
+  projeto preservadas;
+- decisões históricas das versões anteriores foram preservadas como
+  substituídas, sem reescrita silenciosa.
+
+### Resultado
+
+A estrutura documental local adota o modelo EKM 1.9. A entrega permanece
+bloqueada até que o worktree preexistente seja resolvido e a mudança possa ser
+entregue conforme o novo contrato Git.

@@ -1,38 +1,58 @@
 # Instruções para agentes
 
-Este repositório adota o EKM (Engineering Knowledge Management). Antes de alterar código, build, testes, automação ou documentação, leia:
+## Autoridade
 
-1. `docs/rfc/EKM-GUIDELINES.md`;
-2. `docs/rfc/KNOWLEDGE-MAP.md`;
-3. as especificações ativas relacionadas ao recorte em `docs/specs/`;
-4. `docs/rfc/EKM-CHANGELOG.md`, quando houver transação aberta para o trabalho.
+O Arquiteto humano tem autoridade final sobre intenção, prioridade, escopo,
+arquitetura, risco, autorização, validação e integração. A ordem recebida por
+prompt ou pipeline define a etapa e o recorte autorizado.
 
-## Regras obrigatórias
+Não invente requisitos, não amplie o escopo e não converta evidência falha em
+evidência aprovada. Quando faltar uma decisão, devolva-a ao Arquiteto.
 
-- A especificação define o comportamento esperado; não invente contratos ausentes.
-- Antes de qualquer alteração de implementação, execute uma análise técnica integral de implementabilidade da especificação e registre o resultado como `Implementable` ou `Needs Clarification`.
-- Somente uma especificação `Implementable` pode entrar em implementação. Se qualquer requisito obrigatório exigir inferência relevante, não implemente nenhum item do recorte.
-- Em `Needs Clarification`, apresente as lacunas, evidências, decisões ausentes e o ajuste recomendado na própria especificação; aguarde aprovação e repita a análise integral.
-- Enquanto estiver em `Needs Clarification`, altere somente registros EKM e a especificação cuja correção tenha sido explicitamente aprovada.
-- Preserve APIs públicas e comportamentos normativos, salvo autorização explícita registrada em especificação.
-- Trate o worktree inicial, incluindo alterações não commitadas, como parte do baseline.
-- Não apague, condense ou reescreva conhecimento normativo sem declarar a mudança.
-- Toda alteração funcional deve possuir transação EKM `Open` antes da implementação e só pode ser `Closed` após reconciliação de código, especificações, mapa e validações.
-- Não transforme descoberta de implementação em decisão de produto, arquitetura, contrato, compatibilidade, persistência, segurança ou comportamento.
-- Neste projeto, `main` é a referência de produção. Não reescreva uma versão de especificação já integrada; crie uma nova especificação relacionada como `Amends`, `Supersedes`, `Corrects` ou `Retires`.
-- Não presuma que exista validação automática da EKM. O futuro `EKM Gate` está previsto, mas ainda não foi definido nem implantado.
-- Não execute `git add`, commit, tag, push, criação de branch ou PR sem autorização explícita.
+## Antes de começar
+
+1. Confirme que a árvore de trabalho está limpa. Se não estiver, pare e informe.
+2. Leia esta instrução, a especificação aplicável e a transação relacionada.
+3. Confirme que o estado da especificação permite a etapa solicitada.
+
+Não é necessário registrar SHA, branch de origem, checkpoint ou declaração de
+prontidão em documentos EKM.
+
+## Etapas
+
+- **Autoria:** produz especificação Proposta [`Proposed`] e Pendente de revisão
+  [`Pending Review`].
+- **Análise:** não altera implementação; produz Implementável
+  [`Implementable`] ou Precisa de esclarecimento [`Needs Clarification`].
+- **Implementação:** exige ordem do Arquiteto e especificação Implementável;
+  produz código, testes, conhecimento atualizado e evidências.
+- **Revisão:** ocorre somente quando solicitada; registra achados sem alterar
+  fatos nem requisitos.
+
+Execute apenas a etapa solicitada.
+
+## Evidência
+
+Registre decisões, lacunas, validações materiais e limitações. Não transforme o
+changelog em diário de comandos e não copie para ele metadados que o Git já
+mantém.
+
+## Regras específicas do projeto
+
+- `main` é a referência de produção.
+- Preserve APIs públicas e comportamentos normativos, salvo mudança aprovada em
+  especificação.
 - Preserve alterações preexistentes e não relacionadas.
+- Não remova, condense ou reescreva conhecimento normativo sem declarar a
+  mudança.
+- Não execute force push, reescrita de histórico, merge, tag, release ou deploy
+  sem ordem específica do Arquiteto.
 
-## Relatório obrigatório
+## Encerramento obrigatório
 
-O relatório final deve informar, de forma objetiva:
+Toda tarefa deve produzir mudança material, terminar com commit e push e deixar
+a árvore de trabalho limpa. Push com falha significa tarefa ainda não entregue.
 
-- resultado executivo;
-- requisitos atendidos e não atendidos;
-- arquivos de código, build e conhecimento alterados;
-- contratos adicionados, modificados ou removidos;
-- validações executadas e pendentes;
-- riscos, desvios e lacunas descobertas;
-- estado final da transação EKM;
-- operações Git ou externas realizadas.
+O relatório final deve informar objetivamente o resultado, os arquivos
+alterados, contratos afetados, validações e limitações, lacunas remanescentes,
+estado da transação EKM e operações Git ou externas realizadas.
