@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Nova [`New`]
 
@@ -211,19 +211,43 @@ hardware real.
 
 ## 10. Revisão de implementabilidade
 
-**Resultado:** Pendente de revisão [`Pending Review`]
+**Resultado:** Implementável [`Implementable`]
 
-**Resumo da análise:** a autoria registrou o comportamento pretendido, mas não
-autoriza implementação. A etapa de análise deve confrontar requisitos, código,
-testes, framework Arduino e compatibilidade pública.
+**Resumo da análise:** os requisitos GAR-001 a GAR-020 podem ser implementados
+sem decisão normativa, de produto ou arquitetura adicional. A correção pode
+manter a API existente, adicionar a configuração com default compatível,
+separar a intenção do comando do estado físico e validar o debounce com o
+provedor de tempo já disponível na base.
 
-**Decisões ausentes:** nenhuma identificada durante a autoria; sujeita à análise
-independente da etapa seguinte.
+**Decisões ausentes:** nenhuma.
 
-**Evidências consultadas:** relato operacional do estado preso em `opening`,
-histórico de estados fornecido pelo Arquiteto, implementação atual da
-`GarageControlCapability`, builders, adapters e especificações de API pública e
-runtime.
+**Evidências consultadas:**
+
+- `GarageControlCapability` concentra leitura, inferência, publicação e comandos
+  nos métodos `handleSensorState()`, `open()`, `close()` e `handle()`;
+- `GarageControlConfig` herda os defaults públicos de `InputHardwareConfig` e
+  admite a adição de `sensorDebounceTimeMs` sem invalidar inicializações
+  existentes;
+- `CapabilitiesBuilder` já centraliza a criação dos dois inputs com `PULL_UP` e
+  a passagem de configuração para a capability;
+- `IInputHardwareAdapter::readDigitalState()` fornece os níveis necessários sem
+  alteração do contrato do adapter;
+- `ICapability` disponibiliza `timeProvider`, permitindo debounce determinístico
+  por tempo e substituição do provider em testes;
+- `ICapabilityEventSink` e `value` permitem verificar ordem, conteúdo e
+  duplicidade das publicações;
+- a assinatura pública existente pode ser preservada por overload compatível ou
+  argumento adicional com default;
+- o environment `esp32s3_test` usa Unity e compila o código-fonte do projeto,
+  permitindo adicionar mocks de input, output, tempo e event sink;
+- `IOTSSC-PUBLIC-API` autoriza evolução compatível de configs e exige build e
+  validação representativa;
+- `IOTSSC-RUNTIME` exige apenas preservar configuração antes de `setup()`,
+  processamento cooperativo em `handle()` e limite de oito capabilities;
+- não existe outra especificação normativa da máquina de estados da garagem em
+  conflito com este recorte;
+- a validação física exigida permanece pendente para promoção a `Validated`,
+  mas não impede produzir e comprovar o estado `Implemented`.
 
 ## 11. Evidências da implementação
 

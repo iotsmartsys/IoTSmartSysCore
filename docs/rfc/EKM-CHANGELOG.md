@@ -385,9 +385,11 @@ por bounce.
 - a implementação atual transforma o comando em estado de movimento e impede
   `closed` enquanto `currentState` é `opening`;
 - `IOTSSC-GARAGE-CONTROL@0.1` registra requisitos, condições de borda e
-  critérios de aceite.
+  critérios de aceite;
+- a análise confirmou suporte de config, builder, adapters, provider de tempo,
+  event sink e Unity para implementar e testar o recorte sem quebra pública.
 
 ### Resultado
 
-A especificação foi criada como `Proposed`, `Not Started`, `Not Ready` e
-`Pending Review`. Nenhum código, build ou teste foi alterado nesta etapa.
+A especificação permanece `Proposed`, `Not Started` e `Not Ready`, com revisão
+`Implementable`. Nenhum código, build ou teste foi alterado nesta etapa.
