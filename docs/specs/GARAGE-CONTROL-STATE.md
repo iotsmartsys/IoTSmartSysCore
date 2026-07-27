@@ -6,11 +6,11 @@
 
 **Versão:** 0.1
 
-**Estado normativo:** Proposta [`Proposed`]
+**Estado normativo:** Ativa [`Active`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Implementável [`Implementable`]
 
@@ -205,9 +205,9 @@ em hardware é necessária para declarar `Validated`.
 - `EKM-CHG-0007`;
 - `EKM-GAP-0009`.
 
-A proposta preserva a interface existente e adiciona somente uma configuração
-com default compatível. A validação física permanece uma lacuna até execução no
-hardware real.
+A especificação preserva a interface existente e adiciona somente uma
+configuração com default compatível. A lacuna de validação física foi encerrada
+após o Arquiteto declarar a implementação testada e validada em hardware real.
 
 ## 10. Revisão de implementabilidade
 
@@ -246,8 +246,8 @@ provedor de tempo já disponível na base.
   processamento cooperativo em `handle()` e limite de oito capabilities;
 - não existe outra especificação normativa da máquina de estados da garagem em
   conflito com este recorte;
-- a validação física exigida permanece pendente para promoção a `Validated`,
-  mas não impede produzir e comprovar o estado `Implemented`.
+- no momento da revisão de implementabilidade, a validação física ainda estava
+  pendente; ela foi posteriormente declarada aprovada pelo Arquiteto.
 
 ## 11. Evidências da implementação
 
@@ -271,8 +271,14 @@ Evidências materiais:
   fornece uma plataforma;
 - a configuração PlatformIO preexistente não foi alterada por estar fora do
   recorte GAR-001 a GAR-020;
-- nenhum teste automatizado ou validação física foi declarado aprovado.
+- na etapa do Implementador, nenhum teste automatizado ou validação física foi
+  declarado aprovado.
 
-Por isso, a implementação permanece `In Progress`, a entrega permanece
-`Not Ready` e a promoção para `Implemented` depende da execução aprovada dos
-testes automatizados. A validação física continua reservada ao Arquiteto.
+Posteriormente, o Arquiteto declarou a implementação testada e validada em
+ambiente de hardware. Essa evidência humana encerra a pendência de validação
+física sem apagar a limitação anteriormente observada no environment
+automatizado do repositório.
+
+Com a validação aprovada pelo Arquiteto, a especificação passa a `Active`, a
+implementação a `Validated` e a entrega a `Ready for Integration`. A integração
+em `main` permanece uma etapa separada e não foi realizada nesta promoção.

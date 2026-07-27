@@ -355,7 +355,7 @@ seguintes.
 
 ## EKM-CHG-0007 — Correção do estado do controle de garagem
 
-**Estado:** Open
+**Estado:** Closed
 
 **Especificação relacionada:** `IOTSSC-GARAGE-CONTROL@0.1`
 
@@ -382,8 +382,8 @@ por bounce.
 
 ### Lacunas
 
-- `EKM-GAP-0009` permanece aberta até execução dos testes automatizados e
-  validação física.
+- `EKM-GAP-0009` foi encerrada após o Arquiteto declarar a implementação
+  testada e validada em ambiente de hardware.
 
 ### Evidências materiais
 
@@ -410,12 +410,15 @@ por bounce.
   preexistente estende `env:base32` sem plataforma; a configuração não foi
   alterada por estar fora do recorte autorizado;
 - os testes automatizados e a validação física não foram declarados aprovados.
+- em etapa posterior, o Arquiteto declarou a implementação testada e validada
+  em ambiente de hardware, fornecendo a decisão humana necessária para a
+  promoção a `Validated`.
 
 ### Resultado
 
-A especificação permanece `Proposed`, passa a `In Progress` e continua
-`Not Ready`, com revisão `Implementable`. Código, mocks e testes foram
-implementados, o build de produção e a compilação da suíte foram aprovados, mas
-a execução automatizada permanece bloqueada pela configuração preexistente do
-environment. `EKM-CHG-0007` continua aberta até a validação física e a decisão
-do Arquiteto.
+A especificação passa a `Active`, a implementação a `Validated` e a entrega a
+`Ready for Integration`, com revisão `Implementable`. A limitação anteriormente
+observada no environment automatizado permanece registrada como evidência
+histórica, sem invalidar a posterior validação em hardware declarada pelo
+Arquiteto. `EKM-CHG-0007` e `EKM-GAP-0009` são encerradas. A integração em
+`main` permanece uma etapa separada.
