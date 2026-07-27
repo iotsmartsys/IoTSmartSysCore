@@ -25,16 +25,23 @@ namespace iotsmartsys::core
 #define GARAGE_STATE_CLOSING "closing"
 #define GARAGE_STATE_UNKNOWN "unknown"
 
+    enum class GarageRequestedDirection
+    {
+        None,
+        Open,
+        Close
+    };
+
     class GarageControlCapability : public ICommandCapability
     {
     public:
-        GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink);
+        GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock, IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink, long sensorDebounceTimeMs = 50);
 
         virtual void setup() override;
         virtual void handle() override;
 
-        bool isOpen() const { return sensorOpenCompletedActualState == 0; }
-        bool isClosed() const { return sensorCloseActualState == 0; }
+        bool isOpen() const { return hardwareAdapterSensorOpen != nullptr && stableOpenState == 0; }
+        bool isClosed() const { return hardwareAdapterSensorClose != nullptr && stableCloseState == 0; }
 
         void open();
         void close();
@@ -53,9 +60,22 @@ namespace iotsmartsys::core
         std::string currentState;
         std::string lastState;
         long debounceTimeMs;
-        int sensorOpenCompletedActualState = -1;
-        int sensorCloseActualState = -1;
-        bool sensorStateInitialized = false;
+        long sensorDebounceTimeMs;
+
+        // Raw readings from the hardware (may bounce).
+        // HIGH/LOW are defined by Arduino; initialize with 1 (inactive, pull-up).
+        int rawOpenState = 1;
+        int rawCloseState = 1;
+
+        // Stable readings, only updated after the debounce interval.
+        int stableOpenState = 1;
+        int stableCloseState = 1;
+
+        // Time of the last raw-state change, used for debounce.
+        std::uint64_t openLastRawChangeMs = 0;
+        std::uint64_t closeLastRawChangeMs = 0;
+
+        GarageRequestedDirection requestedDirection = GarageRequestedDirection::None;
 
         ICommandHardwareAdapter &hardwareAdapterStopUnlock;
         ICommandHardwareAdapter &hardwareAdapterLock;
@@ -66,6 +86,8 @@ namespace iotsmartsys::core
 
         void simulatePressCommand(ICommandHardwareAdapter &adapter);
         void handleSensorState();
+        void updateStableSensorStates(std::uint64_t now);
+        void evaluateStateFromSensors();
         bool isCurrentState(const char *state) const { return currentState == state; }
         void setCurrentState(const char *newState) { currentState = newState ? newState : ""; }
 

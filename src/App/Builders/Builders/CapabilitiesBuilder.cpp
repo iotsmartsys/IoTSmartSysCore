@@ -556,7 +556,8 @@ namespace iotsmartsys::app
             *hardwareAdapterLock,
             hardwareAdapterOpenSensor,
             hardwareAdapterCloseSensor,
-            &_eventSink);
+            &_eventSink,
+            cfg.sensorDebounceTimeMs);
     }
 
 } // namespace iotsmartsys::app
