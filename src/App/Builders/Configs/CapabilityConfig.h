@@ -140,5 +140,6 @@ namespace iotsmartsys::app
         int GPIO_STOP_UNLOCK;
         int GPIO_OPEN_SENSOR = -1;
         int GPIO_CLOSE_SENSOR = -1;
+        long sensorDebounceTimeMs = 50;
     };
 } // namespace iotsmartsys::app

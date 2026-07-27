@@ -4,11 +4,12 @@
 namespace iotsmartsys::core
 {
     GarageControlCapability::GarageControlCapability(std::string capability_name, long debounceTimeMs, ICommandHardwareAdapter &hardwareAdapterOpen, ICommandHardwareAdapter &hardwareAdapterClose, ICommandHardwareAdapter &hardwareAdapterStopUnlock, ICommandHardwareAdapter &hardwareAdapterLock,
-                                                     IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink)
+                                                     IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink, long sensorDebounceTimeMs)
         : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, GARAGE_STATE_UNKNOWN),
           currentState(GARAGE_STATE_UNKNOWN),
-          lastState(""),
+          lastState(GARAGE_STATE_UNKNOWN),
           debounceTimeMs(debounceTimeMs),
+          sensorDebounceTimeMs(sensorDebounceTimeMs),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
           hardwareAdapterLock(hardwareAdapterLock),
           hardwareAdapterClose(hardwareAdapterClose),
@@ -27,10 +28,16 @@ namespace iotsmartsys::core
         if (hardwareAdapterSensorOpen)
         {
             hardwareAdapterSensorOpen->setup();
+            rawOpenState = hardwareAdapterSensorOpen->readDigitalState();
+            openStableInitialized = false;
+            openLastRawChangeMs = timeProvider.nowMs();
         }
         if (hardwareAdapterSensorClose)
         {
             hardwareAdapterSensorClose->setup();
+            rawCloseState = hardwareAdapterSensorClose->readDigitalState();
+            closeStableInitialized = false;
+            closeLastRawChangeMs = timeProvider.nowMs();
         }
     }
 
@@ -53,19 +60,13 @@ namespace iotsmartsys::core
     void GarageControlCapability::open()
     {
         simulatePressCommand(command_hardware_adapter);
-        if (!isOpen())
-        {
-            setCurrentState(GARAGE_STATE_OPENING);
-        }
+        requestedDirection = GarageRequestedDirection::Open;
     }
 
     void GarageControlCapability::close()
     {
         simulatePressCommand(hardwareAdapterClose);
-        if (!isClosed())
-        {
-            setCurrentState(GARAGE_STATE_CLOSING);
-        }
+        requestedDirection = GarageRequestedDirection::Close;
     }
 
     void GarageControlCapability::lock()
@@ -137,53 +138,123 @@ namespace iotsmartsys::core
 
     void GarageControlCapability::handleSensorState()
     {
+        const std::uint64_t now = timeProvider.nowMs();
+
         if (hardwareAdapterSensorOpen)
         {
-            int currentOpenCompletedState = hardwareAdapterSensorOpen->readDigitalState();
-            if (currentOpenCompletedState != sensorOpenCompletedActualState)
+            int currentOpenState = hardwareAdapterSensorOpen->readDigitalState();
+            if (currentOpenState != rawOpenState)
             {
-                sensorOpenCompletedActualState = currentOpenCompletedState;
+                rawOpenState = currentOpenState;
+                openLastRawChangeMs = now;
             }
         }
 
         if (hardwareAdapterSensorClose)
         {
             int currentCloseState = hardwareAdapterSensorClose->readDigitalState();
-            if (sensorCloseActualState != currentCloseState)
+            if (currentCloseState != rawCloseState)
             {
-                sensorCloseActualState = currentCloseState;
+                rawCloseState = currentCloseState;
+                closeLastRawChangeMs = now;
             }
         }
 
-        if (!sensorStateInitialized)
+        updateStableSensorStates(now);
+        evaluateStateFromSensors();
+    }
+
+    void GarageControlCapability::updateStableSensorStates(std::uint64_t now)
+    {
+        const std::uint64_t debounceThreshold =
+            sensorDebounceTimeMs > 0 ? static_cast<std::uint64_t>(sensorDebounceTimeMs) : 0;
+
+        if (hardwareAdapterSensorOpen && now - openLastRawChangeMs >= debounceThreshold)
         {
-            sensorStateInitialized = true;
+            stableOpenState = rawOpenState;
+            openStableInitialized = true;
+        }
+
+        if (hardwareAdapterSensorClose && now - closeLastRawChangeMs >= debounceThreshold)
+        {
+            stableCloseState = rawCloseState;
+            closeStableInitialized = true;
+        }
+    }
+
+    void GarageControlCapability::evaluateStateFromSensors()
+    {
+        const bool hasOpenSensor = hardwareAdapterSensorOpen != nullptr;
+        const bool hasCloseSensor = hardwareAdapterSensorClose != nullptr;
+        const bool openActiveStable = isOpen();
+        const bool closeActiveStable = isClosed();
+
+        const std::string previousState = currentState;
+
+        // GAR-016: contradictory evidence -> unknown.
+        if (openActiveStable && closeActiveStable)
+        {
+            setCurrentState(GARAGE_STATE_UNKNOWN);
+            requestedDirection = GarageRequestedDirection::None;
             return;
         }
 
-        const bool currentlyOpening = isCurrentState(GARAGE_STATE_OPENING);
-        const bool currentlyClosing = isCurrentState(GARAGE_STATE_CLOSING);
+        // GAR-004: stable close active -> closed.
+        if (closeActiveStable)
+        {
+            setCurrentState(GARAGE_STATE_CLOSED);
+            requestedDirection = GarageRequestedDirection::None;
+            return;
+        }
 
-        if (isClosed() && !currentlyOpening)
+        // GAR-005: stable open active -> opened.
+        if (openActiveStable)
         {
-            if (!isCurrentState(GARAGE_STATE_CLOSED))
-                setCurrentState(GARAGE_STATE_CLOSED);
+            setCurrentState(GARAGE_STATE_OPENED);
+            requestedDirection = GarageRequestedDirection::None;
+            return;
         }
-        else if (isOpen() && !currentlyClosing)
+
+        // No stable active endpoint.
+        if (!hasOpenSensor && !hasCloseSensor)
         {
-            if (!isCurrentState(GARAGE_STATE_OPENED))
-                setCurrentState(GARAGE_STATE_OPENED);
-        }
-        else
-        {
-            if (currentlyOpening || isOpening())
+            // GAR-018: no sensors at all, rely only on requested direction.
+            if (requestedDirection == GarageRequestedDirection::Open)
             {
                 setCurrentState(GARAGE_STATE_OPENING);
             }
-            else if (currentlyClosing || isClosing())
+            else if (requestedDirection == GarageRequestedDirection::Close)
             {
                 setCurrentState(GARAGE_STATE_CLOSING);
             }
+            else if (!isCurrentState(GARAGE_STATE_OPENING) && !isCurrentState(GARAGE_STATE_CLOSING))
+            {
+                setCurrentState(GARAGE_STATE_UNKNOWN);
+            }
+            return;
+        }
+
+        // At least one sensor present, no stable active endpoint.
+        if (requestedDirection == GarageRequestedDirection::Open)
+        {
+            setCurrentState(GARAGE_STATE_OPENING);
+        }
+        else if (requestedDirection == GarageRequestedDirection::Close)
+        {
+            setCurrentState(GARAGE_STATE_CLOSING);
+        }
+        else
+        {
+            // GAR-012: infer external movement from the last known terminal state.
+            if (previousState == GARAGE_STATE_CLOSED)
+            {
+                setCurrentState(GARAGE_STATE_OPENING);
+            }
+            else if (previousState == GARAGE_STATE_OPENED)
+            {
+                setCurrentState(GARAGE_STATE_CLOSING);
+            }
+            // Otherwise keep the current movement state (opening/closing/unknown).
         }
     }
 
@@ -191,14 +262,12 @@ namespace iotsmartsys::core
     /// @return
     bool GarageControlCapability::isOpening()
     {
-        return isCurrentState(GARAGE_STATE_OPENING) ||
-               (isCurrentState(GARAGE_STATE_CLOSED) && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+        return isCurrentState(GARAGE_STATE_OPENING);
     }
 
     bool GarageControlCapability::isClosing()
     {
-        return isCurrentState(GARAGE_STATE_CLOSING) ||
-               (isCurrentState(GARAGE_STATE_OPENED) && sensorCloseActualState == HIGH && sensorOpenCompletedActualState == HIGH);
+        return isCurrentState(GARAGE_STATE_CLOSING);
     }
 
-}
+} // namespace iotsmartsys::core

@@ -355,7 +355,7 @@ seguintes.
 
 ## EKM-CHG-0007 — Correção do estado do controle de garagem
 
-**Estado:** Open
+**Estado:** Closed
 
 **Especificação relacionada:** `IOTSSC-GARAGE-CONTROL@0.1`
 
@@ -373,10 +373,17 @@ por bounce.
 - nomes públicos de comandos e estados são preservados;
 - autoria, análise de implementabilidade e implementação permanecem etapas
   distintas.
+- a implementação será testada com uma instrução autocontida que reúne as
+  regras EKM e técnicas pertinentes ao Implementador; o `AGENTS.md` permanece
+  restrito às invariantes permanentes do repositório.
+- leituras brutas e estados estáveis permanecem separados inclusive durante a
+  inicialização; nenhuma combinação inicial confirma extremo antes do debounce;
+- o estado inicial `unknown` não é republicado sem mudança lógica.
 
 ### Lacunas
 
-- `EKM-GAP-0009` permanece aberta até implementação, testes e validação física.
+- `EKM-GAP-0009` foi encerrada após o Arquiteto declarar a implementação
+  testada e validada em ambiente de hardware.
 
 ### Evidências materiais
 
@@ -385,9 +392,33 @@ por bounce.
 - a implementação atual transforma o comando em estado de movimento e impede
   `closed` enquanto `currentState` é `opening`;
 - `IOTSSC-GARAGE-CONTROL@0.1` registra requisitos, condições de borda e
-  critérios de aceite.
+  critérios de aceite;
+- a análise confirmou suporte de config, builder, adapters, provider de tempo,
+  event sink e Unity para implementar e testar o recorte sem quebra pública;
+- `docs/experiments/GARAGE-CONTROL-STATE-IMPLEMENTER-PROMPT.md` contém a ordem,
+  o contrato funcional, as restrições e as validações da próxima etapa sem
+  exigir releitura da metodologia EKM completa.
+- a capability implementa debounce independente por sensor, prioridade da
+  evidência terminal estável, direção comandada ou inferida e suporte a sensores
+  ausentes ou parciais;
+- o builder propaga `sensorDebounceTimeMs`, cujo default público é 50 ms, sem
+  alterar o pulso configurado por `debounceTimeMs`;
+- o build `esp32_dev` foi aprovado;
+- o binário da suíte `test_garage_control_state` foi compilado para ESP32-S3
+  com configuração temporária equivalente;
+- `pio test -e esp32s3_test` não iniciou a compilação porque o environment
+  preexistente estende `env:base32` sem plataforma; a configuração não foi
+  alterada por estar fora do recorte autorizado;
+- os testes automatizados e a validação física não foram declarados aprovados.
+- em etapa posterior, o Arquiteto declarou a implementação testada e validada
+  em ambiente de hardware, fornecendo a decisão humana necessária para a
+  promoção a `Validated`.
 
 ### Resultado
 
-A especificação foi criada como `Proposed`, `Not Started`, `Not Ready` e
-`Pending Review`. Nenhum código, build ou teste foi alterado nesta etapa.
+A especificação passa a `Active`, a implementação a `Validated` e a entrega a
+`Ready for Integration`, com revisão `Implementable`. A limitação anteriormente
+observada no environment automatizado permanece registrada como evidência
+histórica, sem invalidar a posterior validação em hardware declarada pelo
+Arquiteto. `EKM-CHG-0007` e `EKM-GAP-0009` são encerradas. A integração em
+`main` permanece uma etapa separada.

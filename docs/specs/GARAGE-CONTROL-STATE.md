@@ -6,13 +6,13 @@
 
 **Versão:** 0.1
 
-**Estado normativo:** Proposta [`Proposed`]
+**Estado normativo:** Ativa [`Active`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Nova [`New`]
 
@@ -205,26 +205,80 @@ em hardware é necessária para declarar `Validated`.
 - `EKM-CHG-0007`;
 - `EKM-GAP-0009`.
 
-A proposta preserva a interface existente e adiciona somente uma configuração
-com default compatível. A validação física permanece uma lacuna até execução no
-hardware real.
+A especificação preserva a interface existente e adiciona somente uma
+configuração com default compatível. A lacuna de validação física foi encerrada
+após o Arquiteto declarar a implementação testada e validada em hardware real.
 
 ## 10. Revisão de implementabilidade
 
-**Resultado:** Pendente de revisão [`Pending Review`]
+**Resultado:** Implementável [`Implementable`]
 
-**Resumo da análise:** a autoria registrou o comportamento pretendido, mas não
-autoriza implementação. A etapa de análise deve confrontar requisitos, código,
-testes, framework Arduino e compatibilidade pública.
+**Resumo da análise:** os requisitos GAR-001 a GAR-020 podem ser implementados
+sem decisão normativa, de produto ou arquitetura adicional. A correção pode
+manter a API existente, adicionar a configuração com default compatível,
+separar a intenção do comando do estado físico e validar o debounce com o
+provedor de tempo já disponível na base.
 
-**Decisões ausentes:** nenhuma identificada durante a autoria; sujeita à análise
-independente da etapa seguinte.
+**Decisões ausentes:** nenhuma.
 
-**Evidências consultadas:** relato operacional do estado preso em `opening`,
-histórico de estados fornecido pelo Arquiteto, implementação atual da
-`GarageControlCapability`, builders, adapters e especificações de API pública e
-runtime.
+**Evidências consultadas:**
+
+- `GarageControlCapability` concentra leitura, inferência, publicação e comandos
+  nos métodos `handleSensorState()`, `open()`, `close()` e `handle()`;
+- `GarageControlConfig` herda os defaults públicos de `InputHardwareConfig` e
+  admite a adição de `sensorDebounceTimeMs` sem invalidar inicializações
+  existentes;
+- `CapabilitiesBuilder` já centraliza a criação dos dois inputs com `PULL_UP` e
+  a passagem de configuração para a capability;
+- `IInputHardwareAdapter::readDigitalState()` fornece os níveis necessários sem
+  alteração do contrato do adapter;
+- `ICapability` disponibiliza `timeProvider`, permitindo debounce determinístico
+  por tempo e substituição do provider em testes;
+- `ICapabilityEventSink` e `value` permitem verificar ordem, conteúdo e
+  duplicidade das publicações;
+- a assinatura pública existente pode ser preservada por overload compatível ou
+  argumento adicional com default;
+- o environment `esp32s3_test` usa Unity e compila o código-fonte do projeto,
+  permitindo adicionar mocks de input, output, tempo e event sink;
+- `IOTSSC-PUBLIC-API` autoriza evolução compatível de configs e exige build e
+  validação representativa;
+- `IOTSSC-RUNTIME` exige apenas preservar configuração antes de `setup()`,
+  processamento cooperativo em `handle()` e limite de oito capabilities;
+- não existe outra especificação normativa da máquina de estados da garagem em
+  conflito com este recorte;
+- no momento da revisão de implementabilidade, a validação física ainda estava
+  pendente; ela foi posteriormente declarada aprovada pelo Arquiteto.
 
 ## 11. Evidências da implementação
 
-Não aplicável nesta etapa. A implementação não foi iniciada.
+A máquina de estados foi implementada com leituras brutas e estáveis separadas,
+debounce determinístico por sensor, direção solicitada independente do estado
+físico e publicação somente por mudança lógica em `handle()`.
+
+O recorte automatizado cobre o default e a separação dos debounces, as quatro
+combinações iniciais, fluxos comandados simétricos, falha de partida, retorno ao
+extremo de origem, movimento externo, reversão, bounce, extremos contraditórios,
+sensores ausentes ou parciais e ordem dos eventos sem duplicidade.
+
+Evidências materiais:
+
+- o build `esp32_dev` foi aprovado;
+- o binário do teste `test_garage_control_state` foi compilado para ESP32-S3
+  com uma configuração temporária equivalente que fornece a plataforma e
+  exclui `src/main.cpp`;
+- a execução canônica de `pio test -e esp32s3_test` não iniciou compilação nem
+  testes porque o environment do repositório estende `env:base32`, que não
+  fornece uma plataforma;
+- a configuração PlatformIO preexistente não foi alterada por estar fora do
+  recorte GAR-001 a GAR-020;
+- na etapa do Implementador, nenhum teste automatizado ou validação física foi
+  declarado aprovado.
+
+Posteriormente, o Arquiteto declarou a implementação testada e validada em
+ambiente de hardware. Essa evidência humana encerra a pendência de validação
+física sem apagar a limitação anteriormente observada no environment
+automatizado do repositório.
+
+Com a validação aprovada pelo Arquiteto, a especificação passa a `Active`, a
+implementação a `Validated` e a entrega a `Ready for Integration`. A integração
+em `main` permanece uma etapa separada e não foi realizada nesta promoção.
