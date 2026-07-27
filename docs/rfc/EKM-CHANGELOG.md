@@ -373,6 +373,9 @@ por bounce.
 - nomes públicos de comandos e estados são preservados;
 - autoria, análise de implementabilidade e implementação permanecem etapas
   distintas.
+- a implementação será testada com uma instrução autocontida que reúne as
+  regras EKM e técnicas pertinentes ao Implementador; o `AGENTS.md` permanece
+  restrito às invariantes permanentes do repositório.
 
 ### Lacunas
 
@@ -387,9 +390,13 @@ por bounce.
 - `IOTSSC-GARAGE-CONTROL@0.1` registra requisitos, condições de borda e
   critérios de aceite;
 - a análise confirmou suporte de config, builder, adapters, provider de tempo,
-  event sink e Unity para implementar e testar o recorte sem quebra pública.
+  event sink e Unity para implementar e testar o recorte sem quebra pública;
+- `docs/experiments/GARAGE-CONTROL-STATE-IMPLEMENTER-PROMPT.md` contém a ordem,
+  o contrato funcional, as restrições e as validações da próxima etapa sem
+  exigir releitura da metodologia EKM completa.
 
 ### Resultado
 
 A especificação permanece `Proposed`, `Not Started` e `Not Ready`, com revisão
-`Implementable`. Nenhum código, build ou teste foi alterado nesta etapa.
+`Implementable`. O prompt experimental e a porta de entrada simplificada foram
+preparados; nenhum código, build ou teste foi alterado nesta etapa.
