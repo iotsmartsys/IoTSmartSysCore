@@ -7,7 +7,7 @@ namespace iotsmartsys::core
                                                      IInputHardwareAdapter *openSensorAdapter, IInputHardwareAdapter *closeSensorAdapter, ICapabilityEventSink *event_sink, long sensorDebounceTimeMs)
         : ICommandCapability(hardwareAdapterOpen, event_sink, capability_name, GARAGE_ACTUATOR_TYPE, GARAGE_STATE_UNKNOWN),
           currentState(GARAGE_STATE_UNKNOWN),
-          lastState(""),
+          lastState(GARAGE_STATE_UNKNOWN),
           debounceTimeMs(debounceTimeMs),
           sensorDebounceTimeMs(sensorDebounceTimeMs),
           hardwareAdapterStopUnlock(hardwareAdapterStopUnlock),
@@ -29,14 +29,14 @@ namespace iotsmartsys::core
         {
             hardwareAdapterSensorOpen->setup();
             rawOpenState = hardwareAdapterSensorOpen->readDigitalState();
-            stableOpenState = rawOpenState;
+            openStableInitialized = false;
             openLastRawChangeMs = timeProvider.nowMs();
         }
         if (hardwareAdapterSensorClose)
         {
             hardwareAdapterSensorClose->setup();
             rawCloseState = hardwareAdapterSensorClose->readDigitalState();
-            stableCloseState = rawCloseState;
+            closeStableInitialized = false;
             closeLastRawChangeMs = timeProvider.nowMs();
         }
     }
@@ -166,16 +166,19 @@ namespace iotsmartsys::core
 
     void GarageControlCapability::updateStableSensorStates(std::uint64_t now)
     {
-        const std::uint64_t debounceThreshold = static_cast<std::uint64_t>(sensorDebounceTimeMs);
+        const std::uint64_t debounceThreshold =
+            sensorDebounceTimeMs > 0 ? static_cast<std::uint64_t>(sensorDebounceTimeMs) : 0;
 
-        if (hardwareAdapterSensorOpen && now >= openLastRawChangeMs + debounceThreshold)
+        if (hardwareAdapterSensorOpen && now - openLastRawChangeMs >= debounceThreshold)
         {
             stableOpenState = rawOpenState;
+            openStableInitialized = true;
         }
 
-        if (hardwareAdapterSensorClose && now >= closeLastRawChangeMs + debounceThreshold)
+        if (hardwareAdapterSensorClose && now - closeLastRawChangeMs >= debounceThreshold)
         {
             stableCloseState = rawCloseState;
+            closeStableInitialized = true;
         }
     }
 
@@ -183,8 +186,8 @@ namespace iotsmartsys::core
     {
         const bool hasOpenSensor = hardwareAdapterSensorOpen != nullptr;
         const bool hasCloseSensor = hardwareAdapterSensorClose != nullptr;
-        const bool openActiveStable = hasOpenSensor && stableOpenState == 0;
-        const bool closeActiveStable = hasCloseSensor && stableCloseState == 0;
+        const bool openActiveStable = isOpen();
+        const bool closeActiveStable = isClosed();
 
         const std::string previousState = currentState;
 

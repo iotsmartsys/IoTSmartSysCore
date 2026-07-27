@@ -40,8 +40,8 @@ namespace iotsmartsys::core
         virtual void setup() override;
         virtual void handle() override;
 
-        bool isOpen() const { return hardwareAdapterSensorOpen != nullptr && stableOpenState == 0; }
-        bool isClosed() const { return hardwareAdapterSensorClose != nullptr && stableCloseState == 0; }
+        bool isOpen() const { return hardwareAdapterSensorOpen != nullptr && openStableInitialized && stableOpenState == 0; }
+        bool isClosed() const { return hardwareAdapterSensorClose != nullptr && closeStableInitialized && stableCloseState == 0; }
 
         void open();
         void close();
@@ -70,6 +70,8 @@ namespace iotsmartsys::core
         // Stable readings, only updated after the debounce interval.
         int stableOpenState = 1;
         int stableCloseState = 1;
+        bool openStableInitialized = false;
+        bool closeStableInitialized = false;
 
         // Time of the last raw-state change, used for debounce.
         std::uint64_t openLastRawChangeMs = 0;

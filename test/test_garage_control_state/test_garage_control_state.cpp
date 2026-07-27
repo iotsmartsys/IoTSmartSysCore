@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <unity.h>
 
+#include "App/Builders/Configs/CapabilityConfig.h"
 #include "Contracts/Capabilities/GarageControlCapability.h"
 #include "Contracts/Logging/Log.h"
 #include "Platform/Arduino/Logging/ArduinoSerialLogger.h"
@@ -44,6 +45,14 @@ static void tick(core::GarageControlCapability &cap, std::uint64_t deltaMs = 0)
     cap.handle();
 }
 
+static void settle_sensor(core::GarageControlCapability &cap, test::mocks::MockInputAdapter &sensor,
+                          int32_t state, std::uint64_t debounceMs = 50)
+{
+    sensor.setState(state);
+    tick(cap);
+    tick(cap, debounceMs);
+}
+
 static void assert_state(core::GarageControlCapability &cap, const char *expected)
 {
     auto state = cap.readState();
@@ -68,20 +77,27 @@ static void assert_last_event(const char *expected)
 void test_defaults_and_debounce_separation()
 {
     reset_fixtures();
+    app::GarageControlConfig config;
+    TEST_ASSERT_EQUAL(50, config.sensorDebounceTimeMs);
+
     core::GarageControlCapability cap(
         "garage_test", 200, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
         &openSensor, &closeSensor, &eventSink); // sensorDebounceTimeMs defaults to 50
 
     cap.setup();
+    tick(cap, 49);
+    assert_state(cap, GARAGE_STATE_UNKNOWN);
     tick(cap, 50);
     assert_state(cap, GARAGE_STATE_UNKNOWN);
 
     // A command issues a relay pulse controlled by debounceTimeMs, not sensorDebounceTimeMs.
     cap.open();
     TEST_ASSERT_EQUAL(1, openAdapter.pulseCount);
+    TEST_ASSERT_FALSE(openAdapter.powered);
 
     // The relay pulse length must not influence the sensor debounce timing.
     closeSensor.setState(LOW);
+    tick(cap);
     tick(cap, 49);
     assert_state(cap, GARAGE_STATE_UNKNOWN); // still bouncing
     tick(cap, 1);
@@ -100,7 +116,9 @@ void test_initialization_combinations()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             &openSensor, &closeSensor, &eventSink, 50);
         cap.setup();
-        tick(cap, 50);
+        tick(cap, 49);
+        assert_state(cap, GARAGE_STATE_UNKNOWN);
+        tick(cap, 1);
         assert_state(cap, GARAGE_STATE_UNKNOWN);
     }
 
@@ -112,7 +130,9 @@ void test_initialization_combinations()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             &openSensor, &closeSensor, &eventSink, 50);
         cap.setup();
-        tick(cap, 50);
+        tick(cap, 49);
+        assert_state(cap, GARAGE_STATE_UNKNOWN);
+        tick(cap, 1);
         assert_state(cap, GARAGE_STATE_OPENED);
     }
 
@@ -124,7 +144,9 @@ void test_initialization_combinations()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             &openSensor, &closeSensor, &eventSink, 50);
         cap.setup();
-        tick(cap, 50);
+        tick(cap, 49);
+        assert_state(cap, GARAGE_STATE_UNKNOWN);
+        tick(cap, 1);
         assert_state(cap, GARAGE_STATE_CLOSED);
     }
 
@@ -137,7 +159,9 @@ void test_initialization_combinations()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             &openSensor, &closeSensor, &eventSink, 50);
         cap.setup();
-        tick(cap, 50);
+        tick(cap, 49);
+        assert_state(cap, GARAGE_STATE_UNKNOWN);
+        tick(cap, 1);
         assert_state(cap, GARAGE_STATE_UNKNOWN);
     }
 }
@@ -154,8 +178,7 @@ void test_commanded_open_and_symmetric_close()
     cap.setup();
 
     // Start closed.
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
     assert_state(cap, GARAGE_STATE_CLOSED);
 
     // Command open.
@@ -167,12 +190,14 @@ void test_commanded_open_and_symmetric_close()
 
     // Release the close endpoint -> opening.
     closeSensor.setState(HIGH);
-    tick(cap, 50);
+    tick(cap);
+    tick(cap, 49);
+    assert_state(cap, GARAGE_STATE_CLOSED);
+    tick(cap, 1);
     assert_state(cap, GARAGE_STATE_OPENING);
 
     // Reach the open endpoint -> opened.
-    openSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, openSensor, LOW);
     assert_state(cap, GARAGE_STATE_OPENED);
 
     // Command close.
@@ -182,11 +207,13 @@ void test_commanded_open_and_symmetric_close()
     assert_state(cap, GARAGE_STATE_OPENED); // still active
 
     openSensor.setState(HIGH);
-    tick(cap, 50);
+    tick(cap);
+    tick(cap, 49);
+    assert_state(cap, GARAGE_STATE_OPENED);
+    tick(cap, 1);
     assert_state(cap, GARAGE_STATE_CLOSING);
 
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
     assert_state(cap, GARAGE_STATE_CLOSED);
 }
 
@@ -201,8 +228,7 @@ void test_failed_start_keeps_origin()
         &openSensor, &closeSensor, &eventSink, 50);
     cap.setup();
 
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
     assert_state(cap, GARAGE_STATE_CLOSED);
 
     cap.open();
@@ -218,41 +244,43 @@ void test_failed_start_keeps_origin()
 // ----------------------------------------------------------------------------
 void test_return_to_origin()
 {
-    reset_fixtures();
-    core::GarageControlCapability cap(
-        "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
-        &openSensor, &closeSensor, &eventSink, 50);
-    cap.setup();
-
     // closed -> opening -> closed
-    closeSensor.setState(LOW);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_CLOSED);
+    reset_fixtures();
+    {
+        core::GarageControlCapability cap(
+            "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
+            &openSensor, &closeSensor, &eventSink, 50);
+        cap.setup();
 
-    cap.open();
-    closeSensor.setState(HIGH);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_OPENING);
+        settle_sensor(cap, closeSensor, LOW);
+        assert_state(cap, GARAGE_STATE_CLOSED);
 
-    closeSensor.setState(LOW); // returns to origin
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_CLOSED);
+        cap.open();
+        settle_sensor(cap, closeSensor, HIGH);
+        assert_state(cap, GARAGE_STATE_OPENING);
+
+        settle_sensor(cap, closeSensor, LOW); // returns to origin
+        assert_state(cap, GARAGE_STATE_CLOSED);
+    }
 
     // opened -> closing -> opened
     reset_fixtures();
-    cap.setup();
-    openSensor.setState(LOW);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_OPENED);
+    {
+        core::GarageControlCapability cap(
+            "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
+            &openSensor, &closeSensor, &eventSink, 50);
+        cap.setup();
 
-    cap.close();
-    openSensor.setState(HIGH);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_CLOSING);
+        settle_sensor(cap, openSensor, LOW);
+        assert_state(cap, GARAGE_STATE_OPENED);
 
-    openSensor.setState(LOW); // returns to origin
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_OPENED);
+        cap.close();
+        settle_sensor(cap, openSensor, HIGH);
+        assert_state(cap, GARAGE_STATE_CLOSING);
+
+        settle_sensor(cap, openSensor, LOW); // returns to origin
+        assert_state(cap, GARAGE_STATE_OPENED);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -262,29 +290,33 @@ void test_external_movement()
 {
     // External opening from closed.
     reset_fixtures();
-    core::GarageControlCapability cap(
-        "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
-        &openSensor, &closeSensor, &eventSink, 50);
-    cap.setup();
+    {
+        core::GarageControlCapability cap(
+            "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
+            &openSensor, &closeSensor, &eventSink, 50);
+        cap.setup();
 
-    closeSensor.setState(LOW);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_CLOSED);
+        settle_sensor(cap, closeSensor, LOW);
+        assert_state(cap, GARAGE_STATE_CLOSED);
 
-    closeSensor.setState(HIGH); // no command, endpoint released
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_OPENING);
+        settle_sensor(cap, closeSensor, HIGH); // no command, endpoint released
+        assert_state(cap, GARAGE_STATE_OPENING);
+    }
 
     // External closing from opened.
     reset_fixtures();
-    cap.setup();
-    openSensor.setState(LOW);
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_OPENED);
+    {
+        core::GarageControlCapability cap(
+            "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
+            &openSensor, &closeSensor, &eventSink, 50);
+        cap.setup();
 
-    openSensor.setState(HIGH); // no command, endpoint released
-    tick(cap, 50);
-    assert_state(cap, GARAGE_STATE_CLOSING);
+        settle_sensor(cap, openSensor, LOW);
+        assert_state(cap, GARAGE_STATE_OPENED);
+
+        settle_sensor(cap, openSensor, HIGH); // no command, endpoint released
+        assert_state(cap, GARAGE_STATE_CLOSING);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -320,13 +352,11 @@ void test_reverse_during_travel()
         &openSensor, &closeSensor, &eventSink, 50);
     cap.setup();
 
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
     assert_state(cap, GARAGE_STATE_CLOSED);
 
     cap.open();
-    closeSensor.setState(HIGH);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, HIGH);
     assert_state(cap, GARAGE_STATE_OPENING);
 
     // Reverse before reaching the open endpoint.
@@ -335,8 +365,7 @@ void test_reverse_during_travel()
     assert_state(cap, GARAGE_STATE_CLOSING);
 
     // The open endpoint can still terminate the movement if reached first.
-    openSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, openSensor, LOW);
     assert_state(cap, GARAGE_STATE_OPENED);
 }
 
@@ -363,7 +392,10 @@ void test_bounce()
 
     // Stable change: LOW for the full debounce interval -> closed.
     closeSensor.setState(LOW);
-    tick(cap, 50);
+    tick(cap);
+    tick(cap, 49);
+    assert_state(cap, GARAGE_STATE_UNKNOWN);
+    tick(cap, 1);
     assert_state(cap, GARAGE_STATE_CLOSED);
 
     // A shorter bounce in the opposite direction must not invert direction.
@@ -385,9 +417,10 @@ void test_both_sensors_active_unknown()
         &openSensor, &closeSensor, &eventSink, 50);
     cap.setup();
 
-    openSensor.setState(LOW);
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
+    assert_state(cap, GARAGE_STATE_CLOSED);
+
+    settle_sensor(cap, openSensor, LOW);
     assert_state(cap, GARAGE_STATE_UNKNOWN);
 }
 
@@ -426,13 +459,11 @@ void test_missing_and_partial_sensors()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             &openSensor, nullptr, &eventSink, 50);
         cap.setup();
-        openSensor.setState(LOW);
-        tick(cap, 50);
+        settle_sensor(cap, openSensor, LOW);
         assert_state(cap, GARAGE_STATE_OPENED);
 
         cap.close();
-        openSensor.setState(HIGH);
-        tick(cap, 50);
+        settle_sensor(cap, openSensor, HIGH);
         assert_state(cap, GARAGE_STATE_CLOSING);
         tick(cap, 500);
         assert_state(cap, GARAGE_STATE_CLOSING); // cannot fabricate closed
@@ -445,13 +476,11 @@ void test_missing_and_partial_sensors()
             "garage_test", 1, openAdapter, closeAdapter, stopUnlockAdapter, lockAdapter,
             nullptr, &closeSensor, &eventSink, 50);
         cap.setup();
-        closeSensor.setState(LOW);
-        tick(cap, 50);
+        settle_sensor(cap, closeSensor, LOW);
         assert_state(cap, GARAGE_STATE_CLOSED);
 
         cap.open();
-        closeSensor.setState(HIGH);
-        tick(cap, 50);
+        settle_sensor(cap, closeSensor, HIGH);
         assert_state(cap, GARAGE_STATE_OPENING);
         tick(cap, 500);
         assert_state(cap, GARAGE_STATE_OPENING); // cannot fabricate opened
@@ -471,8 +500,7 @@ void test_event_order_and_no_duplicates()
     tick(cap, 50);
     assert_event_count(0); // unknown is the initial value, no publication
 
-    closeSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, LOW);
     assert_event_count(1);
     assert_last_event(GARAGE_STATE_CLOSED);
 
@@ -480,13 +508,11 @@ void test_event_order_and_no_duplicates()
     assert_event_count(1); // no duplicate
 
     cap.open();
-    closeSensor.setState(HIGH);
-    tick(cap, 50);
+    settle_sensor(cap, closeSensor, HIGH);
     assert_event_count(2);
     assert_last_event(GARAGE_STATE_OPENING);
 
-    openSensor.setState(LOW);
-    tick(cap, 50);
+    settle_sensor(cap, openSensor, LOW);
     assert_event_count(3);
     assert_last_event(GARAGE_STATE_OPENED);
 

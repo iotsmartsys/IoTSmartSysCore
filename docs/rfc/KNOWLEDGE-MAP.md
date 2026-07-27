@@ -13,7 +13,7 @@
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
-| Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Proposed | Not Started |
+| Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Proposed | In Progress |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -91,10 +91,10 @@ implantada atualmente.
 
 **Estado:** Open
 
-A `GarageControlCapability` pode manter `opening` contra o sensor físico de
-fechamento. Encerrar após implementação conforme `IOTSSC-GARAGE-CONTROL`,
-testes automatizados das transições e validação física explicitamente
-registrada.
+A máquina de estados conforme `IOTSSC-GARAGE-CONTROL` está implementada e sua
+suíte compila para ESP32-S3, mas a execução automatizada está bloqueada pela
+configuração preexistente do environment de teste. Encerrar somente após testes
+automatizados aprovados e validação física explicitamente registrada.
 
 ## 4. Baseline inicial
 

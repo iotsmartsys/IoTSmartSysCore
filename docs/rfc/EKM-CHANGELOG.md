@@ -376,10 +376,14 @@ por bounce.
 - a implementação será testada com uma instrução autocontida que reúne as
   regras EKM e técnicas pertinentes ao Implementador; o `AGENTS.md` permanece
   restrito às invariantes permanentes do repositório.
+- leituras brutas e estados estáveis permanecem separados inclusive durante a
+  inicialização; nenhuma combinação inicial confirma extremo antes do debounce;
+- o estado inicial `unknown` não é republicado sem mudança lógica.
 
 ### Lacunas
 
-- `EKM-GAP-0009` permanece aberta até implementação, testes e validação física.
+- `EKM-GAP-0009` permanece aberta até execução dos testes automatizados e
+  validação física.
 
 ### Evidências materiais
 
@@ -394,9 +398,24 @@ por bounce.
 - `docs/experiments/GARAGE-CONTROL-STATE-IMPLEMENTER-PROMPT.md` contém a ordem,
   o contrato funcional, as restrições e as validações da próxima etapa sem
   exigir releitura da metodologia EKM completa.
+- a capability implementa debounce independente por sensor, prioridade da
+  evidência terminal estável, direção comandada ou inferida e suporte a sensores
+  ausentes ou parciais;
+- o builder propaga `sensorDebounceTimeMs`, cujo default público é 50 ms, sem
+  alterar o pulso configurado por `debounceTimeMs`;
+- o build `esp32_dev` foi aprovado;
+- o binário da suíte `test_garage_control_state` foi compilado para ESP32-S3
+  com configuração temporária equivalente;
+- `pio test -e esp32s3_test` não iniciou a compilação porque o environment
+  preexistente estende `env:base32` sem plataforma; a configuração não foi
+  alterada por estar fora do recorte autorizado;
+- os testes automatizados e a validação física não foram declarados aprovados.
 
 ### Resultado
 
-A especificação permanece `Proposed`, `Not Started` e `Not Ready`, com revisão
-`Implementable`. O prompt experimental e a porta de entrada simplificada foram
-preparados; nenhum código, build ou teste foi alterado nesta etapa.
+A especificação permanece `Proposed`, passa a `In Progress` e continua
+`Not Ready`, com revisão `Implementable`. Código, mocks e testes foram
+implementados, o build de produção e a compilação da suíte foram aprovados, mas
+a execução automatizada permanece bloqueada pela configuração preexistente do
+environment. `EKM-CHG-0007` continua aberta até a validação física e a decisão
+do Arquiteto.

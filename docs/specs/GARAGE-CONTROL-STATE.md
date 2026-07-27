@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -251,4 +251,28 @@ provedor de tempo já disponível na base.
 
 ## 11. Evidências da implementação
 
-Não aplicável nesta etapa. A implementação não foi iniciada.
+A máquina de estados foi implementada com leituras brutas e estáveis separadas,
+debounce determinístico por sensor, direção solicitada independente do estado
+físico e publicação somente por mudança lógica em `handle()`.
+
+O recorte automatizado cobre o default e a separação dos debounces, as quatro
+combinações iniciais, fluxos comandados simétricos, falha de partida, retorno ao
+extremo de origem, movimento externo, reversão, bounce, extremos contraditórios,
+sensores ausentes ou parciais e ordem dos eventos sem duplicidade.
+
+Evidências materiais:
+
+- o build `esp32_dev` foi aprovado;
+- o binário do teste `test_garage_control_state` foi compilado para ESP32-S3
+  com uma configuração temporária equivalente que fornece a plataforma e
+  exclui `src/main.cpp`;
+- a execução canônica de `pio test -e esp32s3_test` não iniciou compilação nem
+  testes porque o environment do repositório estende `env:base32`, que não
+  fornece uma plataforma;
+- a configuração PlatformIO preexistente não foi alterada por estar fora do
+  recorte GAR-001 a GAR-020;
+- nenhum teste automatizado ou validação física foi declarado aprovado.
+
+Por isso, a implementação permanece `In Progress`, a entrega permanece
+`Not Ready` e a promoção para `Implemented` depende da execução aprovada dos
+testes automatizados. A validação física continua reservada ao Arquiteto.
