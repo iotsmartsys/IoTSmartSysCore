@@ -492,3 +492,48 @@ deploy foi produzida.
   representa a autorização e as decisões recebidas e autorizou commit e push.
   A confirmação não declara validação técnica independente, integração à
   `main`, release ou deploy.
+
+## EKM-CHG-0009 — Persistência de estados de comandos binários
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.1`
+
+### Objetivo
+
+Restaurar no boot o último estado registrado de cada capability derivada de
+`BinaryCommandCapability` e registrar em NVS toda mudança lógica confirmada.
+
+### Intenção confirmada
+
+- todas as capabilities abrangidas devem aplicar no boot o último estado
+  registrado;
+- o registro deve usar NVS;
+- a leitura deve ser leve;
+- cada mudança de estado deve ser registrada.
+
+### Solução proposta
+
+- contrato de storage no Core e provedor NVS em `Platform/Espressif`;
+- snapshot compacto, versionado e isolado do blob de settings;
+- uma leitura de dados por boot e consultas posteriores em cache;
+- identidade por `capability_name` definitivo e `type`;
+- persistência do estado semântico binário, convertido para o vocabulário de
+  cada capability;
+- commit a cada transição confirmada, sem gravação para repetição do mesmo
+  valor;
+- restauração somente após aplicação aceita e leitura de confirmação do
+  adapter;
+- falhas de storage não bloqueiam nem revertem o runtime.
+
+### Decisão pendente
+
+`BCS-DEC-001` registra que a ordem não definiu se factory reset deve apagar o
+snapshot. A recomendação, ainda não confirmada, é apagar o namespace da
+funcionalidade junto com os demais dados persistentes do dispositivo.
+
+### Resultado da autoria
+
+`IOTSSC-BINARY-COMMAND-STATE@0.1` foi criada como `Proposed` / `Not Started` /
+`Not Ready` / `Pending Review`. Nenhum código de implementação, teste funcional,
+build, upload, release ou deploy integra esta etapa.

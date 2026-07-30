@@ -24,6 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -33,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Mapped | builders, adapters e contracts | Controle de garagem especificado incrementalmente; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários proposta; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -125,3 +126,5 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0008`: adotou o modelo EKM 1.17, o fluxo sequencial por atores,
   preservação arquitetural explícita, gate de encerramento das execuções,
   Consultor de Arquitetura subordinado e adaptador `CLAUDE.md`.
+- `EKM-CHG-0009`: propõe persistência NVS e restauração no boot para
+  capabilities derivadas de `BinaryCommandCapability`.
