@@ -422,3 +422,73 @@ observada no environment automatizado permanece registrada como evidência
 histórica, sem invalidar a posterior validação em hardware declarada pelo
 Arquiteto. `EKM-CHG-0007` e `EKM-GAP-0009` são encerradas. A integração em
 `main` permanece uma etapa separada.
+
+## EKM-CHG-0008 — Adoção do modelo EKM 1.17 e roteamento por atores
+
+**Estado:** Closed
+
+**Especificação relacionada:** Não aplicável
+
+### Objetivo
+
+Adequar a governança local ao modelo EKM 1.17 e garantir que agentes gerais e
+Claude Code carreguem as mesmas regras e exatamente o perfil recebido na ordem
+do Arquiteto.
+
+### Decisões confirmadas
+
+- a atuação ocorre como Consultor de Arquitetura, subordinado ao Arquiteto;
+- o recorte é exclusivamente documental e não altera código funcional,
+  especificações funcionais nem seus estados;
+- `AGENTS.md` passa a rotear regras comuns e exatamente um perfil oficial da
+  EKM;
+- `CLAUDE.md` funciona somente como adaptador para o roteamento obrigatório de
+  `AGENTS.md`;
+- a governança local é reconciliada com o modelo EKM 1.17 na mesma mudança;
+- as invariantes técnicas e validações canônicas do IoTSmartSysCore são
+  preservadas.
+
+### Evidências materiais
+
+- método, governança, decisões de desenho, regras comuns, perfil do Consultor e
+  templates vigentes do repositório `EKM-guidelines` foram confrontados com as
+  fontes locais;
+- o roteamento inclui os quatro atores do fluxo e o Consultor de Arquitetura;
+- a diretriz local incorpora branch derivada da `main`, preservação
+  arquitetural, encerramento terminal das execuções e confirmação final do
+  Consultor;
+- o mapa localiza `AGENTS.md`, `CLAUDE.md`, diretrizes, histórico e a versão
+  vigente do modelo.
+
+### Resultado
+
+O roteamento EKM 1.17, o adaptador Claude Code e as fontes locais de governança
+foram reconciliados. Nenhuma lacuna funcional foi criada ou encerrada e nenhuma
+alegação de validação técnica independente, integração à `main`, release ou
+deploy foi produzida.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura.
+- **Ordem autorizada:** adequar o repositório à EKM 1.17 e adicionar
+  `CLAUDE.md`.
+- **Repositório e recorte:** IoTSmartSysCore; `AGENTS.md`, `CLAUDE.md` e fontes
+  locais de governança afetadas, sem código ou estado funcional.
+- **Operações autorizadas:** investigar as fontes vigentes, editar a
+  documentação, validar consistência e, após confirmação final, criar commit e
+  realizar push.
+- **Decisões confirmadas:** adotar o roteamento por atores da EKM 1.17, usar
+  `CLAUDE.md` somente como adaptador e reconciliar diretriz, mapa e changelog na
+  mesma mudança.
+- **Resultado material:** cinco fontes de governança coerentes com a EKM 1.17,
+  preservando invariantes e comandos canônicos do projeto.
+- **Validações e limitações:** integridade textual, referências e whitespace
+  verificados; builds não executados por não serem aplicáveis ao recorte
+  documental. O Consultor participou da autoria e não constitui revisão
+  independente desta mudança.
+- **Significado da confirmação:** o Arquiteto confirmou que este registro
+  representa a autorização e as decisões recebidas e autorizou commit e push.
+  A confirmação não declara validação técnica independente, integração à
+  `main`, release ou deploy.

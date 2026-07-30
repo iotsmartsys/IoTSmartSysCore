@@ -2,13 +2,23 @@
 
 **Status:** Active
 
-**Última atualização:** 26/07/2026
+**Última atualização:** 29/07/2026
 
-## 1. Fontes normativas
+## 1. Governança
+
+| Área | Fonte | Tipo | Estado |
+|---|---|---|---|
+| Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKM 1.17 |
+| Adaptador para Claude Code | `CLAUDE.md` | Operacional | Active |
+| Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.17 |
+| Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
+| Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
+
+## 2. Fontes normativas
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM 1.9 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
+| Governança EKM 1.17 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -17,7 +27,7 @@
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
-## 2. Cobertura de adoção
+## 3. Cobertura de adoção
 
 | Domínio | Cobertura | Entradas principais | Observação |
 |---|---|---|---|
@@ -34,7 +44,7 @@
 | Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
 | Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
 
-## 3. Lacunas
+## 4. Lacunas
 
 ### EKM-GAP-0001 — Evidência de compatibilidade pública
 
@@ -96,7 +106,7 @@ validada em ambiente de hardware conforme declaração do Arquiteto. A limitaç�
 preexistente do environment automatizado permanece registrada em
 `EKM-CHG-0007`, mas não mantém aberta a lacuna de validação física.
 
-## 4. Baseline inicial
+## 5. Baseline inicial
 
 - Branch: `main`.
 - Commit: `0c6d5e63eb09d826beba2e16a3085c1a8f814668`.
@@ -105,10 +115,13 @@ preexistente do environment automatizado permanece registrada em
 - ESP8266: não suportado.
 - Release: tags na branch `main`, com publicação pelo GitHub Actions no PlatformIO.
 
-## 5. Evolução da governança
+## 6. Evolução da governança
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.
 - `EKM-CHG-0005`: tornou a Technical Readiness Review cumulativa, exigiu matriz completa, separou revisão e implementação em execuções distintas e reservou ao arquiteto a autorização para implementar.
 - `EKM-CHG-0006`: adotou o modelo EKM 1.9, removeu controles universais sem
   evidência de ganho e transferiu a linhagem técnica documental para o Git.
+- `EKM-CHG-0008`: adotou o modelo EKM 1.17, o fluxo sequencial por atores,
+  preservação arquitetural explícita, gate de encerramento das execuções,
+  Consultor de Arquitetura subordinado e adaptador `CLAUDE.md`.

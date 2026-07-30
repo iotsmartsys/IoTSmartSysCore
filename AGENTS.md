@@ -1,51 +1,82 @@
-# Instruções permanentes do repositório
+# Instruções permanentes e roteamento EKM
 
-Este arquivo contém somente invariantes válidas para qualquer tarefa. A ordem
-do Arquiteto fornece etapa, escopo, especificação e regras particulares.
+**Modelo EKM:** 1.17
 
-## Autoridade e escopo
+**Modalidade:** atores com perfis referenciados
 
-- O Arquiteto humano decide intenção, arquitetura, risco e integração.
-- Execute somente a etapa e o recorte recebidos por prompt ou pipeline.
-- Não invente requisitos, não amplie escopo nem falsifique evidências.
-- Preserve alterações preexistentes e não relacionadas.
+**Estado:** vigente
 
-## Fontes locais
+## Autoridade
 
-- especificações normativas: `docs/specs/`;
-- decisões, lacunas e evidências materiais: `docs/rfc/EKM-CHANGELOG.md`;
-- localização das fontes e lacunas: `docs/rfc/KNOWLEDGE-MAP.md`;
-- implementação: `src/`;
+O Arquiteto humano tem autoridade final sobre intenção, prioridade, escopo,
+arquitetura, risco, autorização, validação e integração. A ordem recebida por
+prompt ou pipeline identifica papel, especificação e recorte autorizado.
+
+## Fonte dos perfis
+
+**Raiz local da EKM:**
+`/Users/marcelocostamiranda/source/EKM-guidelines`
+
+Antes de qualquer atuação EKM:
+
+1. leia integralmente
+   `/Users/marcelocostamiranda/source/EKM-guidelines/roles/REGRAS-COMUNS.md`;
+2. leia integralmente somente o perfil correspondente ao papel recebido;
+3. leia a especificação indicada, quando aplicável;
+4. leia apenas as fontes técnicas pertinentes ao recorte.
+
+| Papel recebido | Perfil |
+|---|---|
+| Autor da Especificação | `roles/AUTOR-DA-ESPECIFICACAO.md` |
+| Engenheiro Analista | `roles/ENGENHEIRO-ANALISTA.md` |
+| Engenheiro Implementador | `roles/ENGENHEIRO-IMPLEMENTADOR.md` |
+| Engenheiro Revisor | `roles/ENGENHEIRO-REVISOR.md` |
+| Consultor de Arquitetura | `roles/CONSULTOR-DE-ARQUITETURA.md` |
+
+Não carregue perfis de outros papéis nem a metodologia EKM completa. Se a ordem
+não identificar papel, resultado e recorte, ou se a fonte não estiver
+acessível, não inicie a tarefa; informe o impedimento ao Arquiteto. A
+especificação é obrigatória no ciclo funcional; o Consultor pode receber
+Não se aplica [`Not Applicable`] em governança ou apoio fora desse ciclo.
+
+## Fontes locais do projeto
+
+- diretrizes locais: `docs/rfc/EKM-GUIDELINES.md`;
+- especificações: `docs/specs/`;
+- decisões, evidências e transações: `docs/rfc/EKM-CHANGELOG.md`;
+- mapa de conhecimento: `docs/rfc/KNOWLEDGE-MAP.md`;
+- visão e navegação informativa: `README.md` e `docs/REPO_DOSSIER.md`;
+- runtime e API pública: `src/SmartSysApp.*`, `src/main.cpp` e `src/Core/`;
+- integrações de plataforma: `src/Platform/`;
+- build e environments: `platformio.ini`, `configs/`, `boards/` e `Makefile`;
 - testes PlatformIO/Unity: `test/`.
 
-Uma instrução declarada autocontida fornece as regras EKM e de engenharia da
-tarefa e dispensa reler `docs/rfc/EKM-GUIDELINES.md`.
+## Comandos canônicos
 
-## Invariantes técnicas
+- integridade textual: `git diff --check`;
+- build suportado: `pio run -e esp32_dev`;
+- testes PlatformIO/Unity: `pio test -e esp32s3_test`.
 
-- `main` é a referência de produção.
-- O runtime suportado é Arduino sobre ESP32.
+Validações adicionais pertencem à especificação aplicável. Upload em hardware,
+publicação, release e deploy exigem ordem explícita do Arquiteto. Não declare
+como aprovada uma validação que não foi executada ou não chegou a estado
+terminal.
+
+## Invariantes locais
+
+- Preserve arquitetura, organização e separação de responsabilidades vigentes;
+  use as fontes técnicas acima e o precedente equivalente mais próximo. Desvio
+  exige autorização arquitetural explícita na especificação.
+- `main` é a referência de produção; o runtime suportado é Arduino sobre ESP32.
 - Preserve APIs públicas, defaults e comportamentos normativos, salvo mudança
-  explicitamente aprovada na especificação.
+  explicitamente aprovada em especificação.
 - Configure capabilities antes de `SmartSysApp::setup()`, preserve o
   processamento cooperativo de `handle()` e o limite de oito capabilities.
+- ESP-IDF permanece preparação futura e não pode degradar o runtime vigente;
+  ESP8266 não constitui plataforma suportada.
 - Não altere `private.ini`, credenciais, secrets ou configuração privada.
+- Preserve alterações preexistentes e não relacionadas.
 
-## Validação
-
-Use como verificações canônicas, quando aplicáveis ao recorte:
-
-- `git diff --check`;
-- `pio run -e esp32_dev`;
-- `pio test -e esp32s3_test` para testes PlatformIO/Unity.
-
-Não aprove validação não executada; registre limitações reais.
-
-## Git e entrega
-
-- Comece com árvore de trabalho limpa; se não estiver limpa, não inicie.
-- Toda tarefa iniciada deve terminar com resultado material, commit, push e
-  árvore limpa.
-- O Git mantém a linhagem; não a duplique em documentos EKM.
-- Não execute force push, reescrita de histórico, merge, tag, release ou deploy
-  sem ordem específica do Arquiteto.
+As regras comuns e o perfil selecionado definem condições de entrada, promoção
+de estados, evidência, Git e encerramento. Regras específicas da tarefa
+pertencem à especificação ou à ordem do Arquiteto, não a este arquivo.

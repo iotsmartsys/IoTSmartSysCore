@@ -4,9 +4,9 @@
 
 **Estado da fonte:** Vigente
 
-**Versão do documento:** 1.6
+**Versão do documento:** 1.13
 
-**Versão do modelo EKM:** 1.9
+**Versão do modelo EKM:** 1.17
 
 **Escopo:** Todo o repositório
 
@@ -14,7 +14,7 @@
 
 O Arquiteto humano tem autoridade final sobre intenção, prioridade, escopo,
 arquitetura, risco, autorização, validação e integração. A ordem recebida por
-prompt ou pipeline define a etapa autorizada.
+prompt ou pipeline identifica papel, especificação e recorte autorizado.
 
 Agentes não inventam requisitos nem expandem o recorte. Evidências factuais
 permanecem factuais mesmo quando o Arquiteto aceita o risco.
@@ -28,21 +28,20 @@ permanecem factuais mesmo quando o Arquiteto aceita o risco.
 - código e testes implementam e evidenciam;
 - relatórios não criam requisitos.
 
-Git registra commits, autoria, diferenças, branches e linhagem. Esses dados não
-devem ser duplicados manualmente nas fontes EKM.
+Git registra commits, autoria, diferenças, branches e linhagem. Não duplique
+esses dados manualmente nas fontes EKM.
 
-Estas diretrizes adotam o modelo 1.9 do repositório de referência
-`EKM-guidelines`. Regras específicas deste projeto prevalecem apenas dentro de
-seu escopo declarado.
+Estas diretrizes adotam o modelo 1.17 do repositório de referência
+`EKM-guidelines`. Regras específicas deste projeto prevalecem somente no
+escopo declarado.
 
 ## 3. Fluxo
 
 ```text
-especificação
-→ ordem do Arquiteto
-→ análise de implementabilidade
-→ ordem do Arquiteto
-→ implementação e validação
+Autor da Especificação
+→ Engenheiro Analista
+→ Engenheiro Implementador
+→ Engenheiro Revisor / Tech Lead
 → decisão humana e integração
 ```
 
@@ -50,75 +49,82 @@ Implementação exige especificação Implementável [`Implementable`]. Precisa 
 esclarecimento [`Needs Clarification`] retorna a decisão ao Arquiteto sem
 alteração parcial da implementação.
 
-A análise cobre o necessário para sustentar seu resultado. Uma lacuna
-bloqueante permite concluir `Needs Clarification` quando a decisão necessária
-estiver clara, registrando também outros bloqueios materiais já observados, sem
-matriz universal ou investigação exaustiva.
+Cada ator atualiza a especificação, promove os estados sustentados pela própria
+etapa e entrega o resultado por commit e push. Não existe um ator separado
+apenas para reconciliação.
 
-Revisões adicionais acontecem somente quando solicitadas.
+O `AGENTS.md` seleciona as regras comuns e exatamente um perfil oficial da EKM.
+O agente não carrega perfis de outros papéis nem a metodologia completa, salvo
+ordem explícita de governança.
+
+O Consultor de Arquitetura atua fora do pipeline, subordinado ao Arquiteto,
+somente no recorte e nas operações autorizadas. Antes do commit final, registra
+ordem, decisões, resultado e limitações e obtém confirmação explícita do
+Arquiteto. Participação anterior impede alegação posterior de independência no
+mesmo recorte.
 
 ## 4. Contrato Git
 
-Toda tarefa de agente começa com árvore limpa, produz resultado material,
-termina com commit e push e deixa a árvore limpa. Push com falha significa etapa
-não entregue.
+Todo fluxo começa em uma branch de trabalho derivada da `main`, nunca
+diretamente na `main`. Toda tarefa de agente começa com árvore limpa, produz
+resultado material, termina com commit e push e deixa a árvore limpa. Push com
+falha significa etapa não entregue.
+
+Antes de promover estado, declarar validação aprovada, criar o commit final,
+realizar push ou emitir resposta conclusiva, o agente confirma que toda tarefa,
+comando, processo, build, teste, upload ou execução delegada que iniciou chegou
+a estado terminal e registra seu resultado ou limitação. Estado não terminal ou
+desconhecido bloqueia o encerramento.
 
 A tarefa não autoriza force push, reescrita de histórico, merge, tag, release ou
 deploy sem ordem específica.
-
-Git é a fonte da linhagem técnica. Branches, SHAs, checkpoints e cadeias de
-commits não são repetidos em documentos EKM, salvo quando necessários para
-explicar decisão ou desvio material.
 
 ## 5. Preservação
 
 - Não remover ou enfraquecer decisão vigente silenciosamente.
 - Não substituir fonte normativa por resumo incompleto.
 - Não resolver conflito normativo por preferência do agente.
+- Preservar arquitetura, organização e separação de responsabilidades e usar o
+  precedente equivalente mais próximo.
+- Não criar camada, pasta estrutural, abstração transversal ou padrão
+  arquitetural sem especificação Implementável que identifique o padrão atual,
+  a mudança, o alcance e a justificativa ou decisão do Arquiteto.
+- Na ausência ou conflito de precedentes, devolver a decisão ao Arquiteto.
 - Atualizar conhecimento afetado na mesma mudança.
 - Registrar lacunas que precisem sobreviver à tarefa.
 - Preservar alterações preexistentes e não relacionadas.
 
-## 6. Especificações e estados
-
-Uma especificação incremental é a unidade de comportamento e delegação. Ela
-registra objetivo, escopo, requisitos verificáveis, contratos e falhas
-relevantes, critérios de aceite, relações e resultado da análise de
-implementabilidade.
-
-Estados normativos, de implementação, de entrega e de implementabilidade são
-independentes e seguem o modelo EKM 1.9. Versões concluídas são preservadas;
-mudanças posteriores usam `Amends`, `Supersedes`, `Corrects` ou `Retires`.
-
-## 7. Transações
+## 6. Transações
 
 Mudanças usam `EKM-CHG-NNNN`; lacunas usam `EKM-GAP-NNNN`.
 
-Uma transação registra somente objetivo, especificação relacionada, decisões,
-lacunas, evidências materiais, estado e resultado. Ela não funciona como diário
-de comandos nem como espelho do Git.
+Uma transação registra somente objetivo, decisões, lacunas, evidências materiais
+e resultado. Ela é concluída quando o resultado aceito foi integrado ou, em
+trabalho documental, entregue; o conhecimento está atual; e lacunas restantes
+estão explícitas.
 
-A transação é concluída quando o recorte autorizado foi entregue por commit e
-push, as fontes afetadas estão atuais, as evidências materiais foram registradas
-e as lacunas restantes estão explícitas. O estado da entrega da especificação
-informa separadamente se houve integração.
-
-## 8. Regras específicas do projeto
+## 7. Regras específicas do projeto
 
 - `main` é a referência de produção.
 - O runtime suportado é Arduino sobre ESP32.
 - ESP-IDF permanece preparação futura e não pode degradar o runtime vigente.
 - ESP8266 não constitui plataforma suportada.
-- APIs públicas e comportamentos normativos devem ser preservados, salvo mudança
-  aprovada em especificação.
+- APIs públicas e comportamentos normativos devem ser preservados, salvo
+  mudança aprovada em especificação.
 - Configuração de capabilities termina antes de `SmartSysApp::setup()`.
 - O limite intencional é de oito capabilities por aplicação.
 - Mudanças funcionais relevantes seguem *specification on touch*.
-- Não existe `EKM Gate` ou garantia automatizada vigente.
+- Não altere `private.ini`, credenciais, secrets ou configuração privada.
+- Não existe garantia automatizada EKM vigente.
 
-## 9. Adoção e proporcionalidade
+## 8. Validações canônicas
 
-O projeto mantém adoção incremental: inventaria em largura, aprofunda domínios
-tocados e aplica controles proporcionais ao risco. Controles sem evidência de
-ganho para conhecimento, decisão, auditabilidade, verificação ou velocidade não
-se tornam obrigações universais.
+Use, quando aplicáveis ao recorte:
+
+- `git diff --check`;
+- `pio run -e esp32_dev`;
+- `pio test -e esp32s3_test` para testes PlatformIO/Unity.
+
+Validações adicionais pertencem à especificação. Upload em hardware, publicação,
+release e deploy exigem ordem explícita do Arquiteto. Resultado não executado,
+pendente ou desconhecido não constitui evidência aprovada.
