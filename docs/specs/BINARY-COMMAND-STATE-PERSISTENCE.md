@@ -326,12 +326,54 @@ A revisão de implementabilidade deve classificar o impacto dessa decisão sobre
 o recorte. O comportamento de reboot comum, queda de energia e atualização de
 firmware permanece completamente especificado independentemente dela.
 
+**Classificação da revisão:** não bloqueante para esta especificação. Factory
+reset não integra o escopo funcional autorizado e seu fluxo não deve ser
+alterado pela implementação. `BCS-DEC-001` permanece pendente para uma mudança
+futura que toque esse fluxo, sem impedir a persistência em reboot comum, queda
+de energia ou atualização de firmware.
+
 ## 12. Estado da autoria
 
 A intenção, o comportamento observável, a solução proposta, as falhas e as
-evidências esperadas foram registrados. A especificação permanece `Proposed`,
-a implementação `Not Started`, a entrega `Not Ready` e a revisão de
-implementabilidade `Pending Review`.
+evidências esperadas foram registrados. Ao fim da autoria, a especificação
+permanecia `Proposed`, a implementação `Not Started`, a entrega `Not Ready` e a
+revisão de implementabilidade `Pending Review`.
 
 O Autor da Especificação não executou análise de implementabilidade independente,
 implementação, build nem testes funcionais.
+
+## 13. Revisão de implementabilidade
+
+**Resultado:** Implementável [`Implementable`]
+
+A solução pode ser implementada sem decisão normativa, de produto ou
+arquitetura ausente:
+
+- `BinaryCommandCapability` já centraliza comandos e sincronização com o
+  adapter, oferecendo o ponto comum requerido para restauração, confirmação e
+  persistência de todas as classes derivadas;
+- `ICommandHardwareAdapter` já informa aceitação do comando e permite leitura
+  posterior do estado, sustentando aplicação seguida de read-back sem alteração
+  de sua API pública;
+- o builder define o `capability_name` definitivo antes da construção e do
+  `setup()` do `CapabilityManager`, tornando disponível a identidade composta
+  no momento exigido;
+- `ServiceProvider` e `EspressifPlatformServiceRegistrar` constituem o
+  precedente vigente para contrato no Core, implementação de plataforma e
+  composição no bootstrap;
+- o provedor de settings demonstra o uso vigente de blob versionado, namespace,
+  chave e commit NVS, enquanto o novo contrato e namespace determinados nesta
+  especificação preservam a separação entre os domínios;
+- o limite fixo de oito slots no runtime coincide com o máximo normativo do
+  snapshot;
+- o environment `esp32s3_test` e o teste de settings existente oferecem
+  precedente para testes PlatformIO/Unity contra NVS real.
+
+Versão do formato, serialização compacta, verificação de integridade e detalhes
+internos do cache são decisões de implementação delimitadas pelos requisitos
+BCS-003, BCS-005 a BCS-008 e BCS-019 a BCS-020; não alteram comportamento
+público nem exigem nova decisão arquitetural.
+
+A análise não alterou código, testes ou configuração e preserva a implementação
+como `Not Started`. Uma nova ordem do Arquiteto é necessária para iniciar a
+implementação.

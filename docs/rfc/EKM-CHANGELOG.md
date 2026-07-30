@@ -537,3 +537,21 @@ funcionalidade junto com os demais dados persistentes do dispositivo.
 `IOTSSC-BINARY-COMMAND-STATE@0.1` foi criada como `Proposed` / `Not Started` /
 `Not Ready` / `Pending Review`. Nenhum código de implementação, teste funcional,
 build, upload, release ou deploy integra esta etapa.
+
+### Resultado da análise de implementabilidade
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+As fontes técnicas confirmam ponto comum em `BinaryCommandCapability`, retorno
+de aceitação e read-back no contrato do adapter, identidade definitiva antes de
+`CapabilityManager::setup()`, composição por `ServiceProvider` e registrar de
+plataforma, precedente NVS versionado e testes Unity com NVS real. O recorte
+pode ser implementado sem alterar APIs públicas ou criar estrutura fora da
+fronteira arquitetural já autorizada.
+
+`BCS-DEC-001` permanece pendente, mas foi classificada como não bloqueante:
+factory reset está fora do escopo desta especificação e não deve ser alterado
+pela implementação. Nenhum código, teste, build funcional, upload, release ou
+deploy foi executado nesta etapa. Uma ordem posterior do Arquiteto continua
+obrigatória para implementar.

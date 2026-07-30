@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 29/07/2026
+**Última atualização:** 30/07/2026
 
 ## 1. Governança
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários proposta; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários proposta e `Implementable`; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -126,5 +126,6 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0008`: adotou o modelo EKM 1.17, o fluxo sequencial por atores,
   preservação arquitetural explícita, gate de encerramento das execuções,
   Consultor de Arquitetura subordinado e adaptador `CLAUDE.md`.
-- `EKM-CHG-0009`: propõe persistência NVS e restauração no boot para
-  capabilities derivadas de `BinaryCommandCapability`.
+- `EKM-CHG-0009`: especifica persistência NVS e restauração no boot para
+  capabilities derivadas de `BinaryCommandCapability`; a revisão técnica
+  declarou o recorte `Implementable`.
