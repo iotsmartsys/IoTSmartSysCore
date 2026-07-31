@@ -45,7 +45,7 @@ A fundação EKM foi instituída sem modificar código, build, workflow, testes 
 
 ## EKM-CHG-0002 — Especificação dos exemplos executáveis
 
-**Estado:** Open
+**Estado:** Closed
 
 **Data:** 22/07/2026
 
@@ -633,3 +633,51 @@ executados, por ausência de ESP32-S3 conectado. Não houve validação física.
 A seção 15 da especificação registra classificação, requisitos afetados,
 evidências e recomendação. Nenhum código foi corrigido nesta revisão e nenhuma
 aprovação, integração, release ou deploy foi declarada.
+
+## EKM-CHG-0011 — Adoção de critérios de aceite assertáveis
+
+**Estado:** Closed
+
+**Especificação relacionada:** Não aplicável
+
+### Objetivo
+
+Adotar localmente a EKM 1.18, tornando explícito que critérios obrigatórios
+precisam permitir asserção objetiva de cenário, resultado observável e
+evidência terminal.
+
+### Evidência e decisão
+
+A implementação experimental de persistência binária compilou e criou testes,
+mas a revisão encontrou mocks semanticamente incompatíveis, classes concretas
+fora do caminho supostamente comum, corrupção sem oráculo suficiente e zero
+casos executados usados para sustentar `Implemented`.
+
+O Arquiteto decidiu restaurar posteriormente o recorte funcional ao estado
+anterior à implementação, tornar seus critérios simples e assertáveis e repetir
+o experimento. A EKM oficial foi preparada como 1.18 para generalizar somente a
+regra demonstrada: critérios distinguem aprovação, reprovação e ausência de
+execução; doubles preservam semântica material; compilação não comprova
+comportamento executado.
+
+### Resultado preparado
+
+`AGENTS.md`, diretrizes locais e mapa foram reconciliados com a EKM 1.18.
+Nenhum código funcional, teste ou estado da especificação foi alterado nesta
+atuação de governança. A reversão e a nova autoria pertencem à atuação
+sequencial posterior.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e operações:** evoluir a EKM oficial, reconciliar a adoção local,
+  validar consistência e, após confirmação final, criar commits e push.
+- **Resultado:** regra assertável preparada na EKM 1.18 e adoção local
+  reconciliada.
+- **Limitações:** eficácia ainda não demonstrada; o Consultor participou da
+  solução e não constitui revisão independente.
+- **Significado solicitado:** confirmar este registro e autorizar commit e push
+  nos dois repositórios, sem declarar eficácia, validação funcional, integração,
+  release ou deploy.

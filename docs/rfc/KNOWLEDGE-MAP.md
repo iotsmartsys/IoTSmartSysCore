@@ -8,9 +8,9 @@
 
 | Área | Fonte | Tipo | Estado |
 |---|---|---|---|
-| Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKM 1.17 |
+| Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKM 1.18 |
 | Adaptador para Claude Code | `CLAUDE.md` | Operacional | Active |
-| Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.17 |
+| Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.18 |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
 | Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
 
@@ -18,7 +18,7 @@
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM 1.17 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
+| Governança EKM 1.18 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -129,3 +129,5 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0009`: especifica persistência NVS e restauração no boot para
   capabilities derivadas de `BinaryCommandCapability`; a revisão técnica
   declarou o recorte `Implementable`.
+- `EKM-CHG-0011`: adota a EKM 1.18 e exige critérios de aceite assertáveis,
+  sem confundir compilação com execução.
