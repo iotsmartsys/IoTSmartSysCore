@@ -725,3 +725,51 @@ release ou deploy foi alterado nesta transação.
 - **Significado da confirmação:** autorizar este registro, commit e push, sem
   aprovar a especificação funcional, implementação, integração, release ou
   deploy.
+
+## EKM-CHG-0013 — Correção assertável da persistência de comandos binários
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Corrigir a especificação após o experimento da versão 0.1, tornando cada
+requisito obrigatório verificável por cenário, ação, resultado observável e
+evidência terminal conforme a EKM 1.19.
+
+### Intenção e decisões confirmadas
+
+A intenção funcional permanece inalterada: restaurar no boot o último estado
+binário validamente registrado para cada capability abrangida e persistir toda
+transição confirmada. O Arquiteto determinou que os critérios sejam claros,
+simples e suficientes para que o agente executor consiga afirmar ou reprovar a
+própria implementação.
+
+`BCS-DEC-001`, sobre factory reset, permanece pendente, fora do escopo e não
+bloqueante.
+
+### Resultado da autoria
+
+A versão 0.2:
+
+- relaciona BCS-001 a BCS-023 a critérios BCS-AC-001 a BCS-AC-022;
+- exige evidência terminal capaz de distinguir aprovação, reprovação e ausência
+  de execução;
+- torna reprováveis valve sem interpreter, LED fora do protocolo comum,
+  corrupção validada apenas por tamanho/versão, falhas NVS confundidas com
+  ausência, identidade truncada e testes compilados com zero casos executados;
+- define fidelidade material mínima para doubles de adapter, interpreter, NVS,
+  storage e relógio;
+- separa o gate automatizável de `Implemented` da validação física posterior.
+
+A especificação foi deixada como `Proposed` / `Not Started` / `Not Ready` /
+`Pending Review`. O Autor não executou análise de implementabilidade, alteração
+de código, testes funcionais ou build.
+
+### Limitação material
+
+Os artefatos da tentativa experimental 0.1 ainda existem nesta branch e não
+constituem implementação da versão 0.2. Sua restauração pertence a uma operação
+separada, fora do papel do Autor, e deve ocorrer antes de uma nova implementação
+controlada para não contaminar o experimento.
