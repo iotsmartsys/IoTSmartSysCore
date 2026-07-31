@@ -681,3 +681,47 @@ sequencial posterior.
 - **Significado solicitado:** confirmar este registro e autorizar commit e push
   nos dois repositórios, sem declarar eficácia, validação funcional, integração,
   release ou deploy.
+
+## EKM-CHG-0012 — Adoção local do procedimento de autoria assertável
+
+**Estado:** Closed
+
+**Especificação relacionada:** Não aplicável
+
+### Objetivo
+
+Adotar localmente a EKM 1.19 e tornar operacional a responsabilidade do Autor
+de elaborar critérios de aceite rastreáveis, falsificáveis e independentes de
+novas decisões durante a implementação.
+
+### Resultado
+
+`AGENTS.md`, as diretrizes locais e o mapa de conhecimento foram reconciliados
+com a EKM 1.19. A diretriz local determina que cada requisito obrigatório seja
+relacionado a condição inicial, ação, resultado observável e evidência
+terminal; um executor independente deve conseguir converter o resultado em
+asserção, e a evidência deve conseguir reprovar uma implementação incompatível
+plausível.
+
+O perfil oficial continua sendo a fonte integral do procedimento. A diretriz
+local preserva apenas a regra necessária para roteamento e aplicação no
+projeto, sem duplicar o perfil.
+
+Nenhuma especificação, implementação funcional, teste, configuração de runtime,
+release ou deploy foi alterado nesta transação.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura.
+- **Ordem e operações:** atualizar o IoTSmartSysCore para a última versão da
+  EKM, reconciliar somente a governança local, validar consistência e, após
+  confirmação final, criar commit e realizar push.
+- **Resultado:** roteamento, diretrizes e mapa reconciliados com a EKM 1.19.
+- **Limitações:** a eficácia da diretriz será avaliada na repetição do
+  experimento. O Consultor participou da formulação e da adoção e não constitui
+  revisão independente desse mecanismo.
+- **Significado da confirmação:** autorizar este registro, commit e push, sem
+  aprovar a especificação funcional, implementação, integração, release ou
+  deploy.
