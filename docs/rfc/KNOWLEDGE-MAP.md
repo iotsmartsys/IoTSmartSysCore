@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 30/07/2026
+**Última atualização:** 30/07/2026 (revisão: implementação em andamento da persistência binária 0.2)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started — versão 0.2, `Implementable` |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress — versão 0.2, gate 8.4 pendente de evidência em hardware ESP32-S3 |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários 0.2 `Implementable`, com artefatos experimentais 0.1 ainda aguardando substituição por implementação controlada; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários 0.2 `In Progress` — restore de valve via interpreter, protocolo de `LEDCapability::handle()` e integridade/identidade do provedor NVS corrigidos, `pio run -e esp32_dev` `SUCCESS`, gate 8.4 pendente de `pio test -e esp32s3_test` em hardware físico; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |

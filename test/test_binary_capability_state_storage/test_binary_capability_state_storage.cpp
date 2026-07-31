@@ -11,6 +11,7 @@ extern "C" {
 #include "Contracts/Common/StateResult.h"
 
 #include <vector>
+#include <string>
 #include <cstring>
 #include <cstdio>
 
@@ -168,6 +169,91 @@ void test_repeated_save_keeps_other_records()
     TEST_ASSERT_FALSE(bOn);
 }
 
+// BCS-002: identities that would collide by prefix or exceed the internal
+// buffer capacity must be rejected, never silently truncated.
+void test_oversized_identity_is_rejected_not_truncated()
+{
+    EspNvsBinaryCapabilityStateProvider provider;
+    provider.loadSnapshot();
+
+    std::string longName(64, 'x'); // beyond NAME_LEN(48)
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::InvalidArg),
+                       static_cast<int>(provider.save(longName.c_str(), "Switch", true)));
+
+    bool isOn = true;
+    TEST_ASSERT_FALSE(provider.tryGet(longName.c_str(), "Switch", isOn));
+
+    // A prefix-colliding shorter identity must remain distinct and unaffected.
+    std::string shortName(40, 'x');
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok),
+                       static_cast<int>(provider.save(shortName.c_str(), "Switch", false)));
+    bool shortOn = true;
+    TEST_ASSERT_TRUE(provider.tryGet(shortName.c_str(), "Switch", shortOn));
+    TEST_ASSERT_FALSE(shortOn);
+}
+
+// BCS-006/BCS-012: mutating a single byte of the header or of an active
+// record's region must be detected by the checksum, even though size and
+// version stay unchanged; corrupted content is rejected wholesale.
+void test_header_byte_corruption_is_rejected()
+{
+    {
+        EspNvsBinaryCapabilityStateProvider provider;
+        provider.loadSnapshot();
+        provider.save("dev_Switch", "Switch", true);
+    }
+
+    nvs_handle_t h;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h));
+    size_t required = 0;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_get_blob(h, NVS_KEY, nullptr, &required));
+    std::vector<std::uint8_t> blob(required);
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_get_blob(h, NVS_KEY, blob.data(), &required));
+
+    // Flip a byte inside the header (version field), preserving overall size.
+    blob[0] ^= 0xFF;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_set_blob(h, NVS_KEY, blob.data(), blob.size()));
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_commit(h));
+    nvs_close(h);
+
+    EspNvsBinaryCapabilityStateProvider provider;
+    const StateResult rc = provider.loadSnapshot();
+    TEST_ASSERT_NOT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(rc));
+
+    bool isOn = true;
+    TEST_ASSERT_FALSE(provider.tryGet("dev_Switch", "Switch", isOn));
+}
+
+void test_active_record_byte_corruption_is_rejected()
+{
+    {
+        EspNvsBinaryCapabilityStateProvider provider;
+        provider.loadSnapshot();
+        provider.save("dev_Switch", "Switch", true);
+    }
+
+    nvs_handle_t h;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h));
+    size_t required = 0;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_get_blob(h, NVS_KEY, nullptr, &required));
+    std::vector<std::uint8_t> blob(required);
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_get_blob(h, NVS_KEY, blob.data(), &required));
+
+    // Flip a byte past the header (version+checksum, 8 bytes), inside the
+    // first record's region, preserving overall size and the version field.
+    blob[8] ^= 0xFF;
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_set_blob(h, NVS_KEY, blob.data(), blob.size()));
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_commit(h));
+    nvs_close(h);
+
+    EspNvsBinaryCapabilityStateProvider provider;
+    const StateResult rc = provider.loadSnapshot();
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::StorageCorrupt), static_cast<int>(rc));
+
+    bool isOn = true;
+    TEST_ASSERT_FALSE(provider.tryGet("dev_Switch", "Switch", isOn));
+}
+
 void setup()
 {
     delay(200);
@@ -179,6 +265,9 @@ void setup()
     RUN_TEST(test_truncated_blob_is_rejected);
     RUN_TEST(test_unknown_version_is_rejected);
     RUN_TEST(test_repeated_save_keeps_other_records);
+    RUN_TEST(test_oversized_identity_is_rejected_not_truncated);
+    RUN_TEST(test_header_byte_corruption_is_rejected);
+    RUN_TEST(test_active_record_byte_corruption_is_rejected);
     UNITY_END();
 }
 

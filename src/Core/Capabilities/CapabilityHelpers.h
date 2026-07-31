@@ -203,9 +203,34 @@ namespace iotsmartsys::core
                 storage->tryGet(capability_name.c_str(), type.c_str(), restoredOn))
             {
                 const std::string &target = restoredOn ? _onValue : _offValue;
-                if (command_hardware_adapter.applyCommand(target.c_str()))
+                // BCS-004/5.3: restoration must go through the same
+                // interpreted path as a normal command, so ValveCapability's
+                // on/off <-> open/closed conversion applies here too.
+                bool accepted;
+                if (command_interpreter)
                 {
-                    const std::string confirmed = command_hardware_adapter.getStateValue();
+                    IHardwareCommand hwCommand = command_interpreter->interpretCommand(
+                        CapabilityCommand{type.c_str(), target.c_str()});
+                    accepted = command_hardware_adapter.applyCommand(hwCommand);
+                }
+                else
+                {
+                    accepted = command_hardware_adapter.applyCommand(target.c_str());
+                }
+
+                if (accepted)
+                {
+                    std::string confirmed;
+                    if (command_interpreter)
+                    {
+                        IHardwareState hwStateObj = command_hardware_adapter.getState();
+                        confirmed = command_interpreter->interpretState(hwStateObj);
+                    }
+                    else
+                    {
+                        confirmed = command_hardware_adapter.getStateValue();
+                    }
+
                     if (confirmed == target)
                     {
                         updateState(confirmed);

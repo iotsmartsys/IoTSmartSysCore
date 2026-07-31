@@ -48,6 +48,7 @@ namespace iotsmartsys::platform::espressif
         struct StoredSnapshot
         {
             std::uint32_t version;
+            std::uint32_t checksum;
             StoredRecord records[MAX_RECORDS];
         };
 
@@ -56,7 +57,11 @@ namespace iotsmartsys::platform::espressif
 
         int findRecordIndex(const char *capability_name, const char *type) const;
         static esp_err_t ensureNvsInit();
-        static void copyField(char *dst, std::size_t dstSize, const char *src);
+        // Returns false (no silent truncation) when src does not fit dstSize.
+        static bool copyField(char *dst, std::size_t dstSize, const char *src);
+        // BCS-006/BCS-012: covers the header (version) and every record slot
+        // so any single-byte corruption of an active record is detected.
+        static std::uint32_t computeChecksum(const StoredSnapshot &snapshot);
     };
 } // namespace iotsmartsys::platform::espressif
 

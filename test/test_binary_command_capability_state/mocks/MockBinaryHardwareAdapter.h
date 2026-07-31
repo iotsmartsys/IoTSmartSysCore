@@ -26,10 +26,18 @@ namespace iotsmartsys::test::mocks
         bool applyCommand(const char *value) override
         {
             applyCommandCalls++;
+
+            // Fidelity (spec 8.2): like OutputHardwareAdapter, this double
+            // only understands on/off/toggle; it must reject any other
+            // vocabulary (e.g. valve's open/closed) sent to it directly.
+            std::string requested = value;
+            if (requested != "on" && requested != "off" && requested != "toggle")
+                return false;
+
             if (!acceptCommands)
                 return false;
 
-            std::string newState = value;
+            std::string newState = requested;
             if (newState == "toggle")
             {
                 // Minimal off/on flip, sufficient for the off/on-vocabulary
@@ -47,7 +55,12 @@ namespace iotsmartsys::test::mocks
         }
 
         std::string getStateValue() override { return state; }
-        iotsmartsys::core::IHardwareState getState() override { return iotsmartsys::core::IHardwareState(); }
+        iotsmartsys::core::IHardwareState getState() override
+        {
+            iotsmartsys::core::IHardwareState hwState;
+            hwState.value = state;
+            return hwState;
+        }
 
         std::string state;
         bool acceptCommands{true};

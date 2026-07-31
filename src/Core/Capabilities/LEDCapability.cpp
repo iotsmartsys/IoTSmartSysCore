@@ -10,18 +10,22 @@ namespace iotsmartsys::core
     
     void LEDCapability::handle()
     {
-        if (!blinking || blinkInterval == 0)
-            return;
-
-        auto now = timeProvider.nowMs();
-        if (now - lastToggleTs >= blinkInterval)
+        // BCS-016/BCS-AC-015: an override of handle() must not bypass
+        // BinaryCommandCapability's read-back, publish and persist protocol;
+        // blink only decides whether a new command is issued this cycle.
+        if (blinking && blinkInterval != 0)
         {
-            lastToggleTs = now;
-            if (isOn())
-                turnOff();
-            else
-                turnOn();
+            auto now = timeProvider.nowMs();
+            if (now - lastToggleTs >= blinkInterval)
+            {
+                lastToggleTs = now;
+                if (isOn())
+                    turnOff();
+                else
+                    turnOn();
+            }
         }
+        syncFromHardware();
     }
 
     void LEDCapability::executeCommand(const char *state) { power(state); }

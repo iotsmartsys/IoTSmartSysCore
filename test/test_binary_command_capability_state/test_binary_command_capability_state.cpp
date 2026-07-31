@@ -3,15 +3,19 @@
 
 #include "Contracts/Capabilities/SwitchCapability.h"
 #include "Contracts/Capabilities/ValveCapability.h"
+#include "Contracts/Capabilities/LEDCapability.h"
 #include "Contracts/Providers/ServiceProvider.h"
+#include "Platform/Arduino/Interpreters/ValveHardwareCommandInterpreter.h"
 #include "mocks/MockBinaryHardwareAdapter.h"
 #include "mocks/MockEventSink.h"
 #include "mocks/FakeBinaryCapabilityStateProvider.h"
+#include "mocks/MockTimeProvider.h"
 
 using namespace iotsmartsys;
 
 static test::mocks::FakeBinaryCapabilityStateProvider fakeStorage;
 static test::mocks::MockEventSink eventSink;
+static test::mocks::MockTimeProvider mockTime;
 
 void setUp(void)
 {
@@ -21,6 +25,8 @@ void setUp(void)
     fakeStorage.failNextSave = false;
     eventSink.clear();
     core::ServiceProvider::instance().setBinaryCapabilityStateProvider(&fakeStorage);
+    mockTime.currentMs = 0;
+    core::Time::setProvider(&mockTime);
 }
 
 void tearDown(void) {}
@@ -177,18 +183,79 @@ void test_persist_failure_keeps_hardware_state_and_last_successful_record()
     TEST_ASSERT_FALSE(stored); // last successful commit reflects the latest confirmed state
 }
 
-// BCS-003/BCS-004: storage only knows the semantic off/on state; ValveCapability
-// converts it to its own open/closed vocabulary on restore.
-void test_valve_vocabulary_conversion_on_restore()
+// BCS-003/BCS-004/BCS-009/BCS-010/5.3: storage only knows the semantic
+// off/on state; restoration must reuse the same interpreted command path as
+// a normal command, so ValveCapability's open/closed vocabulary is produced
+// by the interpreter, never sent directly to the adapter.
+void test_valve_vocabulary_conversion_on_restore_open()
 {
     fakeStorage.seed("dev1_valve", "Valve Actuator", true); // true == "open"
-    test::mocks::MockBinaryHardwareAdapter adapter("closed");
+    test::mocks::MockBinaryHardwareAdapter adapter("off"); // adapter-native vocabulary
     core::ValveCapability cap("dev1_valve", adapter, &eventSink);
+    core::ValveHardwareCommandInterpreter interpreter;
+    cap.setCommandInterpreter(&interpreter);
 
     cap.setup();
 
     TEST_ASSERT_TRUE(cap.isOpen());
-    TEST_ASSERT_EQUAL_STRING("open", adapter.getStateValue().c_str());
+    // The adapter (fidelity double, 8.2) only ever sees "on"/"off"/"toggle".
+    TEST_ASSERT_EQUAL_STRING("on", adapter.getStateValue().c_str());
+    TEST_ASSERT_EQUAL(0, fakeStorage.saveCalls); // restore never persists (BCS-011)
+}
+
+void test_valve_vocabulary_conversion_on_restore_closed()
+{
+    fakeStorage.seed("dev1_valve", "Valve Actuator", false); // false == "closed"
+    test::mocks::MockBinaryHardwareAdapter adapter("on");
+    core::ValveCapability cap("dev1_valve", adapter, &eventSink);
+    core::ValveHardwareCommandInterpreter interpreter;
+    cap.setCommandInterpreter(&interpreter);
+
+    cap.setup();
+
+    TEST_ASSERT_FALSE(cap.isOpen());
+    TEST_ASSERT_EQUAL_STRING("off", adapter.getStateValue().c_str());
+    TEST_ASSERT_EQUAL(0, fakeStorage.saveCalls);
+}
+
+// BCS-016/BCS-AC-015: LEDCapability::handle() overrides the base handle()
+// but must not bypass sync/publish/persist for non-blink commands.
+void test_led_handle_outside_blink_persists_confirmed_command()
+{
+    test::mocks::MockBinaryHardwareAdapter adapter("off");
+    core::LEDCapability led("dev1_led", adapter, &eventSink);
+    led.setup();
+    TEST_ASSERT_EQUAL(0, fakeStorage.saveCalls);
+
+    led.executeCommand("on");
+    led.handle(); // must sync/publish/persist even though blink is not active
+
+    TEST_ASSERT_TRUE(led.isOn());
+    TEST_ASSERT_EQUAL(1, fakeStorage.saveCalls);
+    TEST_ASSERT_TRUE(fakeStorage.lastSavedIsOn);
+}
+
+// BCS-016/BCS-AC-015: each confirmed blink alternation is a transition and
+// must produce exactly one persist.
+void test_led_blink_persists_each_alternation()
+{
+    test::mocks::MockBinaryHardwareAdapter adapter("off");
+    core::LEDCapability led("dev1_led", adapter, &eventSink);
+    led.setup();
+
+    led.blink(10);
+    mockTime.advance(10);
+    led.handle(); // first alternation: off -> on
+    TEST_ASSERT_TRUE(led.isOn());
+    TEST_ASSERT_EQUAL(1, fakeStorage.saveCalls);
+
+    led.handle(); // no interval elapsed: no new alternation
+    TEST_ASSERT_EQUAL(1, fakeStorage.saveCalls);
+
+    mockTime.advance(10);
+    led.handle(); // second alternation: on -> off
+    TEST_ASSERT_FALSE(led.isOn());
+    TEST_ASSERT_EQUAL(2, fakeStorage.saveCalls);
 }
 
 void setup()
@@ -203,7 +270,10 @@ void setup()
     RUN_TEST(test_toggle_persists_only_final_confirmed_value);
     RUN_TEST(test_identity_isolation_between_capabilities);
     RUN_TEST(test_persist_failure_keeps_hardware_state_and_last_successful_record);
-    RUN_TEST(test_valve_vocabulary_conversion_on_restore);
+    RUN_TEST(test_valve_vocabulary_conversion_on_restore_open);
+    RUN_TEST(test_valve_vocabulary_conversion_on_restore_closed);
+    RUN_TEST(test_led_handle_outside_blink_persists_confirmed_command);
+    RUN_TEST(test_led_blink_persists_each_alternation);
     UNITY_END();
 }
 

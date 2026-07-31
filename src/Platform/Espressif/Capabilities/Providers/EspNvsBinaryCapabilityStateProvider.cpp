@@ -3,7 +3,6 @@
 
 #ifdef ESP32
 #include <cstring>
-#include <algorithm>
 
 namespace iotsmartsys::platform::espressif
 {
@@ -55,16 +54,40 @@ namespace iotsmartsys::platform::espressif
         return err;
     }
 
-    void EspNvsBinaryCapabilityStateProvider::copyField(char *dst, std::size_t dstSize, const char *src)
+    bool EspNvsBinaryCapabilityStateProvider::copyField(char *dst, std::size_t dstSize, const char *src)
     {
         if (!dst || dstSize == 0)
-            return;
-        const std::size_t n = std::min(dstSize - 1, src ? std::strlen(src) : 0);
+            return false;
+        const std::size_t len = src ? std::strlen(src) : 0;
+        // BCS-002/5.2: reject identities that do not fit instead of
+        // truncating them silently, which would collide by prefix.
+        if (len >= dstSize)
+            return false;
         if (src)
         {
-            std::memcpy(dst, src, n);
+            std::memcpy(dst, src, len);
         }
-        dst[n] = '\0';
+        dst[len] = '\0';
+        return true;
+    }
+
+    std::uint32_t EspNvsBinaryCapabilityStateProvider::computeChecksum(const StoredSnapshot &snapshot)
+    {
+        // FNV-1a 32-bit over the header (version) and every record slot
+        // (used and unused), so any single-byte mutation in an active
+        // record's region is detected regardless of its offset.
+        std::uint32_t hash = 2166136261u;
+        auto mix = [&hash](const std::uint8_t *bytes, std::size_t n)
+        {
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                hash ^= bytes[i];
+                hash *= 16777619u;
+            }
+        };
+        mix(reinterpret_cast<const std::uint8_t *>(&snapshot.version), sizeof(snapshot.version));
+        mix(reinterpret_cast<const std::uint8_t *>(snapshot.records), sizeof(snapshot.records));
+        return hash;
     }
 
     int EspNvsBinaryCapabilityStateProvider::findRecordIndex(const char *capability_name, const char *type) const
@@ -135,6 +158,14 @@ namespace iotsmartsys::platform::espressif
             return StateResult::StorageVersionMismatch;
         }
 
+        // BCS-006/BCS-012: size and version alone do not prove integrity;
+        // reject any content whose checksum does not cover cleanly.
+        if (computeChecksum(loaded) != loaded.checksum)
+        {
+            logger().warn("BinaryCapabilityState", "Snapshot checksum mismatch; treating as absent.");
+            return StateResult::StorageCorrupt;
+        }
+
         _cache = loaded;
         logger().info("BinaryCapabilityState", "Snapshot loaded from NVS.");
         return StateResult::Ok;
@@ -157,6 +188,14 @@ namespace iotsmartsys::platform::espressif
     {
         if (!capability_name || !type || !*capability_name || !*type)
             return StateResult::InvalidArg;
+
+        // BCS-002/5.2: reject identities that do not fit the internal buffer
+        // instead of truncating them silently, which could collide by prefix.
+        if (std::strlen(capability_name) >= NAME_LEN || std::strlen(type) >= TYPE_LEN)
+        {
+            logger().error("BinaryCapabilityState", "Identity too long for '%s'; rejecting instead of truncating.", capability_name);
+            return StateResult::InvalidArg;
+        }
 
         // 5.2: a write updates the in-memory snapshot first, then persists the
         // blob, then commits.
@@ -186,6 +225,7 @@ namespace iotsmartsys::platform::espressif
         copyField(rec.type, sizeof(rec.type), type);
         rec.isOn = isOn ? 1 : 0;
         rec.used = 1;
+        _cache.checksum = computeChecksum(_cache);
 
         esp_err_t err = ensureNvsInit();
         if (err != ESP_OK)

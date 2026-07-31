@@ -823,3 +823,63 @@ Nenhum código, teste, configuração, build funcional, upload, release ou deplo
 foi alterado por esta análise. Os artefatos experimentais 0.1 permanecem como
 material de partida e não constituem evidência aceita para a versão 0.2; uma
 nova implementação controlada continua pendente de ordem do Arquiteto.
+
+## EKM-CHG-0015 — Implementação controlada da persistência binária 0.2
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Como Engenheiro Implementador, sob ordem do Arquiteto, corrigir os desvios
+ponto a ponto identificados em `EKM-CHG-0014` (revisão de implementabilidade
+0.2) nos artefatos experimentais 0.1 ainda presentes na branch, sem criar novo
+contrato, nova camada ou abstração transversal.
+
+### Alterações materiais
+
+- `src/Core/Capabilities/CapabilityHelpers.h`: `restoreFromStorage()` passou a
+  percorrer `command_interpreter` (quando presente) tanto para o comando de
+  restauração quanto para a leitura de confirmação, em vez de chamar
+  `command_hardware_adapter.applyCommand()`/`getStateValue()` diretamente.
+  Corrige BCS-004/BCS-009/BCS-010 para `ValveCapability` (5.3).
+- `src/Core/Capabilities/LEDCapability.cpp`: `handle()` passou a chamar
+  `syncFromHardware()` incondicionalmente (além do avanço de blink quando
+  ativo), preservando publicação/persistência também fora do blink. Corrige o
+  desvio "LED fora do protocolo comum" (BCS-016).
+- `src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.*`:
+  adicionado campo `checksum` (FNV-1a sobre versão + todos os registros,
+  ativos ou não) validado em `loadSnapshot()`; `copyField()` passou a rejeitar
+  (não truncar) identidade que não cabe no buffer interno, e `save()` valida o
+  comprimento antes de gravar. Corrige BCS-002/BCS-006/BCS-012.
+- Testes e doubles ajustados para a fidelidade exigida em 8.2: `MockBinaryHardwareAdapter`
+  passou a rejeitar vocabulário fora de `on`/`off`/`toggle` (como
+  `OutputHardwareAdapter`) e a implementar `getState()` de fato;
+  `test_binary_command_capability_state.cpp` passou a configurar
+  `ValveHardwareCommandInterpreter` real nos casos de valve e ganhou casos
+  para o protocolo de `LEDCapability::handle()` fora e dentro de blink (com
+  `MockTimeProvider` controlável); `test_binary_capability_state_storage.cpp`
+  ganhou casos de identidade sobredimensionada rejeitada e de corrupção de
+  byte único no cabeçalho e em registro ativo.
+
+### Validações executadas
+
+- `pio run -e esp32_dev`: `SUCCESS` (Flash 89.8%, RAM 23.8%).
+- `git diff --check`: aprovado, sem erros.
+- `pio test -e esp32s3_test --filter test_binary_command_capability_state --filter test_binary_capability_state_storage`:
+  compilação e upload tentados; ambas as suítes terminaram `ERRORED` na etapa
+  de upload por exigir um ESP32-S3 físico conectado (`upload_port` fixo em
+  `configs/esp32s3-test.ini`), indisponível nesta sessão — mesma pré-condição
+  ambiental já registrada em `EKM-CHG-0014`. A compilação dos testes (etapa
+  anterior ao upload) não reportou erro.
+
+### Limitação material
+
+O gate de `Implemented` (spec 8.4) exige `pio test -e esp32s3_test` com estado
+terminal aprovado e casos desta especificação efetivamente executados; essa
+evidência depende de hardware ESP32-S3 físico não disponível nesta sessão. A
+implementação desta transação permanece `In Progress` até essa evidência
+existir; nenhum critério da matriz BCS-AC foi promovido a aprovado sem
+execução real. `BCS-DEC-001` permanece pendente e não bloqueante, sem
+alteração do fluxo de factory reset.

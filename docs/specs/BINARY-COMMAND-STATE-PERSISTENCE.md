@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -544,3 +544,90 @@ código, teste, configuração ou build foi alterado por esta análise.
 A análise não alterou código, testes ou configuração e preserva a
 implementação como `Not Started` e a entrega como `Not Ready`. Uma nova ordem
 do Arquiteto é necessária para iniciar a implementação.
+
+## 14. Implementação (Engenheiro Implementador)
+
+**Ordem recebida:** autorização explícita do Arquiteto para implementar todo
+o recorte BCS-001 a BCS-023, corrigindo os artefatos experimentais 0.1 ainda
+presentes na branch conforme os desvios apontados na seção 13.
+
+**Estado desta transação:** Em andamento [`In Progress`]. Registrada em
+`EKM-CHG-0015`.
+
+### 14.1 Correções aplicadas
+
+- `src/Core/Capabilities/CapabilityHelpers.h`: `restoreFromStorage()` agora
+  usa `command_interpreter->interpretCommand()`/`interpretState()` quando
+  presente, em vez de chamar `command_hardware_adapter` diretamente — corrige
+  o desvio "valve sem interpreter" (BCS-004/BCS-009/BCS-010, 5.3).
+- `src/Core/Capabilities/LEDCapability.cpp`: `handle()` chama
+  `syncFromHardware()` incondicionalmente — corrige o desvio "LED fora do
+  protocolo comum" (BCS-016).
+- `src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.*`:
+  checksum (cabeçalho + todos os registros) validado em `loadSnapshot()`;
+  `copyField()`/`save()` rejeitam identidade que excede o buffer interno em
+  vez de truncar — corrige "snapshot sem integridade de conteúdo" e
+  "identidades truncadas" (BCS-002/BCS-006/BCS-012).
+- Doubles e testes alinhados à fidelidade exigida em 8.2 (ver `EKM-CHG-0015`
+  para a lista completa de arquivos de teste alterados).
+
+### 14.2 Matriz BCS-AC — resultado desta transação
+
+Cobertura automatizada aplicada nesta transação; estado terminal por hardware
+real não obtido (ver 14.3). Critérios marcados **compilado, não executado**
+têm caso de teste presente e compilando, mas sem evidência terminal de
+execução em hardware — permanecem não verificados pelo gate 8.4 até essa
+evidência existir.
+
+| Critério | Cobertura nesta transação | Estado |
+|---|---|---|
+| BCS-AC-001 | Parcial: switch coberto por `test_transition_persists_once_and_repeats_do_not`; valve por `test_valve_vocabulary_conversion_on_restore_*`; LED por `test_led_*`. Switch Plug e Light não têm caso dedicado nesta transação. | Compilado, não executado (parcial) |
+| BCS-AC-002 | `test_identity_isolation_between_capabilities` (capability) e `test_identity_isolation` (storage); prefixo longo coberto por `test_oversized_identity_is_rejected_not_truncated`. | Compilado, não executado |
+| BCS-AC-003 | `test_toggle_persists_only_final_confirmed_value`. | Compilado, não executado |
+| BCS-AC-004 | `test_valve_vocabulary_conversion_on_restore_open`/`_closed`, com `ValveHardwareCommandInterpreter` real e double que rejeita `open`/`closed`. | Compilado, não executado |
+| BCS-AC-005 | Coberto indiretamente pelos testes de restore/transição existentes; sem spy de ordem dedicado nesta transação. | Compilado, não executado (parcial) |
+| BCS-AC-006 | Não coberto por caso dedicado nesta transação (namespace exclusivo é garantido pelo design, não observado por teste de sentinela). | Não verificado |
+| BCS-AC-007 | Não coberto por caso dedicado nesta transação (contador de leituras NVS não instrumentado). | Não verificado |
+| BCS-AC-008 | `test_header_byte_corruption_is_rejected`, `test_active_record_byte_corruption_is_rejected`. | Compilado, não executado |
+| BCS-AC-009 | Não coberto por caso dedicado nesta transação. | Não verificado |
+| BCS-AC-010 | Não coberto por caso dedicado nesta transação. | Não verificado |
+| BCS-AC-011 | `test_setup_without_record_uses_default`, `test_first_boot_is_absent`. | Compilado, não executado |
+| BCS-AC-012 | `test_setup_restore_rejected_by_adapter_keeps_default`, `test_setup_restore_unconfirmed_keeps_default`. | Compilado, não executado |
+| BCS-AC-013 | `test_transition_persists_once_and_repeats_do_not`. | Compilado, não executado |
+| BCS-AC-014 | Parcial: `turnOn`/`toggle`/adapter-observed cobertos; comando remoto e `power` sem caso dedicado nesta transação. | Compilado, não executado (parcial) |
+| BCS-AC-015 | `test_led_handle_outside_blink_persists_confirmed_command`, `test_led_blink_persists_each_alternation`. | Compilado, não executado |
+| BCS-AC-016 | Não coberto por caso dedicado nesta transação (seam de falha por operação NVS não construído). | Não verificado |
+| BCS-AC-017 | `test_persist_failure_keeps_hardware_state_and_last_successful_record` cobre falha de save() a nível de capability; não cobre reboot real com falha de write/commit isolada a nível do provedor NVS. | Compilado, não executado (parcial) |
+| BCS-AC-018 | `test_identity_isolation_between_capabilities`. | Compilado, não executado |
+| BCS-AC-019 | Não coberto por caso dedicado nesta transação (mudança de identidade entre boots simulados). | Não verificado |
+| BCS-AC-020 | Não coberto por caso dedicado nesta transação (captura de log). | Não verificado |
+| BCS-AC-021 | Não coberto por caso dedicado nesta transação. | Não verificado |
+| BCS-AC-022 | `pio run -e esp32_dev` `SUCCESS`; inspeção estática confirma que o Core não inclui APIs NVS/Arduino e que o provedor Espressif permanece atrás de `#ifdef ESP32`. | Aprovado (build) / restante não verificado |
+
+### 14.3 Gate 8.4 — não satisfeito nesta transação
+
+`pio test -e esp32s3_test` exige um ESP32-S3 físico conectado
+(`upload_port` fixo em `configs/esp32s3-test.ini`); nesta sessão a suíte
+compilou e terminou `ERRORED` apenas na etapa de upload, para as duas suítes
+desta funcionalidade — mesma pré-condição ambiental registrada em
+`EKM-CHG-0014`. Sem essa evidência terminal, o gate de `Implemented` não é
+satisfeito e a implementação permanece `In Progress`, mesmo com `pio run`
+aprovado e `git diff --check` sem erros. Os critérios BCS-AC-006, BCS-AC-007,
+BCS-AC-009, BCS-AC-010, BCS-AC-016, BCS-AC-019, BCS-AC-020 e BCS-AC-021, além
+das lacunas parciais indicadas em 14.2, também não possuem caso dedicado
+nesta transação e permanecem não verificados independentemente do hardware.
+
+### 14.4 Lacunas conhecidas e próximos passos
+
+- Construir seam de falha por operação NVS (init/open/read/write/commit) no
+  provedor Espressif para viabilizar BCS-AC-016/BCS-AC-017 completos.
+- Instrumentar contadores de leitura NVS (tamanho vs. dados) para
+  BCS-AC-007/BCS-AC-009/BCS-AC-010.
+- Adicionar casos dedicados para Switch Plug e Light em BCS-AC-001/BCS-AC-005,
+  para comando remoto e `power` em BCS-AC-014, para mudança de identidade
+  entre boots em BCS-AC-019, para captura de log em BCS-AC-020/BCS-AC-021 e
+  para sentinela de namespace de settings em BCS-AC-006.
+- Executar `pio test -e esp32s3_test` com ESP32-S3 físico conectado para
+  produzir a evidência terminal exigida pelo gate 8.4.
+- `BCS-DEC-001` permanece pendente e não bloqueante; nenhuma ação desta
+  transação depende dela.
