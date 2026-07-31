@@ -2,6 +2,7 @@
 
 #include "Contracts/Capabilities/IInputCapability.h"
 #include "Contracts/Capabilities/ICommandCapability.h"
+#include "Contracts/Providers/ServiceProvider.h"
 #include <cmath>
 #include <string>
 
@@ -119,6 +120,16 @@ namespace iotsmartsys::core
         {
         }
 
+        // BCS-009/BCS-010/BCS-011: adapter is initialized first, then a valid
+        // persisted record is applied and confirmed by read-back before the
+        // capability is considered initialized; absence/invalidity preserves
+        // the default flow.
+        void setup() override
+        {
+            command_hardware_adapter.setup();
+            restoreFromStorage();
+        }
+
         void handle() override
         {
             syncFromHardware();
@@ -166,10 +177,74 @@ namespace iotsmartsys::core
             if (hwState != value)
             {
                 updateState(hwState);
+                // BCS-013/BCS-016: every confirmed transition (remote command,
+                // public API, adapter-observed sync, derived-class automation
+                // such as blink) funnels through this single point.
+                persistIfTransition(hwState);
             }
         }
 
     private:
+        providers::IBinaryCapabilityStateProvider *stateStorage() const
+        {
+            return ServiceProvider::instance().getBinaryCapabilityStateProvider();
+        }
+
+        // BCS-009/BCS-011/BCS-012/BCS-020: consult the boot cache by identity
+        // (capability_name, type); apply and confirm by read-back before
+        // treating the restored value as the logical state. Absence, an
+        // identity mismatch or a rejected/unconfirmed command preserve the
+        // default flow untouched, without persisting anything (BCS-011).
+        void restoreFromStorage()
+        {
+            auto *storage = stateStorage();
+            bool restoredOn = false;
+            if (storage && !capability_name.empty() &&
+                storage->tryGet(capability_name.c_str(), type.c_str(), restoredOn))
+            {
+                const std::string &target = restoredOn ? _onValue : _offValue;
+                if (command_hardware_adapter.applyCommand(target.c_str()))
+                {
+                    const std::string confirmed = command_hardware_adapter.getStateValue();
+                    if (confirmed == target)
+                    {
+                        updateState(confirmed);
+                        logger.info("BinaryCommandCapability", "Restored '%s' to '%s'.", capability_name.c_str(), confirmed.c_str());
+                        return;
+                    }
+                    logger.warn("BinaryCommandCapability", "Restore of '%s' not confirmed by adapter; keeping default.", capability_name.c_str());
+                }
+                else
+                {
+                    logger.warn("BinaryCommandCapability", "Adapter rejected restore command for '%s'; keeping default.", capability_name.c_str());
+                }
+            }
+
+            updateState(command_hardware_adapter.getStateValue());
+        }
+
+        // BCS-013/BCS-014/BCS-015/BCS-017/BCS-018: persists only the two
+        // semantic states (never the transitory "toggle" command), skips
+        // writes that would repeat the already-persisted value, and never
+        // reverts an already-applied hardware/logical state on storage failure.
+        void persistIfTransition(const std::string &confirmedValue)
+        {
+            if (confirmedValue != _onValue && confirmedValue != _offValue)
+                return;
+
+            auto *storage = stateStorage();
+            if (!storage || capability_name.empty())
+                return;
+
+            const bool newIsOn = (confirmedValue == _onValue);
+            const auto result = storage->save(capability_name.c_str(), type.c_str(), newIsOn);
+            if (result != common::StateResult::Ok)
+            {
+                logger.error("BinaryCommandCapability", "Persist failed for '%s' (rc=%d); hardware/logical state unaffected.",
+                             capability_name.c_str(), static_cast<int>(result));
+            }
+        }
+
         std::string _offValue;
         std::string _onValue;
     };

@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -377,3 +377,90 @@ público nem exigem nova decisão arquitetural.
 A análise não alterou código, testes ou configuração e preserva a implementação
 como `Not Started`. Uma nova ordem do Arquiteto é necessária para iniciar a
 implementação.
+
+## 14. Registro de implementação
+
+**Ordem recebida:** Arquiteto autorizou explicitamente o início da
+implementação, com recorte completo (Core + provedor Espressif + composição no
+bootstrap + testes) e resultado-alvo `Implemented` sustentado por build e
+testes automatizáveis.
+
+### Código alterado/criado
+
+- `src/Contracts/Providers/IBinaryCapabilityStateProvider.h` (novo): contrato
+  de storage do domínio de capabilities — `loadSnapshot()` (leitura única),
+  `tryGet()` (somente cache) e `save()` (atualiza cache, persiste e comita).
+- `src/Contracts/Providers/IServiceProvider.h` e
+  `src/Contracts/Providers/ServiceProvider.h`/`.cpp`: novo getter/setter para
+  o provedor, seguindo o padrão já usado por settings/WiFi/logger.
+- `src/Core/Capabilities/CapabilityHelpers.h`: `BinaryCommandCapability` passa
+  a sobrescrever `setup()` para restaurar (com aplicação + leitura de
+  confirmação antes de assumir o valor) e centraliza a persistência em
+  `syncFromHardware()`, único ponto por onde toda transição confirmada
+  (comando remoto, API pública, sincronização com o adapter, automação de
+  classe derivada como `blink`) passa nesta hierarquia.
+- `src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.h/.cpp`
+  (novo): implementação NVS, namespace `iotbcs` exclusivo (não compartilha
+  namespace/chave de settings), snapshot versionado com até 8 registros
+  ativos, identidade por `capability_name` + `type`.
+- `src/Platform/Espressif/Providers/EspressifPlatformServiceRegistrar.h/.cpp`:
+  registra o novo provedor e executa a leitura única do snapshot NVS durante o
+  bootstrap de plataforma, antes da construção das capabilities.
+
+### Testes criados
+
+- `test/test_binary_capability_state_storage/` (PlatformIO/Unity, NVS real):
+  ausência no primeiro boot, round-trip através de reboot simulado, isolamento
+  de identidade, limite de 8 registros, blob truncado, versão desconhecida,
+  gravação repetida preservando outros registros.
+- `test/test_binary_command_capability_state/` (PlatformIO/Unity, mocks): setup
+  sem registro preserva default; restauração válida com read-back; rejeição
+  pelo adapter e leitura não confirmada preservam o default; transição
+  persiste uma única vez e repetição não gera gravação; `toggle` persiste
+  somente o valor final; isolamento entre duas capabilities; falha de
+  persistência não reverte hardware/estado lógico e preserva o último commit
+  bem-sucedido; conversão de vocabulário `off`/`on` → `closed`/`open` na
+  `ValveCapability`.
+
+### Impedimentos pré-existentes encontrados e decisão do Arquiteto
+
+Durante a validação, `pio test -e esp32s3_test` revelou dois bloqueios
+pré-existentes e não relacionados ao recorte desta especificação, que
+impediam qualquer teste PlatformIO/Unity do repositório de rodar por este
+comando:
+
+1. `configs/esp32s3-test.ini` referenciava `extends = env:base32`, ambiente
+   inexistente em `platformio.ini`/`configs/*.ini`. Corrigido para
+   `env:base_esp` mediante autorização explícita do Arquiteto.
+2. `src/main.cpp` não distinguia build de teste (`UNIT_TEST_MAIN`), causando
+   `multiple definition` de `setup()`/`loop()` contra qualquer teste Unity.
+   Mediante autorização explícita do Arquiteto, foi adicionada a mesma guarda
+   já usada para `APP_EXAMPLE_RUNNER`. `src/main.cpp` está listado em
+   `*main.cpp` no `.gitignore` (customização local por dispositivo) — a
+   correção não é versionada nem afeta outros ambientes.
+
+### Evidência material
+
+- `pio run -e esp32_dev`: `SUCCESS`.
+- `pio test -e esp32s3_test --without-uploading --without-testing` (build de
+  todos os testes, sem upload): os testes desta especificação e os testes
+  pré-existentes que já tinham API compatível (`test_settings_provider`,
+  `test_garage_control_state`) compilaram e passaram na etapa de build; testes
+  pré-existentes já desalinhados de outras APIs do projeto (`test_builder`,
+  `test_mqtt_settings`, `test_waterlevelpercent` e similares) continuam
+  falhando por motivos anteriores e não relacionados a este recorte.
+- `pio test -e esp32s3_test` com upload real: não pôde ser observado nesta
+  sessão por ausência de hardware ESP32-S3 conectado (falha na etapa de
+  upload). Esta limitação é registrada como tal, sem alegar validação em
+  hardware — que permanece responsabilidade do Engenheiro Revisor para a
+  promoção a `Validated`, incluindo a comprovação em hardware exigida na
+  seção 8.
+- `git diff --check`: aprovado.
+
+### Limitações preservadas
+
+- `BCS-DEC-001` (factory reset) permanece pendente, não bloqueante, conforme
+  seção 11.
+- Validação em hardware (duas capabilities distintas, desligamento completo,
+  novo boot, aplicação dos dois últimos estados) não foi executada nesta
+  etapa e permanece necessária para `Validated`.

@@ -25,6 +25,7 @@ namespace iotsmartsys::core
     void ServiceProvider::setSettingsGate(settings::ISettingsGate *gate) { _settingsGate = gate; }
     void ServiceProvider::setSettingsManager(settings::SettingsManager *manager) { _settingsManager = manager; }
     void ServiceProvider::setWiFiManager(core::WiFiManager *wifi) { _wifiManager = wifi; }
+    void ServiceProvider::setBinaryCapabilityStateProvider(providers::IBinaryCapabilityStateProvider *provider) { _binaryCapabilityStateProvider = provider; }
 
     ILogger *ServiceProvider::logger() const { return _logger; }
     ITimeProvider *ServiceProvider::time() const { return _time; }
@@ -33,6 +34,7 @@ namespace iotsmartsys::core
     settings::ISettingsGate *ServiceProvider::getSettingsGate() const { return _settingsGate; }
     settings::SettingsManager *ServiceProvider::getSettingsManager() const { return _settingsManager; }
     core::WiFiManager *ServiceProvider::getWiFiManager() const { return _wifiManager; }
+    providers::IBinaryCapabilityStateProvider *ServiceProvider::getBinaryCapabilityStateProvider() const { return _binaryCapabilityStateProvider; }
 
     bool ServiceProvider::isReady() const
     {

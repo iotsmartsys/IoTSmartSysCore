@@ -555,3 +555,59 @@ factory reset está fora do escopo desta especificação e não deve ser alterad
 pela implementação. Nenhum código, teste, build funcional, upload, release ou
 deploy foi executado nesta etapa. Uma ordem posterior do Arquiteto continua
 obrigatória para implementar.
+
+## EKM-CHG-0010 — Implementação da persistência de estados de comandos binários
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.1`
+
+### Objetivo
+
+Implementar o recorte completo autorizado por `EKM-CHG-0009`: contrato de
+storage no Core, provedor Espressif em NVS, integração em
+`BinaryCommandCapability` e testes PlatformIO/Unity.
+
+### Ordem recebida
+
+O Arquiteto confirmou explicitamente o início da implementação, com recorte
+completo e resultado-alvo `Implemented` sustentado por build e testes
+automatizáveis.
+
+### Resultado
+
+`IOTSSC-BINARY-COMMAND-STATE@0.1` foi promovida para `Implemented` (estado
+normativo `Proposed` preservado; fora da responsabilidade deste papel). Ver a
+seção 14 da especificação para o detalhamento completo do código alterado,
+testes criados e evidência material.
+
+### Impedimentos pré-existentes resolvidos mediante autorização do Arquiteto
+
+- `configs/esp32s3-test.ini` referenciava um ambiente `env:base32` inexistente,
+  bloqueando `pio test -e esp32s3_test` para todo o repositório, não apenas
+  para este recorte. Corrigido para `env:base_esp`.
+- `src/main.cpp` (arquivo local, listado em `*main.cpp` no `.gitignore` e não
+  versionado) não guardava `setup()`/`loop()` contra `UNIT_TEST_MAIN`,
+  colidindo com qualquer teste Unity. Guarda adicionada localmente; não gera
+  diff versionado.
+
+### Validações
+
+- `pio run -e esp32_dev`: aprovado.
+- `pio test -e esp32s3_test --without-uploading --without-testing`: testes
+  desta especificação e os testes pré-existentes compatíveis compilaram e
+  passaram na etapa de build; testes pré-existentes já desalinhados de outras
+  APIs do projeto (anteriores a esta transação) continuam falhando por
+  motivos não relacionados.
+- `pio test -e esp32s3_test` com upload real: não observável nesta sessão por
+  ausência de hardware ESP32-S3 conectado — limitação registrada, não
+  alegada como evidência.
+- `git diff --check`: aprovado.
+
+### Limitações preservadas
+
+- `BCS-DEC-001` (factory reset) permanece pendente e não bloqueante.
+- Validação em hardware permanece pendente e é responsabilidade do Engenheiro
+  Revisor para a promoção a `Validated`.
+- Este registro não promove `Validated` nem `Done`, e não autoriza upload,
+  release ou deploy.

@@ -20,7 +20,8 @@ namespace iotsmartsys::platform::espressif
           settingsProvider_(),
           settingsGate_(),
           settingsManager_(settingsProvider_, settingsFetcher_, settingsParser_, settingsGate_),
-          wifiManager_(logger_)
+          wifiManager_(logger_),
+          binaryCapabilityStateProvider_()
     {
 #if defined(SERIAL_ENABLED) && SERIAL_ENABLED == 1
 #ifdef SERIAL_BAUD_RATE
@@ -39,6 +40,9 @@ namespace iotsmartsys::platform::espressif
         sp.setSettingsGate(&settingsGate_);
         sp.setSettingsManager(&settingsManager_);
         sp.setWiFiManager(&wifiManager_);
+        sp.setBinaryCapabilityStateProvider(&binaryCapabilityStateProvider_);
+        // BCS-007: single NVS data read for the boot, before any capability exists.
+        binaryCapabilityStateProvider_.loadSnapshot();
     }
 } // namespace iotsmartsys::platform::espressif
 #endif

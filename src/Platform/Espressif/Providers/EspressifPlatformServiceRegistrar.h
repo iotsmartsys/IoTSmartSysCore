@@ -15,6 +15,7 @@
 #endif
 #include "Platform/Espressif/Settings/EspIdfSettingsParser.h"
 #include "Platform/Espressif/Settings/Providers/EspIdfNvsSettingsProvider.h"
+#include "Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.h"
 
 namespace iotsmartsys::platform::espressif
 {
@@ -41,5 +42,6 @@ namespace iotsmartsys::platform::espressif
         core::settings::SettingsGateImpl settingsGate_;
         core::settings::SettingsManager settingsManager_;
         core::WiFiManager wifiManager_;
+        platform::espressif::EspNvsBinaryCapabilityStateProvider binaryCapabilityStateProvider_;
     };
 } // namespace iotsmartsys::platform::espressif
