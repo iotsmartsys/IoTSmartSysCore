@@ -883,3 +883,122 @@ implementação desta transação permanece `In Progress` até essa evidência
 existir; nenhum critério da matriz BCS-AC foi promovido a aprovado sem
 execução real. `BCS-DEC-001` permanece pendente e não bloqueante, sem
 alteração do fluxo de factory reset.
+
+## EKM-CHG-0016 — Validação consultiva da implementação binária 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo e limite
+
+Confrontar, como Consultor de Arquitetura, a implementação produzida em
+`EKM-CHG-0015` com BCS-AC-001 a BCS-AC-022, sem corrigir código e sem promover
+estado pertencente ao Engenheiro Revisor.
+
+O Consultor participou da formulação dos critérios e da autoria da versão 0.2;
+esta validação é tecnicamente confrontativa, mas não constitui revisão
+independente.
+
+### Resultado
+
+O gate de `Implemented` não foi atendido. A implementação permanece corretamente
+`In Progress`.
+
+| Classificação | Critérios |
+|---|---|
+| Aprovado | BCS-AC-022 |
+| Reprovado | BCS-AC-002, BCS-AC-006, BCS-AC-007, BCS-AC-011, BCS-AC-012, BCS-AC-016, BCS-AC-020 |
+| Não verificado | BCS-AC-001, BCS-AC-003, BCS-AC-004, BCS-AC-005, BCS-AC-008, BCS-AC-009, BCS-AC-010, BCS-AC-013, BCS-AC-014, BCS-AC-015, BCS-AC-017, BCS-AC-018, BCS-AC-019, BCS-AC-021 |
+
+### Achados materiais
+
+1. **Alto — identidade longa continua incompatível com o contrato.**
+   A especificação exige preservar integralmente todo nome e tipo aceito pela
+   configuração pública e BCS-AC-002 reprova rejeição por limite interno menor
+   que o público. O provedor rejeita nomes a partir de 48 bytes e o teste novo
+   afirma que essa rejeição é o resultado esperado. A API pública usa
+   `std::string`/`const char *` e não declara esse limite. O agente inverteu o
+   oráculo explícito em vez de implementar o resultado exigido.
+2. **Alto — recuperação NVS pode apagar settings e abortar o runtime.**
+   `ensureNvsInit()` ainda executa `ESP_ERROR_CHECK(nvs_flash_erase())`.
+   A operação apaga a partição NVS inteira, não apenas o namespace da
+   funcionalidade, e a macro pode abortar. Isso viola isolamento de settings,
+   continuidade do runtime e tratamento não fatal.
+3. **Alto — falha de storage ainda é confundida com ausência.**
+   `loadSnapshot()` converte qualquer erro de `nvs_open()` e da consulta inicial
+   de `nvs_get_blob()` em `Ok`/ausência. Somente `ESP_ERR_NVS_NOT_FOUND` poderia
+   representar ausência; os demais erros precisam permanecer distinguíveis.
+   Falhas de write e commit também caem no fallback `StorageReadFail`, embora os
+   logs citem operações diferentes.
+4. **Alto — snapshot estruturalmente inválido ainda pode ser aceito.**
+   O checksum detecta mutação não acompanhada de recomputação, mas após validá-lo
+   o provedor não verifica `used`, `isOn` nem terminação das identidades.
+   Snapshot com checksum coerente e campos semanticamente inválidos é aceito;
+   `strcmp()` pode alcançar campos sem terminador. BCS-AC-007 permanece
+   funcionalmente reprovado.
+5. **Alto — ausência ou falha de restore da valve não preserva seu vocabulário.**
+   O caminho de sucesso passou a usar o interpreter, mas o fallback final ainda
+   chama `getStateValue()` diretamente. Para valve, o adapter devolve `off`/`on`
+   e o estado lógico esperado é `closed`/`open`. No primeiro `handle()`, a
+   conversão posterior pode ainda criar uma transição e persistência que
+   BCS-AC-011 proíbe no primeiro boot.
+6. **Alto — cobertura obrigatória permanece incompleta.**
+   Não há casos dedicados para Switch Plug e Light, ordem completa de restore,
+   namespace sentinela, validade estrutural, contadores NVS, todas as origens de
+   comando, injeção por operação NVS, reboot após write/commit falho, mudança de
+   identidade, logs e preservação completa da API/limite.
+
+As correções de valve no caminho de sucesso e de LED dentro/fora de blink são
+coerentes com os respectivos oráculos por inspeção. Sem execução dos testes,
+BCS-AC-004 e BCS-AC-015 permanecem não verificados, não aprovados.
+
+### Evidências terminais
+
+- `pio run -e esp32_dev`: `SUCCESS`; RAM 23,8%, Flash 89,8%.
+- `pio test -e esp32s3_test`: estado terminal de erro; 15 suítes coletadas,
+  zero aprovadas. As duas suítes desta funcionalidade compilaram e falharam no
+  upload por ausência de hardware; outras suítes também possuem erros de
+  compilação preexistentes. Zero casos comportamentais desta especificação
+  foram executados.
+- `git diff --check`: aprovado.
+- inspeção estática confrontou o delta da implementação, os doubles, os testes,
+  o adapter Arduino real, o interpreter da valve, o contrato de identidade e
+  as operações NVS.
+
+### Interpretação do experimento
+
+A EKM 1.19 melhorou o resultado de governança: o Implementador registrou
+explicitamente critérios parciais ou não verificados e não promoveu falso
+`Implemented`.
+
+Ela não garantiu completude da implementação. O agente concentrou-se nos
+achados conhecidos da versão 0.1, deixou critérios obrigatórios para “próximos
+passos”, associou BCS-AC-007 ao contador de leituras que pertence a BCS-AC-009
+e contrariou diretamente BCS-AC-002 ao testar rejeição de identidade longa como
+sucesso.
+
+Além disso, os artefatos 0.1 não foram restaurados antes da análise e da
+implementação 0.2. O agente trabalhou sobre a solução anterior e seus achados;
+portanto, esta execução não isola o efeito da nova especificação sobre uma
+implementação iniciada do zero.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura.
+- **Ordem e operações:** validar a implementação produzida pelo Claude Sonnet 5
+  contra a especificação 0.2, executar validações pertinentes e registrar o
+  resultado, sem corrigir código nem promover estados do Revisor.
+- **Resultado:** gate não atendido; 1 critério aprovado, 7 reprovados e 14 não
+  verificados; implementação corretamente preservada como `In Progress`.
+- **Validações:** build canônico aprovado, suíte canônica terminal com zero
+  suítes aprovadas e integridade textual aprovada.
+- **Limitações e independência:** ausência de hardware impediu execução das
+  suítes da funcionalidade; outras suítes possuem erros preexistentes. O
+  Consultor participou da formulação e autoria da versão 0.2 e não constitui
+  revisão independente.
+- **Significado da confirmação:** autorizar o fechamento deste registro, commit
+  e push somente da documentação, sem aprovar implementação, promover estado,
+  aceitar risco ou autorizar correção funcional, integração, release ou deploy.

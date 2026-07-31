@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress — versão 0.2, gate 8.4 pendente de evidência em hardware ESP32-S3 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress — versão 0.2; validação consultiva: 1 critério aprovado, 7 reprovados e 14 não verificados |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários 0.2 `In Progress` — restore de valve via interpreter, protocolo de `LEDCapability::handle()` e integridade/identidade do provedor NVS corrigidos, `pio run -e esp32_dev` `SUCCESS`, gate 8.4 pendente de `pio test -e esp32s3_test` em hardware físico; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.2 `In Progress`: valve e LED melhoraram, mas identidade longa, isolamento/falhas NVS, validade estrutural e fallback da valve ainda reprovam critérios; cobertura e execução permanecem incompletas; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -138,3 +138,7 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0014`: revisão independente de implementabilidade da versão 0.2,
   declarada `Implementable` sem decisão normativa ausente além de
   `BCS-DEC-001` (não bloqueante).
+- `EKM-CHG-0015`: implementação parcial da versão 0.2 preservada como
+  `In Progress`, sem satisfazer o gate de testes.
+- `EKM-CHG-0016`: validação consultiva confronta os 22 critérios e encontra 1
+  aprovado, 7 reprovados e 14 não verificados.
