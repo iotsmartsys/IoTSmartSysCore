@@ -611,3 +611,25 @@ testes criados e evidência material.
   Revisor para a promoção a `Validated`.
 - Este registro não promove `Validated` nem `Done`, e não autoriza upload,
   release ou deploy.
+
+### Resultado da revisão do Tech Lead
+
+**Resultado:** alterações necessárias. A implementação foi reconciliada para
+`In Progress`; a especificação permanece `Proposed`, a entrega permanece
+`Not Ready` e esta transação continua `Open`.
+
+Foram identificados achados materiais na restauração de válvula sem o
+interpreter, no protocolo ausente de sincronização/persistência do LED, na
+aceitação de snapshot sem validação de integridade, no tratamento potencialmente
+fatal ou indistinto de falhas NVS e no truncamento silencioso da identidade.
+A cobertura também não atende todos os tipos, blink, instrumentação de leituras
+ou injeção separada de falhas de open, write e commit.
+
+O build `esp32_dev` e a compilação direcionada dos dois novos testes foram
+aprovados. A compilação reportou zero casos executados. A tentativa direcionada
+de executar os testes terminou em erro de upload, também com zero casos
+executados, por ausência de ESP32-S3 conectado. Não houve validação física.
+
+A seção 15 da especificação registra classificação, requisitos afetados,
+evidências e recomendação. Nenhum código foi corrigido nesta revisão e nenhuma
+aprovação, integração, release ou deploy foi declarada.

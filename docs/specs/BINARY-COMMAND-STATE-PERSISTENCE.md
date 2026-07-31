@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -464,3 +464,74 @@ comando:
 - Validação em hardware (duas capabilities distintas, desligamento completo,
   novo boot, aplicação dos dois últimos estados) não foi executada nesta
   etapa e permanece necessária para `Validated`.
+
+## 15. Revisão do Tech Lead
+
+**Resultado:** alterações necessárias; implementação preservada como Em
+andamento [`In Progress`].
+
+### Achados
+
+1. **Alto — restauração da válvula não usa o interpreter.**
+   `BinaryCommandCapability::restoreFromStorage()` envia diretamente
+   `open`/`closed` ao `ICommandHardwareAdapter` e confirma por
+   `getStateValue()`. O adapter Arduino real aceita `on`/`off`, enquanto
+   `ValveHardwareCommandInterpreter` é a fronteira que converte os comandos e
+   estados. Assim, a restauração de `ValveCapability` é rejeitada no hardware
+   real, apesar de o mock do teste aceitar diretamente o vocabulário da
+   capability. Requisitos afetados: BCS-001, BCS-004, BCS-009 e BCS-010.
+2. **Alto — LED não entra no protocolo comum de confirmação e persistência.**
+   `LEDCapability::handle()` retorna sem chamar `syncFromHardware()` quando não
+   está em blink e, durante blink, emite comandos sem sincronizar o estado
+   lógico após cada alternância. Comandos públicos/remotos de LED não são
+   confirmados nem persistidos e o blink não produz as alternâncias/commits
+   exigidos. Requisitos afetados: BCS-001, BCS-013 e BCS-016.
+3. **Alto — snapshot de tamanho e versão válidos não possui proteção contra
+   corrupção de conteúdo.** O provedor aceita o blob após verificar somente
+   tamanho e versão; não valida `used`, `isOn`, terminação dos campos nem
+   integridade global. Conteúdo corrompido pode ser aplicado e campos sem
+   terminador podem alcançar `strcmp()` fora de seus limites. Requisitos
+   afetados: BCS-006, BCS-012 e BCS-017.
+4. **Alto — falhas NVS não são integralmente não fatais nem distinguíveis.**
+   `ensureNvsInit()` usa `ESP_ERROR_CHECK(nvs_flash_erase())`, que pode abortar
+   o runtime, e `loadSnapshot()` trata qualquer falha de `nvs_open()` ou
+   `nvs_get_blob()` inicial como ausência com retorno `Ok`. Isso mistura
+   ausência e falha de storage nos resultados/logs. Requisitos afetados:
+   BCS-017, BCS-018 e BCS-021.
+5. **Médio — identidades longas são truncadas silenciosamente.** Nomes acima
+   de 47 bytes ou tipos acima de 23 bytes são gravados truncados, mas buscas
+   continuam comparando o texto integral. A mesma identidade pode deixar de
+   ser localizada e consumir novos slots, além de permitir colisões por
+   prefixo. Requisitos afetados: BCS-002, BCS-019 e BCS-020.
+6. **Alto — critérios automatizados obrigatórios não estão cobertos nem foram
+   executados.** Os testes de Core exercitam switch e valve com mock, mas não
+   light, LED, switch plug, blink ou mudança observada no adapter. O provedor
+   não possui instrumentação/testes para uma leitura de dados, zero leituras
+   em consulta/`handle()`, corrupção de conteúdo e falhas separadas de open,
+   write e commit. A compilação direcionada informou zero casos executados e o
+   comando com execução terminou em erro de upload. Evidências afetadas:
+   BCS-001 a BCS-004, BCS-006 a BCS-008, BCS-013 a BCS-018 e os critérios
+   obrigatórios da seção 8.
+
+### Evidências executadas na revisão
+
+- `pio run -e esp32_dev`: aprovado.
+- build direcionado dos dois novos testes com
+  `pio test -e esp32s3_test --without-uploading --without-testing`: aprovado,
+  com zero casos executados.
+- `pio test -e esp32s3_test` direcionado aos dois novos testes: estado terminal
+  `ERRORED` na etapa de upload (`Error 2`), com zero casos executados, pois não
+  havia ESP32-S3 conectado.
+- inspeção estática confrontou o adapter Arduino real, o interpreter da válvula,
+  os overrides das classes derivadas, o formato NVS e os testes adicionados.
+
+### Limitações e recomendação
+
+Não houve execução dos testes Unity nem validação física com duas capabilities,
+desligamento completo e novo boot. A revisão não altera código nem aceita risco
+em nome do Arquiteto.
+
+Recomenda-se devolver a implementação para correção dos achados 1 a 5, ampliar
+os testes conforme o achado 6 e repetir todas as validações obrigatórias antes
+de nova revisão. A especificação permanece `Proposed`, a entrega `Not Ready` e
+`BCS-DEC-001` continua pendente e não bloqueante.
