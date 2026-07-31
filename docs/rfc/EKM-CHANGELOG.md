@@ -773,3 +773,53 @@ Os artefatos da tentativa experimental 0.1 ainda existem nesta branch e não
 constituem implementação da versão 0.2. Sua restauração pertence a uma operação
 separada, fora do papel do Autor, e deve ocorrer antes de uma nova implementação
 controlada para não contaminar o experimento.
+
+## EKM-CHG-0014 — Revisão de implementabilidade da persistência binária 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se `IOTSSC-BINARY-COMMAND-STATE@0.2`
+pode ser implementada sem decisão normativa, de produto ou arquitetura
+ausente, sem reutilizar a conclusão de implementabilidade da versão 0.1.
+
+### Resultado da análise
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+Confrontação com o estado atual do repositório confirmou que os pontos de
+composição já exigidos existem (`BinaryCommandCapability` como ponto comum,
+`ICommandCapability`/adapter com aceitação e leitura, identidade definitiva
+antes de `CapabilityManager::setup()`, `ServiceProvider` +
+`EspressifPlatformServiceRegistrar` como precedente de composição,
+`common::StateResult` com granularidade suficiente). Os artefatos
+experimentais da versão 0.1 ainda presentes na branch (`BinaryCommandCapability::restoreFromStorage()`,
+`LEDCapability::handle()`, `EspNvsBinaryCapabilityStateProvider`) reproduzem,
+ponto a ponto, os desvios que os fatos observados da versão 0.2 registraram
+(valve sem interpreter no restore, LED fora do protocolo comum, integridade
+validada apenas por tamanho/versão, truncamento silencioso de identidade).
+Cada desvio tem correção alcançável dentro da arquitetura vigente e já descrita
+pelos requisitos BCS-002, BCS-004, BCS-006, BCS-012 e BCS-016; nenhum exige
+novo contrato, nova camada ou decisão do Arquiteto.
+
+`pio run -e esp32_dev` foi executado nesta sessão apenas para verificar fato e
+terminou `SUCCESS` (Flash 89.8%, RAM 23.8%) com o código experimental 0.1 ainda
+presente. `pio test -e esp32s3_test` foi executado e terminou `ERRORED` na
+etapa de upload para todas as suítes, por exigir um ESP32-S3 conectado
+(`upload_port` fixo), incluindo os testes já existentes da própria
+funcionalidade — condição ambiental preexistente do projeto, não uma lacuna
+desta especificação.
+
+`BCS-DEC-001` permanece pendente e classificada como não bloqueante, sem
+mudança em relação à revisão da versão 0.1.
+
+### Limitação material
+
+Nenhum código, teste, configuração, build funcional, upload, release ou deploy
+foi alterado por esta análise. Os artefatos experimentais 0.1 permanecem como
+material de partida e não constituem evidência aceita para a versão 0.2; uma
+nova implementação controlada continua pendente de ordem do Arquiteto.

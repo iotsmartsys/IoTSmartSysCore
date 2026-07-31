@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-BINARY-COMMAND-STATE@0.1`
@@ -444,13 +444,103 @@ implementação, build nem testes funcionais.
 
 ## 13. Revisão de implementabilidade
 
-**Resultado:** Pendente de revisão [`Pending Review`]
+**Resultado:** Implementável [`Implementable`]
 
-**Resumo da análise:** não preenchido pelo Autor. O Engenheiro Analista deve
-verificar a suficiência, a viabilidade e o custo dos critérios BCS-AC-001 a
-BCS-AC-022 sem reutilizar a conclusão de implementabilidade da versão 0.1.
+**Resumo da análise:** revisão independente da versão 0.2, sem reutilizar a
+conclusão de implementabilidade da versão 0.1. Todo o recorte (BCS-001 a
+BCS-023, BCS-AC-001 a BCS-AC-022) pode ser executado sem decisão normativa, de
+produto ou arquitetura ausente, usando exclusivamente os padrões já vigentes no
+repositório.
 
-**Decisões ausentes:** `BCS-DEC-001`, não bloqueante e fora do escopo.
+Fontes técnicas confrontadas nesta análise:
 
-**Evidências consultadas:** fatos e precedentes técnicos indicados nesta
-especificação. A análise independente permanece necessária.
+- `src/Core/Capabilities/CapabilityHelpers.h` (`BinaryCommandCapability`) já
+  concentra `toggle`/`turnOn`/`turnOff`/`power`, restauração no `setup()` e
+  sincronização com persistência via `syncFromHardware()`/
+  `persistIfTransition()`, confirmando o ponto comum exigido por BCS-001 e
+  BCS-016;
+- `ICommandCapability::applyCommand` já percorre `command_interpreter` quando
+  presente, e `command_hardware_adapter.applyCommand` já retorna aceitação;
+  isso sustenta aplicação seguida de read-back interpretados (BCS-004,
+  BCS-009, BCS-010) sem alterar API pública. Para `ValveCapability`, o caminho
+  correto (5.3/BCS-AC-004) exige que a restauração reutilize esse mesmo caminho
+  interpretado — hoje `restoreFromStorage()` chama
+  `command_hardware_adapter.applyCommand()`/`getStateValue()` diretamente,
+  contornando `command_interpreter`. Isso é um desvio de implementação
+  corrigível dentro da classe existente (membros protegidos já acessíveis),
+  não uma lacuna de decisão;
+- `LEDCapability::handle()` hoje substitui integralmente
+  `BinaryCommandCapability::handle()` sem chamar `syncFromHardware()`, o que
+  reproduz exatamente o desvio "LED fora do protocolo comum" registrado nos
+  fatos observados (seção 2). `syncFromHardware()` é protegido e herdável, o
+  que torna a correção (BCS-016, BCS-AC-015) uma alteração local, sem novo
+  contrato;
+- `EspNvsBinaryCapabilityStateProvider` (namespace `iotbcs`, chave `state`)
+  hoje valida apenas tamanho e versão do blob, e `copyField()` trunca
+  silenciosamente nomes que excedam `NAME_LEN`/`TYPE_LEN`. Ambos reproduzem os
+  desvios "snapshot sem integridade de conteúdo" e "identidades truncadas" dos
+  fatos observados. BCS-006/BCS-012/BCS-AC-008 exigem verificação de
+  integridade sobre cabeçalho e registros ativos (ex.: checksum), e
+  BCS-002/BCS-AC-002 exigem rejeitar em vez de truncar; ambos são alcançáveis
+  no mesmo formato de blob fixo já em uso, sem novo contrato de storage;
+- `type` das cinco capabilities do escopo (`Switch`, `Switch Plug`,
+  `Light Actuator`, `LED Actuator`, `Valve Actuator`) tem no máximo 14
+  caracteres, dentro de `TYPE_LEN=24`; `capability_name` não possui limite
+  público documentado (é `device_id + "_" + type` ou string arbitrária vinda
+  da configuração), portanto o requisito de "não introduzir limite menor que o
+  público" (5.2) é satisfeito por um buffer generoso combinado com rejeição
+  explícita (não silenciosa) de identidades que excedam a capacidade interna —
+  decisão de formato interno, não decisão normativa ausente;
+- `ServiceProvider`/`EspressifPlatformServiceRegistrar` já implementam
+  exatamente o padrão de composição exigido (contrato no Core, implementação
+  em `Platform/Espressif`, registro via setter singleton), e
+  `registerPlatformServices()` já chama `loadSnapshot()` antes da construção
+  das capabilities, confirmando a ordem de boot da seção 5.3;
+- `common::StateResult` já distingue `NotFound`, `StorageCorrupt`,
+  `StorageVersionMismatch`, `StorageReadFail`, `StorageWriteFail`,
+  `InvalidArg` e `Overflow`, suficiente para os diagnósticos distintos exigidos
+  por BCS-021 sem novo tipo;
+- `pio run -e esp32_dev` compila com sucesso no estado atual do branch
+  (`SUCCESS`, Flash 89.8% / RAM 23.8%), confirmando que a fronteira de
+  plataforma já integra sem quebrar o build; a margem de Flash é estreita e
+  deve ser observada pelo Implementador ao adicionar verificação de
+  integridade e diagnósticos mais granulares, mas isso é risco de engenharia,
+  não decisão ausente;
+- `pio test -e esp32s3_test` exige upload para hardware físico
+  (`upload_port` fixo em `configs/esp32s3-test.ini`); sem um ESP32-S3 conectado
+  nesta sessão, a suíte inteira retorna `ERRORED` na etapa de upload — inclusive
+  os testes já existentes de `test_binary_command_capability_state` e
+  `test_binary_capability_state_storage`, que chegam a compilar com sucesso
+  antes de falhar apenas no upload. Essa é uma pré-condição ambiental
+  preexistente do projeto (mesma modalidade de teste usada pelas specs
+  anteriores), não uma lacuna desta especificação; o Implementador precisa de
+  hardware conectado para produzir a evidência terminal exigida pelo gate 8.4;
+- os artefatos da versão 0.1 ainda presentes na branch (`IBinaryCapabilityStateProvider`,
+  `EspNvsBinaryCapabilityStateProvider`, testes e mocks) não constituem
+  implementação aprovada da versão 0.2 e reproduzem, ponto a ponto, os desvios
+  que os fatos observados da seção 2 registraram; permanecem como material de
+  partida sujeito a nova implementação controlada, não como evidência aceita.
+
+**Decisões ausentes:** `BCS-DEC-001`, permanece pendente e não bloqueante
+(fora do escopo funcional autorizado; factory reset não deve ser alterado por
+esta implementação). Nenhuma outra decisão normativa, de produto ou
+arquitetura está ausente.
+
+**Evidências consultadas:** leitura de
+`src/Core/Capabilities/CapabilityHelpers.h`, `src/Contracts/Capabilities/ValveCapability.*`,
+`src/Contracts/Capabilities/LEDCapability.*`,
+`src/Platform/Arduino/Interpreters/ValveHardwareCommandInterpreter.*`,
+`src/Platform/Arduino/Adapters/OutputHardwareAdapter.h`,
+`src/Contracts/Providers/IBinaryCapabilityStateProvider.h`,
+`src/Contracts/Providers/ServiceProvider.*`,
+`src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.*`,
+`src/Platform/Espressif/Providers/EspressifPlatformServiceRegistrar.*`,
+`src/Contracts/Common/StateResult.h`, `src/App/Builders/Builders/CapabilitiesBuilder.cpp`
+e `src/App/Builders/Configs/HardwareConfig.h`; execução de `pio run -e esp32_dev`
+(`SUCCESS`) e `pio test -e esp32s3_test` (`ERRORED` na etapa de upload, sem
+hardware conectado) nesta sessão, apenas para verificação de fatos — nenhum
+código, teste, configuração ou build foi alterado por esta análise.
+
+A análise não alterou código, testes ou configuração e preserva a
+implementação como `Not Started` e a entrega como `Not Ready`. Uma nova ordem
+do Arquiteto é necessária para iniciar a implementação.

@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started — versão 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started — versão 0.2, `Implementable` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários 0.2 em `Pending Review`, com artefatos experimentais 0.1 ainda aguardando restauração; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência de comandos binários 0.2 `Implementable`, com artefatos experimentais 0.1 ainda aguardando substituição por implementação controlada; `BCS-DEC-001` pendente e não bloqueante; limite intencional de 8 |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -135,3 +135,6 @@ preexistente do environment automatizado permanece registrada em
   elaboração rastreável, falsificável e independente dos critérios de aceite.
 - `EKM-CHG-0013`: corrige a especificação de persistência binária como versão
   0.2, com critérios assertáveis, e a devolve para análise independente.
+- `EKM-CHG-0014`: revisão independente de implementabilidade da versão 0.2,
+  declarada `Implementable` sem decisão normativa ausente além de
+  `BCS-DEC-001` (não bloqueante).
