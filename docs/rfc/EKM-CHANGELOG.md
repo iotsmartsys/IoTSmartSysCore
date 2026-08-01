@@ -1066,3 +1066,158 @@ mudança em relação às revisões anteriores.
 Nenhum código, teste, configuração, build funcional, upload, release ou deploy
 foi alterado por esta análise. Uma nova ordem do Arquiteto é necessária para
 iniciar a implementação do acréscimo BCS-024/BCS-025.
+
+## EKM-CHG-0018 — Avaliação consultiva da persistência binária 0.3
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.3`
+
+### Objetivo e limite
+
+Registrar, como Consultor de Arquitetura, os riscos de comportamento em
+hardware, as inconsistências materiais da revisão de implementabilidade 0.3 e
+as correções recomendadas para uma futura autoria. Esta avaliação não altera
+requisitos nem promove ou reverte estados pertencentes ao Autor, Analista,
+Implementador ou Revisor.
+
+O estado formal `Implementable` produzido em `EKM-CHG-0017` permanece
+registrado, mas sua fundamentação está contestada pelos achados abaixo. Não se
+recomenda iniciar nova implementação até o Autor reconciliar o contrato e uma
+nova atuação independente do Engenheiro Analista confrontar a versão
+resultante.
+
+### Inconsistências da revisão 0.3
+
+1. **Garantia de concorrência inexistente.** A seção 15 afirma que a
+   inicialização de estática local é thread-safe por garantia do C++11. O
+   build base e o environment `esp32s3_ia` usam explicitamente
+   `-fno-threadsafe-statics`. O precedente de `ServiceProvider` continua útil,
+   mas a correção precisa ser sustentada pela ordem observável de inicialização
+   antes das tasks, não por uma garantia desativada da toolchain.
+2. **Reuso contraditório da revisão 0.2.** A revisão declara não reutilizar a
+   conclusão anterior e, simultaneamente, preserva BCS-001 a BCS-023 com base na
+   seção histórica e na implementação 0.2. Uma revisão incremental pode ser
+   proposta, mas não pode ser apresentada como revisão integral independente
+   sem confrontar novamente todo o contrato vigente.
+3. **Gate obrigatório sem caminho de aprovação.** O gate 8.4 exige
+   `pio run -e esp32_dev` com `SUCCESS`; a própria análise obteve `FAILED` por
+   causa preexistente e declarou sua correção fora do recorte. Enquanto o
+   Arquiteto não autorizar a correção do baseline ou outro oráculo equivalente,
+   o Implementador não consegue satisfazer integralmente a especificação.
+4. **Conclusão causal excessiva.** A duplicação de `ServiceManager` explica o
+   panic observado, mas não comprova que seja a única correção necessária para
+   BCS-025. `SettingsManager::save()` retorna falha, porém o callback ignora o
+   retorno, agenda restart e registra sucesso incondicionalmente.
+5. **Metadado Git copiado sem necessidade material.** A especificação e o
+   changelog passaram a citar commit da implementação 0.2, embora o Git já
+   preserve essa linhagem e nenhum desvio dependa desse identificador.
+
+### Riscos reais de comportamento em hardware
+
+- **Provisionamento indisponível:** no firmware atual, o caminho BLE reproduzido
+  aborta em `BTC_TASK` antes de persistir settings e retorna ao provisioning no
+  boot seguinte.
+- **Perda global de configuração:** `ensureNvsInit()` usa
+  `ESP_ERROR_CHECK(nvs_flash_erase())`; o erase alcança toda a partição NVS, não
+  apenas `iotbcs`, podendo remover Wi-Fi, API, MQTT e demais settings. Falha do
+  erase pode abortar o runtime.
+- **Estado físico divergente após reboot:** identidades acima do limite interno,
+  falhas de storage confundidas com ausência e registros rejeitados fazem o
+  hardware retornar ao default em vez do último estado confirmado.
+- **Snapshot semanticamente inválido:** checksum, tamanho e versão não validam
+  `used`, `isOn` nem terminação das identidades. `strcmp()` sobre campo sem
+  terminador pode ler além do registro, causar correspondência imprevisível ou
+  abort.
+- **Valve inconsistente:** o fallback de restore usa `getStateValue()` sem
+  interpreter, expondo `off`/`on` onde a capability exige `closed`/`open` e
+  podendo gerar publicação e commit artificiais no primeiro ciclo.
+- **Desgaste de flash:** persistir e commitar cada alternância de `blink` pode
+  produzir dezenas de milhares de commits por dia e acelerar falhas NVS.
+- **Latência do ciclo cooperativo:** `nvs_set_blob()` e `nvs_commit()` são
+  executados sincronamente em cada transição, podendo introduzir jitter,
+  atrasar conectividade e aumentar risco de watchdog sob alta frequência.
+- **Ausência de evidência multiplataforma:** o build canônico `esp32_dev`
+  permanece falho; portanto não existe evidência atual de preservação do
+  runtime ESP32 genérico.
+
+O impacto depende da carga conectada. Em bancada com LED e recuperação local,
+os riscos podem ser observados experimentalmente. Para relés, válvulas, bombas,
+fechaduras, aquecimento, cargas de potência ou instalação remota, a aceitação
+do estado atual não é recomendada.
+
+### Correções solicitadas para futura autoria
+
+O Autor deve produzir uma nova versão relacionada que:
+
+1. torne explícita a ordem de inicialização única de `ServiceManager` antes de
+   acessos concorrentes, considerando `-fno-threadsafe-statics`, e defina
+   critério que observe identidade, quantidade de construções e ordem;
+2. determine que restart e status de sucesso do provisioning somente ocorram
+   após `SettingsManager::save()` concluir com sucesso; falha deve permanecer
+   observável e não pode descartar a possibilidade de nova tentativa;
+3. proíba recuperação do storage binário por erase global da NVS e qualquer
+   `ESP_ERROR_CHECK` capaz de abortar o runtime nesse fluxo;
+4. exija validação estrutural e semântica de cada registro antes de usar strings
+   ou aplicar estado, incluindo domínio de `used`/`isOn` e terminação dos campos;
+5. reconcilie a identidade persistente com a API pública sem transformar
+   rejeição por limite interno menor em resultado aprovado;
+6. obrigue todo fallback da valve a percorrer o interpreter antes de atualizar,
+   publicar ou persistir o estado lógico;
+7. defina um oráculo de cooperatividade que observe latência e continuidade do
+   loop durante write/commit, sem tratar mera compilação como evidência;
+8. acrescente testes assertáveis para isolamento do namespace de settings,
+   falhas NVS por operação, snapshot semanticamente inválido, limite de
+   identidade, fallback da valve, resultado de `SettingsManager::save()` e
+   provisioning completo após reboot;
+9. remova da fonte normativa metadados Git que não expliquem desvio material e
+   preserve as revisões anteriores apenas como evidência histórica contestada.
+
+### Decisões devolvidas ao Arquiteto
+
+- **Política de desgaste por `blink`:** decidir entre persistir cada
+  alternância, excluir transições transitórias de blink, consolidar estado ou
+  adotar debounce/batching com limite explícito de perda aceitável.
+- **Gate de build:** autorizar a correção do baseline `esp32_dev`, substituir o
+  environment obrigatório por outro suportado ou definir como a dependência será
+  satisfeita sem ampliar silenciosamente o recorte.
+- **Contexto da persistência:** confirmar se write/commit NVS pode permanecer
+  síncrono no ciclo das capabilities ou se deve ser deslocado para trabalho
+  cooperativo/assíncrono com semântica de falha e reboot especificada.
+
+### Ação de segurança externa ao recorte funcional
+
+Uma execução anterior imprimiu o conteúdo de `private.ini` no transcript. Os
+valores não são reproduzidos neste registro. Credenciais potencialmente válidas
+devem ser rotacionadas e execuções futuras não devem ler nem imprimir arquivos
+privados para diagnosticar build ou pinout. Esta ação não deve ser incorporada
+como requisito funcional de persistência binária.
+
+### Registro da atuação consultiva
+
+**Estado da confirmação final:** Pendente.
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e resultado autorizados:** registrar a avaliação consultiva da versão
+  0.3 e indicar correções para futura atuação do Autor.
+- **Repositório, recorte e operações:** IoTSmartSysCore; riscos de hardware,
+  inconsistências da revisão 0.3 e correções propostas; edição exclusiva de
+  `EKM-CHANGELOG.md` e `KNOWLEDGE-MAP.md`, validação textual e, após
+  confirmação, commit e push.
+- **Decisões confirmadas:** manter a EKOM vigente sem alteração; registrar a
+  avaliação sem modificar requisitos, código ou estados formais da
+  especificação.
+- **Resultado material preparado:** `EKM-CHG-0018` e mapa de conhecimento
+  atualizados para localizar a contestação, os riscos, as correções solicitadas
+  e as decisões pendentes.
+- **Validações, limitações e independência:** confronto estático das fontes e
+  integridade textual; nenhum build, teste, upload ou validação funcional foi
+  iniciado nesta atuação. O Consultor participou do diagnóstico e da autoria
+  da versão 0.3 e não constitui Autor, Analista ou Revisor independente deste
+  recorte.
+- **Significado da confirmação solicitada:** confirmar que este registro
+  representa a avaliação do Arquiteto e autorizar sua marcação como confirmada,
+  o fechamento de `EKM-CHG-0018`, commit e push somente da documentação. A
+  confirmação não altera a especificação, não invalida formalmente
+  `EKM-CHG-0017`, não aprova correção, risco, implementação, integração,
+  release ou deploy.
