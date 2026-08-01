@@ -1069,7 +1069,7 @@ iniciar a implementação do acréscimo BCS-024/BCS-025.
 
 ## EKM-CHG-0018 — Avaliação consultiva da persistência binária 0.3
 
-**Estado:** Open
+**Estado:** Closed
 
 **Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.3`
 
@@ -1195,7 +1195,7 @@ como requisito funcional de persistência binária.
 
 ### Registro da atuação consultiva
 
-**Estado da confirmação final:** Pendente.
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
 
 - **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
 - **Ordem e resultado autorizados:** registrar a avaliação consultiva da versão
