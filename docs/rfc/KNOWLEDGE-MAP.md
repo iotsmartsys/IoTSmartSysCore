@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (autoria da persistência binária 0.6)
+**Última atualização:** 01/08/2026 (revisão de implementabilidade da persistência binária 0.6)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — corrige 0.5 conforme `EKM-CHG-0022`; revisão `Pending Review`; `BCS-DEC-005` confirma limites públicos de 63/31 bytes para nome/tipo e rejeição observável pré-registro, encerrando `EKM-GAP-0010`; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` falha e sua correção continua sendo dependência separada conforme `BCS-DEC-003`; código na branch ainda reflete implementação experimental 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — revisão `Needs Clarification` em `EKM-CHG-0023`; `BCS-DEC-006`/`EKM-GAP-0011` bloqueiam a mutação pública de identidade após registro; `BCS-DEC-005` mantém limites de 63/31 bytes e `EKM-GAP-0010` fechada; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` continua dependência separada conforme `BCS-DEC-003`; código ainda reflete implementação experimental 0.2 |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`Not Started`/`Pending Review` (`EKM-CHG-0022`); identidade pública limitada a 63 bytes para nome e 31 para tipo, com rejeição pré-registro; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer; `BCS-DEC-001` permanece pendente e não bloqueante |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`Not Started`/`Needs Clarification` (`EKM-CHG-0023`); limites 63/31 estão definidos, mas `BCS-DEC-006` deve decidir imutabilidade ou semântica da mutação pública após registro; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -117,6 +117,17 @@ com rejeição observável antes do registro e sem efeito parcial. A versão 0.6
 incorpora limites, compatibilidade, adequação de consumidores excedentes e
 critérios assertáveis; a lacuna está encerrada.
 
+### EKM-GAP-0011 — Mutabilidade da identidade após registro
+
+**Estado:** Open
+
+Capabilities já registradas continuam expondo `capability_name` e `type` como
+campos públicos mutáveis, além de métodos de renomeação sem retorno de erro. O
+Arquiteto deve decidir se a identidade será imutável após registro e como
+migrar a API, ou definir validação, identidade prevalente, erro e preservação de
+efeitos para mutações suportadas. A ausência bloqueia BCS-002, BCS-022,
+BCS-AC-002 e BCS-AC-021.
+
 ## 5. Baseline inicial
 
 - Branch: `main`.
@@ -169,3 +180,6 @@ critérios assertáveis; a lacuna está encerrada.
 - `EKM-CHG-0022`: autoria da versão 0.6 incorpora `BCS-DEC-005`, publica
   limites de identidade de 63/31 bytes com rejeição observável pré-registro,
   encerra `EKM-GAP-0010` e restaura a revisão como `Pending Review`.
+- `EKM-CHG-0023`: revisão integral da versão 0.6 resulta em `Needs
+  Clarification`; `EKM-GAP-0011` registra a decisão ausente sobre mutação da
+  identidade pública depois do registro.

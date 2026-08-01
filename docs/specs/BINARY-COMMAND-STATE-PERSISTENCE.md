@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Precisa de esclarecimento [`Needs Clarification`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-BINARY-COMMAND-STATE@0.5`
@@ -70,6 +70,11 @@ As seções históricas 13 a 15 permanecem apenas como evidência contestada.
   documental único; o builder possui buffer local de geração automática, mas
   nomes fornecidos externamente não compartilham automaticamente o mesmo teto
   do storage experimental;
+- `SmartSysApp::add*Capability()` devolve ponteiro para a capability já
+  registrada; `ICapability::capability_name` e `ICapability::type` são campos
+  públicos mutáveis, enquanto `rename()` e `applyRenamedName()` também podem
+  mudar a identidade e retornam `void`, permitindo alteração após consumo do
+  slot e construção dos objetos;
 - o build base e environments ESP32 aplicáveis usam
   `-fno-threadsafe-statics`; portanto a garantia de "magic statics" thread-safe
   do C++11 não está disponível nesta toolchain;
@@ -703,8 +708,9 @@ observar uma operação exigida torna o critério correspondente não verificáv
 - [x] BCS-001 a BCS-029 estão relacionados a pelo menos um critério.
 - [x] Cada critério identifica cenário, ação, resultado observável e evidência
   terminal.
-- [x] BCS-002, BCS-AC-002 e BCS-AC-021 incorporam os limites e a política de
-  rejeição confirmados em `BCS-DEC-005`.
+- [ ] BCS-002 e BCS-022 ainda não possuem semântica nem critério para mutação
+  pública da identidade depois do registro; `BCS-DEC-006` e
+  `EKM-GAP-0011` registram o bloqueio.
 - [x] Os critérios reprovam os desvios apontados em `EKM-CHG-0018`: statics sob
   `-fno-threadsafe-statics`, restart de provisioning sem sucesso de `save()`,
   erase global/`ESP_ERROR_CHECK`, snapshot só com tamanho/versão/checksum,
@@ -713,6 +719,7 @@ observar uma operação exigida torna o critério correspondente não verificáv
 - [x] Validações automatizáveis estão separadas da validação física posterior.
 - [x] `BCS-DEC-002` a `BCS-DEC-005` refletem as decisões confirmadas pelo
   Arquiteto; `BCS-DEC-001` permanece explícita e não bloqueante.
+- [ ] `BCS-DEC-006` permanece pendente e bloqueante.
 
 ### 8.4 Gate da implementação
 
@@ -859,6 +866,33 @@ vigente, seguida da mesma validação sobre o nome definitivo.
 seus terminadores; BCS-002, BCS-022, BCS-AC-002 e BCS-AC-021 possuem agora
 limites e oráculos executáveis. `EKM-GAP-0010` é encerrada.
 
+### BCS-DEC-006 — Mutabilidade da identidade após o registro
+
+**Estado:** pendente e bloqueante para a versão 0.6.
+
+O contrato 63/31 e a rejeição pré-registro são assertáveis quando nome e tipo
+entram pelo builder. Porém a superfície pública vigente devolve a capability já
+registrada e mantém `capability_name` e `type` como `std::string` públicos,
+além de expor `rename()` e `applyRenamedName()` com retorno `void`. Um
+consumidor pode alterar a identidade depois que slot, capability e adapter já
+existem e antes de `SmartSysApp::setup()`, contrariando simultaneamente a
+rejeição pré-registro sem efeito parcial e a proibição de caminho alternativo
+de renomeação acima dos limites.
+
+O Arquiteto deve definir o ciclo de vida normativo da identidade: se ela se
+torna imutável após o registro, com a mudança pública e a estratégia de
+compatibilidade correspondentes; ou, se a mutação pública permanece suportada,
+qual operação valida, qual identidade prevalece após rejeição, como a falha é
+observada e como se preservam slot, adapter, cache e registro persistido. A
+decisão também deve dizer se atribuição direta aos campos públicos continua
+contrato suportado ou passa a ser removida/depreciada.
+
+**Consequência:** BCS-002 e BCS-022 não podem ser implementados em todos os
+caminhos públicos sem escolher uma quebra ou semântica não autorizada, e
+BCS-AC-002/BCS-AC-021 não exercitam mutação posterior ao registro.
+`EKM-GAP-0011` permanece aberta e a revisão integral resulta em `Needs
+Clarification`.
+
 ## 12. Estado da especificação
 
 A versão 0.6 corrige a versão 0.5 para incorporar `BCS-DEC-005`, preservando as
@@ -887,9 +921,9 @@ versão anterior, ela:
   `BCS-DEC-002` a `BCS-DEC-005` como confirmadas.
 
 Os estados normativo, de implementação e de entrega permanecem `Proposed`,
-`Not Started` e `Not Ready`. A autoria da versão 0.6 restaura a revisão como
-`Pending Review`; o estado `Implementable` de versões anteriores não é
-reutilizado.
+`Not Started` e `Not Ready`. A revisão independente da versão 0.6 foi promovida
+para `Needs Clarification` em `EKM-CHG-0023`; o estado `Implementable` de
+versões anteriores não é reutilizado.
 
 ### 12.1 Revisão de implementabilidade da versão 0.5
 
@@ -926,10 +960,33 @@ BCS-022, BCS-AC-002, BCS-AC-021, checklist, conhecimento afetado e estado da
 especificação. A decisão define limites públicos de 63/31 bytes e rejeição
 observável pré-registro sem efeito parcial. `EKM-GAP-0010` foi encerrada.
 
-A versão 0.6 permanece `Proposed` / `Not Started` / `Not Ready` / `Pending
-Review`. Esta autoria não executa nem promove a própria revisão de
-implementabilidade. Uma nova ordem do Arquiteto ao Engenheiro Analista é
-necessária antes de qualquer implementação.
+A autoria deixou a versão 0.6 como `Proposed` / `Not Started` / `Not Ready` /
+`Pending Review` e não promoveu a própria revisão de implementabilidade. O
+resultado independente posterior está na seção 12.3.
+
+### 12.3 Revisão de implementabilidade da versão 0.6
+
+**Resultado:** Precisa de esclarecimento [`Needs Clarification`].
+
+A confrontação integral de BCS-001 a BCS-029, BCS-AC-001 a BCS-AC-028,
+decisões, falhas, relações, dependências e gates confirmou que `BCS-DEC-005`
+resolveu o teto do storage e o fluxo inicial do builder. Os precedentes de
+Core/plataforma, composição de serviços, inicialização antes da concorrência,
+worker FreeRTOS, interpreter da valve, provisioning condicionado a `save()` e
+seams de teste continuam suficientes. `BCS-DEC-001` permanece fora do escopo e
+não bloqueante; o baseline `esp32_dev` falho continua dependência externa com
+contrato responsável já definido em `BCS-DEC-003`.
+
+O bloqueio material é `BCS-DEC-006`: os campos públicos e os métodos de
+renomeação permitem alterar nome/tipo depois do registro, mas a versão exige
+rejeição antes do registro sem efeito parcial e não define imutabilidade,
+rollback, erro observável nem compatibilidade para esse caminho. O
+Implementador teria de decidir qual contrato público preservar ou quebrar.
+
+Nenhum código, teste ou configuração de implementação foi alterado. Nenhum
+build, teste funcional, upload ou validação física foi iniciado nesta revisão.
+Uma versão reconciliada com `BCS-DEC-006` deve retornar a análise independente
+antes de qualquer ordem de implementação.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
@@ -985,4 +1042,5 @@ Inconsistências materiais registradas na contestação:
 A autoria da versão 0.5 havia restaurado `Pending Review`; a atuação independente
 registrada na seção 12.1 resultou em `Needs Clarification`. A autoria 0.6 da
 seção 12.2 incorpora a decisão devolvida e restaura `Pending Review` sem
-reutilizar resultados anteriores.
+reutilizar resultados anteriores; a revisão atual da seção 12.3 resulta em
+`Needs Clarification` por `BCS-DEC-006`.

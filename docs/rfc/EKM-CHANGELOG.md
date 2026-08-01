@@ -1459,3 +1459,54 @@ permanece dependência separada conforme `BCS-DEC-003`.
 
 Nova atuação independente do Engenheiro Analista sobre
 `IOTSSC-BINARY-COMMAND-STATE@0.6`. Implementação permanece não autorizada.
+
+## EKM-CHG-0023 — Revisão de implementabilidade da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão integral 0.6 pode ser
+implementada sem decisão normativa, de produto ou arquitetura ausente, sem
+reutilizar revisões anteriores.
+
+### Resultado da análise
+
+A revisão foi promovida para `Needs Clarification`, preservando a especificação
+como `Proposed`, a implementação como `Not Started` e a entrega como `Not
+Ready`.
+
+`BCS-DEC-005` resolveu os máximos de 63/31 bytes, a capacidade do storage e a
+rejeição no fluxo inicial do builder. A superfície pública, porém, devolve
+ponteiros para capabilities já registradas; `ICapability::capability_name` e
+`ICapability::type` são campos públicos mutáveis, e `rename()`/
+`applyRenamedName()` alteram identidade com retorno `void`. Assim, um consumidor
+pode produzir identidade excedente após slot e objetos já existirem, enquanto
+BCS-002 exige rejeição pré-registro sem efeito parcial e a solução proíbe
+caminho alternativo de renomeação acima do limite.
+
+`BCS-DEC-006` e `EKM-GAP-0011` devolvem ao Arquiteto a escolha entre identidade
+imutável após registro, com a compatibilidade pública correspondente, ou
+mutação suportada com validação, identidade prevalente, falha observável e
+preservação explícita de slot, adapter, cache e registro. BCS-AC-002 e
+BCS-AC-021 também precisam exercer o caminho decidido.
+
+A confrontação restante confirmou contratos e precedentes suficientes para a
+fronteira Core/plataforma, serviços únicos, worker assíncrono, valve,
+provisioning e doubles. `BCS-DEC-001` continua fora do escopo e não bloqueante.
+A falha conhecida de `esp32_dev` permanece dependência separada já governada
+por `BCS-DEC-003`, não nova decisão ausente nesta versão.
+
+### Validações e limitações
+
+Foram executadas somente inspeções estáticas e validação textual. Nenhum código,
+teste ou configuração de implementação foi alterado; nenhum build, teste
+funcional, upload ou validação física foi iniciado.
+
+### Próximo passo
+
+O Arquiteto deve decidir `BCS-DEC-006` e ordenar nova autoria integral. A versão
+reconciliada deve retornar a uma análise independente; implementação permanece
+não autorizada.
