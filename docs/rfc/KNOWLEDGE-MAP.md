@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (revisão técnica da implementação da persistência binária 0.6)
+**Última atualização:** 01/08/2026 (quarentena das suítes de teste existentes)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — revisão `EKM-CHG-0027` não aprova promoção: falhas de abertura/leitura NVS são confundidas com ausência, comando explícito não substitui `blink` e os oráculos de concorrência/pilha de BCS-AC-028 estão incompletos; 0 de 18 suítes aprovadas no gate canônico e BCS-AC-022 reprovado pelo baseline `esp32_dev` |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — `BCS-DEC-007` coloca nominalmente as 18 suítes existentes em quarentena e suspende seu uso como gate/evidência; BCS-REV-003 vira dívida futura de testes, enquanto os defeitos funcionais BCS-REV-001/002 e o build `esp32_dev` reprovado continuam impedindo promoção |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -42,7 +42,7 @@
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
-| Testes | Inventoried | `test/` | Cobertura concentrada em builders/settings |
+| Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
 | Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
 
 ## 4. Lacunas
@@ -199,3 +199,7 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   substituição de `blink` e oráculos de BCS-AC-028. O gate canônico de testes
   terminou com 18 suítes em erro e nenhum caso executado, ampliando a limitação
   factual da evidência anterior.
+- `EKM-CHG-0028`: decisão do Arquiteto coloca nominalmente em quarentena todas
+  as 18 suítes existentes, inclusive as criadas na implementação 0.6. O
+  PlatformIO passa a marcá-las `SKIPPED`; testes deixam de integrar o gate e os
+  critérios dependentes ficam `Deferred` até futura decisão de maturidade.

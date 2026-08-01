@@ -43,7 +43,7 @@ A intenção confirmada pelo Arquiteto para o comportamento funcional é:
 
 A versão 0.6 incorpora a avaliação consultiva registrada em `EKM-CHG-0018` e
 as decisões arquiteturais confirmadas pelo Arquiteto para `BCS-DEC-002` a
-`BCS-DEC-005`. Ela corrige o contrato 0.5 sem reutilizar o estado
+`BCS-DEC-007`. Ela corrige o contrato 0.5 sem reutilizar o estado
 `Implementable` de versões anteriores.
 As seções históricas 13 a 15 permanecem apenas como evidência contestada.
 
@@ -705,6 +705,10 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 
 ### 8.2 Fidelidade obrigatória dos doubles
 
+Os contratos desta seção ficam preservados como requisitos futuros, mas os
+doubles e suítes existentes estão em quarentena conforme `BCS-DEC-007`. Eles
+não são executados nem aceitos como evidência da implementação atual.
+
 - O double do adapter de saída aceita somente `on`, `off` e `toggle`, como o
   `OutputHardwareAdapter`; ele deve rejeitar `open` e `closed`.
 - Testes de valve usam o `ValveHardwareCommandInterpreter` real ou um double
@@ -747,30 +751,34 @@ observar uma operação exigida torna o critério correspondente não verificáv
   identidade com limite interno menor, fallback da valve sem interpreter e
   ausência de oráculo de cooperatividade.
 - [x] Validações automatizáveis estão separadas da validação física posterior.
-- [x] `BCS-DEC-002` a `BCS-DEC-006` refletem as decisões confirmadas pelo
+- [x] `BCS-DEC-002` a `BCS-DEC-007` refletem as decisões confirmadas pelo
   Arquiteto; `BCS-DEC-001` permanece explícita e não bloqueante.
 - [x] `BCS-DEC-006` encerra `EKM-GAP-0011`.
 
 ### 8.4 Gate da implementação
 
-Para promover a implementação a `Implemented`, todos os critérios BCS-AC-001 a
-BCS-AC-028 aplicáveis devem estar aprovados ou possuir evidência automatizada
-equivalente que demonstre exatamente o mesmo oráculo. São obrigatórios:
+Durante a quarentena definida em `BCS-DEC-007`, as suítes existentes e seus
+resultados não integram o gate e não podem ser usados como evidência positiva ou
+negativa de conformidade. Para promover a implementação a `Implemented` neste
+período, são obrigatórios:
 
 - `pio run -e esp32_dev` terminal com `SUCCESS`; falha preexistente do baseline
   exige correção mínima, autorizada e entregue separadamente antes deste gate,
   sem substituição silenciosa do environment;
-- `pio test -e esp32s3_test` com estado terminal aprovado, quantidade total de
-  casos executados maior que zero e os casos desta especificação efetivamente
-  executados;
 - `git diff --check` sem erros;
-- matriz BCS-AC preenchida com resultado terminal e referência à evidência de
-  cada critério.
+- revisão estática terminal da implementação, com todos os achados funcionais e
+  de segurança encerrados ou explicitamente aceitos pelo Arquiteto;
+- matriz BCS-AC preservada, classificando como `Deferred` os critérios cuja
+  única evidência disponível dependeria das suítes em quarentena, sem promovê-los
+  artificialmente a aprovados.
 
-Critério falho, não executado ou não verificável mantém a implementação `In
-Progress`. Compilar testes com `--without-testing`, obter zero casos, falhar
-antes da execução ou substituir `esp32_dev` por outro environment não satisfaz
-o gate.
+`pio test -e esp32s3_test` deixa de ser executado como gate enquanto a decisão
+estiver vigente. `configs/esp32s3-test.ini` enumera as 18 suítes existentes em
+01/08/2026 por `test_ignore`, fazendo o Test Runner marcá-las como `SKIPPED` sem
+build, upload ou execução. A reativação exige decisão explícita, remoção
+controlada da quarentena e definição de uma estratégia de testes capaz de
+produzir evidência confiável. Substituir `esp32_dev` por outro environment
+continua sem satisfazer o gate de build.
 
 ### 8.5 Gate posterior de validação
 
@@ -779,7 +787,10 @@ de identidades distintas: aplicar estados opostos, confirmar os estados,
 desligar completamente o dispositivo, ligar novamente e observar que ambos são
 aplicados ao hardware antes da publicação correspondente. Essa validação física
 não substitui nem é exigida para afirmar individualmente os oráculos
-automatizados; permanece responsabilidade da etapa de validação posterior.
+automatizados quando reativados; permanece responsabilidade da etapa de
+validação posterior.
+A quarentena de testes não constitui aprovação de nenhum BCS-AC nem substitui
+essa validação física.
 
 ## 9. Conhecimento afetado
 
@@ -925,6 +936,31 @@ identidade usada pelo registro, cache e storage não pode divergir depois do
 registro, e BCS-AC-002/BCS-AC-021 passam a comprovar a imutabilidade, os retornos
 `void` e a preservação dos ponteiros públicos. `EKM-GAP-0011` é encerrada.
 
+### BCS-DEC-007 — Quarentena das suítes de teste existentes
+
+**Estado:** confirmada pelo Arquiteto para a versão 0.6.
+
+O Arquiteto determinou que todas as 18 suítes existentes no repositório em
+01/08/2026, incluindo as criadas durante esta implementação, são antigas ou
+insuficientemente confiáveis para atestar comportamento. Corrigi-las agora
+imporia custo desproporcional ao estágio de maturidade do projeto. Elas devem
+ser preservadas, mas marcadas para não compilar, carregar nem executar até que
+o repositório esteja maduro para uma estratégia de testes confiável.
+
+O mecanismo operacional é `test_ignore` no environment `esp32s3_test`, com
+enumeração nominal das suítes atuais. Não se usa curinga: uma suíte futura não
+pode ser ignorada silenciosamente sem nova decisão. O Test Runner pode ser
+consultado somente em modo de listagem para comprovar `SKIPPED`; seus resultados
+anteriores deixam de constituir gate ou evidência desta versão.
+
+**Consequência:** `pio test -e esp32s3_test` fica suspenso como gate. Os
+BCS-AC permanecem registrados como contrato futuro, mas os critérios dependentes
+dessas suítes são classificados `Deferred`, nunca aprovados por inferência. A
+promoção a `Implemented` durante a quarentena depende do build canônico, da
+integridade textual e de revisão estática terminal sem achados funcionais ou de
+segurança abertos. `Validated` continua exigindo a evidência física da seção
+8.5. A reativação requer decisão posterior do Arquiteto.
+
 ## 12. Estado da especificação
 
 A versão 0.6 corrige a versão 0.5 para incorporar `BCS-DEC-005`, preservando as
@@ -948,11 +984,13 @@ versão anterior, ela:
   um pré-requisito separado;
 - determina um único escritor assíncrono, limitado e observável para
   write/commit;
+- coloca nominalmente em quarentena as 18 suítes existentes e suspende seu uso
+  como gate ou evidência até nova decisão de maturidade;
 - completa critérios para falhas NVS, isolamento de settings, identidade, valve
   e provisioning após reboot;
 - remove metadados Git sem necessidade normativa;
 - preserva `BCS-DEC-001` como pendente não bloqueante e registra
-  `BCS-DEC-002` a `BCS-DEC-006` como confirmadas.
+  `BCS-DEC-002` a `BCS-DEC-007` como confirmadas.
 
 Os estados normativo, de implementação e de entrega permanecem `Proposed`,
 `Not Started` e `Not Ready`. A revisão independente da versão 0.6 registrada em
@@ -1236,6 +1274,26 @@ em alvo ESP32-S3 para os critérios dependentes de hardware. Os estados
 `Proposed`, `In Progress`, `Not Ready` e `Implementable` permanecem inalterados;
 esta revisão não fornece aprovação arquitetural, validação física nem
 autorização de integração.
+
+### 12.7 Decisão posterior sobre as suítes existentes
+
+O Arquiteto determinou em `BCS-DEC-007` que todas as 18 suítes existentes em
+01/08/2026 sejam preservadas e marcadas como `SKIPPED`, inclusive as adicionadas
+pela implementação 0.6. A decisão reconhece que esses testes não produzem
+evidência confiável no estágio atual e que sua recuperação teria custo
+desproporcional.
+
+`configs/esp32s3-test.ini` passou a enumerar nominalmente as 18 suítes em
+`test_ignore`. A listagem do PlatformIO confirma todas como `SKIPPED`, sem
+build, upload ou execução. O gate da seção 8.4 foi reconciliado: execução de
+testes deixa de bloquear ou promover a implementação; critérios dependentes
+dessas suítes ficam `Deferred`. O achado BCS-REV-003 deixa de ser correção
+exigida para esta implementação e passa a representar dívida futura para a
+reativação dos testes. BCS-REV-001 e BCS-REV-002 permanecem achados funcionais
+abertos e continuam impedindo aprovação da revisão estática.
+
+A decisão não aprova nenhum BCS-AC, não valida a implementação e não altera os
+estados `Proposed`, `In Progress`, `Not Ready` e `Implementable`.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 

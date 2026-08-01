@@ -1736,3 +1736,48 @@ Engenheiro Implementador para corrigir BCS-REV-001 e BCS-REV-002, completar os
 seams e testes de BCS-AC-028 e reconciliar a evidência das suítes. Depois disso,
 os gates canônicos devem ser repetidos, com alvo ESP32-S3 para os critérios
 dependentes de hardware.
+
+## EKM-CHG-0028 — Quarentena das suítes de teste existentes
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Decisão confirmada
+
+O Arquiteto determinou que todas as suítes existentes no repositório até
+01/08/2026, inclusive as adicionadas pela implementação 0.6, não devem ser
+executadas. No estágio atual elas são antigas ou insuficientemente confiáveis
+para atestar comportamento, e sua recuperação imediata teria custo
+desproporcional. Os arquivos são preservados para retomada futura.
+
+### Aplicação operacional
+
+As 18 suítes foram enumeradas nominalmente em `test_ignore` no environment
+`esp32s3_test`. A enumeração, em vez de curinga, evita que testes futuros sejam
+ignorados sem nova decisão. A listagem do PlatformIO deve apresentá-las como
+`SKIPPED`, sem build, upload ou execução.
+
+`pio project config --json-output` confirmou as 18 entradas de `test_ignore`;
+`pio test -e esp32s3_test --list-tests` apresentou as 18 suítes como `SKIPPED`;
+e `pio test -e esp32s3_test` terminou com zero casos, sem iniciar build, upload
+ou execução de teste.
+
+`BCS-DEC-007` reconcilia a especificação: `pio test -e esp32s3_test` deixa de
+integrar o gate e seus resultados anteriores deixam de constituir evidência
+positiva ou negativa. Critérios BCS-AC dependentes dessas suítes permanecem
+`Deferred`, não aprovados. O achado BCS-REV-003 passa a dívida futura para a
+reativação da estratégia de testes; BCS-REV-001 e BCS-REV-002 continuam defeitos
+funcionais abertos.
+
+### Limites e reativação
+
+A quarentena não aprova critérios de aceite, não substitui revisão estática,
+build ou validação física e não autoriza remoção dos arquivos. Reativar qualquer
+suíte exige decisão explícita do Arquiteto e uma estratégia capaz de produzir
+evidência confiável.
+
+### Estado
+
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`.
