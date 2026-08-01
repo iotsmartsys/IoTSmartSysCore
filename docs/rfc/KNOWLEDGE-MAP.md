@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress — versão 0.2; validação consultiva: 1 critério aprovado, 7 reprovados e 14 não verificados |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.3) — revisão de implementabilidade 0.3 (BCS-024/BCS-025) Implementable em `EKM-CHG-0017`; código ainda reflete a implementação 0.2 validada em `EKM-CHG-0016` (1 critério aprovado, 7 reprovados, 14 não verificados) |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 

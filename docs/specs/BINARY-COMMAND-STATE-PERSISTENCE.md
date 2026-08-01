@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-BINARY-COMMAND-STATE@0.2`
@@ -741,3 +741,102 @@ nesta transação e permanecem não verificados independentemente do hardware.
   produzir a evidência terminal exigida pelo gate 8.4.
 - `BCS-DEC-001` permanece pendente e não bloqueante; nenhuma ação desta
   transação depende dela.
+
+## 15. Revisão de implementabilidade da versão 0.3
+
+**Resultado:** Implementável [`Implementable`]
+
+**Resumo da análise:** revisão independente da versão 0.3, sem reutilizar a
+conclusão de implementabilidade da versão 0.2 registrada na seção 13. A versão
+0.3 acrescenta ao recorte já coberto (BCS-001 a BCS-023, cuja implementabilidade
+permanece sustentada pela análise da seção 13 e pelas correções já aplicadas em
+`EKM-CHG-0015`/commit `5ac3921`) somente BCS-024 e BCS-025, motivados pela
+regressão de ESP32-S3 descrita na seção 2.1. Esta análise confronta
+especificamente esse acréscimo contra o estado atual do repositório.
+
+Fontes técnicas confrontadas nesta análise:
+
+- `src/Core/Providers/ServiceManager.cpp`: `init()` e `instance()` declaram,
+  cada um, seu próprio `static ServiceManager instance;` local — duas variáveis
+  estáticas distintas em funções diferentes formam dois objetos, não um único
+  singleton acessado por dois caminhos. Isso reproduz integralmente a causa raiz
+  descrita na seção 2.1: qualquer primeiro acesso a `instance()` após `init()`
+  já ter sido usado no bootstrap constrói um segundo `ServiceManager`, que
+  registra novamente os serviços de plataforma
+  (`EspressifPlatformServiceRegistrar::registerPlatformServices`) e chama
+  novamente `EspNvsBinaryCapabilityStateProvider::loadSnapshot()`;
+- `src/App/Managers/ProvisioningController.cpp` (linha 93): o callback de
+  conclusão do provisionamento (`onProvisioningCompleted`) chama
+  `iotsmartsys::core::ServiceManager::instance()` diretamente no caminho
+  síncrono do evento GATT, confirmando o segundo trecho da cadeia causal da
+  seção 2.1;
+- o próprio `src/Core/Providers/ServiceProvider.cpp`, componente irmão no mesmo
+  diretório, já implementa exatamente o padrão exigido por BCS-024: `instance()`
+  possui a única declaração `static ServiceProvider inst;` e `init()`/
+  `init(ILogger*)` delegam para `instance()` em vez de declarar outra estática
+  local. Esse precedente equivalente mais próximo demonstra que convergir os
+  dois accessors de `ServiceManager` para uma única instância é alteração local
+  e mecânica — sem novo contrato, camada ou decisão do Arquiteto — bastando
+  fazer `ServiceManager::instance()` reutilizar a mesma estática de `init()`, da
+  mesma forma já praticada por `ServiceProvider` nas linhas ao lado;
+- `src/Core/Settings/SettingsManager.cpp` (`save()`, linha 565): a gravação de
+  settings já é síncrona e antecede `provManager_->scheduleRestart(...)` em
+  `ProvisioningController::setupProvisioning()`, ou seja, a ordem "gravar e
+  commitar antes do restart controlado" exigida por 5.5/BCS-025 já é respeitada
+  pelo fluxo vigente; o defeito registrado em 2.1 ocorre porque o abort
+  interrompe o processo antes de alcançar esse `save()`, não porque a ordem
+  esteja incorreta. Corrigir a duplicação do grafo remove o caminho de código
+  adicional que hoje alcança `vsnprintf()`/`ArduinoSerialLogger::logf()` sob a
+  pilha de 3072 bytes da `BTC_TASK`, sem exigir nenhuma reorganização do
+  protocolo BLE além da correção de identidade do singleton;
+- inicialização de estática local de função é thread-safe por garantia da
+  linguagem (C++11 "magic statics", já suportada pela toolchain do projeto e já
+  usada por `ServiceProvider::instance()`); convergir os dois accessors de
+  `ServiceManager` para essa mesma estática não introduz nova preocupação de
+  concorrência além da já aceita pelo padrão vigente.
+
+Este acréscimo (BCS-024, BCS-025) é executável inteiramente dentro do padrão de
+composição já vigente (contrato/composição em `Core/Providers`, precedente
+direto e local no arquivo irmão `ServiceProvider.cpp`), sem criar nova camada
+nem exigir decisão normativa, de produto ou arquitetura ausente. `BCS-DEC-001`
+permanece pendente e não bloqueante, sem mudança em relação às revisões
+anteriores.
+
+**Achado material não bloqueante — build canônico `esp32_dev` falha por causa
+alheia a este recorte:** `pio run -e esp32_dev`, executado nesta sessão apenas
+para verificação de fato, terminou `FAILED` em `src/main.cpp` (`ESP32_LED_GREEN`
+e `ESP32_LED_BLUE` não declarados; `LightConfig` sem construtor compatível). A
+causa é que esses símbolos só existem em
+`src/Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h`, mas `env:esp32_dev` usa
+`board = esp32dev` (ESP32 genérico, não S3) e `main.cpp` os referencia sem
+guarda de board. `git diff main -- src/main.cpp src/Platform/Espressif/Pinouts/
+platformio.ini` não retorna diferença: a falha já existe em `main` e é
+independente de toda a cadeia de transações desta especificação (nenhum commit
+de `EKM-CHG-0009` a `EKM-CHG-0016` toca esses arquivos). `src/main.cpp` e
+`src/Platform/Espressif/Pinouts/` não integram o conhecimento afetado (seção 9)
+desta especificação, portanto esta análise não trata a correção desse defeito
+como parte do recorte autorizado. Registro para o Arquiteto: o gate 8.4 exige
+`pio run -e esp32_dev` com estado terminal `SUCCESS`; sem uma ordem separada
+que autorize corrigir esse defeito pré-existente e alheio ao recorte, o
+Implementador pode não conseguir produzir essa evidência mesmo com BCS-001 a
+BCS-025 corretamente implementados.
+
+**Decisões ausentes:** `BCS-DEC-001`, permanece pendente e não bloqueante
+(seção 11). Nenhuma outra decisão normativa, de produto ou arquitetura está
+ausente para BCS-001 a BCS-025.
+
+**Evidências consultadas:** leitura de `src/Core/Providers/ServiceManager.h`,
+`src/Core/Providers/ServiceManager.cpp`, `src/Core/Providers/ServiceProvider.cpp`,
+`src/Contracts/Providers/ServiceProvider.h`,
+`src/App/Managers/ProvisioningController.cpp`,
+`src/Platform/Espressif/Providers/EspressifPlatformServiceRegistrar.cpp`,
+`src/Platform/Espressif/Provisioning/BleProvisioningChannel.cpp`,
+`src/Core/Settings/SettingsManager.cpp`; execução de `pio run -e esp32_dev`
+(`FAILED`, causa alheia ao recorte, confirmada também em `main` via
+`git diff main`) e `git status`/`git log` nesta sessão, apenas para verificação
+de fatos — nenhum código, teste, configuração ou build foi alterado por esta
+análise.
+
+A análise não alterou código, testes ou configuração e preserva a implementação
+como `Not Started` e a entrega como `Not Ready`. Uma nova ordem do Arquiteto é
+necessária para iniciar a implementação.

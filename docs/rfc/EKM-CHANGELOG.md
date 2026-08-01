@@ -1002,3 +1002,67 @@ implementação iniciada do zero.
 - **Significado da confirmação:** autorizar o fechamento deste registro, commit
   e push somente da documentação, sem aprovar implementação, promover estado,
   aceitar risco ou autorizar correção funcional, integração, release ou deploy.
+
+## EKM-CHG-0017 — Revisão de implementabilidade da persistência binária 0.3
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.3`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se `IOTSSC-BINARY-COMMAND-STATE@0.3`
+pode ser implementada sem decisão normativa, de produto ou arquitetura
+ausente, sem reutilizar a conclusão de implementabilidade da versão 0.2
+(`EKM-CHG-0014`).
+
+### Resultado da análise
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+A versão 0.3 corrige a 0.2 para tornar obrigatórias BCS-024 (identidade única
+do grafo de `ServiceManager`/`ServiceProvider`) e BCS-025 (preservação do
+provisionamento BLE). BCS-001 a BCS-023 mantêm a implementabilidade já
+sustentada pela análise da seção 13 do documento e pelas correções já aplicadas
+em `EKM-CHG-0015` (commit `5ac3921`); esta transação concentrou a verificação
+independente no acréscimo BCS-024/BCS-025.
+
+`src/Core/Providers/ServiceManager.cpp` confirma, no código atual, a causa raiz
+exatamente como descrita na seção 2.1 da especificação: `init()` e
+`instance()` declaram cada um sua própria variável `static ServiceManager`
+local, formando duas instâncias. `ProvisioningController.cpp` (linha 93) chama
+`ServiceManager::instance()` de forma síncrona a partir do callback de
+conclusão do provisionamento BLE, reproduzindo o segundo trecho da cadeia
+causal do abort em `BTC_TASK`. O componente irmão
+`src/Core/Providers/ServiceProvider.cpp`, no mesmo diretório, já implementa o
+padrão exigido (um único `static` em `instance()`, com `init()` delegando para
+ele) — precedente equivalente mais próximo que demonstra a correção como
+alteração local e mecânica, sem novo contrato, camada ou decisão do Arquiteto.
+`SettingsManager::save()` já é síncrono e já antecede o restart controlado no
+fluxo vigente de `ProvisioningController::setupProvisioning()`, confirmando que
+a ordem exigida por BCS-025 já existe e que o defeito de 2.1 está na duplicação
+do grafo, não na ordem de gravação.
+
+### Achado material não bloqueante
+
+`pio run -e esp32_dev`, executado nesta sessão apenas para verificação de fato,
+terminou `FAILED` em `src/main.cpp` (`ESP32_LED_GREEN`/`ESP32_LED_BLUE` não
+declarados para `board = esp32dev`; esses símbolos só existem no pinout
+ESP32-S3). `git diff main -- src/main.cpp
+src/Platform/Espressif/Pinouts/ platformio.ini` não retorna diferença: a falha
+já existe em `main`, é anterior e alheia a toda a cadeia `EKM-CHG-0009` a
+`EKM-CHG-0016`, e `src/main.cpp`/`src/Platform/Espressif/Pinouts/` não integram
+o conhecimento afetado desta especificação. Registrado para o Arquiteto: sem
+uma ordem separada autorizando essa correção, o Implementador pode não
+conseguir produzir a evidência `pio run -e esp32_dev` `SUCCESS` exigida pelo
+gate 8.4, mesmo com BCS-001 a BCS-025 corretamente implementados.
+
+`BCS-DEC-001` permanece pendente e classificada como não bloqueante, sem
+mudança em relação às revisões anteriores.
+
+### Limitação material
+
+Nenhum código, teste, configuração, build funcional, upload, release ou deploy
+foi alterado por esta análise. Uma nova ordem do Arquiteto é necessária para
+iniciar a implementação do acréscimo BCS-024/BCS-025.
