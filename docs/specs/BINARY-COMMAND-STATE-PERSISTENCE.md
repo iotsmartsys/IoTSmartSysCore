@@ -4,18 +4,18 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.2
+**Versão:** 0.3
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Não iniciada [`Not Started`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Implementável [`Implementable`]
+**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
 
 **Relação normativa:** Corrige [`Corrects`]
-`IOTSSC-BINARY-COMMAND-STATE@0.1`
+`IOTSSC-BINARY-COMMAND-STATE@0.2`
 
 ## 1. Objetivo e contexto
 
@@ -59,6 +59,59 @@ A intenção confirmada pelo Arquiteto é:
   comum, snapshot sem integridade de conteúdo, falhas NVS indistintas de
   ausência, identidades truncadas e compilação com zero casos executados.
 
+### 2.1 Defeito encontrado na validação da versão 0.2
+
+Durante a validação em ESP32-S3 do firmware 1.0.54, um provisionamento BLE
+sem settings previamente armazenados recebeu uma configuração fragmentada em
+escritas GATT de 9, 96, 96, 48 e 3 bytes. A escrita final de 3 bytes continha o
+encerramento da transmissão. Antes de registrar conclusão ou persistência, o
+dispositivo abortou com `Stack canary watchpoint triggered (BTC_TASK)` e
+reiniciou. No boot seguinte, `SettingsManager` retornou `NotFound(6)` e o
+dispositivo entrou novamente em provisionamento.
+
+O backtrace foi decodificado contra o ELF local do environment `esp32s3_ia`,
+que possui a mesma versão 1.0.54 e resolveu integralmente os frames do projeto.
+A cadeia observada foi:
+
+```text
+vsnprintf
+→ ArduinoSerialLogger::logf
+→ EspNvsBinaryCapabilityStateProvider::loadSnapshot
+→ EspressifPlatformServiceRegistrar::registerPlatformServices
+→ ServiceManager::ServiceManager
+→ ServiceManager::instance
+→ callback de ProvisioningController
+→ ProvisioningManager::handleNewConfig
+→ BleProvisioningChannel::onConfigWrite
+→ BleProvisioningChannel::gattsEventHandler
+→ btc_gatts_cb_to_app
+→ btc_thread_handler
+```
+
+As fontes mostram a seguinte causa:
+
+- `SmartSysApp` obtém seu grafo de serviços por `ServiceManager::init()`;
+- `ServiceManager::init()` e `ServiceManager::instance()` declaram, cada um,
+  um `static ServiceManager` local, formando duas instâncias distintas em vez
+  de dois acessos ao mesmo singleton;
+- o callback de conclusão do provisionamento chama
+  `ServiceManager::instance()` diretamente no caminho síncrono iniciado pelo
+  callback GATT;
+- o primeiro uso desse segundo accessor constrói outro `ServiceManager`,
+  registra novamente os serviços de plataforma e chama novamente
+  `loadSnapshot()`;
+- o ESP32-S3 usa pilha de 3072 bytes para a `BTC_TASK`; o encadeamento adicional
+  alcança `ArduinoSerialLogger::logf()` e `vsnprintf()`, onde o canário acusa a
+  pilha já excedida;
+- o backtrace não alcança `SettingsManager::save()`. Portanto, o reboot ocorre
+  antes da gravação e do commit dos settings recebidos.
+
+Os erros posteriores sobre configuração ou partição de core dump não integram
+a cadeia causal do abort. O hash do ELF informado pelo panic não pôde ser
+confrontado de forma independente com o app descriptor local; essa limitação
+não altera a correspondência integral dos endereços do backtrace com a cadeia
+de fontes acima.
+
 Esses fatos descrevem a implementação atual e sustentam a proposta; não
 constituem por si mesmos requisitos legados.
 
@@ -73,6 +126,10 @@ constituem por si mesmos requisitos legados.
 - gravação e commit em NVS após cada mudança lógica confirmada;
 - tratamento de ausência, corrupção, incompatibilidade e falha de storage;
 - logs diagnósticos sem dados privados;
+- preservação da identidade única do grafo de serviços durante o registro e
+  uso do provedor de estado binário;
+- preservação do provisionamento BLE e da persistência de settings após o
+  registro do novo provedor;
 - testes automatizados do Core e do provedor NVS;
 - build do runtime Arduino sobre ESP32.
 
@@ -88,6 +145,10 @@ constituem por si mesmos requisitos legados.
   dispositivo;
 - criar histórico de estados, contador de acionamentos ou telemetria;
 - adicionar debounce, atraso ou agrupamento de gravações;
+- aumentar a pilha da `BTC_TASK` como substituto para corrigir a duplicação do
+  grafo de serviços;
+- reorganizar genericamente o threading, protocolo ou arquitetura do
+  provisionamento BLE além do necessário para satisfazer BCS-024 e BCS-025;
 - suportar ESP8266;
 - promover ESP-IDF a runtime suportado;
 - upload, release ou deploy.
@@ -202,6 +263,29 @@ do estado lógico, publicação e persistência. Uma falha de gravação deve se
 registrada em log, mas não pode reverter um comando já aplicado nem impedir o
 processamento cooperativo.
 
+### 5.5 Identidade do grafo de serviços e compatibilidade do provisioning
+
+O precedente arquitetural vigente é o acesso singleton ao grafo composto por
+`ServiceManager` e `ServiceProvider`. Os accessors públicos existentes
+`ServiceManager::init()` e `ServiceManager::instance()` devem resolver o mesmo
+objeto durante todo o boot. Registrar o provedor de estado binário não pode
+criar outro grafo, registrar novamente os mesmos serviços nem repetir a leitura
+inicial do snapshot.
+
+A correção deve preservar as APIs públicas e a composição vigente. A forma
+interna de compartilhar a instância permanece escolha de implementação, desde
+que ambos os accessors possuam identidade observavelmente igual e a
+inicialização de plataforma ocorra uma única vez por boot. Apenas aumentar a
+pilha, suprimir o log no qual o canário foi detectado ou postergar a segunda
+construção não satisfaz esta especificação.
+
+Após a recepção de uma configuração BLE válida, o fluxo deve alcançar a
+gravação e o commit dos settings antes de qualquer reinicialização controlada.
+No boot seguinte, os settings devem ser carregados do cache e o bootstrap não
+pode retornar ao provisionamento por ausência da configuração que acabou de ser
+aceita. A inclusão do provedor binário não pode introduzir panic, abort ou
+reboot não controlado nesse caminho.
+
 ## 6. Requisitos
 
 - **BCS-001:** toda capability derivada de `BinaryCommandCapability` deve
@@ -263,6 +347,15 @@ processamento cooperativo.
   capabilities devem ser preservados.
 - **BCS-023:** a implementação Espressif deve operar no runtime Arduino sobre
   ESP32 e não pode degradar o código preparatório para ESP-IDF.
+- **BCS-024:** `ServiceManager::init()` e `ServiceManager::instance()` devem
+  resolver a mesma instância durante o boot; o registro dos serviços de
+  plataforma e a leitura inicial do snapshot binário devem ocorrer uma única
+  vez, inclusive quando o provisionamento consultar os serviços após o
+  bootstrap.
+- **BCS-025:** o registro e o uso do provedor de estado binário não podem
+  degradar o provisionamento BLE: uma configuração válida deve ser persistida
+  antes do restart controlado, carregada do cache no boot seguinte e não pode
+  provocar stack overflow, panic, abort ou reboot não controlado.
 
 ## 7. Falhas e condições de borda
 
@@ -286,6 +379,12 @@ processamento cooperativo.
   portanto, produz commit. A frequência de escrita resultante é consequência
   direta do requisito de persistir toda mudança; otimização por atraso ou
   agrupamento está fora do escopo.
+- Primeiro acesso aos serviços durante o provisionamento: deve reutilizar o
+  grafo inicializado no bootstrap, sem reconstrução nem nova leitura do
+  snapshot binário.
+- Provisionamento BLE fragmentado concluído: deve persistir os settings antes
+  do restart controlado; qualquer panic ou retorno ao provisionamento por
+  `NotFound` no boot seguinte reprova o fluxo.
 
 ## 8. Critérios de aceite e validações
 
@@ -321,6 +420,8 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 | BCS-AC-020 | BCS-021 | Executar ausência, snapshot inválido, falha de aplicação e falha de init/open/read/write/commit. | O diagnóstico identifica a classe correta sem imprimir valor do blob, settings, credenciais ou conteúdo privado. Falha de storage nunca é registrada como ausência. | Testes com logger capturado e asserções positivas da classe e negativas para sentinelas privadas. |
 | BCS-AC-021 | BCS-022 | Comparar as APIs públicas e defaults com a base anterior à funcionalidade; construir oito capabilities antes de `SmartSysApp::setup()` e executar ciclos cooperativos. | Assinaturas e defaults públicos permanecem compatíveis, oito capabilities continuam aceitas, uma nona continua sujeita ao limite vigente e `handle()` retorna cooperativamente sem espera por storage. | Inspeção de diff das APIs públicas mais build e teste executado do limite/configuração/ciclo. |
 | BCS-AC-022 | BCS-023 | Compilar o environment Arduino ESP32 suportado e inspecionar as dependências do contrato Core e do código preparatório ESP-IDF afetado. | `pio run -e esp32_dev` termina com sucesso; o Core não inclui APIs NVS/Arduino; o provedor Espressif permanece atrás da fronteira de plataforma e nenhuma fonte preparatória ESP-IDF é removida ou tornada dependente do runtime Arduino. | Build terminal aprovado e inspeção estática registrada sobre os arquivos alterados. |
+| BCS-AC-023 | BCS-024 | Em um processo limpo, instrumentar a construção de `ServiceManager`, o registro de serviços e `loadSnapshot()`; executar o bootstrap por `init()` e depois consultar `instance()` pelo mesmo caminho usado na conclusão do provisionamento. Repetir a consulta aos dois accessors. | Os endereços retornados por `init()` e `instance()` são iguais; existe exatamente uma construção do grafo, um registro dos serviços de plataforma e uma leitura inicial do snapshot. Aumentar a pilha ou omitir logs sem eliminar a segunda instância reprova. | Teste executado em processo limpo ou seam fiel de inicialização, com asserção de identidade e contadores exatamente iguais a um; inspeção estática confirma que os dois accessors convergem. |
+| BCS-AC-024 | BCS-024, BCS-025 | Em ESP32-S3 sem settings armazenados, iniciar provisioning, conectar por BLE, habilitar notifications e enviar uma configuração válida fragmentada em escritas de 9, 96, 96, 48 e 3 bytes, encerrando com `END`; aguardar o restart controlado e o boot seguinte. | O fluxo não apresenta stack canary, panic, abort ou reboot antecipado; `SettingsManager::save()` e o commit terminam antes do restart; no boot seguinte o cache é carregado, os valores provisionados são preservados e o dispositivo não reentra em provisioning por `NotFound`. | Execução terminal em hardware ESP32-S3 com captura serial completa e verificação dos settings após o reboot. Execução interrompida, ausência do reboot observado, falta de prova do commit ou somente build classificam o critério como não verificado. |
 
 ### 8.2 Fidelidade obrigatória dos doubles
 
@@ -335,6 +436,9 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
   leitura que copia dados, atualização de cache, write e commit.
 - Relógio usado no teste de blink é controlável e avança cada alternância sem
   espera real.
+- O seam de inicialização de serviços preserva a semântica de `static` local:
+  acessos repetidos não constroem novamente a instância e contadores não podem
+  ser reinicializados entre `init()` e `instance()`.
 
 Um double que aceite um vocabulário rejeitado pela integração real, trate write
 como commit ou não permita observar uma operação exigida torna o critério
@@ -342,7 +446,7 @@ correspondente não verificável.
 
 ### 8.3 Checklist de autoria
 
-- [x] BCS-001 a BCS-023 estão relacionados a pelo menos um critério.
+- [x] BCS-001 a BCS-025 estão relacionados a pelo menos um critério.
 - [x] Cada critério identifica cenário, ação, resultado observável e evidência
   terminal.
 - [x] Os resultados podem ser convertidos em asserções sem decisão funcional ou
@@ -350,14 +454,15 @@ correspondente não verificável.
 - [x] Os critérios reprovam os desvios plausíveis observados na execução
   anterior: valve sem interpreter, override de LED fora do protocolo, corrupção
   validada apenas por tamanho/versão, falhas NVS confundidas com ausência,
-  identidade truncada e testes compilados com zero casos executados.
+  identidade truncada, testes compilados com zero casos executados, grafo de
+  serviços duplicado e provisioning reiniciado sem settings persistidos.
 - [x] Validações automatizáveis estão separadas da validação física posterior.
 - [x] `BCS-DEC-001` permanece explicitamente fora do recorte e não bloqueante.
 
 ### 8.4 Gate da implementação
 
 Para promover a implementação a `Implemented`, todos os critérios
-BCS-AC-001 a BCS-AC-022 devem estar aprovados ou possuir evidência automatizada
+BCS-AC-001 a BCS-AC-024 devem estar aprovados ou possuir evidência automatizada
 equivalente que demonstre exatamente o mesmo oráculo. São obrigatórios:
 
 - `pio run -e esp32_dev` com estado terminal `SUCCESS`;
@@ -388,7 +493,10 @@ automatizados; permanece responsabilidade da etapa de validação posterior.
   necessário para identificar o comportamento binário sem RTTI;
 - novo contrato de storage no domínio de capabilities;
 - `src/Contracts/Providers/ServiceProvider.*`;
+- `src/Core/Providers/ServiceManager.*`;
 - `src/Platform/Espressif/Providers/EspressifPlatformServiceRegistrar.*`;
+- `src/App/Managers/ProvisioningController.*`;
+- `src/Platform/Espressif/Provisioning/BleProvisioningChannel.*`;
 - novo provedor Espressif de estado binário em NVS;
 - `src/App/Builders/Builders/CapabilitiesBuilder.*` e/ou
   `CapabilityManager`, conforme a composição aprovada na revisão;
@@ -428,12 +536,14 @@ de energia ou atualização de firmware.
 
 ## 12. Estado da autoria
 
-A versão 0.2 corrige os oráculos insuficientes da versão 0.1 sem alterar a
-intenção funcional. Todos os requisitos obrigatórios possuem rastreabilidade
-para cenário, ação, resultado observável e evidência terminal. Os critérios
-explicitam as propriedades que reprovam as incompatibilidades plausíveis
-observadas no experimento anterior e separam o gate automatizável da validação
-física posterior.
+A versão 0.3 corrige a versão 0.2 para incorporar a regressão encontrada na
+validação em ESP32-S3. Ela torna obrigatórias a identidade única do grafo de
+serviços e a preservação ponta a ponta do provisionamento BLE, sem autorizar
+uma refatoração genérica do subsistema. Todos os requisitos obrigatórios
+possuem rastreabilidade para cenário, ação, resultado observável e evidência
+terminal. BCS-AC-023 reprova soluções que apenas ocultem o estouro de pilha;
+BCS-AC-024 exige a persistência e o reboot completo no hardware em que a falha
+foi observada.
 
 Ao fim desta autoria, a especificação está `Proposed`, a implementação desta
 versão está `Not Started`, a entrega está `Not Ready` e a revisão de
@@ -442,7 +552,7 @@ implementabilidade está `Pending Review`.
 O Autor da Especificação não executou análise de implementabilidade independente,
 implementação, build nem testes funcionais.
 
-## 13. Revisão de implementabilidade
+## 13. Revisão de implementabilidade da versão 0.2 (histórico)
 
 **Resultado:** Implementável [`Implementable`]
 
@@ -545,7 +655,7 @@ A análise não alterou código, testes ou configuração e preserva a
 implementação como `Not Started` e a entrega como `Not Ready`. Uma nova ordem
 do Arquiteto é necessária para iniciar a implementação.
 
-## 14. Implementação (Engenheiro Implementador)
+## 14. Implementação da versão 0.2 (histórico)
 
 **Ordem recebida:** autorização explícita do Arquiteto para implementar todo
 o recorte BCS-001 a BCS-023, corrigindo os artefatos experimentais 0.1 ainda
