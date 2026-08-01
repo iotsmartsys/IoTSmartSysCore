@@ -1359,3 +1359,54 @@ Nova análise independente de implementabilidade sobre
 `IOTSSC-BINARY-COMMAND-STATE@0.5`. A correção do baseline `esp32_dev`, se ainda
 necessária, depende de ordem separada e deve anteceder a aprovação de
 BCS-AC-022.
+
+## EKM-CHG-0021 — Revisão de implementabilidade da persistência binária 0.5
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.5`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão integral 0.5 pode ser
+implementada sem decisão normativa, de produto ou arquitetura ausente, sem
+reutilizar as conclusões históricas contestadas das versões 0.2 e 0.3.
+
+### Resultado da análise
+
+A revisão foi promovida para `Needs Clarification`, preservando a especificação
+como `Proposed`, a implementação como `Not Started` e a entrega como `Not
+Ready`.
+
+O contrato público aceita `capability_name` por `const char *`, armazena-o em
+`std::string` e permite renomeação sem teto documentado. O buffer local de 32
+bytes limita apenas nomes automáticos; não limita nomes externos. BCS-002
+proíbe que o storage tenha limite interno menor, enquanto BCS-AC-002 e
+BCS-AC-021 exigem o maior comprimento público aceito. Portanto um implementador
+não possui oráculo finito sem inventar limite, compatibilidade ou representação.
+`BCS-DEC-005` e `EKM-GAP-0010` devolvem essa decisão ao Arquiteto.
+
+A análise integral confirmou que `BCS-DEC-001` continua fora do escopo e não
+bloqueante e que os demais requisitos possuem fronteiras, precedentes e
+critérios suficientes: contrato no Core, provedor Espressif, composição por
+serviços, inicialização única antes de concorrência, worker assíncrono limitado,
+interpreter da valve, provisioning condicionado a `save()` e seams observáveis.
+
+### Evidência e dependências
+
+`pio run -e esp32_dev` terminou `FAILED` na compilação de `src/main.cpp` porque
+`ESP32_LED_GREEN` e `ESP32_LED_BLUE` não estão definidos. A falha confirma a
+dependência externa prevista por `BCS-DEC-003`: correção mínima autorizada e
+entregue separadamente deve anteceder BCS-AC-022. Como a política e o caminho
+responsável já estão definidos, esse baseline falho não acrescenta uma decisão
+normativa ausente à versão 0.5.
+
+Nenhum teste funcional, upload ou validação física foi executado. Nenhum código,
+teste ou arquivo de configuração de implementação foi alterado.
+
+### Próximo passo
+
+O Arquiteto deve decidir o contrato público de comprimento da identidade e
+ordenar nova autoria da especificação. A versão reconciliada deve retornar a
+uma revisão independente; implementação permanece não autorizada. A correção do
+baseline `esp32_dev` continua sendo uma entrega separada.

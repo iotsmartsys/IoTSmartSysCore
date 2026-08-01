@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (decisões arquiteturais da persistência binária 0.5)
+**Última atualização:** 01/08/2026 (revisão de implementabilidade da persistência binária 0.5)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.5) — corrige 0.4 conforme `EKM-CHG-0020`; revisão `Pending Review`; não reutiliza `Implementable` de 0.3; `BCS-DEC-002`/`003`/`004` confirmadas, com `blink` transitório fora da persistência, gate canônico `esp32_dev` e escritor NVS assíncrono único/limitado; `BCS-DEC-001` permanece pendente e não bloqueante; código na branch ainda reflete implementação experimental 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.5) — revisão `Needs Clarification` em `EKM-CHG-0021`; `BCS-DEC-005`/`EKM-GAP-0010` bloqueiam a identidade por ausência de limite público de `capability_name`; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` falha e sua correção continua sendo dependência separada conforme `BCS-DEC-003`; código na branch ainda reflete implementação experimental 0.2 |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.5 `Proposed`/`Not Started`/`Pending Review` (`EKM-CHG-0020`); contrato corrige riscos de NVS global, identidade vs API pública, validade estrutural/semântica, fallback da valve e provisioning condicionado a `save()`; writer assíncrono preserva cooperatividade com uma entrada consolidada por cada uma das 8 identidades; `BCS-DEC-001` permanece pendente e não bloqueante |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.5 `Proposed`/`Not Started`/`Needs Clarification` (`EKM-CHG-0021`); `BCS-DEC-005` exige decisão sobre o comprimento público de `capability_name`; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer; `BCS-DEC-001` permanece pendente e não bloqueante |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -107,6 +107,16 @@ validada em ambiente de hardware conforme declaração do Arquiteto. A limitaç�
 preexistente do environment automatizado permanece registrada em
 `EKM-CHG-0007`, mas não mantém aberta a lacuna de validação física.
 
+### EKM-GAP-0010 — Limite público da identidade de capability
+
+**Estado:** Open
+
+`capability_name` é aceito pela API/configuração pública sem comprimento máximo,
+enquanto a persistência binária exige storage finito sem limite interno menor e
+critérios sobre o maior nome público aceito. O Arquiteto deve definir o contrato
+de comprimento, compatibilidade e eventual migração antes de nova autoria e
+revisão de implementabilidade de `IOTSSC-BINARY-COMMAND-STATE`.
+
 ## 5. Baseline inicial
 
 - Branch: `main`.
@@ -152,3 +162,7 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0020`: decisões arquiteturais promovem documentalmente a
   persistência binária para a versão 0.5, encerram os bloqueios de `blink`, gate
   e contexto NVS e preservam a revisão como `Pending Review`.
+- `EKM-CHG-0021`: revisão integral da versão 0.5 resulta em `Needs
+  Clarification`; `EKM-GAP-0010` registra a decisão ausente sobre o limite
+  público de `capability_name`, e o baseline `esp32_dev` falho permanece
+  dependência separada conforme `BCS-DEC-003`.

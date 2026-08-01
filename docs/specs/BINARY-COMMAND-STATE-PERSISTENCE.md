@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Precisa de esclarecimento [`Needs Clarification`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-BINARY-COMMAND-STATE@0.4`
@@ -668,9 +668,9 @@ observar uma operação exigida torna o critério correspondente não verificáv
 - [x] BCS-001 a BCS-029 estão relacionados a pelo menos um critério.
 - [x] Cada critério identifica cenário, ação, resultado observável e evidência
   terminal.
-- [x] Os resultados podem ser convertidos em asserções sem decisão funcional ou
-  arquitetural adicional; somente `BCS-DEC-001` permanece pendente e fora do
-  recorte.
+- [ ] BCS-002, BCS-AC-002 e BCS-AC-021 ainda dependem de decisão sobre o limite
+  público de `capability_name`, registrada em `BCS-DEC-005` e
+  `EKM-GAP-0010`.
 - [x] Os critérios reprovam os desvios apontados em `EKM-CHG-0018`: statics sob
   `-fno-threadsafe-statics`, restart de provisioning sem sucesso de `save()`,
   erase global/`ESP_ERROR_CHECK`, snapshot só com tamanho/versão/checksum,
@@ -803,6 +803,28 @@ reprovar qualquer chamada NVS ou espera pelo commit no contexto solicitante,
 fila sem limite, múltiplos escritores ou reboot de verificação antes de estado
 terminal bem-sucedido.
 
+### BCS-DEC-005 — Limite público da identidade persistente
+
+**Estado:** pendente e bloqueante para a versão 0.5.
+
+A API pública vigente aceita `capability_name` como `const char *`, converte o
+valor para `std::string` e também permite renomeação sem publicar comprimento
+máximo. O buffer de 32 bytes usado apenas para nomes gerados automaticamente
+não limita nomes fornecidos externamente. Assim, não existe hoje um "maior
+comprimento público aceito" que permita implementar e afirmar BCS-002,
+BCS-AC-002 e BCS-AC-021.
+
+O Arquiteto deve determinar o contrato observável de comprimento da identidade:
+ou autorizar e especificar um limite público compatível, com o tratamento dos
+consumidores existentes, ou definir outra representação persistente finita que
+preserve integralmente todas as identidades aceitas pela API vigente sem
+truncamento, colisão ou rejeição por limite interno menor. O Analista não pode
+escolher o teto, a compatibilidade ou a estratégia de migração.
+
+**Consequência:** enquanto a decisão não for incorporada à especificação, a
+matriz não possui oráculo executável para o maior nome público aceito e a versão
+permanece `Needs Clarification`.
+
 ## 12. Estado da especificação
 
 A versão 0.5 corrige a versão 0.4 para incorporar as decisões arquiteturais
@@ -829,13 +851,40 @@ da versão anterior, ela:
 - preserva `BCS-DEC-001` como pendente não bloqueante e registra
   `BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004` como confirmadas.
 
-Os estados permanecem `Proposed`, `Not Started`, `Not Ready` e `Pending
-Review`; esta atuação consultiva não promove estados reservados ao Autor, ao
-Analista, ao Implementador ou ao Revisor.
+Os estados normativo, de implementação e de entrega permanecem `Proposed`,
+`Not Started` e `Not Ready`. A revisão independente da versão integral foi
+promovida para `Needs Clarification` em `EKM-CHG-0021`; o estado
+`Implementable` da versão 0.3 não é reutilizado.
 
-Esta atuação não executou análise de implementabilidade independente,
-implementação, build nem testes funcionais. O estado `Implementable` da versão
-0.3 não é reutilizado.
+### 12.1 Revisão de implementabilidade da versão 0.5
+
+**Resultado:** Precisa de esclarecimento [`Needs Clarification`].
+
+A confrontação integral de BCS-001 a BCS-029, BCS-AC-001 a BCS-AC-028,
+decisões, falhas, relações e gates confirmou precedentes implementáveis para a
+fronteira Core/plataforma, composição de serviços, inicialização antes de
+concorrência, worker FreeRTOS, interpreter da valve, protocolo comum das
+capabilities e seams de teste. `BCS-DEC-001` permanece não bloqueante porque
+factory reset está explicitamente fora do escopo.
+
+O bloqueio material é `BCS-DEC-005`: a superfície pública não define limite de
+comprimento para `capability_name`, mas BCS-002 exige que o storage não seja
+mais restritivo e BCS-AC-002/BCS-AC-021 exigem testar o maior comprimento
+público aceito. Um implementador teria de inventar um teto público, aceitar
+rejeição não autorizada ou assumir uma representação ilimitada incompatível
+com storage finito. A lacuna está registrada em `EKM-GAP-0010`.
+
+Como evidência adicional, `pio run -e esp32_dev` terminou `FAILED` antes da
+implementação desta versão porque `ESP32_LED_GREEN` e `ESP32_LED_BLUE` não
+estão definidos em `src/main.cpp`. BCS-DEC-003 já define esse baseline como
+dependência externa: sua correção mínima requer autorização e entrega
+separadas antes de BCS-AC-022. O fato não acrescenta decisão ausente à versão
+0.5, mas impede aprovação futura do gate enquanto persistir.
+
+Nenhum código, teste ou configuração de implementação foi alterado, e nenhum
+teste funcional ou upload foi executado nesta análise. Uma nova versão
+reconciliada com a decisão de identidade deve retornar a revisão independente
+antes de qualquer ordem de implementação.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
@@ -888,5 +937,5 @@ Inconsistências materiais registradas na contestação:
    retorno de `save()` ser ignorado;
 5. copiou metadado Git sem necessidade normativa.
 
-A versão 0.5 preserva `Pending Review` e exige nova atuação independente do
-Engenheiro Analista sobre este contrato corrigido.
+A autoria da versão 0.5 havia restaurado `Pending Review`; a nova atuação
+independente está registrada na seção 12.1 e resultou em `Needs Clarification`.
