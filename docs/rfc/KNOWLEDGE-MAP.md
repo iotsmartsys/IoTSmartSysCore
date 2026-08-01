@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — revisão `Needs Clarification` em `EKM-CHG-0023`; `BCS-DEC-006`/`EKM-GAP-0011` bloqueiam a mutação pública de identidade após registro; `BCS-DEC-005` mantém limites de 63/31 bytes e `EKM-GAP-0010` fechada; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` continua dependência separada conforme `BCS-DEC-003`; código ainda reflete implementação experimental 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — revisão `Needs Clarification` em `EKM-CHG-0023`; decisão parcial `EKM-CHG-0024` torna `rename()`/`applyRenamedName()` obsoletos, mas `BCS-DEC-006`/`EKM-GAP-0011` continuam bloqueando chamadas legadas e campos públicos mutáveis; limites 63/31 permanecem definidos; baseline `esp32_dev` continua dependência separada conforme `BCS-DEC-003` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -126,7 +126,9 @@ campos públicos mutáveis, além de métodos de renomeação sem retorno de err
 Arquiteto deve decidir se a identidade será imutável após registro e como
 migrar a API, ou definir validação, identidade prevalente, erro e preservação de
 efeitos para mutações suportadas. A ausência bloqueia BCS-002, BCS-022,
-BCS-AC-002 e BCS-AC-021.
+BCS-AC-002 e BCS-AC-021. O Arquiteto já decidiu em `EKM-CHG-0024` marcar
+`rename()` e `applyRenamedName()` como obsoletos; comportamento legado e
+atribuição direta aos campos continuam pendentes.
 
 ## 5. Baseline inicial
 
@@ -183,3 +185,6 @@ BCS-AC-002 e BCS-AC-021.
 - `EKM-CHG-0023`: revisão integral da versão 0.6 resulta em `Needs
   Clarification`; `EKM-GAP-0011` registra a decisão ausente sobre mutação da
   identidade pública depois do registro.
+- `EKM-CHG-0024`: decisão parcial do Arquiteto marca `rename()` e
+  `applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
+  a revisão da versão 0.6.

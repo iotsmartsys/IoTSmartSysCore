@@ -1510,3 +1510,32 @@ funcional, upload ou validação física foi iniciado.
 O Arquiteto deve decidir `BCS-DEC-006` e ordenar nova autoria integral. A versão
 reconciliada deve retornar a uma análise independente; implementação permanece
 não autorizada.
+
+## EKM-CHG-0024 — Obsolescência dos métodos públicos de renomeação
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Decisão confirmada
+
+O Arquiteto determinou que `ICapability::rename()` e
+`ICapability::applyRenamedName()` sejam marcados como obsoletos na API pública e
+não recebam novos usos.
+
+### Alcance e limitação
+
+A decisão é parcial no contexto de `BCS-DEC-006`: não autoriza remoção dos
+métodos, não define se chamadas legadas continuam alterando a identidade e não
+decide o tratamento dos campos públicos mutáveis `capability_name` e `type`.
+Consequentemente, `EKM-GAP-0011` permanece aberta e a revisão da versão 0.6
+continua `Needs Clarification`.
+
+Nenhum código, teste ou configuração de implementação foi alterado. Esta
+transação registra somente a decisão humana recebida e sua limitação material;
+implementação permanece não autorizada.
+
+### Próximo passo
+
+O Arquiteto deve completar `BCS-DEC-006` quanto ao comportamento legado e à
+atribuição direta aos campos públicos antes de nova autoria integral.

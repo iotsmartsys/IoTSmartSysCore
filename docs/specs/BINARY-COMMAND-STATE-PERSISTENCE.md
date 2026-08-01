@@ -868,7 +868,8 @@ limites e oráculos executáveis. `EKM-GAP-0010` é encerrada.
 
 ### BCS-DEC-006 — Mutabilidade da identidade após o registro
 
-**Estado:** pendente e bloqueante para a versão 0.6.
+**Estado:** parcialmente confirmada pelo Arquiteto e ainda bloqueante para a
+versão 0.6.
 
 O contrato 63/31 e a rejeição pré-registro são assertáveis quando nome e tipo
 entram pelo builder. Porém a superfície pública vigente devolve a capability já
@@ -886,6 +887,12 @@ qual operação valida, qual identidade prevalece após rejeição, como a falha
 observada e como se preservam slot, adapter, cache e registro persistido. A
 decisão também deve dizer se atribuição direta aos campos públicos continua
 contrato suportado ou passa a ser removida/depreciada.
+
+**Decisão parcial confirmada:** `rename()` e `applyRenamedName()` devem ser
+marcados como obsoletos na API pública e não devem receber novos usos. Esta
+decisão não autoriza ainda sua remoção, não define mudança de comportamento para
+chamadas legadas e não resolve a atribuição direta aos campos públicos
+`capability_name` e `type`.
 
 **Consequência:** BCS-002 e BCS-022 não podem ser implementados em todos os
 caminhos públicos sem escolher uma quebra ou semântica não autorizada, e
@@ -982,6 +989,12 @@ renomeação permitem alterar nome/tipo depois do registro, mas a versão exige
 rejeição antes do registro sem efeito parcial e não define imutabilidade,
 rollback, erro observável nem compatibilidade para esse caminho. O
 Implementador teria de decidir qual contrato público preservar ou quebrar.
+
+Após esta revisão, o Arquiteto confirmou que `rename()` e
+`applyRenamedName()` serão marcados como obsoletos. A decisão parcial reduz a
+superfície futura, mas a revisão permanece `Needs Clarification` porque chamadas
+legadas e atribuições diretas aos campos públicos continuam sem semântica
+normativa para identidade excedente após registro.
 
 Nenhum código, teste ou configuração de implementação foi alterado. Nenhum
 build, teste funcional, upload ou validação física foi iniciado nesta revisão.
