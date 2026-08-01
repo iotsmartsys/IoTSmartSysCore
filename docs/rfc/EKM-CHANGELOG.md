@@ -1221,3 +1221,61 @@ como requisito funcional de persistência binária.
   confirmação não altera a especificação, não invalida formalmente
   `EKM-CHG-0017`, não aprova correção, risco, implementação, integração,
   release ou deploy.
+
+## EKM-CHG-0019 — Autoria da persistência binária 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.4`
+
+### Objetivo
+
+Produzir a versão 0.4 da especificação de persistência de comandos binários,
+relacionada por `Corrects` à versão 0.3, incorporando a avaliação consultiva
+`EKM-CHG-0018`.
+
+### Resultado material
+
+- `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` promovida documentalmente
+  para a versão 0.4 com estados `Proposed` / `Not Started` / `Not Ready` /
+  `Pending Review`;
+- fatos, escopo, fora de escopo, solução, requisitos BCS-001 a BCS-029, falhas,
+  critérios BCS-AC-001 a BCS-AC-028, fidelidade dos doubles, gates e conhecimento
+  afetado reconciliados com `EKM-CHG-0018`;
+- decisões pendentes registradas sem decisão do Autor: `BCS-DEC-001` (não
+  bloqueante), `BCS-DEC-002` (blink), `BCS-DEC-003` (gate de build) e
+  `BCS-DEC-004` (contexto síncrono/assíncrono), com impacto na futura revisão;
+- revisões e implementação 0.2/0.3 preservadas apenas como histórico
+  contestado; o estado `Implementable` da versão 0.3 não foi reutilizado;
+- metadados Git sem necessidade normativa removidos da fonte normativa;
+- mapa de conhecimento atualizado para localizar a versão 0.4.
+
+### Correções normativas incorporadas
+
+1. inicialização única de `ServiceManager` antes de acessos concorrentes, sob
+   `-fno-threadsafe-statics`;
+2. sucesso e restart do provisioning condicionados a
+   `SettingsManager::save()`;
+3. proibição de erase global da NVS e de abort por `ESP_ERROR_CHECK` no storage
+   binário;
+4. validação estrutural e semântica completa do snapshot;
+5. reconciliação do limite de identidade com a API pública;
+6. interpreter obrigatório em todos os fallbacks da valve;
+7. oráculo de cooperatividade para write/commit;
+8. critérios completados para falhas NVS, isolamento de settings, identidade,
+   valve e provisioning após reboot.
+
+### Restrições observadas
+
+Nenhum código, teste, build ou configuração foi alterado. Nenhuma revisão de
+implementabilidade foi executada nesta atuação.
+
+### Validações
+
+- `git diff --check`: aprovado na entrega;
+- conferência dos estados de saída e da relação `Corrects` 0.3 → 0.4.
+
+### Próximo passo
+
+Nova atuação independente do Engenheiro Analista sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.4`, sem reutilizar `EKM-CHG-0017`.
