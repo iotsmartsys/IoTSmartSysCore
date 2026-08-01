@@ -1410,3 +1410,52 @@ O Arquiteto deve decidir o contrato público de comprimento da identidade e
 ordenar nova autoria da especificação. A versão reconciliada deve retornar a
 uma revisão independente; implementação permanece não autorizada. A correção do
 baseline `esp32_dev` continua sendo uma entrega separada.
+
+## EKM-CHG-0022 — Autoria da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Corrigir integralmente a versão 0.5 após `EKM-CHG-0021`, incorporando a decisão
+do Arquiteto sobre o contrato público finito da identidade persistente sem
+alterar código, testes ou configuração de implementação.
+
+### Decisão confirmada
+
+`BCS-DEC-005` limita o `capability_name` definitivo a 63 bytes e `type` a 31
+bytes de sua representação UTF-8, excluídos os terminadores nulos. Valor acima
+do limite deve falhar observavelmente antes do registro, sem truncamento,
+consumo de slot, capability/adapter parcial, alteração do cache ou solicitação
+de persistência. Omissão de nome preserva a geração automática vigente e o
+nome resultante passa pela mesma validação.
+
+Configurações existentes dentro dos limites permanecem compatíveis. Consumidor
+com identidade excedente deve adequá-la antes de adotar a versão; não existe
+truncamento, alias ou migração silenciosa de registro persistido.
+
+### Resultado material
+
+- especificação promovida documentalmente para a versão 0.6, relacionada por
+  `Corrects` à versão 0.5;
+- BCS-002, BCS-022, BCS-AC-002 e BCS-AC-021 reconciliados com os limites,
+  rejeição pré-registro, geração automática e ausência de efeito parcial;
+- storage obrigado a preservar integralmente 63/31 bytes e seus terminadores,
+  sem limite interno menor;
+- checklist integral restaurado e `EKM-GAP-0010` encerrada;
+- estados definidos como `Proposed`, `Not Started`, `Not Ready` e `Pending
+  Review`, sem reutilizar revisões anteriores.
+
+### Validações e limitações
+
+Somente integridade textual, rastreabilidade normativa e coerência documental
+pertencem a esta autoria. Nenhum código, teste funcional, build, upload ou
+validação física foi iniciado. A falha conhecida do baseline `esp32_dev`
+permanece dependência separada conforme `BCS-DEC-003`.
+
+### Próximo passo
+
+Nova atuação independente do Engenheiro Analista sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.6`. Implementação permanece não autorizada.

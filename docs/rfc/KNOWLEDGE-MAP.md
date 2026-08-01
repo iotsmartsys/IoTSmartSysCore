@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (revisão de implementabilidade da persistência binária 0.5)
+**Última atualização:** 01/08/2026 (autoria da persistência binária 0.6)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.5) — revisão `Needs Clarification` em `EKM-CHG-0021`; `BCS-DEC-005`/`EKM-GAP-0010` bloqueiam a identidade por ausência de limite público de `capability_name`; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` falha e sua correção continua sendo dependência separada conforme `BCS-DEC-003`; código na branch ainda reflete implementação experimental 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — corrige 0.5 conforme `EKM-CHG-0022`; revisão `Pending Review`; `BCS-DEC-005` confirma limites públicos de 63/31 bytes para nome/tipo e rejeição observável pré-registro, encerrando `EKM-GAP-0010`; `BCS-DEC-001` permanece pendente e não bloqueante; baseline `esp32_dev` falha e sua correção continua sendo dependência separada conforme `BCS-DEC-003`; código na branch ainda reflete implementação experimental 0.2 |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.5 `Proposed`/`Not Started`/`Needs Clarification` (`EKM-CHG-0021`); `BCS-DEC-005` exige decisão sobre o comprimento público de `capability_name`; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer; `BCS-DEC-001` permanece pendente e não bloqueante |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`Not Started`/`Pending Review` (`EKM-CHG-0022`); identidade pública limitada a 63 bytes para nome e 31 para tipo, com rejeição pré-registro; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer; `BCS-DEC-001` permanece pendente e não bloqueante |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -109,13 +109,13 @@ preexistente do environment automatizado permanece registrada em
 
 ### EKM-GAP-0010 — Limite público da identidade de capability
 
-**Estado:** Open
+**Estado:** Closed
 
-`capability_name` é aceito pela API/configuração pública sem comprimento máximo,
-enquanto a persistência binária exige storage finito sem limite interno menor e
-critérios sobre o maior nome público aceito. O Arquiteto deve definir o contrato
-de comprimento, compatibilidade e eventual migração antes de nova autoria e
-revisão de implementabilidade de `IOTSSC-BINARY-COMMAND-STATE`.
+O Arquiteto confirmou em `BCS-DEC-005` os limites públicos de 63 bytes para o
+`capability_name` definitivo e 31 bytes para `type`, excluídos os terminadores,
+com rejeição observável antes do registro e sem efeito parcial. A versão 0.6
+incorpora limites, compatibilidade, adequação de consumidores excedentes e
+critérios assertáveis; a lacuna está encerrada.
 
 ## 5. Baseline inicial
 
@@ -166,3 +166,6 @@ revisão de implementabilidade de `IOTSSC-BINARY-COMMAND-STATE`.
   Clarification`; `EKM-GAP-0010` registra a decisão ausente sobre o limite
   público de `capability_name`, e o baseline `esp32_dev` falho permanece
   dependência separada conforme `BCS-DEC-003`.
+- `EKM-CHG-0022`: autoria da versão 0.6 incorpora `BCS-DEC-005`, publica
+  limites de identidade de 63/31 bytes com rejeição observável pré-registro,
+  encerra `EKM-GAP-0010` e restaura a revisão como `Pending Review`.
