@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (autoria da persistência binária 0.4)
+**Última atualização:** 01/08/2026 (decisões arquiteturais da persistência binária 0.5)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.4) — corrige 0.3 conforme `EKM-CHG-0018`/`EKM-CHG-0019`; revisão `Pending Review`; não reutiliza `Implementable` de 0.3; decisões pendentes `BCS-DEC-001` (não bloqueante), `BCS-DEC-002`/`003`/`004` (bloqueantes parciais); código na branch ainda reflete implementação experimental 0.2 |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.5) — corrige 0.4 conforme `EKM-CHG-0020`; revisão `Pending Review`; não reutiliza `Implementable` de 0.3; `BCS-DEC-002`/`003`/`004` confirmadas, com `blink` transitório fora da persistência, gate canônico `esp32_dev` e escritor NVS assíncrono único/limitado; `BCS-DEC-001` permanece pendente e não bloqueante; código na branch ainda reflete implementação experimental 0.2 |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.4 `Proposed`/`Not Started`/`Pending Review` (`EKM-CHG-0019`); contrato corrige riscos de NVS global, identidade vs API pública, validade estrutural/semântica, fallback da valve, provisioning condicionado a `save()` e cooperatividade; `BCS-DEC-002`/`003`/`004` pendentes e parcialmente bloqueantes; limite intencional de 8 |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.5 `Proposed`/`Not Started`/`Pending Review` (`EKM-CHG-0020`); contrato corrige riscos de NVS global, identidade vs API pública, validade estrutural/semântica, fallback da valve e provisioning condicionado a `save()`; writer assíncrono preserva cooperatividade com uma entrada consolidada por cada uma das 8 identidades; `BCS-DEC-001` permanece pendente e não bloqueante |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -149,3 +149,6 @@ preexistente do environment automatizado permanece registrada em
 - `EKM-CHG-0019`: autoria da versão 0.4 da persistência binária, incorporando
   `EKM-CHG-0018`; revisão de implementabilidade reinstaurada como
   `Pending Review`.
+- `EKM-CHG-0020`: decisões arquiteturais promovem documentalmente a
+  persistência binária para a versão 0.5, encerram os bloqueios de `blink`, gate
+  e contexto NVS e preservam a revisão como `Pending Review`.

@@ -1279,3 +1279,83 @@ implementabilidade foi executada nesta atuação.
 
 Nova atuação independente do Engenheiro Analista sobre
 `IOTSSC-BINARY-COMMAND-STATE@0.4`, sem reutilizar `EKM-CHG-0017`.
+
+## EKM-CHG-0020 — Decisões arquiteturais da persistência binária 0.5
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.5`
+
+### Objetivo e limite
+
+Incorporar à especificação as decisões do Arquiteto que encerram os bloqueios
+`BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004`, preservando os estados formais
+dos atores e sem alterar código, testes ou configuração.
+
+### Decisões confirmadas
+
+1. alternâncias produzidas exclusivamente pelo temporizador de `blink` são
+   transitórias e não são persistidas; o último estado estável permanece
+   válido durante o modo, e o estado estável confirmado ao encerrá-lo é
+   solicitado uma vez quando tiver mudado;
+2. `pio run -e esp32_dev` permanece o gate canônico obrigatório; eventual
+   correção preexistente do baseline exige autorização e entrega separadas e
+   não pode ser substituída silenciosamente por outro environment;
+3. write e commit do snapshot binário são executados por um único escritor
+   assíncrono Espressif, fora de callbacks BLE, caminhos síncronos de comando e
+   `handle()` das capabilities;
+4. o trabalho pendente é limitado a uma entrada consolidada por identidade,
+   até oito, sem alocação ou crescimento por transição; mudança ocorrida
+   durante write/commit não pode ser perdida;
+5. o worker é ativado uma única vez após `ServiceManager::init()` retornar com
+   o grafo completo e antes da primeira solicitação; falha de criação é
+   observável e não autoriza fallback síncrono;
+6. aceitação da solicitação não significa commit concluído; trabalho pendente,
+   operação em curso, sucesso e falha permanecem observáveis, e somente commit
+   bem-sucedido altera o snapshot restaurável;
+7. a execução instrumentada no target deve preservar margem mínima de 25% da
+   pilha configurada para o worker sob a carga definida pelo critério;
+8. `BCS-DEC-001` permanece pendente, fora do recorte e não bloqueante.
+
+### Resultado material
+
+- especificação promovida documentalmente para a versão 0.5, relacionada por
+  `Corrects` à versão 0.4;
+- requisitos BCS-013, BCS-016 a BCS-018 e BCS-029 reconciliados com a política
+  estável de `blink` e o escritor assíncrono;
+- BCS-AC-001, BCS-AC-010 e BCS-AC-013 a BCS-AC-015 atualizados para distinguir
+  solicitação, consolidação, quiescência e commit;
+- BCS-AC-022 fixado no gate `esp32_dev`;
+- BCS-AC-023 e BCS-AC-028 ampliados para observar ordem de ativação, identidade
+  única, contexto executor, limite, concorrência, falha de criação e pilha;
+- estados preservados como `Proposed`, `Not Started`, `Not Ready` e `Pending
+  Review`.
+
+### Registro da atuação consultiva
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e resultado autorizados:** corrigir a especificação de persistência
+  binária com as decisões arquiteturais necessárias e entregar a documentação
+  confirmada.
+- **Repositório, recorte e operações:** IoTSmartSysCore; persistência binária,
+  `blink`, gate de build, writer NVS, ciclo de serviços, critérios e registros
+  EKM; edição documental, validação textual, commit e push.
+- **Decisões explicitamente confirmadas:** as oito decisões relacionadas nesta
+  transação, sem decisão sobre factory reset.
+- **Resultado material produzido:** versão 0.5 da especificação, esta transação
+  e mapa de conhecimento correspondente.
+- **Validações, limitações e independência:** integridade textual e unicidade
+  dos 29 requisitos e 28 critérios verificadas; nenhum build, teste funcional,
+  upload ou validação em hardware foi iniciado. O Consultor participou desta
+  correção e não constitui Analista ou Revisor independente do mesmo recorte.
+- **Significado da confirmação:** o Arquiteto confirmou a entrega documental e
+  autorizou seu registro, commit e push. A confirmação não promove estados,
+  não aprova implementação, não valida hardware e não autoriza integração,
+  release ou deploy.
+
+### Próximo passo
+
+Nova análise independente de implementabilidade sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.5`. A correção do baseline `esp32_dev`, se ainda
+necessária, depende de ordem separada e deve anteceder a aprovação de
+BCS-AC-022.

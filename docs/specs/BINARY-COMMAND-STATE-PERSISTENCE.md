@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.4
+**Versão:** 0.5
 
 **Estado normativo:** Proposta [`Proposed`]
 
@@ -15,7 +15,7 @@
 **Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
 
 **Relação normativa:** Corrige [`Corrects`]
-`IOTSSC-BINARY-COMMAND-STATE@0.3`
+`IOTSSC-BINARY-COMMAND-STATE@0.4`
 
 ## 1. Objetivo e contexto
 
@@ -33,16 +33,18 @@ integridade NVS e vocabulário da valve.
 
 A intenção confirmada pelo Arquiteto para o comportamento funcional é:
 
-- registrar o estado em NVS quando o estado binário confirmado mudar, segundo a
-  política de origem ainda sujeita às decisões pendentes desta versão;
+- registrar de forma assíncrona o último estado binário estável confirmado,
+  excluindo alternâncias transitórias produzidas pelo temporizador de `blink`;
 - manter a leitura de boot leve;
 - aplicar, durante a inicialização, o último estado validamente registrado para
   cada capability abrangida;
 - preservar o grafo único de serviços, o provisionamento BLE e os settings
   existentes.
 
-A versão 0.4 incorpora a avaliação consultiva registrada em `EKM-CHG-0018`. Ela
-corrige o contrato 0.3 sem reutilizar o estado `Implementable` daquela versão.
+A versão 0.5 incorpora a avaliação consultiva registrada em `EKM-CHG-0018` e
+as decisões arquiteturais confirmadas pelo Arquiteto para `BCS-DEC-002`,
+`BCS-DEC-003` e `BCS-DEC-004`. Ela corrige o contrato 0.4 sem reutilizar o
+estado `Implementable` de versões anteriores.
 As seções históricas 13 a 15 permanecem apenas como evidência contestada.
 
 ## 2. Fatos observados
@@ -160,8 +162,8 @@ constituem por si mesmos requisitos legados aprovados.
 - representação persistida dos dois estados lógicos suportados;
 - leitura, validação estrutural/semântica e cache do snapshot durante o boot;
 - aplicação do estado restaurado ao hardware durante `setup()`;
-- gravação e commit em NVS após mudança lógica confirmada, segundo a política
-  de origem autorizada;
+- solicitação assíncrona de gravação e commit em NVS após mudança lógica
+  estável confirmada, com exclusão das alternâncias transitórias de `blink`;
 - tratamento de ausência, corrupção, incompatibilidade e falha de storage sem
   erase global da NVS e sem abort por checagem fatal no fluxo binário;
 - logs diagnósticos sem dados privados;
@@ -173,8 +175,7 @@ constituem por si mesmos requisitos legados aprovados.
 - oráculo de cooperatividade observável para write/commit;
 - testes automatizados do Core, do provedor NVS, da valve e do provisioning
   após reboot;
-- build do runtime Arduino sobre ESP32 no environment de gate que o Arquiteto
-  autorizar.
+- build do runtime Arduino sobre ESP32 no environment canônico `esp32_dev`.
 
 ## 4. Fora de escopo
 
@@ -189,8 +190,8 @@ constituem por si mesmos requisitos legados aprovados.
 - sincronizar o estado persistido com API remota, MQTT ou settings do
   dispositivo;
 - criar histórico de estados, contador de acionamentos ou telemetria;
-- decidir unilateralmente debounce, atraso, batching ou exclusão de `blink`
-  enquanto `BCS-DEC-002` permanecer pendente;
+- persistir cada alternância produzida exclusivamente pelo temporizador de
+  `blink`, ou alterar a política estável de `blink` confirmada nesta versão;
 - aumentar a pilha da `BTC_TASK` como substituto para corrigir a duplicação do
   grafo de serviços;
 - reorganizar genericamente o threading, protocolo ou arquitetura do
@@ -279,9 +280,52 @@ adicional que copie conteúdo conta. Consultas posteriores no mesmo boot devem
 ocorrer somente no cache em memória. O ciclo cooperativo de `handle()` não pode
 fazer leituras NVS.
 
-Uma gravação deve atualizar o snapshot em memória, persistir o blob e executar
-o commit NVS. Gravação e leitura não podem tocar o namespace ou a chave de
-settings.
+Uma solicitação de persistência deve atualizar, sob sincronização interna do
+provedor, o estado desejado em memória para a identidade afetada. A chamada
+originada pela capability deve retornar sem executar `nvs_set_blob()`,
+`nvs_commit()` ou esperar a conclusão dessas operações.
+
+Um único escritor assíncrono deve serializar write e commit do snapshot. O
+trabalho pendente deve ser limitado pelo máximo de oito identidades: cada
+identidade pode manter somente o estado estável confirmado mais recente ainda
+não processado. Se novas transições da mesma identidade ocorrerem antes do
+início do próximo write, elas devem ser consolidadas no valor mais recente,
+sem crescimento de fila, alocação por transição ou obrigação de persistir
+estados intermediários já substituídos.
+
+O precedente técnico mais próximo é o worker FreeRTOS com sincronização e
+estado observável já usado pela integração Espressif de settings. A
+implementação deve permanecer no provedor Espressif, usando primitives da
+plataforma e sem introduzir dependência FreeRTOS no contrato Core. Isso não
+autoriza criar scheduler, camada transversal ou fila genérica nova.
+
+O worker deve ser criado uma única vez no bootstrap, somente depois de
+`ServiceManager::init()` retornar com o grafo completamente construído e da
+leitura inicial do snapshot, mas antes de capabilities poderem solicitar
+persistência. Falha de criação deve tornar o escritor indisponível de forma
+observável; não autoriza fallback síncrono. Sua pilha deve ser dimensionada e
+medida no target, e sua prioridade não pode impedir a continuidade das tasks de
+conectividade, BLE ou do loop cooperativo.
+
+O retorno da operação chamada pela capability informa somente se a identidade,
+o valor e a solicitação assíncrona foram aceitos; não significa que write ou
+commit terminaram. Falha posterior deve ser diagnosticada pelo próprio
+provedor e refletida no estado terminal observável, sem callback para a
+capability.
+
+Uma transição ocorrida durante write/commit deve permanecer pendente quando
+divergir do snapshot efetivamente confirmado pelo commit em curso. Somente um
+commit NVS bem-sucedido pode atualizar a visão de último snapshot persistido.
+Falha de write/commit deve ser observável, não pode ser promovida a sucesso e
+não deve criar retry contínuo; nova tentativa ocorre quando outra transição
+estável confirmada atualizar a identidade. O provedor deve oferecer seam
+interno observável para distinguir trabalho pendente, operação em curso,
+último commit bem-sucedido e falha, permitindo aguardar quiescência nos testes
+e antes de um reboot controlado que pretenda verificar persistência.
+
+Gravação e leitura não podem tocar o namespace ou a chave de settings. O
+escritor de estado binário não substitui nem altera a semântica síncrona exigida
+para `SettingsManager::save()` no encerramento do provisioning.
 
 #### Recuperação NVS do storage binário
 
@@ -310,6 +354,7 @@ bootstrap da plataforma
 → inicialização única e completa de ServiceManager antes de tasks/callbacks concorrentes
 → inicialização do storage e leitura única do snapshot NVS
 → validação estrutural e semântica do snapshot
+→ retorno de ServiceManager::init() e ativação única do escritor assíncrono
 → construção e nomeação das capabilities
 → setup do adapter de comando
 → consulta em cache por (capability_name, type)
@@ -336,15 +381,23 @@ interpreter antes de atualizar, publicar ou persistir estado lógico; ler
 
 ### 5.4 Registro de mudanças
 
-Toda transição lógica confirmada entre os dois valores binários, cuja origem
-esteja autorizada pela política vigente, deve solicitar a atualização e o
-commit do snapshot. Isso inclui, no protocolo comum:
+Toda transição lógica estável confirmada entre os dois valores binários, cuja
+origem esteja autorizada pela política vigente, deve atualizar o estado
+desejado em memória e sinalizar o escritor assíncrono. Isso inclui, no
+protocolo comum:
 
 - comandos remotos;
 - chamadas públicas como `turnOn`, `turnOff`, `power` e `toggle`;
 - sincronização com mudança observada no adapter;
-- comportamento automático de classe derivada, ressalvado `BCS-DEC-002` para
-  `blink`.
+- comportamento automático de classe derivada que produza estado estável.
+
+Alternâncias produzidas exclusivamente pelo temporizador de
+`LEDCapability::blink` são transitórias: continuam aplicadas, confirmadas e
+publicadas pelo protocolo comum, mas não atualizam o estado persistente nem
+sinalizam o escritor. Iniciar `blink` não substitui o último estado estável
+persistido. Quando `blink` terminar ou for substituído por comando explícito,
+o primeiro estado estável confirmado deve solicitar persistência uma única vez
+se diferir do último estado estável solicitado.
 
 Repetir o mesmo valor não constitui mudança e não pode gerar nova gravação. O
 texto `toggle` nunca deve ser persistido; deve ser registrado apenas o estado
@@ -357,15 +410,10 @@ atualização do estado lógico, publicação e o protocolo de persistência
 aplicável. Uma falha de gravação deve ser registrada em log, mas não pode
 reverter um comando já aplicado nem impedir o processamento cooperativo.
 
-Enquanto `BCS-DEC-004` permanecer pendente, a especificação não autoriza nem
-proíbe de forma final a execução síncrona ou assíncrona de write/commit. Em
-qualquer escolha futura autorizada pelo Arquiteto:
-
-- o ciclo cooperativo deve permanecer contínuo e observável;
-- write/commit não podem abortar, reiniciar ou bloquear indefinidamente o
-  dispositivo;
-- a semântica de "último commit bem-sucedido" após reboot deve permanecer
-  testável.
+A execução de write/commit deve ocorrer fora de callbacks BLE, do caminho
+síncrono de comando e de `handle()` das capabilities. O escritor deve ser
+único, ter memória limitada pelo contrato de oito identidades e não pode chamar
+de volta uma capability a partir do contexto de persistência.
 
 ### 5.5 Identidade do grafo de serviços e compatibilidade do provisioning
 
@@ -439,9 +487,11 @@ Após a recepção de uma configuração BLE válida:
   terminador, flag fora de domínio ou identidade não correspondente devem ser
   tratados como ausência de registro utilizável para a capability afetada, sem
   aplicar valores parciais.
-- **BCS-013:** toda transição confirmada autorizada de `off` para `on` ou de
-  `on` para `off` deve atualizar o cache, gravar o snapshot e executar commit
-  NVS, observada a política pendente de `blink` em `BCS-DEC-002`.
+- **BCS-013:** toda transição estável confirmada autorizada de `off` para `on`
+  ou de `on` para `off` deve atualizar o estado desejado e sinalizar o escritor
+  assíncrono. Alternâncias produzidas exclusivamente pelo temporizador de
+  `blink` não são persistíveis; estados pendentes da mesma identidade podem ser
+  consolidados no valor mais recente antes do próximo write.
 - **BCS-014:** uma tentativa de atribuir novamente o estado lógico corrente não
   pode gerar gravação nem commit.
 - **BCS-015:** `toggle` deve persistir somente o valor final confirmado, nunca
@@ -449,13 +499,17 @@ Após a recepção de uma configuração BLE válida:
 - **BCS-016:** mudanças originadas por comandos, API pública, leitura do
   adapter ou automação de classe derivada devem seguir o mesmo protocolo de
   aplicação/read-back/publicação e o protocolo de persistência aplicável, mesmo
-  quando a classe derivada sobrescrever `handle()` ou outro ponto do ciclo.
+  quando a classe derivada sobrescrever `handle()` ou outro ponto do ciclo;
+  somente as alternâncias transitórias de `blink` ficam excluídas da
+  persistência.
 - **BCS-017:** falha ao inicializar, abrir, ler, gravar ou executar commit na
   NVS do storage binário não pode bloquear o loop, abortar ou reiniciar o
-  dispositivo nem desfazer o estado de hardware já confirmado.
+  dispositivo nem desfazer o estado de hardware já confirmado; write/commit
+  não podem executar em callback BLE, caminho síncrono de comando ou
+  `handle()` de capability.
 - **BCS-018:** após falha de persistência, o estado lógico e sua publicação
-  devem continuar refletindo o hardware; o último estado registrado continua
-  sendo o último commit concluído com sucesso.
+  devem continuar refletindo o hardware; após reboot, o último estado
+  persistido continua sendo o snapshot do último commit concluído com sucesso.
 - **BCS-019:** a restauração de uma capability não pode alterar outra
   capability, mesmo quando ambas possuem o mesmo estado semântico.
 - **BCS-020:** mudança de nome ou tipo entre boots não pode reutilizar
@@ -489,11 +543,16 @@ Após a recepção de uma configuração BLE válida:
 - **BCS-028:** todo fallback de `ValveCapability` — restore, sync, default pós
   falha de aplicação/read-back — deve percorrer o interpreter antes de
   atualizar, publicar ou persistir o estado lógico.
-- **BCS-029:** write e commit do snapshot devem preservar cooperatividade
-  observável do ciclo: retorno de `handle()`/caminho cooperativo, continuidade
-  de ciclos posteriores e ausência de reset por watchdog atribuível a essa
-  operação, conforme o oráculo de aceite. A escolha final entre execução
-  síncrona e assíncrona permanece em `BCS-DEC-004`.
+- **BCS-029:** write e commit do snapshot devem ser executados por um único
+  escritor assíncrono, com trabalho pendente limitado a uma entrada por cada
+  uma das oito identidades, consolidação do estado mais recente antes do write,
+  sincronização entre snapshot desejado e confirmado e estado terminal
+  observável. O caminho solicitante deve retornar sem executar ou aguardar NVS;
+  `handle()` e ciclos posteriores devem continuar, sem reset por watchdog
+  atribuível à operação. O worker deve ser criado uma única vez, após a
+  conclusão de `ServiceManager::init()` e antes do uso; falha de criação não
+  pode provocar fallback síncrono, e medição em target sob carga deve preservar
+  ao menos 25% de margem da pilha configurada.
 
 ## 7. Falhas e condições de borda
 
@@ -509,16 +568,19 @@ Após a recepção de uma configuração BLE válida:
   anunciado nem persistido como estado confirmado.
 - Falha de commit: o runtime mantém o estado confirmado em memória e hardware,
   registra a falha e tenta persistir novamente apenas quando ocorrer outra
-  transição autorizada; esta especificação não cria fila de retry.
+  transição estável autorizada; esta especificação não cria retry contínuo.
 - Reinicialização após commit bem-sucedido: o valor confirmado é restaurado.
 - Reinicialização após falha de commit: restaura-se o último snapshot cujo
   commit foi concluído com sucesso.
 - Duas capabilities no mesmo estado: cada registro permanece isolado pela
   identidade composta.
-- `LEDCapability` em `blink`: o comportamento de persistência por alternância
-  permanece subordinado a `BCS-DEC-002`; até essa decisão, a implementação não
-  está autorizada a assumir nem "persistir cada alternância" nem "ignorar
-  blink" como contrato final.
+- `LEDCapability` em `blink`: alternâncias produzidas exclusivamente pelo
+  temporizador são aplicadas e publicadas, mas não persistidas. O último estado
+  estável permanece válido durante `blink`; ao encerrar o modo, o primeiro
+  estado estável confirmado é solicitado uma vez se tiver mudado.
+- Rajada de transições estáveis antes do próximo write: cada identidade ocupa
+  no máximo uma entrada pendente e conserva somente seu valor mais recente;
+  após quiescência e commit bem-sucedido, esse valor é o restaurado no reboot.
 - Primeiro acesso aos serviços durante o provisionamento: deve reutilizar o
   grafo inicializado no bootstrap, sem reconstrução nem nova leitura do
   snapshot binário.
@@ -542,7 +604,7 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 
 | Critério | Requisito | Cenário e ação | Resultado observável | Evidência terminal |
 |---|---|---|---|---|
-| BCS-AC-001 | BCS-001 | Para cada tipo concreto `SwitchCapability`, `SwitchPlugCapability`, `LightCapability`, `LEDCapability` e `ValveCapability`, partir de snapshot válido com estado oposto ao default, executar `setup()` e depois uma transição confirmada autorizada. | Cada um dos cinco tipos restaura o estado correto e persiste exatamente uma vez a transição posterior, sem opt-in específico do tipo. Se qualquer tipo não restaurar ou não persistir, o critério reprova. | Suíte parametrizada ou cinco casos nomeados, todos executados e aprovados, com adapter e storage observáveis. |
+| BCS-AC-001 | BCS-001 | Para cada tipo concreto `SwitchCapability`, `SwitchPlugCapability`, `LightCapability`, `LEDCapability` e `ValveCapability`, partir de snapshot válido com estado oposto ao default, executar `setup()`, produzir uma transição estável autorizada e aguardar quiescência do escritor. | Cada um dos cinco tipos restaura o estado correto e conclui exatamente um commit da transição posterior, sem opt-in específico do tipo. Se qualquer tipo não restaurar ou não persistir, o critério reprova. | Suíte parametrizada ou cinco casos nomeados, todos executados e aprovados, com adapter e estados do escritor observáveis. |
 | BCS-AC-002 | BCS-002, BCS-019 | Salvar duas capabilities cujas identidades diferem apenas pelo nome, duas que compartilham o nome mas diferem pelo tipo e duas identidades válidas no contrato público com prefixo longo comum e sufixos distintos, inclusive no maior comprimento público aceito; reinicializar o provedor e consultar cada identidade completa. | Cada consulta retorna somente o próprio estado. Nenhuma identidade válida na API pública é truncada, rejeitada por limite interno menor, colide, consome o registro de outra ou altera outra capability. | Teste de round-trip e isolamento que compara nome e tipo integrais antes e depois do reboot simulado, incluindo o comprimento máximo público. |
 | BCS-AC-003 | BCS-003, BCS-015 | Partir de `off`, executar `toggle`, confirmar `on`, persistir e decodificar o snapshot; repetir partindo de `on`. | O snapshot contém somente o estado semântico final `on` ou `off`; nunca contém `toggle`, `open`, `closed` ou outro comando transitório/concreto. | Teste executado que observa a entrada do contrato de storage e decodifica o blob persistido nos dois sentidos. |
 | BCS-AC-004 | BCS-004, BCS-009, BCS-010, BCS-028 | Configurar uma `ValveCapability` com o `ValveHardwareCommandInterpreter` e um double fiel ao `OutputHardwareAdapter`, que aceita somente `on`, `off` e `toggle`. Restaurar semanticamente `on` e depois `off`. Em seguida, forçar o caminho de fallback pós rejeição/read-back não confirmado e o sync inicial sem registro. | Para `on`, a capability solicita `open`, o interpreter envia `on` ao adapter, o read-back `on` é interpretado como `open` e somente então o estado lógico/publicado se torna `open`. Para `off`, ocorre `closed → off → off → closed`. Em todos os fallbacks, nenhum `off`/`on` cruza para estado lógico/publicação/persistência da valve sem interpreter. Envio direto de `open`/`closed` ao adapter reprova. | Casos executados de restore e fallback com sequência de chamadas e valores observáveis; o double rejeita o vocabulário da valve quando recebido diretamente. |
@@ -551,25 +613,25 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 | BCS-AC-007 | BCS-006, BCS-012 | Criar snapshots válidos com zero e oito registros; tentar salvar o nono; fornecer separadamente blob truncado, versão desconhecida, quantidade maior que oito, estado fora de `off`/`on`, `used`/`isOn` fora de domínio, campo sem terminador nulo e registro estruturalmente inválido. | Zero e oito são aceitos; o nono é recusado sem alterar o último snapshot válido. Cada blob inválido é rejeitado integralmente e nenhum de seus valores é aplicado. | Casos executados por condição, com inspeção do resultado do provedor, cache e ausência de aplicação nas capabilities. |
 | BCS-AC-008 | BCS-006, BCS-012 | Partir de snapshot válido e alterar separadamente um byte do cabeçalho e um byte de cada região de registro ativo, preservando tamanho e versão externos. | Toda alteração coberta é detectada pela verificação de integridade; o snapshot é rejeitado integralmente e nenhum valor corrompido é aplicado. Aceitar conteúdo apenas porque tamanho e versão coincidem reprova. | Teste de corrupção por mutação de bytes, executado sobre formato real, que comprova rejeição e zero chamadas de aplicação. |
 | BCS-AC-009 | BCS-007 | Instrumentar as operações NVS, iniciar o serviço uma vez com snapshot presente e consultar todas as oito identidades repetidamente. | Durante o boot ocorre no máximo uma chamada que copia dados do blob para memória. Todas as consultas posteriores retornam do cache e não acrescentam leitura de dados; consulta apenas de tamanho é contabilizada separadamente. | Contadores executados por operação NVS antes e depois do boot e das consultas, com asserção `data_reads <= 1` e delta posterior igual a zero. |
-| BCS-AC-010 | BCS-008 | Após o boot, chamar `handle()` repetidamente nos cinco tipos concretos, incluindo LED parado e, se a política de blink estiver decidida, piscando. | O contador de leituras NVS permanece inalterado em todas as chamadas. Gravações decorrentes de transição confirmada autorizada não contam como leitura. | Teste executado com instrumentação NVS e asserção de delta zero para chamadas de leitura. |
+| BCS-AC-010 | BCS-008 | Após o boot, chamar `handle()` repetidamente nos cinco tipos concretos, incluindo LED parado e piscando. | O contador de leituras NVS permanece inalterado em todas as chamadas. Gravações assíncronas decorrentes de transição estável autorizada não contam como leitura. | Teste executado com instrumentação NVS e asserção de delta zero para chamadas de leitura. |
 | BCS-AC-011 | BCS-011 | Simular primeiro boot, namespace ausente e identidade ausente em snapshot válido; executar `setup()` de cada tipo concreto. | Cada capability mantém o default vigente obtido pelo caminho interpretado aplicável, conclui a inicialização e não cria gravação ou commit apenas por estar no default. | Casos executados com estado lógico, eventos, chamadas de storage e conclusão do setup observáveis. |
 | BCS-AC-012 | BCS-009, BCS-010, BCS-012 | Restaurar registro válido e provocar separadamente rejeição do comando e read-back diferente do valor solicitado. | Em ambos os casos o valor solicitado não vira estado lógico, não é publicado e não é persistido como confirmado; a inicialização continua com o estado efetivamente confirmado pelo caminho interpretado ou o default vigente. | Dois casos executados com adapter programável e spies de estado, publicação e save. |
-| BCS-AC-013 | BCS-013, BCS-014 | Para cada sentido `off → on` e `on → off`, confirmar a mudança autorizada e depois atribuir novamente o mesmo valor. | Cada mudança efetiva atualiza o cache, grava um snapshot e conclui um commit exatamente uma vez. A repetição produz zero gravações e zero commits adicionais. | Teste executado com contadores separados de atualização de cache, write e commit. |
-| BCS-AC-014 | BCS-016 | Produzir transições separadamente por comando remoto, `turnOn`, `turnOff`, `power`, `toggle` e mudança externa observada no adapter. | Cada origem que resulta em mudança confirmada autorizada percorre read-back, atualização/publicação e exatamente um save/commit; origem rejeitada ou sem mudança produz zero save/commit. | Casos executados e nomeados por origem, com adapter, eventos e storage observáveis. |
-| BCS-AC-015 | BCS-001, BCS-013, BCS-016, BCS-DEC-002 | Em `LEDCapability` fora de blink, executar comando aceito e depois `handle()`. O ramo de blink somente é avaliado após `BCS-DEC-002`. | Fora de blink, a transição é confirmada, publicada e persistida uma vez. O override de `handle()` não omite sincronização nem duplica commit. O ramo blink permanece não verificável até a decisão. | Teste com LED concreto, adapter e storage observáveis; contadores após a transição fora de blink. O caso de blink fica bloqueado por decisão pendente. |
+| BCS-AC-013 | BCS-013, BCS-014 | Para cada sentido `off → on` e `on → off`, confirmar uma mudança estável isolada, aguardar quiescência do escritor e depois atribuir novamente o mesmo valor. Repetir com uma rajada `off → on → off → on` antes de liberar o write. | Cada mudança isolada atualiza o estado desejado e termina em um commit. A repetição produz zero sinalizações, writes e commits adicionais. Na rajada, existe no máximo uma entrada pendente para a identidade, estados substituídos são consolidados e, após quiescência, `on` é o último estado confirmado pelo commit e restaurado no reboot simulado. | Teste executado com escritor controlável e contadores separados de atualização desejada, sinalização, write e commit, incluindo inspeção do snapshot após reboot simulado. |
+| BCS-AC-014 | BCS-016 | Produzir transições estáveis separadamente por comando remoto, `turnOn`, `turnOff`, `power`, `toggle` e mudança externa observada no adapter; aguardar quiescência após cada caso. | Cada origem que resulta em mudança estável confirmada percorre read-back e atualização/publicação, sinaliza o escritor e termina em commit; origem rejeitada ou sem mudança produz zero sinalizações/write/commit. | Casos executados e nomeados por origem, com adapter, eventos e estados do escritor observáveis. |
+| BCS-AC-015 | BCS-001, BCS-013, BCS-016, BCS-DEC-002 | Em `LEDCapability`, persistir um estado estável, iniciar `blink`, executar múltiplas alternâncias pelo temporizador e depois encerrar o modo em estado oposto. | As alternâncias são aplicadas, confirmadas e publicadas sem sinalização, write ou commit. Durante `blink`, o estado persistido anterior permanece inalterado. Ao encerrar, o novo estado estável sinaliza o escritor uma vez e, após quiescência, é restaurado no reboot simulado. | Teste com LED concreto, relógio controlável, adapter, publicação e escritor observáveis; contadores separam alternâncias transitórias da consolidação estável final. |
 | BCS-AC-016 | BCS-017, BCS-018, BCS-021, BCS-027 | Injetar separadamente falha de inicialização NVS, open, leitura do blob, write e commit; incluir o cenário em que a recuperação legada tentaria erase global; após cada falha, executar o próximo ciclo cooperativo. | Nenhuma falha aborta, reinicia, bloqueia ou escapa do ciclo esperado. Nenhuma chamada de erase global da NVS é emitida pelo storage binário. Falhas de init/open/read preservam o fluxo/default; falhas de write/commit preservam o estado já confirmado de hardware, lógico e publicado. Ausência e falha possuem resultados/logs distintos, e o ciclo posterior termina. | Um caso executado por operação, usando seam que devolve os mesmos códigos e preserva a semântica de commit da NVS; spy comprova ausência de erase global, retorno ao chamador, ciclo posterior e classe diagnóstica. |
 | BCS-AC-017 | BCS-017, BCS-018 | Persistir `off`, confirmar transição de hardware para `on` e provocar falha de write; repetir provocando falha de commit; reinicializar após cada cenário. | Antes do reboot, hardware, estado lógico e publicação permanecem `on` apesar da falha. Após o reboot, restaura-se `off`, que foi o último commit bem-sucedido. Não há rollback imediato nem promoção do snapshot falho a commit válido. | Casos executados com emulação transacional fiel ou NVS real com injeção equivalente, observando estado antes e depois do reboot. |
 | BCS-AC-018 | BCS-019 | Persistir estados opostos para duas capabilities e restaurá-las no mesmo boot, variando a ordem de consulta e setup. | Cada capability recebe somente o próprio estado; restaurar ou alterar uma não muda cache, hardware, estado lógico ou publicação da outra. | Teste executado com duas instâncias, dois adapters, dois sinks e inspeção independente dos registros. |
 | BCS-AC-019 | BCS-020 | Persistir uma identidade, reinicializar primeiro com nome diferente e depois com tipo diferente. | Nenhuma das identidades alteradas reutiliza o registro anterior; ambas seguem o fluxo de ausência e preservam o default. A identidade original ainda recupera seu próprio registro. | Teste executado cobrindo mudança de nome e de tipo separadamente. |
 | BCS-AC-020 | BCS-021 | Executar ausência, snapshot inválido estrutural/semântico, falha de aplicação e falha de init/open/read/write/commit. | O diagnóstico identifica a classe correta sem imprimir valor do blob, settings, credenciais ou conteúdo privado. Falha de storage nunca é registrada como ausência. | Testes com logger capturado e asserções positivas da classe e negativas para sentinelas privadas. |
 | BCS-AC-021 | BCS-022 | Comparar as APIs públicas e defaults com a base anterior à funcionalidade; construir oito capabilities antes de `SmartSysApp::setup()` e executar ciclos cooperativos. | Assinaturas e defaults públicos permanecem compatíveis, oito capabilities continuam aceitas, uma nona continua sujeita ao limite vigente e `handle()` retorna cooperativamente sem espera indefinida por storage. Eventual limite explícito de identidade, se autorizado, deve aparecer no contrato público e ser o mesmo do storage. | Inspeção de diff das APIs públicas mais build e teste executado do limite/configuração/ciclo. |
-| BCS-AC-022 | BCS-023, BCS-DEC-003 | Compilar o environment de gate autorizado para o runtime Arduino ESP32 e inspecionar as dependências do contrato Core e do código preparatório ESP-IDF afetado. | O build de gate autorizado termina com sucesso; o Core não inclui APIs NVS/Arduino; o provedor Espressif permanece atrás da fronteira de plataforma e nenhuma fonte preparatória ESP-IDF é removida ou tornada dependente do runtime Arduino. Enquanto `BCS-DEC-003` não escolher o environment/oráculo, este critério permanece não verificável. | Build terminal aprovado no environment autorizado e inspeção estática registrada sobre os arquivos alterados. |
-| BCS-AC-023 | BCS-024 | Em um processo limpo, instrumentar a construção de `ServiceManager`, o registro de serviços e `loadSnapshot()`; executar o bootstrap que completa `init()` antes de qualquer callback/task concorrente; depois consultar `instance()` pelo mesmo caminho usado na conclusão do provisionamento, inclusive a partir de contexto que simule a task BLE. Repetir a consulta aos dois accessors. | Os endereços retornados por `init()` e `instance()` são iguais; existe exatamente uma construção do grafo, um registro dos serviços de plataforma e uma leitura inicial do snapshot. A ordem observa inicialização única concluída antes do acesso concorrente simulado. Aumentar a pilha, omitir logs ou invocar garantia de statics thread-safe sob `-fno-threadsafe-statics` sem eliminar a segunda instância/race reprova. | Teste executado em processo limpo ou seam fiel de inicialização, com asserção de identidade, contadores exatamente iguais a um e evidência da ordem pré-concorrência; inspeção estática confirma convergência dos accessors e a flag `-fno-threadsafe-statics` no build aplicável. |
+| BCS-AC-022 | BCS-023, BCS-DEC-003 | Executar `pio run -e esp32_dev` e inspecionar as dependências do contrato Core e do código preparatório ESP-IDF afetado. | O build canônico termina com `SUCCESS`; o Core não inclui APIs NVS/Arduino; o provedor Espressif permanece atrás da fronteira de plataforma e nenhuma fonte preparatória ESP-IDF é removida ou tornada dependente do runtime Arduino. Falha preexistente do baseline não autoriza substituir ou dispensar o gate. | Build terminal aprovado em `esp32_dev` e inspeção estática registrada sobre os arquivos alterados. Se o baseline exigir correção alheia, sua autorização e entrega separadas devem anteceder este gate. |
+| BCS-AC-023 | BCS-024 | Em um processo limpo, instrumentar a construção de `ServiceManager`, o registro de serviços, `loadSnapshot()` e a ativação do escritor; executar o bootstrap que completa `init()` antes de qualquer callback/task concorrente; depois consultar `instance()` pelo mesmo caminho usado na conclusão do provisionamento, inclusive a partir de contexto que simule a task BLE. Repetir a consulta aos dois accessors. | Os endereços retornados por `init()` e `instance()` são iguais; existe exatamente uma construção do grafo, um registro dos serviços de plataforma, uma leitura inicial do snapshot e uma ativação do escritor. A ativação ocorre somente após `init()` retornar e antes da primeira solicitação de persistência. Aumentar a pilha, omitir logs ou invocar garantia de statics thread-safe sob `-fno-threadsafe-statics` sem eliminar a segunda instância/race reprova. | Teste executado em processo limpo ou seam fiel de inicialização, com asserção de identidade, contadores exatamente iguais a um e evidência da ordem completa; inspeção estática confirma convergência dos accessors e a flag `-fno-threadsafe-statics` no build aplicável. |
 | BCS-AC-024 | BCS-025, BCS-026 | Em ESP32-S3 sem settings armazenados, iniciar provisioning, conectar por BLE, habilitar notifications e enviar uma configuração válida fragmentada em escritas de 9, 96, 96, 48 e 3 bytes, encerrando com `END`; observar o resultado de `SettingsManager::save()` e o boot seguinte. | O fluxo não apresenta stack canary, panic, abort ou reboot antecipado. Se `save()` sucede, o commit termina antes do restart controlado; no boot seguinte o cache é carregado, os valores provisionados são preservados e o dispositivo não reentra em provisioning por `NotFound`. | Execução terminal em hardware ESP32-S3 com captura serial completa, prova do sucesso de `save()`/commit e verificação dos settings após o reboot. Execução interrompida, ausência do reboot observado, falta de prova do commit ou somente build classificam o critério como não verificado. |
 | BCS-AC-025 | BCS-026 | No caminho de conclusão do provisioning, injetar separadamente sucesso e falha de `SettingsManager::save()` após configuração válida. | No sucesso, restart controlado e status/log de sucesso ocorrem somente depois do retorno bem-sucedido. Na falha, não há restart de sucesso, o status permanece de falha observável e nova tentativa permanece possível. | Teste executado com seam de `save()`, spies de restart/status/log e asserções de ordem. |
 | BCS-AC-026 | BCS-027 | Forçar no storage binário as condições que a implementação legada usava para chamar `nvs_flash_erase()` e `ESP_ERROR_CHECK`. | O runtime não aborta, não reinicia e não apaga a partição/namespace global; o domínio binário reporta falha/ausência e os settings sentinela permanecem intactos. | Teste executado com contadores de erase global, códigos de retorno e sobrevivência do processo. |
 | BCS-AC-027 | BCS-006, BCS-012 | Fornecer snapshots com checksum correto porém semanticamente inválidos: `used` fora de `{0,1}`, `isOn` fora de `{0,1}`, nome/tipo sem terminador nulo interno e registro ativo com identidade vazia. | Todos são rejeitados antes de qualquer `strcmp`/aplicação; nenhum valor é exposto via `tryGet` nem aplicado em capability. | Casos executados por classe de invalidez semântica, com zero aplicações e diagnóstico de inválido distinto de ausência quando aplicável. |
-| BCS-AC-028 | BCS-029, BCS-DEC-004 | Durante uma ou mais transições confirmadas autorizadas, instrumentar início/fim de write e commit, chamar `handle()`/ciclo cooperativo antes, durante a janela observável e depois da operação, e verificar continuidade. | O caminho cooperativo retorna; ciclos posteriores executam; não ocorre reset por watchdog atribuível a write/commit; a operação de persistência não converte o loop em espera indefinida. Se a política final de `BCS-DEC-004` exigir offload assíncrono, o mesmo oráculo de continuidade permanece válido e o commit efetivo continua observável antes do reboot de verificação. | Teste executado com relógio/contadores de ciclo, sondas de write/commit e asserção de continuidade; ausência de medição de cooperatividade reprova mesmo que o estado final esteja correto. |
+| BCS-AC-028 | BCS-029, BCS-DEC-004 | Bloquear controladamente o escritor antes de write/commit; produzir transições confirmadas por comando, `handle()` e callback BLE simulado; executar ciclos durante o bloqueio, liberar o escritor e aguardar quiescência. Repetir com transição da mesma identidade durante o commit, oito identidades pendentes e falha de criação do worker. No target ESP32-S3, repetir sob carga medindo stack high-water mark. | Nenhum caminho solicitante executa NVS nem aguarda o escritor; callbacks e `handle()` retornam, ciclos posteriores continuam e não ocorre watchdog. Existe um único worker e um único write/commit em curso, no máximo uma entrada pendente por identidade, a mudança concorrente não é perdida e o estado terminal distingue pendente, em curso, sucesso e falha. Falha de criação é observável e não faz fallback síncrono. Após o commit final e reboot simulado, cada identidade restaura seu valor estável mais recente; no target, a margem mínima observada da pilha do worker permanece em pelo menos 25% da capacidade configurada. | Testes com barreiras, contexto/contador de chamadas NVS, relógio, sondas do escritor, oito identidades, injeção de falha e reboot simulado, mais execução terminal instrumentada no ESP32-S3. Qualquer NVS no contexto solicitante, crescimento além do limite, múltiplos workers, perda de atualização, margem inferior a 25% ou ausência de estado terminal reprova. |
 
 ### 8.2 Fidelidade obrigatória dos doubles
 
@@ -583,8 +645,12 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
   que somente commit bem-sucedido sobrevive ao reboot.
 - Spies de storage mantêm contadores distintos para consulta de tamanho,
   leitura que copia dados, atualização de cache, write, commit e erase global.
-- Relógio usado em testes de cooperatividade e, quando autorizado, de blink é
-  controlável e avança sem espera real desnecessária.
+- Relógio usado em testes de cooperatividade e de blink é controlável e avança
+  sem espera real desnecessária.
+- O seam do escritor assíncrono permite bloquear e liberar write/commit,
+  identificar o contexto executor, observar uma única operação em curso,
+  inspecionar as oito entradas pendentes consolidadas e aguardar estado
+  terminal sem converter quiescência em sucesso presumido.
 - O seam de inicialização de serviços preserva a semântica de construção única
   e permite observar ordem antes de acesso concorrente simulado; contadores não
   podem ser reinicializados entre `init()` e `instance()`.
@@ -603,25 +669,27 @@ observar uma operação exigida torna o critério correspondente não verificáv
 - [x] Cada critério identifica cenário, ação, resultado observável e evidência
   terminal.
 - [x] Os resultados podem ser convertidos em asserções sem decisão funcional ou
-  arquitetural adicional, exceto os ramos explicitamente bloqueados por
-  `BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004`.
+  arquitetural adicional; somente `BCS-DEC-001` permanece pendente e fora do
+  recorte.
 - [x] Os critérios reprovam os desvios apontados em `EKM-CHG-0018`: statics sob
   `-fno-threadsafe-statics`, restart de provisioning sem sucesso de `save()`,
   erase global/`ESP_ERROR_CHECK`, snapshot só com tamanho/versão/checksum,
   identidade com limite interno menor, fallback da valve sem interpreter e
   ausência de oráculo de cooperatividade.
 - [x] Validações automatizáveis estão separadas da validação física posterior.
-- [x] Decisões pendentes permanecem explícitas, sem decisão pelo Autor.
+- [x] `BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004` refletem as decisões
+  confirmadas pelo Arquiteto; `BCS-DEC-001` permanece explícita e não
+  bloqueante.
 
 ### 8.4 Gate da implementação
 
 Para promover a implementação a `Implemented`, todos os critérios BCS-AC-001 a
-BCS-AC-028 aplicáveis e não bloqueados por decisão pendente devem estar
-aprovados ou possuir evidência automatizada equivalente que demonstre exatamente
-o mesmo oráculo. São obrigatórios:
+BCS-AC-028 aplicáveis devem estar aprovados ou possuir evidência automatizada
+equivalente que demonstre exatamente o mesmo oráculo. São obrigatórios:
 
-- build terminal com `SUCCESS` no environment de gate autorizado por
-  `BCS-DEC-003`;
+- `pio run -e esp32_dev` terminal com `SUCCESS`; falha preexistente do baseline
+  exige correção mínima, autorizada e entregue separadamente antes deste gate,
+  sem substituição silenciosa do environment;
 - `pio test -e esp32s3_test` com estado terminal aprovado, quantidade total de
   casos executados maior que zero e os casos desta especificação efetivamente
   executados;
@@ -629,11 +697,10 @@ o mesmo oráculo. São obrigatórios:
 - matriz BCS-AC preenchida com resultado terminal e referência à evidência de
   cada critério.
 
-Enquanto `BCS-DEC-002`, `BCS-DEC-003` ou `BCS-DEC-004` bloquearem critério ou
-oráculo indispensável, a implementação não pode ser promovida a `Implemented`
-por omissão da decisão. Critério falho, não executado ou não verificável mantém
-a implementação `In Progress`. Compilar testes com `--without-testing`, obter
-zero casos ou falhar antes da execução não satisfaz o gate.
+Critério falho, não executado ou não verificável mantém a implementação `In
+Progress`. Compilar testes com `--without-testing`, obter zero casos, falhar
+antes da execução ou substituir `esp32_dev` por outro environment não satisfaz
+o gate.
 
 ### 8.5 Gate posterior de validação
 
@@ -647,6 +714,8 @@ automatizados; permanece responsabilidade da etapa de validação posterior.
 ## 9. Conhecimento afetado
 
 - `src/Core/Capabilities/CapabilityHelpers.h`;
+- `src/SmartSysApp.*`, para ativação do escritor somente após a conclusão da
+  inicialização única do grafo;
 - `src/Contracts/Capabilities/ICapability.h` e/ou o contrato de consulta segura
   necessário para identificar o comportamento binário sem RTTI;
 - contrato de storage no domínio de capabilities;
@@ -674,7 +743,7 @@ reorganização estrutural nem obriga a alterar todos os arquivos citados.
 - `EKM-CHG-0013`;
 - `EKM-CHG-0018`.
 
-## 11. Decisões pendentes do Arquiteto
+## 11. Decisões do Arquiteto
 
 ### BCS-DEC-001 — Factory reset
 
@@ -692,58 +761,53 @@ reset permanece fora do escopo autorizado até decisão específica.
 
 ### BCS-DEC-002 — Política de persistência de `blink`
 
-A intenção confirmada de "persistir mudança binária" não decide se cada
-alternância de `LEDCapability` em `blink` deve gerar write/commit, se
-transições transitórias de blink devem ser excluídas, se o estado deve ser
-consolidado ao sair do blink, ou se debounce/batching com perda aceitável é
-permitido.
+**Estado:** confirmada pelo Arquiteto para a versão 0.5.
 
-**Recomendação do Autor:** excluir do protocolo de commit as alternâncias
-estritamente transitórias de blink e persistir apenas o estado confirmado ao
-entrar/sair do modo ou por comando explícito, para evitar desgaste acelerado da
-NVS. A recomendação não autoriza implementação.
+Alternâncias produzidas exclusivamente pelo temporizador de `blink` são
+transitórias e não devem gerar solicitação, write ou commit. O último estado
+estável solicitado permanece como estado persistente durante o modo. Ao
+encerrar ou substituir `blink`, o primeiro estado estável confirmado deve ser
+solicitado uma única vez se tiver mudado.
 
-**Impacto na revisão futura:** bloqueante para o ramo blink de BCS-013,
-BCS-016, BCS-AC-015 e para qualquer declaração de implementabilidade integral
-que inclua automação blink. Não bloqueia o restante do protocolo fora de blink.
+**Consequência:** BCS-013, BCS-016 e BCS-AC-015 deixam de estar bloqueados. A
+decisão limita desgaste de flash e define deterministicamente o estado
+restaurado quando ocorrer reboot durante `blink`.
 
 ### BCS-DEC-003 — Gate de build `esp32_dev`
 
-O gate histórico exige `pio run -e esp32_dev` com `SUCCESS`. Há registro de
-falha preexistente e alheia ao domínio binário nesse environment. O Arquiteto
-ainda não autorizou corrigir o baseline, substituir o environment obrigatório
-nem definir oráculo equivalente.
+**Estado:** confirmada pelo Arquiteto para a versão 0.5.
 
-**Recomendação do Autor:** ou autorizar correção mínima e separada do baseline
-de `esp32_dev`, ou substituir o gate desta especificação por environment
-suportado já utilizado na validação do recorte, sem ampliar silenciosamente o
-escopo funcional binário. A recomendação não autoriza a correção.
+`pio run -e esp32_dev` permanece o gate canônico obrigatório. Falha
+preexistente e alheia ao domínio binário não autoriza dispensar ou substituir
+o environment. Se necessária, a correção mínima do baseline deve receber
+autorização e entrega separadas e anteceder a avaliação de BCS-AC-022.
 
-**Impacto na revisão futura:** bloqueante para BCS-AC-022, para o gate 8.4 e
-para promoção a `Implemented`, enquanto o oráculo de build permanecer
-insatisfazível ou indefinido.
+**Consequência:** BCS-AC-022 possui oráculo definido. O critério e a promoção a
+`Implemented` permanecem reprovados enquanto o build canônico não terminar com
+`SUCCESS`, independentemente de sucesso em outro environment.
 
-### BCS-DEC-004 — Contexto síncrono ou assíncrono da persistência
+### BCS-DEC-004 — Contexto assíncrono da persistência
 
-Ainda não está decidido se write/commit NVS pode permanecer no caminho
-síncrono da transição/capability ou se deve ser deslocado para trabalho
-cooperativo/assíncrono com semântica explícita de falha e de "último commit
-visível após reboot".
+**Estado:** confirmada pelo Arquiteto para a versão 0.5.
 
-**Recomendação do Autor:** preferir caminho que preserve BCS-029 sem jitter
-capaz de comprometer conectividade ou watchdog sob a frequência de transições
-autorizada; se a medição do oráculo de cooperatividade não puder ser satisfeita
-de forma síncrona com a política de origens escolhida, adotar offload
-cooperativo com commit observável. A recomendação não autoriza a escolha.
+Write e commit NVS devem executar fora de callback BLE, caminho síncrono de
+comando e `handle()` das capabilities. Um único escritor assíncrono serializa
+as operações. O trabalho pendente é limitado a uma entrada consolidada por
+identidade, até oito; estados intermediários da mesma identidade podem ser
+substituídos antes do write, mas uma mudança ocorrida durante a operação não
+pode ser perdida. Sucesso, falha, trabalho pendente e operação em curso devem
+ser observáveis.
 
-**Impacto na revisão futura:** bloqueante para fechar a forma de execução de
-write/commit e para quantificar limites adicionais de latência além do oráculo
-qualitativo de continuidade. Não bloqueia a análise dos demais requisitos se a
-revisão declarar explicitamente a dependência residual.
+**Consequência:** BCS-029 e BCS-AC-028 deixam de estar bloqueados e passam a
+reprovar qualquer chamada NVS ou espera pelo commit no contexto solicitante,
+fila sem limite, múltiplos escritores ou reboot de verificação antes de estado
+terminal bem-sucedido.
 
-## 12. Estado da autoria
+## 12. Estado da especificação
 
-A versão 0.4 corrige a versão 0.3 para incorporar `EKM-CHG-0018`. Ela:
+A versão 0.5 corrige a versão 0.4 para incorporar as decisões arquiteturais
+confirmadas pelo Arquiteto após `EKM-CHG-0018`. Além das correções preservadas
+da versão anterior, ela:
 
 - torna explícita a inicialização única de `ServiceManager` antes de acessos
   concorrentes sob `-fno-threadsafe-statics`;
@@ -753,19 +817,25 @@ A versão 0.4 corrige a versão 0.3 para incorporar `EKM-CHG-0018`. Ela:
 - exige validação estrutural e semântica completa do snapshot;
 - reconcilia o limite de identidade com a API pública;
 - exige interpreter em todos os fallbacks da valve;
-- cria oráculo de cooperatividade para write/commit;
+- exclui alternâncias transitórias de `blink` da persistência e define a
+  consolidação do estado estável ao encerrar o modo;
+- mantém `esp32_dev` como gate canônico, tornando eventual correção do baseline
+  um pré-requisito separado;
+- determina um único escritor assíncrono, limitado e observável para
+  write/commit;
 - completa critérios para falhas NVS, isolamento de settings, identidade, valve
   e provisioning após reboot;
 - remove metadados Git sem necessidade normativa;
-- registra `BCS-DEC-001` a `BCS-DEC-004` sem decidir pelo Arquiteto.
+- preserva `BCS-DEC-001` como pendente não bloqueante e registra
+  `BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004` como confirmadas.
 
-Ao fim desta autoria, a especificação está `Proposed`, a implementação desta
-versão está `Not Started`, a entrega está `Not Ready` e a revisão de
-implementabilidade está `Pending Review`.
+Os estados permanecem `Proposed`, `Not Started`, `Not Ready` e `Pending
+Review`; esta atuação consultiva não promove estados reservados ao Autor, ao
+Analista, ao Implementador ou ao Revisor.
 
-O Autor da Especificação não executou análise de implementabilidade
-independente, implementação, build nem testes funcionais. O estado
-`Implementable` da versão 0.3 não é reutilizado.
+Esta atuação não executou análise de implementabilidade independente,
+implementação, build nem testes funcionais. O estado `Implementable` da versão
+0.3 não é reutilizado.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
@@ -774,7 +844,7 @@ independente, implementação, build nem testes funcionais. O estado
 **Status atual deste resultado:** contestado pelos achados posteriores de
 implementação parcial, validação e pela avaliação consultiva da linha 0.3;
 preservado apenas como evidência histórica. Não autoriza implementação da
-versão 0.4.
+versão 0.5.
 
 A análise histórica da versão 0.2 concluiu implementabilidade de BCS-001 a
 BCS-023 com base nos padrões então vigentes e classificou `BCS-DEC-001` como
@@ -794,7 +864,7 @@ máximo cobertura incompleta dos critérios então existentes, com a maior parte
 compilada e não executada ou não verificada, e com o gate de testes em hardware
 não satisfeito.
 
-Para a versão 0.4, esse código é precedente tático e fonte de riscos
+Para a versão 0.5, esse código é precedente tático e fonte de riscos
 conhecidos — inclusive erase global da NVS, validação semântica incompleta,
 fallback da valve, restart de provisioning incondicional e ausência de oráculo
 de cooperatividade — não evidência de conformidade.
@@ -805,7 +875,7 @@ de cooperatividade — não evidência de conformidade.
 `EKM-CHG-0017`.
 
 **Status atual deste resultado:** contestado por `EKM-CHG-0018`. Não é
-reutilizado por esta autoria e não autoriza implementação da versão 0.4.
+reutilizado por esta atuação e não autoriza implementação da versão 0.5.
 
 Inconsistências materiais registradas na contestação:
 
@@ -818,5 +888,5 @@ Inconsistências materiais registradas na contestação:
    retorno de `save()` ser ignorado;
 5. copiou metadado Git sem necessidade normativa.
 
-A versão 0.4 reinstaura `Pending Review` e exige nova atuação independente do
+A versão 0.5 preserva `Pending Review` e exige nova atuação independente do
 Engenheiro Analista sobre este contrato corrigido.
