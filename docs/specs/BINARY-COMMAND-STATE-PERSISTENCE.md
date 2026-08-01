@@ -1173,6 +1173,70 @@ Nenhum upload, release, deploy ou validação física foi realizado. `BCS-DEC-00
 permanece fora do escopo. A implementação não pode ser promovida a `Implemented`
 enquanto os impedimentos acima persistirem.
 
+### 12.6 Revisão técnica da implementação da versão 0.6
+
+**Resultado:** não aprovada para promoção; permanece Em andamento [`In
+Progress`] e Não pronta [`Not Ready`].
+
+A revisão independente confrontou a implementação e seus testes com os
+requisitos, decisões e critérios da versão 0.6. Foram encontrados três desvios
+materiais que não dependem dos impedimentos preexistentes do baseline.
+
+#### Achados
+
+1. **BCS-REV-001 — Alta — falhas de NVS são classificadas como ausência.**
+   `EspNvsBinaryCapabilityStateProvider::loadSnapshot()` devolve `Ok` para
+   qualquer erro de abertura do namespace e para qualquer erro da consulta de
+   tamanho do blob. Somente `ESP_ERR_NVS_NOT_FOUND` representa ausência; erros
+   como `ESP_ERR_NVS_NOT_INITIALIZED` são falhas de storage. O teste
+   `test_open_and_read_failures_preserve_the_default_flow` injeta precisamente
+   `ESP_ERR_NVS_NOT_INITIALIZED` e exige `Ok`, consolidando o comportamento
+   contrário a BCS-017, BCS-021, BCS-AC-016 e BCS-AC-020. O desvio oculta
+   indisponibilidade do domínio binário como primeiro boot e impede diagnóstico
+   correto.
+2. **BCS-REV-002 — Alta — comando explícito não substitui `blink`.**
+   `LEDCapability::executeCommand()` delega a `power()`, mas nenhum dos caminhos
+   encerra `blinking` nem confirma o novo estado estável. Assim, depois do
+   comando explícito, `handle()` continua alternando o LED e o estado solicitado
+   não é consolidado uma única vez. Os testes exercitam a saída por `blink(0)`,
+   mas não a substituição por comando. O comportamento viola BCS-013, BCS-016,
+   `BCS-DEC-002` e BCS-AC-015.
+3. **BCS-REV-003 — Alta — o oráculo de BCS-AC-028 não foi implementado.** O
+   double `FakeBinaryCapabilityStateProvider` informa `inProgress=false` em
+   todos os estados e, ao liberar o escritor, simula um write/commit por
+   identidade, enquanto o provedor real grava um snapshot consolidado. Não há
+   barreira que bloqueie controladamente o escritor real entre write e commit,
+   nem casos que comprovem atualização durante o commit, oito identidades
+   pendentes e margem mínima de 25% da pilha no target. Portanto os testes
+   indicados na matriz da seção 12.5 não implementam o conjunto de oráculos
+   exigido por BCS-AC-028 e não podem sustentar conformidade do escritor
+   assíncrono.
+
+#### Evidência da revisão
+
+| Comando ou inspeção | Resultado terminal |
+|---|---|
+| `pio run -e esp32_dev` | `FAILED` — `ESP32_LED_GREEN` e `ESP32_LED_BLUE` continuam não declarados em `src/main.cpp`; BCS-AC-022 permanece reprovado. |
+| `pio test -e esp32s3_test` | `FAILED` — 18 suítes coletadas, 0 aprovadas e 18 com erro. As suítes novas que chegaram à etapa de upload não executaram por ausência de hardware; além das quatro suítes citadas na seção 12.5, também houve falha de compilação em `test_waterlevelpercent`, `test_heightwaterlevel`, `test_glp_meter`, `test_operational_color_sensor`, `test_waterlevelliters`, `test_temperature` e `test_glp_sensor`. Nenhum caso de teste foi executado. |
+| Inspeção estática de provider, LED, seams e testes | Confirmou BCS-REV-001 a BCS-REV-003. |
+| `git diff --check` antes do registro documental | Aprovado, sem erros. |
+
+A evidência desta revisão corrige a limitação factual da seção 12.5 quanto à
+execução canônica: o comando completo foi executado nesta atuação e terminou
+reprovado. Isso não altera o caráter histórico da evidência registrada pelo
+Implementador, mas impede tratá-la como estado atual das suítes.
+
+#### Recomendação do Revisor
+
+Não promover a implementação. Ela deve retornar ao Engenheiro Implementador
+para corrigir BCS-REV-001 e BCS-REV-002, implementar os seams e casos completos
+de BCS-AC-028 e reconciliar a evidência das suítes. Depois das correções, os
+gates da seção 8.4 devem ser repetidos em estado terminal, incluindo execução
+em alvo ESP32-S3 para os critérios dependentes de hardware. Os estados
+`Proposed`, `In Progress`, `Not Ready` e `Implementable` permanecem inalterados;
+esta revisão não fornece aprovação arquitetural, validação física nem
+autorização de integração.
+
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
 **Resultado histórico:** Implementável [`Implementable`]

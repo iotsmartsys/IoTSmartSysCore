@@ -1684,3 +1684,55 @@ O Arquiteto deve decidir sobre a correção autorizada do baseline `esp32_dev` e
 das quatro suítes preexistentes quebradas, e disponibilizar um alvo ESP32-S3
 para que `pio test -e esp32s3_test` e BCS-AC-024 possam alcançar estado
 terminal.
+
+## EKM-CHG-0027 — Revisão técnica da implementação da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Revisar, como Engenheiro Revisor, a implementação entregue em `EKM-CHG-0026`
+contra o contrato integral da versão 0.6 e emitir recomendação independente de
+promoção.
+
+### Achados materiais
+
+1. `BCS-REV-001` — Alta: o provider devolve `Ok` para qualquer falha de abertura
+   do namespace ou consulta de tamanho do blob, inclusive
+   `ESP_ERR_NVS_NOT_INITIALIZED`, confundindo falha de storage com ausência. Um
+   teste exige explicitamente esse comportamento, em desacordo com BCS-017,
+   BCS-021, BCS-AC-016 e BCS-AC-020.
+2. `BCS-REV-002` — Alta: comando explícito aplicado durante `blink` não encerra
+   o modo nem consolida o primeiro estado estável; as alternâncias continuam e
+   o caso de substituição exigido por `BCS-DEC-002`/BCS-AC-015 não é testado.
+3. `BCS-REV-003` — Alta: o double do writer nunca expõe operação em curso e
+   modela writes por identidade, sem barreira no commit real, atualização
+   concorrente durante commit, oito identidades pendentes ou medição da margem
+   de pilha. A matriz anterior superestima a implementação de BCS-AC-028.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `FAILED` pelos identificadores preexistentes
+  `ESP32_LED_GREEN` e `ESP32_LED_BLUE`; BCS-AC-022 permanece reprovado;
+- `pio test -e esp32s3_test`: `FAILED`, com 18 suítes coletadas, 0 aprovadas e
+  18 em erro; nenhum caso executado. As suítes novas que compilaram não
+  ultrapassaram o upload por ausência de hardware, e foram observadas falhas de
+  compilação em onze suítes preexistentes, não apenas nas quatro registradas em
+  `EKM-CHG-0026`;
+- inspeção estática confirmou os três achados;
+- `git diff --check` estava aprovado antes do registro documental.
+
+Nenhum código de produção ou teste foi corrigido nesta revisão. Nenhum upload,
+release, deploy ou validação física foi realizado.
+
+### Resultado e recomendação
+
+A revisão não aprova promoção. A especificação permanece `Proposed`, a
+implementação `In Progress`, a entrega `Not Ready` e a revisão de
+implementabilidade `Implementable`. A implementação deve retornar ao
+Engenheiro Implementador para corrigir BCS-REV-001 e BCS-REV-002, completar os
+seams e testes de BCS-AC-028 e reconciliar a evidência das suítes. Depois disso,
+os gates canônicos devem ser repetidos, com alvo ESP32-S3 para os critérios
+dependentes de hardware.

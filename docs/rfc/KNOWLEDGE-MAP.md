@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (revisão de implementabilidade da persistência binária 0.6)
+**Última atualização:** 01/08/2026 (revisão técnica da implementação da persistência binária 0.6)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — implementação integral entregue em `EKM-CHG-0026`; identidade 63/31 imutável, escritor assíncrono único, validação semântica do snapshot, grafo de serviços único e provisioning condicionado a `save()`; nenhum critério comportamental executado (sem alvo ESP32-S3), BCS-AC-022 reprovado pelo baseline `esp32_dev` de `BCS-DEC-003` |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — revisão `EKM-CHG-0027` não aprova promoção: falhas de abertura/leitura NVS são confundidas com ausência, comando explícito não substitui `blink` e os oráculos de concorrência/pilha de BCS-AC-028 estão incompletos; 0 de 18 suítes aprovadas no gate canônico e BCS-AC-022 reprovado pelo baseline `esp32_dev` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`In Progress` (`EKM-CHG-0026`); `ICapability` expõe identidade somente para leitura com limites 63/31 fixados pelo builder antes do registro; `BinaryCommandCapability` concentra restauração interpretada, read-back e solicitação assíncrona de persistência, com alternâncias de `blink` excluídas |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`In Progress` (`EKM-CHG-0026`, `EKM-CHG-0027`); identidade 63/31 somente para leitura implementada, mas a revisão encontrou classificação incorreta de falhas NVS, substituição incompleta de `blink` e evidência insuficiente do writer assíncrono |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -194,3 +194,8 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   foi executado (sem alvo ESP32-S3), BCS-AC-022 continua reprovado pelo baseline
   `esp32_dev` e quatro suítes preexistentes não compilam, impedindo estado
   terminal aprovado de `pio test -e esp32s3_test`.
+- `EKM-CHG-0027`: revisão técnica independente não aprova a promoção da versão
+  0.6; registra três achados materiais em classificação de falhas NVS,
+  substituição de `blink` e oráculos de BCS-AC-028. O gate canônico de testes
+  terminou com 18 suítes em erro e nenhum caso executado, ampliando a limitação
+  factual da evidência anterior.
