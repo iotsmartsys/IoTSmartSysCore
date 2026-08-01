@@ -1295,6 +1295,58 @@ abertos e continuam impedindo aprovação da revisão estática.
 A decisão não aprova nenhum BCS-AC, não valida a implementação e não altera os
 estados `Proposed`, `In Progress`, `Not Ready` e `Implementable`.
 
+### 12.8 Nova revisão técnica após a quarentena de testes
+
+**Resultado:** não aprovada para promoção; permanece Em andamento [`In
+Progress`] e Não pronta [`Not Ready`].
+
+A revisão integral foi repetida sob `BCS-DEC-007`, sem compilar nem executar
+qualquer suíte em quarentena e sem usar seus resultados como evidência. A
+comparação desde a entrega de código `0d7f151` confirmou que os commits
+posteriores alteraram somente especificação, conhecimento e configuração da
+quarentena; nenhum código de produção corrigiu os achados funcionais.
+
+#### Achados vigentes
+
+1. **BCS-REV-001 — Alta — aberto.**
+   `EspNvsBinaryCapabilityStateProvider::loadSnapshot()` ainda retorna `Ok` e
+   registra ausência para qualquer erro de abertura do namespace e de consulta
+   do tamanho do blob. Erros diferentes de `ESP_ERR_NVS_NOT_FOUND` continuam
+   sendo falhas de storage, não ausência. O comportamento permanece contrário a
+   BCS-017 e BCS-021 e impede aprovação estática de BCS-AC-016/020.
+2. **BCS-REV-002 — Alta — aberto.** `LEDCapability::executeCommand()` ainda
+   chama somente `power()`, sem encerrar `blinking` nem consolidar o primeiro
+   estado estável. Um comando explícito durante o modo continua sujeito às
+   alternâncias posteriores do temporizador, em desacordo com BCS-013, BCS-016
+   e `BCS-DEC-002`; BCS-AC-015 não pode ser aprovado por inspeção.
+3. **BCS-REV-003 — Deferred por decisão.** A insuficiência dos seams e oráculos
+   do writer permanece tecnicamente existente, mas `BCS-DEC-007` a retirou do
+   gate atual e a classificou como dívida para futura reativação dos testes.
+   Esta revisão não a converte em aprovação.
+
+#### Evidência e limitações
+
+| Verificação | Resultado terminal |
+|---|---|
+| Inspeção do diff de produção e das fontes afetadas | BCS-REV-001 e BCS-REV-002 confirmados sem correção; nenhuma nova alteração de produção após `0d7f151`. |
+| `pio run -e esp32_dev` | `FAILED` — `ESP32_LED_GREEN` e `ESP32_LED_BLUE` continuam não declarados em `src/main.cpp`; BCS-AC-022 permanece reprovado conforme `BCS-DEC-003`. |
+| Suítes de teste | Não executadas por decisão; critérios dependentes permanecem `Deferred` conforme `BCS-DEC-007`. |
+| `git diff --check` antes do registro documental | Aprovado, sem erros. |
+
+Nenhum teste, upload, validação física, release ou deploy foi realizado. A
+revisão não afirma comportamento operacional onde somente inspeção estática
+foi possível.
+
+#### Recomendação do Revisor
+
+Não promover a implementação. Ela deve retornar ao Engenheiro Implementador
+para corrigir BCS-REV-001 e BCS-REV-002. O build canônico também deve terminar
+com `SUCCESS` por meio da entrega separada governada por `BCS-DEC-003`. Depois
+das correções, uma nova revisão estática terminal deve ser ordenada; as suítes
+permanecem em quarentena e não integram essa recomendação. Os estados
+`Proposed`, `In Progress`, `Not Ready` e `Implementable` permanecem
+inalterados, sem aprovação de integração.
+
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
 **Resultado histórico:** Implementável [`Implementable`]

@@ -1781,3 +1781,52 @@ evidência confiável.
 
 A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
 `Not Ready` e a revisão de implementabilidade `Implementable`.
+
+## EKM-CHG-0029 — Nova revisão técnica após a quarentena de testes
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Repetir a revisão integral da implementação sob a decisão `BCS-DEC-007`, sem
+executar ou usar como evidência as 18 suítes em quarentena.
+
+### Resultado da revisão
+
+A revisão não aprova promoção. Não houve mudança de código de produção após a
+entrega `0d7f151`; os commits posteriores alteraram somente documentos EKM e a
+configuração de quarentena. A inspeção confirmou:
+
+1. `BCS-REV-001` permanece aberto e de impacto alto: falhas diferentes de
+   `ESP_ERR_NVS_NOT_FOUND` durante open ou consulta de tamanho do blob ainda são
+   registradas como ausência e retornam `Ok`, em desacordo com BCS-017/021;
+2. `BCS-REV-002` permanece aberto e de impacto alto: comando explícito ainda não
+   encerra `blink` nem consolida o primeiro estado estável exigido por
+   BCS-013/016 e `BCS-DEC-002`;
+3. `BCS-REV-003` permanece dívida técnica real, mas está `Deferred` e fora do
+   gate atual por decisão explícita em `BCS-DEC-007`; não foi convertido em
+   aprovação.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `FAILED` pelos identificadores preexistentes
+  `ESP32_LED_GREEN` e `ESP32_LED_BLUE`; BCS-AC-022 permanece reprovado;
+- `git diff --check`: aprovado antes do registro documental;
+- nenhuma suíte foi compilada ou executada; critérios dependentes permanecem
+  `Deferred`;
+- nenhum upload, validação física, release ou deploy foi realizado.
+
+### Recomendação
+
+Retornar ao Engenheiro Implementador para corrigir BCS-REV-001 e BCS-REV-002.
+O build canônico deve alcançar `SUCCESS` por entrega separada conforme
+`BCS-DEC-003`. Depois das correções, nova revisão estática terminal deve ser
+ordenada, mantendo as suítes em quarentena.
+
+### Estado
+
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`. Não há aprovação
+de integração.

@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (quarentena das suítes de teste existentes)
+**Última atualização:** 01/08/2026 (nova revisão técnica da persistência binária 0.6)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — `BCS-DEC-007` coloca nominalmente as 18 suítes existentes em quarentena e suspende seu uso como gate/evidência; BCS-REV-003 vira dívida futura de testes, enquanto os defeitos funcionais BCS-REV-001/002 e o build `esp32_dev` reprovado continuam impedindo promoção |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — revisão posterior à quarentena em `EKM-CHG-0029` confirma BCS-REV-001/002 ainda abertos e `esp32_dev` reprovado; BCS-REV-003 permanece `Deferred` por `BCS-DEC-007`; promoção não aprovada |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -203,3 +203,6 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   as 18 suítes existentes, inclusive as criadas na implementação 0.6. O
   PlatformIO passa a marcá-las `SKIPPED`; testes deixam de integrar o gate e os
   critérios dependentes ficam `Deferred` até futura decisão de maturidade.
+- `EKM-CHG-0029`: nova revisão integral sob `BCS-DEC-007` não executa testes e
+  confirma que BCS-REV-001/002 permanecem sem correção no código de produção;
+  o build canônico continua reprovado e a implementação não é promovida.
