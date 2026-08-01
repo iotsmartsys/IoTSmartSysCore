@@ -123,6 +123,13 @@ namespace iotsmartsys::app
         void *allocateAligned(size_t sizeBytes, size_t alignment);
         bool registerCapability(ICapability *cap, void (*destructor)(void *));
         bool registerAdapter(void *adapter, void (*destructor)(void *));
+
+        // BCS-002/BCS-DEC-005: resolves the definitive capability name (the one
+        // configured, or the automatically generated one when it is omitted) and
+        // validates name and type against the public 63/31-byte limits. Callers
+        // invoke it before creating any adapter or capability, so a rejected
+        // identity consumes no slot and leaves no partial artefact behind.
+        bool resolveIdentity(const char *configuredName, const char *type, std::string &outName);
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;
         iotsmartsys::core::ICapabilityEventSink &_eventSink;

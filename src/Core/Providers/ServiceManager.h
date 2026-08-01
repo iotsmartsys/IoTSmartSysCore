@@ -19,6 +19,12 @@ namespace iotsmartsys::core
         settings::ISettingsGate &settingsGate();
         settings::IReadOnlySettingsProvider &settingsProvider();
         core::WiFiManager &wifiManager();
+        providers::IBinaryCapabilityStateProvider *binaryCapabilityStateProvider();
+
+        // BCS-024/BCS-029: activates the single asynchronous binary-state
+        // writer. Only valid once the graph is fully built and the boot snapshot
+        // has been read, and before any capability can request persistence.
+        common::StateResult activateBinaryStateWriter();
 
         void setLogLevel(LogLevel level);
 

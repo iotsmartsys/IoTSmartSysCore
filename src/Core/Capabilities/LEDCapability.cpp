@@ -12,20 +12,31 @@ namespace iotsmartsys::core
     {
         // BCS-016/BCS-AC-015: an override of handle() must not bypass
         // BinaryCommandCapability's read-back, publish and persist protocol;
-        // blink only decides whether a new command is issued this cycle.
+        // blink only decides whether a new command is issued this cycle and
+        // whether that alternation counts as transitory.
+        bool transientCycle = false;
         if (blinking && blinkInterval != 0)
         {
             auto now = timeProvider.nowMs();
             if (now - lastToggleTs >= blinkInterval)
             {
                 lastToggleTs = now;
+                // BCS-DEC-002: produced exclusively by the blink timer.
+                transientCycle = true;
+                beginTransientCycle();
                 if (isOn())
                     turnOff();
                 else
                     turnOn();
             }
         }
+
         syncFromHardware();
+
+        if (transientCycle)
+        {
+            endTransientCycle();
+        }
     }
 
     void LEDCapability::executeCommand(const char *state) { power(state); }
@@ -34,8 +45,16 @@ namespace iotsmartsys::core
     {
         if (intervalMs == 0)
         {
+            const bool wasBlinking = blinking;
             blinking = false;
             blinkInterval = 0;
+            // BCS-DEC-002/BCS-AC-015: leaving blink turns the current confirmed
+            // value into a stable state again; it is requested exactly once, and
+            // only if it differs from the last stable value requested.
+            if (wasBlinking)
+            {
+                confirmStableState();
+            }
             return;
         }
         blinkInterval = intervalMs;

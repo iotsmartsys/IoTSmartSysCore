@@ -226,6 +226,17 @@ namespace iotsmartsys
         settingsManager_.setUpdatedCallback(SmartSysApp::onSettingsUpdatedThunk, this);
         iotsmartsys::core::ConnectivityGate::init(latch_);
 
+        // BCS-024/BCS-029: the service graph is fully built and the single boot
+        // read of the binary snapshot already happened during ServiceManager
+        // construction, so the asynchronous writer is activated exactly once
+        // here, before any capability can request persistence.
+        const auto binaryWriterRc = serviceManager_.activateBinaryStateWriter();
+        if (binaryWriterRc != core::common::StateResult::Ok)
+        {
+            logger_.error("App", "Binary state writer unavailable (rc=%d); binary capability states are not persisted this boot.",
+                          static_cast<int>(binaryWriterRc));
+        }
+
         const auto path = connectivityBootstrap_.run(settings_);
         if (path == app::ConnectivityBootstrap::BootPath::Provisioning)
         {

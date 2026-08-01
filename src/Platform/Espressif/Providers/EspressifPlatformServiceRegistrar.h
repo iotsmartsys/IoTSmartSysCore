@@ -26,6 +26,12 @@ namespace iotsmartsys::platform::espressif
 
         void registerPlatformServices(iotsmartsys::core::ServiceProvider &sp) override;
 
+        // BCS-024/BCS-AC-023: observable evidence that the platform services are
+        // registered and the binary snapshot is read exactly once per boot.
+        // The counters are never reset, so a second graph would show up here.
+        static std::uint32_t registrationCount();
+        static std::uint32_t snapshotLoadCount();
+
     private:
         EspressifPlatformServiceRegistrar();
 

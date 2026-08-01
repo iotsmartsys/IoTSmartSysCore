@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -1056,6 +1056,122 @@ depende de ordem posterior do Arquiteto.
 
 Nenhum código, teste ou configuração de implementação foi alterado. Nenhum
 build, teste funcional, upload ou validação física foi iniciado nesta análise.
+
+### 12.5 Implementação da versão 0.6
+
+**Estado da implementação:** Em andamento [`In Progress`].
+
+A implementação integral do contrato 0.6 foi realizada em código e testes. O
+estado permanece `In Progress` porque os dois gates obrigatórios da seção 8.4
+não alcançaram estado terminal aprovado por dependências externas descritas
+abaixo; nenhum critério comportamental foi executado.
+
+#### Implementação entregue
+
+- identidade pública (BCS-002, BCS-022, `BCS-DEC-005`, `BCS-DEC-006`):
+  `ICapability` publica `kMaxCapabilityNameBytes` (63) e
+  `kMaxCapabilityTypeBytes` (31); `capability_name` e `type` passaram a ser
+  campos de leitura pública sem atribuição pública, e `rename()` /
+  `applyRenamedName()` permanecem públicos, `void`, obsoletos e inertes. O
+  builder resolve o nome definitivo — fornecido ou gerado —, valida nome e tipo
+  e finaliza a identidade antes do registro; a rejeição ocorre antes de criar
+  adapter, capability ou slot;
+- protocolo comum (BCS-004, BCS-009 a BCS-016, BCS-028): `BinaryCommandCapability`
+  concentra restauração, read-back, publicação e solicitação de persistência, e
+  toda leitura de estado confirmado passa pelo interpreter quando configurado,
+  inclusive nos fallbacks da valve;
+- política de `blink` (`BCS-DEC-002`): alternâncias do temporizador são marcadas
+  como transitórias pelo `LEDCapability::handle()` e não sinalizam o escritor;
+  o encerramento do modo confirma o estado estável uma única vez se mudou;
+- escritor assíncrono (BCS-029, `BCS-DEC-004`): o provedor Espressif mantém
+  snapshot desejado e snapshot confirmado sob mutex, um único worker FreeRTOS
+  serializa write e commit, o caminho solicitante retorna sem tocar a NVS, e
+  `BinaryStateWriterStatus` expõe disponibilidade, pendências, operação em
+  curso, writes, commits, falhas e último erro;
+- storage (BCS-005, BCS-006, BCS-012, BCS-027): campos de 64/32 bytes, versão 2,
+  validação estrutural, semântica e de integridade antes de qualquer `strcmp`,
+  namespace exclusivo, e nenhum caminho com erase global, `ESP_ERROR_CHECK`,
+  abort ou restart;
+- grafo de serviços (BCS-024): `ServiceManager::init()` e
+  `ServiceManager::instance()` convergem para uma instância única construída em
+  armazenamento de escopo de namespace, sem depender de estáticas locais
+  thread-safe sob `-fno-threadsafe-statics`; a ativação do escritor ocorre uma
+  única vez em `SmartSysApp::setup()`, após a conclusão do grafo;
+- provisioning (BCS-025, BCS-026): `ProvisioningController::completeProvisioning()`
+  condiciona restart controlado e status/log de sucesso ao sucesso de
+  `SettingsManager::save()`, e o callback BLE reutiliza o grafo único.
+
+Foram adicionados os seams exigidos pela seção 8.2: `NvsOps` no provedor
+Espressif (falha individual de init, open, read, write e commit; contagem por
+operação; ausência de qualquer ponto de entrada de erase), `waitForQuiescence()`
+e `writerStatus()` para estado terminal, e contadores de registro/leitura
+no `EspressifPlatformServiceRegistrar`.
+
+#### Evidência executada
+
+| Comando | Resultado terminal |
+|---|---|
+| `pio run -e esp32_dev` | `FAILED` — dois erros preexistentes em `src/main.cpp` (`ESP32_LED_GREEN` e `ESP32_LED_BLUE` não declarados). Idênticos aos do baseline registrado na seção 12.1; nenhum erro novo foi introduzido. |
+| `pio test -e esp32s3_test --without-uploading --without-testing` | Compilação aprovada para `test_binary_command_capability_state`, `test_binary_capability_state_storage`, `test_capability_identity`, `test_service_graph_identity`, `test_provisioning_save_gate` e `test_settings_provider`, entre outras. `test_builder`, `test_waterflow`, `test_humidity` e `test_mqtt_settings` falham na compilação. |
+| `pio test -e esp32s3_test` | **Não executado.** Nenhum alvo ESP32-S3 conectado (`/dev/cu.*` expõe apenas `Bluetooth-Incoming-Port` e `debug-console`). |
+| `git diff --check` | Aprovado, sem erros. |
+
+#### Matriz BCS-AC — resultado terminal
+
+Nenhum critério comportamental foi executado. Compilação não comprova execução;
+todos os critérios abaixo permanecem **não verificados**, nunca aprovados.
+
+| Critério | Teste automatizado implementado | Resultado terminal |
+|---|---|---|
+| BCS-AC-001 | `test_binary_command_capability_state` (restauração e transição por tipo concreto) | Não verificado — não executado |
+| BCS-AC-002 | `test_capability_identity`, `test_binary_capability_state_storage` | Não verificado — não executado |
+| BCS-AC-003 | `test_binary_command_capability_state` | Não verificado — não executado |
+| BCS-AC-004 | `test_binary_command_capability_state` (valve: restore, sync e fallbacks) | Não verificado — não executado |
+| BCS-AC-005 | `test_binary_command_capability_state` | Não verificado — não executado |
+| BCS-AC-006 | `test_binary_capability_state_storage` (sentinela de settings) | Não verificado — não executado |
+| BCS-AC-007 | `test_binary_capability_state_storage` | Não verificado — não executado |
+| BCS-AC-008 | `test_binary_capability_state_storage` (mutação de bytes) | Não verificado — não executado |
+| BCS-AC-009 | `test_binary_capability_state_storage` (contadores do seam NVS) | Não verificado — não executado |
+| BCS-AC-010 | `test_binary_capability_state_storage` (cinco tipos concretos, LED parado e piscando) | Não verificado — não executado |
+| BCS-AC-011 | `test_binary_command_capability_state`, `test_binary_capability_state_storage` | Não verificado — não executado |
+| BCS-AC-012 | `test_binary_command_capability_state` | Não verificado — não executado |
+| BCS-AC-013 | `test_binary_command_capability_state` (transição isolada e rajada) | Não verificado — não executado |
+| BCS-AC-014 | `test_binary_command_capability_state` (origens nomeadas) | Não verificado — não executado |
+| BCS-AC-015 | `test_binary_command_capability_state` (blink transitório e saída do modo) | Não verificado — não executado |
+| BCS-AC-016 | `test_binary_capability_state_storage` (injeção por operação) | Não verificado — não executado |
+| BCS-AC-017 | `test_binary_command_capability_state`, `test_binary_capability_state_storage` | Não verificado — não executado |
+| BCS-AC-018 | `test_binary_command_capability_state` | Não verificado — não executado |
+| BCS-AC-019 | `test_binary_command_capability_state` | Não verificado — não executado |
+| BCS-AC-020 | `test_binary_capability_state_storage` (logger capturado, classes distintas e sentinelas privadas) | Não verificado — não executado |
+| BCS-AC-021 | `test_capability_identity` (oráculo de tipos compilado com sucesso; asserções em runtime não executadas) | Não verificado — execução não iniciada |
+| BCS-AC-022 | Gate `pio run -e esp32_dev` | **Reprovado** — baseline preexistente falho, governado por `BCS-DEC-003` |
+| BCS-AC-023 | `test_service_graph_identity` | Não verificado — não executado |
+| BCS-AC-024 | Não implementável sem hardware | Não verificado — sem alvo ESP32-S3 |
+| BCS-AC-025 | `test_provisioning_save_gate` | Não verificado — não executado |
+| BCS-AC-026 | `test_binary_capability_state_storage` | Não verificado — não executado |
+| BCS-AC-027 | `test_binary_capability_state_storage` (espelho com checksum correto) | Não verificado — não executado |
+| BCS-AC-028 | `test_binary_command_capability_state`, `test_binary_capability_state_storage`; medição de pilha no target não realizada | Não verificado — não executado |
+
+#### Impedimentos materiais
+
+1. **Baseline `esp32_dev` falho.** `ESP32_LED_GREEN` e `ESP32_LED_BLUE` não estão
+   definidos em `src/main.cpp`. `BCS-DEC-003` exige autorização e entrega
+   separadas para essa correção; ela não foi realizada nesta atuação. BCS-AC-022
+   permanece reprovado.
+2. **Ausência de alvo ESP32-S3.** Nenhuma porta serial de dispositivo está
+   presente, portanto `pio test -e esp32s3_test` não pôde ser iniciado e
+   BCS-AC-024 e a medição de pilha de BCS-AC-028 não puderam ser observadas.
+3. **Suítes de teste preexistentes quebradas.** `test_builder`, `test_waterflow`,
+   `test_humidity` e `test_mqtt_settings` não compilam na `main` nem nesta
+   branch: usam assinatura antiga do `CapabilitiesBuilder`, membros de config
+   inexistentes (`pin`, `activeHigh`), `CapabilityManager::count` privado e um
+   caminho de header inexistente. A verificação foi confirmada com a árvore
+   revertida ao baseline. Enquanto persistirem, `pio test -e esp32s3_test` não
+   pode alcançar estado terminal aprovado. A correção é alheia ao domínio
+   binário e exige autorização e entrega separadas, como em `BCS-DEC-003`.
+Nenhum upload, release, deploy ou validação física foi realizado. `BCS-DEC-001`
+permanece fora do escopo. A implementação não pode ser promovida a `Implemented`
+enquanto os impedimentos acima persistirem.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 

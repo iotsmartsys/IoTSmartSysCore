@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 #include "Config/BuildConfig.h"
+#include "Contracts/Settings/Settings.h"
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Connections/WiFiManager.h"
 #include "Core/Provisioning/ProvisioningManager.h"
@@ -31,6 +33,20 @@ namespace iotsmartsys::app
         void begin();
         void handle();
         bool isActive() const;
+
+        using SettingsSaver = std::function<bool(const core::settings::Settings &)>;
+        using RestartScheduler = std::function<void()>;
+
+        // BCS-026: maps an accepted configuration onto Settings, persists it and
+        // only then authorises the controlled restart and the success
+        // status/log. A failed save stays observable, schedules no success
+        // restart and does not discard a further attempt. Exposed as a seam so
+        // the decision and its ordering can be asserted without a real reboot.
+        // Returns true when save() succeeded.
+        static bool completeProvisioning(const core::provisioning::DeviceConfig &cfg,
+                                         const SettingsSaver &save,
+                                         const RestartScheduler &scheduleRestart,
+                                         core::ILogger &logger);
 
     private:
         void setupProvisioning();

@@ -1592,3 +1592,95 @@ Uma ordem posterior do Arquiteto é necessária para iniciar a implementação
 integral de `IOTSSC-BINARY-COMMAND-STATE@0.6`. A correção do baseline
 `esp32_dev`, se ainda necessária, permanece entrega separada conforme
 `BCS-DEC-003`.
+
+## EKM-CHG-0026 — Implementação da persistência de estados binários 0.6
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Implementar, como Engenheiro Implementador, o contrato integral da versão 0.6:
+identidade pública imutável com limites 63/31, restauração interpretada,
+persistência assíncrona por escritor único, validação semântica do snapshot,
+identidade única do grafo de serviços e provisionamento condicionado ao sucesso
+de `SettingsManager::save()`.
+
+### Baseline
+
+- Branch `spec/binary-command-state-persistence`, derivada da `main`.
+- Árvore de trabalho limpa no início da atuação.
+- Revisão de implementabilidade `Implementable` registrada em `EKM-CHG-0025`.
+
+### Implementação
+
+- `ICapability` publica os limites de identidade e passa a expor
+  `capability_name` e `type` com leitura pública e sem atribuição pública;
+  `rename()` e `applyRenamedName()` permanecem públicos, `void`, obsoletos e
+  inertes. O `CapabilitiesBuilder` resolve o nome definitivo — fornecido ou
+  gerado —, valida nome e tipo e finaliza a identidade antes do registro,
+  rejeitando de forma observável antes de criar adapter, capability ou slot.
+- `BinaryCommandCapability` concentra restauração, read-back, publicação e
+  solicitação de persistência; toda leitura de estado confirmado percorre o
+  interpreter quando configurado, inclusive nos fallbacks da valve.
+- `LEDCapability` marca as alternâncias do temporizador como transitórias e
+  confirma o estado estável uma única vez ao encerrar o modo `blink`.
+- O provedor Espressif mantém snapshot desejado e confirmado sob mutex, com um
+  único worker FreeRTOS serializando write e commit; o caminho solicitante
+  retorna sem tocar a NVS. O formato passou à versão 2, com campos de 64/32
+  bytes e validação estrutural, semântica e de integridade antes de qualquer
+  `strcmp`. Nenhum caminho executa erase global, `ESP_ERROR_CHECK`, abort ou
+  restart.
+- `ServiceManager::init()` e `ServiceManager::instance()` convergem para uma
+  instância única sem depender de estáticas locais thread-safe sob
+  `-fno-threadsafe-statics`; `SmartSysApp::setup()` ativa o escritor uma única
+  vez após a conclusão do grafo.
+- `ProvisioningController::completeProvisioning()` condiciona restart controlado
+  e status/log de sucesso ao sucesso de `SettingsManager::save()`.
+
+Foram adicionados os seams exigidos pela seção 8.2 da especificação e três
+suítes de teste novas: `test_capability_identity`, `test_service_graph_identity`
+e `test_provisioning_save_gate`.
+
+### Validações executadas
+
+- `pio run -e esp32_dev`: `FAILED`, com os mesmos dois erros preexistentes de
+  `src/main.cpp` registrados na seção 12.1 da especificação; nenhum erro novo.
+- `pio test -e esp32s3_test --without-uploading --without-testing`: compilação
+  aprovada para as suítes desta especificação; `test_builder`, `test_waterflow`,
+  `test_humidity` e `test_mqtt_settings` falham na compilação.
+- `pio test -e esp32s3_test`: não executado, por ausência de alvo ESP32-S3.
+- `git diff --check`: aprovado.
+
+### Limitações e impedimentos
+
+1. O baseline `esp32_dev` continua falho; sua correção exige autorização e
+   entrega separadas conforme `BCS-DEC-003`. BCS-AC-022 permanece reprovado.
+2. Nenhum alvo ESP32-S3 está conectado, portanto nenhum critério comportamental
+   foi executado. BCS-AC-024 e a medição de pilha de BCS-AC-028 não puderam ser
+   observadas. Compilação não comprova execução.
+3. `test_builder`, `test_waterflow`, `test_humidity` e `test_mqtt_settings` não
+   compilam na `main` nem nesta branch, por uso de assinatura antiga do builder,
+   membros de config inexistentes, `CapabilityManager::count` privado e caminho
+   de header inexistente. A verificação foi confirmada com a árvore revertida ao
+   baseline. Enquanto persistirem, `pio test -e esp32s3_test` não alcança estado
+   terminal aprovado. A correção é alheia ao domínio binário e exige autorização
+   e entrega separadas.
+
+Nenhum upload, release, deploy ou validação física foi realizado. `BCS-DEC-001`
+permanece fora do escopo.
+
+### Resultado
+
+A implementação da versão 0.6 permanece Em andamento [`In Progress`]. Todos os
+critérios BCS-AC continuam **não verificados**, exceto BCS-AC-022, que está
+reprovado pelo baseline. A especificação permanece `Proposed` e a entrega
+`Not Ready`.
+
+### Próximo passo
+
+O Arquiteto deve decidir sobre a correção autorizada do baseline `esp32_dev` e
+das quatro suítes preexistentes quebradas, e disponibilizar um alvo ESP32-S3
+para que `pio test -e esp32s3_test` e BCS-AC-024 possam alcançar estado
+terminal.

@@ -7,6 +7,7 @@
 namespace iotsmartsys::platform::espressif
 {
     using iotsmartsys::core::common::StateResult;
+    using iotsmartsys::core::providers::BinaryStateWriterStatus;
 
     namespace
     {
@@ -41,17 +42,60 @@ namespace iotsmartsys::platform::espressif
         }
     } // namespace
 
+    const EspNvsBinaryCapabilityStateProvider::NvsOps &EspNvsBinaryCapabilityStateProvider::defaultNvsOps()
+    {
+        // BCS-027: the default seam deliberately offers no erase operation, so
+        // no code path in this provider can emit a global NVS erase.
+        static const NvsOps ops{
+            []() -> esp_err_t
+            { return nvs_flash_init(); },
+            [](const char *ns, nvs_open_mode_t mode, nvs_handle_t *out) -> esp_err_t
+            { return nvs_open(ns, mode, out); },
+            [](nvs_handle_t handle, const char *key, void *out, std::size_t *length) -> esp_err_t
+            { return nvs_get_blob(handle, key, out, length); },
+            [](nvs_handle_t handle, const char *key, const void *value, std::size_t length) -> esp_err_t
+            { return nvs_set_blob(handle, key, value, length); },
+            [](nvs_handle_t handle) -> esp_err_t
+            { return nvs_commit(handle); },
+            [](nvs_handle_t handle)
+            { nvs_close(handle); }};
+        return ops;
+    }
+
     EspNvsBinaryCapabilityStateProvider::EspNvsBinaryCapabilityStateProvider() = default;
 
-    esp_err_t EspNvsBinaryCapabilityStateProvider::ensureNvsInit()
+    EspNvsBinaryCapabilityStateProvider::~EspNvsBinaryCapabilityStateProvider()
     {
-        esp_err_t err = nvs_flash_init();
-        if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+        if (_writerTask)
         {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            err = nvs_flash_init();
+            _writerStop = true;
+            xTaskNotifyGive(_writerTask);
         }
-        return err;
+        if (_mutex)
+        {
+            vSemaphoreDelete(_mutex);
+            _mutex = nullptr;
+        }
+    }
+
+    bool EspNvsBinaryCapabilityStateProvider::lock() const
+    {
+        if (!_mutex)
+        {
+            // Before activateWriter() the provider is only touched by the
+            // single-threaded bootstrap, so the absence of a mutex is not a
+            // failure.
+            return true;
+        }
+        return xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE;
+    }
+
+    void EspNvsBinaryCapabilityStateProvider::unlock() const
+    {
+        if (_mutex)
+        {
+            xSemaphoreGive(_mutex);
+        }
     }
 
     bool EspNvsBinaryCapabilityStateProvider::copyField(char *dst, std::size_t dstSize, const char *src)
@@ -59,23 +103,20 @@ namespace iotsmartsys::platform::espressif
         if (!dst || dstSize == 0)
             return false;
         const std::size_t len = src ? std::strlen(src) : 0;
-        // BCS-002/5.2: reject identities that do not fit instead of
-        // truncating them silently, which would collide by prefix.
+        // BCS-002/5.2: reject identities that do not fit instead of truncating
+        // them silently, which would collide by prefix.
         if (len >= dstSize)
             return false;
-        if (src)
+        if (src && len > 0)
         {
             std::memcpy(dst, src, len);
         }
-        dst[len] = '\0';
+        std::memset(dst + len, 0, dstSize - len);
         return true;
     }
 
     std::uint32_t EspNvsBinaryCapabilityStateProvider::computeChecksum(const StoredSnapshot &snapshot)
     {
-        // FNV-1a 32-bit over the header (version) and every record slot
-        // (used and unused), so any single-byte mutation in an active
-        // record's region is detected regardless of its offset.
         std::uint32_t hash = 2166136261u;
         auto mix = [&hash](const std::uint8_t *bytes, std::size_t n)
         {
@@ -90,12 +131,63 @@ namespace iotsmartsys::platform::espressif
         return hash;
     }
 
-    int EspNvsBinaryCapabilityStateProvider::findRecordIndex(const char *capability_name, const char *type) const
+    bool EspNvsBinaryCapabilityStateProvider::fieldIsTerminated(const char *field, std::size_t capacity)
+    {
+        for (std::size_t i = 0; i < capacity; ++i)
+        {
+            if (field[i] == '\0')
+                return true;
+        }
+        return false;
+    }
+
+    bool EspNvsBinaryCapabilityStateProvider::validateSnapshot(const StoredSnapshot &snapshot)
+    {
+        if (snapshot.version != STORAGE_VERSION)
+            return false;
+
+        std::size_t active = 0;
+        for (std::size_t i = 0; i < MAX_RECORDS; ++i)
+        {
+            const auto &rec = snapshot.records[i];
+
+            // Domain of the flags: anything outside {0,1} invalidates the blob.
+            if (rec.used > 1 || rec.isOn > 1)
+                return false;
+
+            // Both fields must terminate inside their own storage, whether the
+            // record is active or not, so no strcmp can ever run off the field.
+            if (!fieldIsTerminated(rec.capability_name, NAME_LEN) ||
+                !fieldIsTerminated(rec.type, TYPE_LEN))
+                return false;
+
+            if (rec.used == 0)
+                continue;
+
+            ++active;
+            // An active record with an empty identity cannot be matched and
+            // indicates a corrupt or partially written snapshot.
+            if (rec.capability_name[0] == '\0' || rec.type[0] == '\0')
+                return false;
+        }
+
+        if (active > MAX_RECORDS)
+            return false;
+
+        // Integrity last: it covers the header and every record slot, so size
+        // and version matching is never sufficient on its own.
+        return computeChecksum(snapshot) == snapshot.checksum;
+    }
+
+    int EspNvsBinaryCapabilityStateProvider::findRecordIndex(const StoredSnapshot &snapshot,
+                                                            const char *capability_name,
+                                                            const char *type)
     {
         for (std::size_t i = 0; i < MAX_RECORDS; ++i)
         {
-            const auto &rec = _cache.records[i];
-            if (rec.used && std::strcmp(rec.capability_name, capability_name) == 0 && std::strcmp(rec.type, type) == 0)
+            const auto &rec = snapshot.records[i];
+            if (rec.used && std::strcmp(rec.capability_name, capability_name) == 0 &&
+                std::strcmp(rec.type, type) == 0)
             {
                 return static_cast<int>(i);
             }
@@ -103,20 +195,44 @@ namespace iotsmartsys::platform::espressif
         return -1;
     }
 
+    std::uint8_t EspNvsBinaryCapabilityStateProvider::pendingCount(const StoredSnapshot &desired,
+                                                                  const StoredSnapshot &committed)
+    {
+        std::uint8_t pending = 0;
+        for (std::size_t i = 0; i < MAX_RECORDS; ++i)
+        {
+            const auto &d = desired.records[i];
+            const auto &c = committed.records[i];
+            if (d.used != c.used || d.isOn != c.isOn ||
+                std::strncmp(d.capability_name, c.capability_name, NAME_LEN) != 0 ||
+                std::strncmp(d.type, c.type, TYPE_LEN) != 0)
+            {
+                ++pending;
+            }
+        }
+        return pending;
+    }
+
     iotsmartsys::core::common::StateResult EspNvsBinaryCapabilityStateProvider::loadSnapshot()
     {
-        std::memset(&_cache, 0, sizeof(_cache));
+        std::memset(&_committed, 0, sizeof(_committed));
+        _committed.version = STORAGE_VERSION;
+        _desired = _committed;
         _cacheLoaded = true;
 
-        esp_err_t err = ensureNvsInit();
+        // BCS-027: initialise NVS but never erase the partition to recover, and
+        // never wrap the call in ESP_ERROR_CHECK. A failure here degrades the
+        // binary domain only; settings and the runtime stay untouched.
+        esp_err_t err = _nvs.flashInit();
         if (err != ESP_OK)
         {
-            logger().error("BinaryCapabilityState", "NVS init failed: %d", static_cast<int>(err));
+            logger().error("BinaryCapabilityState", "NVS init failed (rc=%d); binary domain unavailable, no erase performed.",
+                           static_cast<int>(err));
             return mapEspErr(err);
         }
 
         nvs_handle_t h;
-        err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &h);
+        err = _nvs.open(NVS_NAMESPACE, NVS_READONLY, &h);
         if (err != ESP_OK)
         {
             // No namespace yet (first boot / erased NVS) is a legitimate absence,
@@ -125,49 +241,93 @@ namespace iotsmartsys::platform::espressif
             return StateResult::Ok;
         }
 
+        // Metadata-only query: it does not copy blob content and therefore is
+        // not the single data read allowed by BCS-007.
         std::size_t required = 0;
-        err = nvs_get_blob(h, NVS_KEY, nullptr, &required);
+        err = _nvs.getBlob(h, NVS_KEY, nullptr, &required);
         if (err != ESP_OK)
         {
-            nvs_close(h);
+            _nvs.close(h);
             logger().info("BinaryCapabilityState", "No stored snapshot key (rc=%d); using defaults.", static_cast<int>(err));
             return StateResult::Ok;
         }
 
         if (required != sizeof(StoredSnapshot))
         {
-            nvs_close(h);
-            logger().warn("BinaryCapabilityState", "Snapshot size mismatch (got %u, expected %u); treating as absent.",
+            _nvs.close(h);
+            logger().warn("BinaryCapabilityState", "Snapshot size mismatch (got %u, expected %u); treating as invalid.",
                           static_cast<unsigned>(required), static_cast<unsigned>(sizeof(StoredSnapshot)));
             return StateResult::StorageCorrupt;
         }
 
         StoredSnapshot loaded{};
-        err = nvs_get_blob(h, NVS_KEY, &loaded, &required);
-        nvs_close(h);
+        err = _nvs.getBlob(h, NVS_KEY, &loaded, &required);
+        _nvs.close(h);
         if (err != ESP_OK)
         {
-            logger().error("BinaryCapabilityState", "Snapshot read failed: %d", static_cast<int>(err));
+            logger().error("BinaryCapabilityState", "Snapshot read failed (rc=%d).", static_cast<int>(err));
             return mapEspErr(err);
         }
 
         if (loaded.version != STORAGE_VERSION)
         {
-            logger().warn("BinaryCapabilityState", "Snapshot version mismatch (got %u, expected %u); treating as absent.",
+            logger().warn("BinaryCapabilityState", "Snapshot version mismatch (got %u, expected %u); treating as invalid.",
                           static_cast<unsigned>(loaded.version), static_cast<unsigned>(STORAGE_VERSION));
             return StateResult::StorageVersionMismatch;
         }
 
-        // BCS-006/BCS-012: size and version alone do not prove integrity;
-        // reject any content whose checksum does not cover cleanly.
-        if (computeChecksum(loaded) != loaded.checksum)
+        // BCS-006/BCS-012: a record failing any structural, semantic or
+        // integrity check invalidates the whole snapshot; none of its values is
+        // applied, and nothing is compared with strcmp before this point.
+        if (!validateSnapshot(loaded))
         {
-            logger().warn("BinaryCapabilityState", "Snapshot checksum mismatch; treating as absent.");
+            logger().warn("BinaryCapabilityState", "Snapshot rejected by structural/semantic/integrity validation; treating as invalid.");
             return StateResult::StorageCorrupt;
         }
 
-        _cache = loaded;
+        _committed = loaded;
+        _desired = loaded;
         logger().info("BinaryCapabilityState", "Snapshot loaded from NVS.");
+        return StateResult::Ok;
+    }
+
+    iotsmartsys::core::common::StateResult EspNvsBinaryCapabilityStateProvider::activateWriter()
+    {
+        if (_writerAvailable)
+        {
+            // BCS-024/BCS-029: exactly one worker per boot.
+            return StateResult::Ok;
+        }
+
+        if (!_mutex)
+        {
+            _mutex = xSemaphoreCreateMutex();
+            if (!_mutex)
+            {
+                _lastError = StateResult::NoMem;
+                logger().error("BinaryCapabilityState", "Writer mutex creation failed; writer unavailable (no synchronous fallback).");
+                return StateResult::NoMem;
+            }
+        }
+
+        const BaseType_t ok = xTaskCreate(&EspNvsBinaryCapabilityStateProvider::writerTaskEntry,
+                                          "bcs_writer",
+                                          WRITER_STACK_BYTES,
+                                          this,
+                                          WRITER_PRIORITY,
+                                          &_writerTask);
+        if (ok != pdPASS)
+        {
+            _writerTask = nullptr;
+            _lastError = StateResult::NoMem;
+            // BCS-029: a creation failure stays observable and never authorises
+            // a synchronous write from the requesting context.
+            logger().error("BinaryCapabilityState", "Writer task creation failed; writer unavailable (no synchronous fallback).");
+            return StateResult::NoMem;
+        }
+
+        _writerAvailable = true;
+        logger().info("BinaryCapabilityState", "Asynchronous snapshot writer activated.");
         return StateResult::Ok;
     }
 
@@ -176,35 +336,53 @@ namespace iotsmartsys::platform::espressif
         if (!_cacheLoaded || !capability_name || !type)
             return false;
 
-        const int idx = findRecordIndex(capability_name, type);
-        if (idx < 0)
+        if (!lock())
             return false;
 
-        outIsOn = (_cache.records[idx].isOn != 0);
-        return true;
+        // BCS-018: answers from the last successfully committed snapshot, which
+        // is exactly what survives a reboot.
+        const int idx = findRecordIndex(_committed, capability_name, type);
+        const bool found = idx >= 0;
+        if (found)
+        {
+            outIsOn = (_committed.records[idx].isOn != 0);
+        }
+        unlock();
+        return found;
     }
 
-    iotsmartsys::core::common::StateResult EspNvsBinaryCapabilityStateProvider::save(const char *capability_name, const char *type, bool isOn)
+    iotsmartsys::core::common::StateResult EspNvsBinaryCapabilityStateProvider::requestSave(const char *capability_name,
+                                                                                           const char *type,
+                                                                                           bool isOn)
     {
         if (!capability_name || !type || !*capability_name || !*type)
             return StateResult::InvalidArg;
 
-        // BCS-002/5.2: reject identities that do not fit the internal buffer
-        // instead of truncating them silently, which could collide by prefix.
+        // BCS-002: the storage is never more restrictive than the public
+        // identity contract; anything that still does not fit is rejected, never
+        // truncated.
         if (std::strlen(capability_name) >= NAME_LEN || std::strlen(type) >= TYPE_LEN)
         {
             logger().error("BinaryCapabilityState", "Identity too long for '%s'; rejecting instead of truncating.", capability_name);
             return StateResult::InvalidArg;
         }
 
-        // 5.2: a write updates the in-memory snapshot first, then persists the
-        // blob, then commits.
-        int idx = findRecordIndex(capability_name, type);
+        if (!_writerAvailable)
+        {
+            // No synchronous fallback: the caller keeps its confirmed hardware
+            // and logical state, and the refusal stays observable.
+            return StateResult::InvalidState;
+        }
+
+        if (!lock())
+            return StateResult::Timeout;
+
+        int idx = findRecordIndex(_desired, capability_name, type);
         if (idx < 0)
         {
             for (std::size_t i = 0; i < MAX_RECORDS; ++i)
             {
-                if (!_cache.records[i].used)
+                if (!_desired.records[i].used)
                 {
                     idx = static_cast<int>(i);
                     break;
@@ -214,50 +392,168 @@ namespace iotsmartsys::platform::espressif
 
         if (idx < 0)
         {
+            unlock();
             logger().error("BinaryCapabilityState", "No free slot to persist '%s' (limit %u reached).",
-                          capability_name, static_cast<unsigned>(MAX_RECORDS));
+                           capability_name, static_cast<unsigned>(MAX_RECORDS));
             return StateResult::Overflow;
         }
 
-        _cache.version = STORAGE_VERSION;
-        auto &rec = _cache.records[idx];
-        copyField(rec.capability_name, sizeof(rec.capability_name), capability_name);
-        copyField(rec.type, sizeof(rec.type), type);
+        // 5.2/BCS-029: the identity keeps only its most recent stable value;
+        // repeated transitions before the next write are consolidated in place,
+        // with no queue growth and no per-transition allocation.
+        _desired.version = STORAGE_VERSION;
+        auto &rec = _desired.records[idx];
+        if (!copyField(rec.capability_name, sizeof(rec.capability_name), capability_name) ||
+            !copyField(rec.type, sizeof(rec.type), type))
+        {
+            unlock();
+            return StateResult::InvalidArg;
+        }
         rec.isOn = isOn ? 1 : 0;
         rec.used = 1;
-        _cache.checksum = computeChecksum(_cache);
+        _desired.checksum = computeChecksum(_desired);
+        unlock();
 
-        esp_err_t err = ensureNvsInit();
-        if (err != ESP_OK)
+        // Returns immediately: no nvs_set_blob(), no nvs_commit(), no waiting.
+        xTaskNotifyGive(_writerTask);
+        return StateResult::Ok;
+    }
+
+    iotsmartsys::core::providers::BinaryStateWriterStatus EspNvsBinaryCapabilityStateProvider::writerStatus() const
+    {
+        BinaryStateWriterStatus status;
+        if (!lock())
+            return status;
+
+        status.available = _writerAvailable;
+        status.pending = pendingCount(_desired, _committed);
+        status.inProgress = _writeInProgress;
+        status.writes = _writes;
+        status.commits = _commits;
+        status.failures = _failures;
+        status.lastError = _lastError;
+        unlock();
+        return status;
+    }
+
+    bool EspNvsBinaryCapabilityStateProvider::waitForQuiescence(std::uint32_t timeoutMs)
+    {
+        const TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(timeoutMs);
+        while (true)
         {
-            logger().error("BinaryCapabilityState", "NVS init failed on save: %d", static_cast<int>(err));
-            return mapEspErr(err);
+            const auto status = writerStatus();
+            if (status.pending == 0 && !status.inProgress)
+                return true;
+            if (static_cast<int32_t>(xTaskGetTickCount() - deadline) >= 0)
+                return false;
+            vTaskDelay(pdMS_TO_TICKS(5));
+        }
+    }
+
+    void EspNvsBinaryCapabilityStateProvider::writerTaskEntry(void *arg)
+    {
+        auto *self = static_cast<EspNvsBinaryCapabilityStateProvider *>(arg);
+        if (self)
+        {
+            self->writerLoop();
+        }
+        vTaskDelete(nullptr);
+    }
+
+    void EspNvsBinaryCapabilityStateProvider::writerLoop()
+    {
+        while (!_writerStop)
+        {
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+            if (_writerStop)
+                break;
+
+            // Drain: consolidate whatever is pending, one write/commit at a
+            // time, until desired and committed converge.
+            while (!_writerStop)
+            {
+                StoredSnapshot attempt{};
+                if (!lock())
+                    break;
+                if (pendingCount(_desired, _committed) == 0)
+                {
+                    unlock();
+                    break;
+                }
+                attempt = _desired;
+                _writeInProgress = true;
+                unlock();
+
+                const StateResult rc = writeAndCommit(attempt);
+
+                if (!lock())
+                    break;
+                _writeInProgress = false;
+                if (rc == StateResult::Ok)
+                {
+                    // BCS-018: only a successful commit updates the view of the
+                    // last persisted snapshot. A transition that arrived during
+                    // the operation stays pending because it diverges from what
+                    // this commit actually confirmed.
+                    _committed = attempt;
+                    ++_commits;
+                    _lastError = StateResult::Ok;
+                    unlock();
+                }
+                else
+                {
+                    ++_failures;
+                    _lastError = rc;
+                    unlock();
+                    // BCS-017/7: no continuous retry; the next attempt happens
+                    // when another confirmed stable transition updates the
+                    // identity and signals the writer again.
+                    break;
+                }
+            }
         }
 
+        _writerTask = nullptr;
+    }
+
+    iotsmartsys::core::common::StateResult EspNvsBinaryCapabilityStateProvider::writeAndCommit(const StoredSnapshot &snapshot)
+    {
+        // BCS-027: no erase, no ESP_ERROR_CHECK, no abort/restart in this path.
         nvs_handle_t h;
-        err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h);
+        esp_err_t err = _nvs.open(NVS_NAMESPACE, NVS_READWRITE, &h);
         if (err != ESP_OK)
         {
-            logger().error("BinaryCapabilityState", "NVS open failed on save: %d", static_cast<int>(err));
+            logger().error("BinaryCapabilityState", "NVS open failed on write (rc=%d); state kept in memory.", static_cast<int>(err));
             return mapEspErr(err);
         }
 
-        err = nvs_set_blob(h, NVS_KEY, &_cache, sizeof(_cache));
+        if (!lock())
+        {
+            _nvs.close(h);
+            return StateResult::Timeout;
+        }
+        ++_writes;
+        unlock();
+
+        err = _nvs.setBlob(h, NVS_KEY, &snapshot, sizeof(snapshot));
         if (err != ESP_OK)
         {
-            nvs_close(h);
-            logger().error("BinaryCapabilityState", "NVS set_blob failed on save: %d", static_cast<int>(err));
-            return mapEspErr(err);
+            _nvs.close(h);
+            logger().error("BinaryCapabilityState", "NVS write failed (rc=%d); confirmed hardware/logical state unaffected.",
+                           static_cast<int>(err));
+            return StateResult::StorageWriteFail;
         }
 
-        err = nvs_commit(h);
-        nvs_close(h);
+        err = _nvs.commit(h);
+        _nvs.close(h);
         if (err != ESP_OK)
         {
-            logger().error("BinaryCapabilityState", "NVS commit failed on save: %d", static_cast<int>(err));
+            logger().error("BinaryCapabilityState", "NVS commit failed (rc=%d); last successful commit remains the persisted snapshot.",
+                           static_cast<int>(err));
+            return StateResult::StorageWriteFail;
         }
 
-        return mapEspErr(err);
+        return StateResult::Ok;
     }
 } // namespace iotsmartsys::platform::espressif
 
