@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Precisa de esclarecimento [`Needs Clarification`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-BINARY-COMMAND-STATE@0.5`
@@ -71,10 +71,11 @@ As seções históricas 13 a 15 permanecem apenas como evidência contestada.
   nomes fornecidos externamente não compartilham automaticamente o mesmo teto
   do storage experimental;
 - `SmartSysApp::add*Capability()` devolve ponteiro para a capability já
-  registrada; `ICapability::capability_name` e `ICapability::type` são campos
-  públicos mutáveis, enquanto `rename()` e `applyRenamedName()` também podem
-  mudar a identidade e retornam `void`, permitindo alteração após consumo do
-  slot e construção dos objetos;
+  registrada; na implementação vigente, `ICapability::capability_name` e
+  `ICapability::type` ainda são campos públicos mutáveis, enquanto `rename()` e
+  `applyRenamedName()` também podem mudar a identidade e retornam `void`; o
+  contrato confirmado em `BCS-DEC-006` elimina essa mutabilidade sem alterar o
+  retorno dos métodos nem os ponteiros devolvidos por `add*Capability()`;
 - o build base e environments ESP32 aplicáveis usam
   `-fno-threadsafe-statics`; portanto a garantia de "magic statics" thread-safe
   do C++11 não está disponível nesta toolchain;
@@ -168,6 +169,8 @@ constituem por si mesmos requisitos legados aprovados.
 - contrato público de identidade limitado a 63 bytes para `capability_name` e
   31 bytes para `type`, excluído o terminador nulo, com rejeição observável
   antes do registro;
+- finalização da identidade antes do registro e imutabilidade pública de
+  `capability_name` e `type` durante toda a vida da capability registrada;
 - representação persistida dos dois estados lógicos suportados;
 - leitura, validação estrutural/semântica e cache do snapshot durante o boot;
 - aplicação do estado restaurado ao hardware durante `setup()`;
@@ -191,8 +194,9 @@ constituem por si mesmos requisitos legados aprovados.
 - persistir estados de capabilities que não derivem de
   `BinaryCommandCapability`;
 - persistir comandos transitórios como o texto `toggle`;
-- alterar nomes públicos de capabilities, comandos, tipos ou estados além do
-  limite explícito de identidade autorizado em `BCS-DEC-005`;
+- alterar nomes públicos de capabilities, comandos, tipos ou estados além dos
+  limites e da imutabilidade explícita da identidade autorizados em
+  `BCS-DEC-005` e `BCS-DEC-006`;
 - alterar defaults públicos das capabilities;
 - alterar o limite de oito capabilities;
 - sincronizar o estado persistido com API remota, MQTT ou settings do
@@ -285,6 +289,13 @@ existentes dentro dos limites permanecem compatíveis; consumidor que forneça
 nome ou tipo excedente deve adequar a identidade antes de adotar esta versão.
 Não existe truncamento, alias automático nem migração silenciosa de registro
 persistido excedente.
+
+O builder deve resolver o nome definitivo — fornecido ou gerado — e o tipo,
+validá-los e fixá-los antes do registro. A capability registrada conserva
+acesso público de leitura a `capability_name` e `type`, mas não oferece
+atribuição pública nem qualquer outro caminho suportado que os modifique. Esta
+quebra da escrita direta é a mudança de compatibilidade aprovada em
+`BCS-DEC-006`.
 
 O storage deve reservar capacidade para os valores públicos completos e seus
 terminadores: ao menos 64 bytes para `capability_name` e 32 bytes para `type`
@@ -381,6 +392,15 @@ A identidade somente pode ser consultada depois que o builder tiver definido o
 nome definitivo da capability. Alterar `capability_name` ou `type` entre boots
 cria outra identidade e não pode aplicar automaticamente o registro da
 identidade anterior.
+
+Depois do registro, `capability_name` e `type` são imutáveis. Os métodos
+`rename()` e `applyRenamedName()` permanecem na API pública, preservam seus
+retornos `void` e devem ser marcados como obsoletos, mas não podem alterar a
+identidade finalizada de uma capability registrada. Chamá-los nesse estado
+preserva silenciosamente o nome e o tipo vigentes. Nenhum novo uso desses
+métodos é autorizado. Os métodos `SmartSysApp::add*Capability()` continuam
+devolvendo o ponteiro para a capability já registrada, agora com identidade
+somente para leitura.
 
 O fluxo de inicialização proposto é:
 
@@ -501,6 +521,9 @@ Após a recepção de uma configuração BLE válida:
   vazia ou excedente deve ser rejeitada de forma observável antes do registro e
   sem consumir slot, alterar cache ou solicitar persistência; nome omitido
   continua sujeito à geração automática vigente e é validado depois de gerado.
+  Nome e tipo devem ser finalizados antes do registro e permanecer imutáveis
+  durante toda a vida da capability registrada, com leitura pública e sem
+  atribuição pública.
 - **BCS-003:** o storage deve representar somente os estados semânticos
   binários `off` e `on`.
 - **BCS-004:** cada estado semântico restaurado deve ser convertido para o
@@ -551,17 +574,21 @@ Após a recepção de uma configuração BLE válida:
   persistido continua sendo o snapshot do último commit concluído com sucesso.
 - **BCS-019:** a restauração de uma capability não pode alterar outra
   capability, mesmo quando ambas possuem o mesmo estado semântico.
-- **BCS-020:** mudança de nome ou tipo entre boots não pode reutilizar
-  silenciosamente o registro da identidade anterior.
+- **BCS-020:** mudança de nome ou tipo configurada entre boots não pode
+  reutilizar silenciosamente o registro da identidade anterior; a capability
+  já registrada não admite mudança de identidade durante o mesmo boot.
 - **BCS-021:** logs devem permitir distinguir ausência de registro, registro
   inválido, falha de aplicação e cada falha de storage observada, sem converter
   falha de storage em ausência e sem expor settings, credenciais ou conteúdo
   privado.
 - **BCS-022:** APIs públicas, defaults, ordem de configuração antes de
   `SmartSysApp::setup()`, processamento cooperativo e limite de oito
-  capabilities devem ser preservados, ressalvada a publicação dos limites de
-  identidade e da rejeição pré-registro autorizados em BCS-002 e
-  `BCS-DEC-005`.
+  capabilities devem ser preservados, ressalvados os limites, a rejeição
+  pré-registro e a remoção da escrita pública de identidade autorizados em
+  BCS-002, `BCS-DEC-005` e `BCS-DEC-006`. `rename()` e
+  `applyRenamedName()` permanecem públicos, obsoletos e com retorno `void`, sem
+  alterar a identidade registrada; `SmartSysApp::add*Capability()` preserva
+  suas assinaturas e continua retornando a mesma capability registrada.
 - **BCS-023:** a implementação Espressif deve operar no runtime Arduino sobre
   ESP32 e não pode degradar o código preparatório para ESP-IDF.
 - **BCS-024:** `ServiceManager::init()` e `ServiceManager::instance()` devem
@@ -631,6 +658,9 @@ Após a recepção de uma configuração BLE válida:
   observável como falha e admite nova tentativa.
 - Falha de init NVS no storage binário: não executa erase global, não aborta e
   trata o domínio binário como ausente/indisponível.
+- Tentativa de escrita direta em `capability_name` ou `type` de uma capability
+  registrada: a API não oferece operação de atribuição; chamadas legadas a
+  `rename()` ou `applyRenamedName()` preservam a identidade sem alteração.
 
 ## 8. Critérios de aceite e validações
 
@@ -645,7 +675,7 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 | Critério | Requisito | Cenário e ação | Resultado observável | Evidência terminal |
 |---|---|---|---|---|
 | BCS-AC-001 | BCS-001 | Para cada tipo concreto `SwitchCapability`, `SwitchPlugCapability`, `LightCapability`, `LEDCapability` e `ValveCapability`, partir de snapshot válido com estado oposto ao default, executar `setup()`, produzir uma transição estável autorizada e aguardar quiescência do escritor. | Cada um dos cinco tipos restaura o estado correto e conclui exatamente um commit da transição posterior, sem opt-in específico do tipo. Se qualquer tipo não restaurar ou não persistir, o critério reprova. | Suíte parametrizada ou cinco casos nomeados, todos executados e aprovados, com adapter e estados do escritor observáveis. |
-| BCS-AC-002 | BCS-002, BCS-019 | Salvar duas capabilities cujas identidades diferem apenas pelo nome, duas que compartilham o nome mas diferem pelo tipo e pares com prefixo longo comum e sufixos distintos, incluindo `capability_name` de 63 bytes e `type` de 31 bytes. Tentar separadamente nome de 64 bytes e tipo de 32 bytes; omitir o nome em outro caso para exercer a geração automática; reinicializar o provedor e consultar cada identidade válida completa. | Cada identidade válida, inclusive a gerada automaticamente, retorna somente o próprio estado, sem truncamento, colisão, gravação parcial ou limite interno menor. Cada identidade excedente é rejeitada antes do registro, não consome slot, não cria capability/adapter parcial, não altera cache e não sinaliza o escritor. | Teste de round-trip, isolamento e limites que compara nome e tipo integrais antes e depois do reboot simulado, observa geração automática, falha pública pré-registro e contadores de slots, cache e escritor. |
+| BCS-AC-002 | BCS-002, BCS-019 | Salvar duas capabilities cujas identidades diferem apenas pelo nome, duas que compartilham o nome mas diferem pelo tipo e pares com prefixo longo comum e sufixos distintos, incluindo `capability_name` de 63 bytes e `type` de 31 bytes. Tentar separadamente nome de 64 bytes e tipo de 32 bytes; omitir o nome em outro caso para exercer a geração automática; reinicializar o provedor e consultar cada identidade válida completa. | Cada identidade válida, inclusive a gerada automaticamente, retorna somente o próprio estado, sem truncamento, colisão, gravação parcial ou limite interno menor. Cada identidade excedente é rejeitada antes do registro, não consome slot, não cria capability/adapter parcial, não altera cache e não sinaliza o escritor. Nome e tipo observados após o registro permanecem os valores validados e finalizados. | Teste de round-trip, isolamento e limites que compara nome e tipo integrais antes e depois do reboot simulado, observa geração automática, falha pública pré-registro e contadores de slots, cache e escritor. |
 | BCS-AC-003 | BCS-003, BCS-015 | Partir de `off`, executar `toggle`, confirmar `on`, persistir e decodificar o snapshot; repetir partindo de `on`. | O snapshot contém somente o estado semântico final `on` ou `off`; nunca contém `toggle`, `open`, `closed` ou outro comando transitório/concreto. | Teste executado que observa a entrada do contrato de storage e decodifica o blob persistido nos dois sentidos. |
 | BCS-AC-004 | BCS-004, BCS-009, BCS-010, BCS-028 | Configurar uma `ValveCapability` com o `ValveHardwareCommandInterpreter` e um double fiel ao `OutputHardwareAdapter`, que aceita somente `on`, `off` e `toggle`. Restaurar semanticamente `on` e depois `off`. Em seguida, forçar o caminho de fallback pós rejeição/read-back não confirmado e o sync inicial sem registro. | Para `on`, a capability solicita `open`, o interpreter envia `on` ao adapter, o read-back `on` é interpretado como `open` e somente então o estado lógico/publicado se torna `open`. Para `off`, ocorre `closed → off → off → closed`. Em todos os fallbacks, nenhum `off`/`on` cruza para estado lógico/publicação/persistência da valve sem interpreter. Envio direto de `open`/`closed` ao adapter reprova. | Casos executados de restore e fallback com sequência de chamadas e valores observáveis; o double rejeita o vocabulário da valve quando recebido diretamente. |
 | BCS-AC-005 | BCS-004, BCS-009, BCS-010 | Para switch, switch plug, light e LED, restaurar `on` e `off` após o `setup()` do adapter, registrando ordem, aceitação, read-back e eventos. | A ordem é `adapter setup → comando interpretado/aplicado → read-back → atualização/publicação`. Estado rejeitado ou não confirmado não é assumido nem publicado. | Casos executados para os quatro tipos, com spy de ordem e asserções de ausência de atualização antes do read-back. |
@@ -664,7 +694,7 @@ erro de infraestrutura ou resultado desconhecido classificam o critério como
 | BCS-AC-018 | BCS-019 | Persistir estados opostos para duas capabilities e restaurá-las no mesmo boot, variando a ordem de consulta e setup. | Cada capability recebe somente o próprio estado; restaurar ou alterar uma não muda cache, hardware, estado lógico ou publicação da outra. | Teste executado com duas instâncias, dois adapters, dois sinks e inspeção independente dos registros. |
 | BCS-AC-019 | BCS-020 | Persistir uma identidade, reinicializar primeiro com nome diferente e depois com tipo diferente. | Nenhuma das identidades alteradas reutiliza o registro anterior; ambas seguem o fluxo de ausência e preservam o default. A identidade original ainda recupera seu próprio registro. | Teste executado cobrindo mudança de nome e de tipo separadamente. |
 | BCS-AC-020 | BCS-021 | Executar ausência, snapshot inválido estrutural/semântico, falha de aplicação e falha de init/open/read/write/commit. | O diagnóstico identifica a classe correta sem imprimir valor do blob, settings, credenciais ou conteúdo privado. Falha de storage nunca é registrada como ausência. | Testes com logger capturado e asserções positivas da classe e negativas para sentinelas privadas. |
-| BCS-AC-021 | BCS-022, BCS-DEC-005 | Comparar as APIs públicas e defaults com a base anterior à funcionalidade; construir oito capabilities com identidades nos limites de 63/31 bytes antes de `SmartSysApp::setup()`, tentar uma nona e tentar separadamente identidades de 64/31 e 63/32 bytes; executar ciclos cooperativos. | Assinaturas e defaults permanecem compatíveis salvo o limite público autorizado; oito capabilities válidas continuam aceitas, a nona continua sujeita ao limite vigente, identidades excedentes falham observavelmente antes do registro sem consumir slot ou criar artefato parcial, e `handle()` retorna sem espera indefinida por storage. | Inspeção de diff da API pública e de sua documentação, mais teste executado dos limites de identidade, oito slots, falha pré-registro, configuração e ciclo. |
+| BCS-AC-021 | BCS-022, BCS-DEC-005, BCS-DEC-006 | Comparar as APIs públicas e defaults com a base anterior à funcionalidade; construir oito capabilities com identidades nos limites de 63/31 bytes antes de `SmartSysApp::setup()`, tentar uma nona e tentar separadamente identidades de 64/31 e 63/32 bytes; sobre um ponteiro retornado por `add*Capability()`, comprovar leitura pública, ausência de atribuição pública e chamar os overloads `void` de `rename()` e `applyRenamedName()`; executar ciclos cooperativos. | Assinaturas e defaults permanecem compatíveis salvo os limites e a imutabilidade autorizados; oito capabilities válidas continuam aceitas, a nona continua sujeita ao limite vigente, identidades excedentes falham observavelmente antes do registro sem consumir slot ou criar artefato parcial. O ponteiro retornado continua sendo o da capability registrada; nome e tipo são legíveis, não atribuíveis e não mudam após chamadas aos métodos obsoletos, cujas assinaturas continuam `void`. `handle()` retorna sem espera indefinida por storage. | Inspeção de diff e documentação da API pública; verificação de compilação/tipos para leitura, não atribuição e retornos `void`; teste executado dos ponteiros, métodos obsoletos, limites de identidade, oito slots, falha pré-registro, configuração e ciclo. |
 | BCS-AC-022 | BCS-023, BCS-DEC-003 | Executar `pio run -e esp32_dev` e inspecionar as dependências do contrato Core e do código preparatório ESP-IDF afetado. | O build canônico termina com `SUCCESS`; o Core não inclui APIs NVS/Arduino; o provedor Espressif permanece atrás da fronteira de plataforma e nenhuma fonte preparatória ESP-IDF é removida ou tornada dependente do runtime Arduino. Falha preexistente do baseline não autoriza substituir ou dispensar o gate. | Build terminal aprovado em `esp32_dev` e inspeção estática registrada sobre os arquivos alterados. Se o baseline exigir correção alheia, sua autorização e entrega separadas devem anteceder este gate. |
 | BCS-AC-023 | BCS-024 | Em um processo limpo, instrumentar a construção de `ServiceManager`, o registro de serviços, `loadSnapshot()` e a ativação do escritor; executar o bootstrap que completa `init()` antes de qualquer callback/task concorrente; depois consultar `instance()` pelo mesmo caminho usado na conclusão do provisionamento, inclusive a partir de contexto que simule a task BLE. Repetir a consulta aos dois accessors. | Os endereços retornados por `init()` e `instance()` são iguais; existe exatamente uma construção do grafo, um registro dos serviços de plataforma, uma leitura inicial do snapshot e uma ativação do escritor. A ativação ocorre somente após `init()` retornar e antes da primeira solicitação de persistência. Aumentar a pilha, omitir logs ou invocar garantia de statics thread-safe sob `-fno-threadsafe-statics` sem eliminar a segunda instância/race reprova. | Teste executado em processo limpo ou seam fiel de inicialização, com asserção de identidade, contadores exatamente iguais a um e evidência da ordem completa; inspeção estática confirma convergência dos accessors e a flag `-fno-threadsafe-statics` no build aplicável. |
 | BCS-AC-024 | BCS-025, BCS-026 | Em ESP32-S3 sem settings armazenados, iniciar provisioning, conectar por BLE, habilitar notifications e enviar uma configuração válida fragmentada em escritas de 9, 96, 96, 48 e 3 bytes, encerrando com `END`; observar o resultado de `SettingsManager::save()` e o boot seguinte. | O fluxo não apresenta stack canary, panic, abort ou reboot antecipado. Se `save()` sucede, o commit termina antes do restart controlado; no boot seguinte o cache é carregado, os valores provisionados são preservados e o dispositivo não reentra em provisioning por `NotFound`. | Execução terminal em hardware ESP32-S3 com captura serial completa, prova do sucesso de `save()`/commit e verificação dos settings após o reboot. Execução interrompida, ausência do reboot observado, falta de prova do commit ou somente build classificam o critério como não verificado. |
@@ -708,18 +738,18 @@ observar uma operação exigida torna o critério correspondente não verificáv
 - [x] BCS-001 a BCS-029 estão relacionados a pelo menos um critério.
 - [x] Cada critério identifica cenário, ação, resultado observável e evidência
   terminal.
-- [ ] BCS-002 e BCS-022 ainda não possuem semântica nem critério para mutação
-  pública da identidade depois do registro; `BCS-DEC-006` e
-  `EKM-GAP-0011` registram o bloqueio.
+- [x] BCS-002, BCS-022, BCS-AC-002 e BCS-AC-021 fixam a identidade antes do
+  registro, removem sua escrita pública, preservam os métodos obsoletos com
+  retorno `void` sem mutação e mantêm os ponteiros de `add*Capability()`.
 - [x] Os critérios reprovam os desvios apontados em `EKM-CHG-0018`: statics sob
   `-fno-threadsafe-statics`, restart de provisioning sem sucesso de `save()`,
   erase global/`ESP_ERROR_CHECK`, snapshot só com tamanho/versão/checksum,
   identidade com limite interno menor, fallback da valve sem interpreter e
   ausência de oráculo de cooperatividade.
 - [x] Validações automatizáveis estão separadas da validação física posterior.
-- [x] `BCS-DEC-002` a `BCS-DEC-005` refletem as decisões confirmadas pelo
+- [x] `BCS-DEC-002` a `BCS-DEC-006` refletem as decisões confirmadas pelo
   Arquiteto; `BCS-DEC-001` permanece explícita e não bloqueante.
-- [ ] `BCS-DEC-006` permanece pendente e bloqueante.
+- [x] `BCS-DEC-006` encerra `EKM-GAP-0011`.
 
 ### 8.4 Gate da implementação
 
@@ -768,7 +798,7 @@ automatizados; permanece responsabilidade da etapa de validação posterior.
 - `src/App/Builders/Builders/CapabilitiesBuilder.*` e/ou
   `CapabilityManager`, conforme a composição aprovada na revisão;
 - contrato público de limite e rejeição da identidade autorizado em
-  `BCS-DEC-005`;
+  `BCS-DEC-005`, e seu ciclo de vida imutável autorizado em `BCS-DEC-006`;
 - testes, mocks e configuração de teste aplicáveis;
 - `docs/rfc/KNOWLEDGE-MAP.md`;
 - `docs/rfc/EKM-CHANGELOG.md`.
@@ -868,8 +898,7 @@ limites e oráculos executáveis. `EKM-GAP-0010` é encerrada.
 
 ### BCS-DEC-006 — Mutabilidade da identidade após o registro
 
-**Estado:** parcialmente confirmada pelo Arquiteto e ainda bloqueante para a
-versão 0.6.
+**Estado:** confirmada pelo Arquiteto para a versão 0.6.
 
 O contrato 63/31 e a rejeição pré-registro são assertáveis quando nome e tipo
 entram pelo builder. Porém a superfície pública vigente devolve a capability já
@@ -880,25 +909,21 @@ existem e antes de `SmartSysApp::setup()`, contrariando simultaneamente a
 rejeição pré-registro sem efeito parcial e a proibição de caminho alternativo
 de renomeação acima dos limites.
 
-O Arquiteto deve definir o ciclo de vida normativo da identidade: se ela se
-torna imutável após o registro, com a mudança pública e a estratégia de
-compatibilidade correspondentes; ou, se a mutação pública permanece suportada,
-qual operação valida, qual identidade prevalece após rejeição, como a falha é
-observada e como se preservam slot, adapter, cache e registro persistido. A
-decisão também deve dizer se atribuição direta aos campos públicos continua
-contrato suportado ou passa a ser removida/depreciada.
+O Arquiteto decidiu que `capability_name` e `type` passam a ser imutáveis. O
+builder deve gerar ou receber, validar e finalizar ambos antes do registro; o
+ponteiro público devolvido por `SmartSysApp::add*Capability()` permanece como
+está e oferece leitura, mas não atribuição da identidade.
 
-**Decisão parcial confirmada:** `rename()` e `applyRenamedName()` devem ser
-marcados como obsoletos na API pública e não devem receber novos usos. Esta
-decisão não autoriza ainda sua remoção, não define mudança de comportamento para
-chamadas legadas e não resolve a atribuição direta aos campos públicos
-`capability_name` e `type`.
+`rename()` e `applyRenamedName()` permanecem públicos e com retorno `void`, são
+marcados como obsoletos e não recebem novos usos. Como não podem contrariar a
+imutabilidade, chamadas sobre uma capability registrada preservam
+silenciosamente `capability_name` e `type` sem alteração. A manutenção das
+assinaturas não mantém a mutabilidade anterior.
 
-**Consequência:** BCS-002 e BCS-022 não podem ser implementados em todos os
-caminhos públicos sem escolher uma quebra ou semântica não autorizada, e
-BCS-AC-002/BCS-AC-021 não exercitam mutação posterior ao registro.
-`EKM-GAP-0011` permanece aberta e a revisão integral resulta em `Needs
-Clarification`.
+**Consequência:** a escrita direta deixa de integrar a API suportada, a
+identidade usada pelo registro, cache e storage não pode divergir depois do
+registro, e BCS-AC-002/BCS-AC-021 passam a comprovar a imutabilidade, os retornos
+`void` e a preservação dos ponteiros públicos. `EKM-GAP-0011` é encerrada.
 
 ## 12. Estado da especificação
 
@@ -914,6 +939,8 @@ versão anterior, ela:
 - exige validação estrutural e semântica completa do snapshot;
 - publica limites de 63/31 bytes para nome/tipo, exige rejeição observável
   antes do registro e reconcilia integralmente storage e API pública;
+- finaliza nome/tipo antes do registro, remove sua escrita pública e preserva
+  os métodos obsoletos `void` sem mutação posterior;
 - exige interpreter em todos os fallbacks da valve;
 - exclui alternâncias transitórias de `blink` da persistência e define a
   consolidação do estado estável ao encerrar o modo;
@@ -925,12 +952,13 @@ versão anterior, ela:
   e provisioning após reboot;
 - remove metadados Git sem necessidade normativa;
 - preserva `BCS-DEC-001` como pendente não bloqueante e registra
-  `BCS-DEC-002` a `BCS-DEC-005` como confirmadas.
+  `BCS-DEC-002` a `BCS-DEC-006` como confirmadas.
 
 Os estados normativo, de implementação e de entrega permanecem `Proposed`,
-`Not Started` e `Not Ready`. A revisão independente da versão 0.6 foi promovida
-para `Needs Clarification` em `EKM-CHG-0023`; o estado `Implementable` de
-versões anteriores não é reutilizado.
+`Not Started` e `Not Ready`. A revisão independente da versão 0.6 registrada em
+`EKM-CHG-0023` encontrou `BCS-DEC-006`; após as decisões do Arquiteto, a análise
+integral complementar em `EKM-CHG-0025` promove a revisão para `Implementable`,
+sem reutilizar o estado de versões anteriores.
 
 ### 12.1 Revisão de implementabilidade da versão 0.5
 
@@ -1001,6 +1029,34 @@ build, teste funcional, upload ou validação física foi iniciado nesta revisã
 Uma versão reconciliada com `BCS-DEC-006` deve retornar a análise independente
 antes de qualquer ordem de implementação.
 
+### 12.4 Complemento da revisão de implementabilidade da versão 0.6
+
+**Resultado:** Implementável [`Implementable`].
+
+O Arquiteto completou `BCS-DEC-006`: `capability_name` e `type` tornam-se
+imutáveis, os métodos públicos obsoletos `rename()` e `applyRenamedName()`
+preservam retorno `void` sem alterar a identidade registrada, e os ponteiros
+devolvidos por `SmartSysApp::add*Capability()` permanecem como estão. A decisão
+foi reconciliada em BCS-002, BCS-020, BCS-022, BCS-AC-002 e BCS-AC-021 e encerra
+`EKM-GAP-0011`.
+
+A confrontação integral de BCS-001 a BCS-029, BCS-AC-001 a BCS-AC-028,
+decisões, falhas, relações, dependências e gates não encontrou outra decisão
+normativa, de produto ou arquitetura ausente. O builder vigente já concentra a
+geração do nome e o registro, fornecendo precedente suficiente para finalizar e
+validar a identidade antes de expor a capability; a forma interna de obter
+imutabilidade permanece escolha de implementação, desde que preserve os
+oráculos públicos definidos.
+
+`BCS-DEC-001` continua explicitamente fora do escopo e não bloqueante. A falha
+conhecida do baseline `esp32_dev` permanece dependência externa governada por
+`BCS-DEC-003`: impede aprovação futura de BCS-AC-022 enquanto existir, mas não
+exige nova decisão nesta versão. A implementação permanece `Not Started` e
+depende de ordem posterior do Arquiteto.
+
+Nenhum código, teste ou configuração de implementação foi alterado. Nenhum
+build, teste funcional, upload ou validação física foi iniciado nesta análise.
+
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
 **Resultado histórico:** Implementável [`Implementable`]
@@ -1055,5 +1111,6 @@ Inconsistências materiais registradas na contestação:
 A autoria da versão 0.5 havia restaurado `Pending Review`; a atuação independente
 registrada na seção 12.1 resultou em `Needs Clarification`. A autoria 0.6 da
 seção 12.2 incorpora a decisão devolvida e restaura `Pending Review` sem
-reutilizar resultados anteriores; a revisão atual da seção 12.3 resulta em
-`Needs Clarification` por `BCS-DEC-006`.
+reutilizar resultados anteriores; a seção 12.3 registra o bloqueio encontrado
+em `BCS-DEC-006`, e a análise complementar da seção 12.4 resulta em
+`Implementable` após a decisão do Arquiteto.

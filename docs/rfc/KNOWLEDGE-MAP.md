@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — revisão `Needs Clarification` em `EKM-CHG-0023`; decisão parcial `EKM-CHG-0024` torna `rename()`/`applyRenamedName()` obsoletos, mas `BCS-DEC-006`/`EKM-GAP-0011` continuam bloqueando chamadas legadas e campos públicos mutáveis; limites 63/31 permanecem definidos; baseline `esp32_dev` continua dependência separada conforme `BCS-DEC-003` |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Not Started (versão 0.6) — revisão `Implementable` em `EKM-CHG-0025`; `BCS-DEC-006` torna nome/tipo imutáveis, preserva `rename()`/`applyRenamedName()` obsoletos com retorno `void` sem mutação e mantém os ponteiros de `add*Capability()`; `EKM-GAP-0011` encerrada; baseline `esp32_dev` continua dependência separada conforme `BCS-DEC-003` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`Not Started`/`Needs Clarification` (`EKM-CHG-0023`); limites 63/31 estão definidos, mas `BCS-DEC-006` deve decidir imutabilidade ou semântica da mutação pública após registro; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`Not Started`/`Implementable` (`EKM-CHG-0025`); identidade 63/31 é finalizada antes do registro e permanece imutável; os demais contratos corrigem NVS global, validade estrutural/semântica, valve, provisioning e cooperatividade do writer |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -119,16 +119,14 @@ critérios assertáveis; a lacuna está encerrada.
 
 ### EKM-GAP-0011 — Mutabilidade da identidade após registro
 
-**Estado:** Open
+**Estado:** Closed
 
-Capabilities já registradas continuam expondo `capability_name` e `type` como
-campos públicos mutáveis, além de métodos de renomeação sem retorno de erro. O
-Arquiteto deve decidir se a identidade será imutável após registro e como
-migrar a API, ou definir validação, identidade prevalente, erro e preservação de
-efeitos para mutações suportadas. A ausência bloqueia BCS-002, BCS-022,
-BCS-AC-002 e BCS-AC-021. O Arquiteto já decidiu em `EKM-CHG-0024` marcar
-`rename()` e `applyRenamedName()` como obsoletos; comportamento legado e
-atribuição direta aos campos continuam pendentes.
+O Arquiteto completou `BCS-DEC-006` em `EKM-CHG-0025`: `capability_name` e
+`type` passam a ser imutáveis e somente legíveis depois de finalizados antes do
+registro. `rename()` e `applyRenamedName()` permanecem públicos, obsoletos e
+com retorno `void`, mas não alteram a identidade registrada. Os ponteiros
+devolvidos por `SmartSysApp::add*Capability()` permanecem como estão. BCS-002,
+BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 
 ## 5. Baseline inicial
 
@@ -188,3 +186,6 @@ atribuição direta aos campos continuam pendentes.
 - `EKM-CHG-0024`: decisão parcial do Arquiteto marca `rename()` e
   `applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
   a revisão da versão 0.6.
+- `EKM-CHG-0025`: o Arquiteto completa `BCS-DEC-006`; a análise integral fecha
+  `EKM-GAP-0011` e promove a revisão da versão 0.6 para `Implementable`,
+  preservando implementação `Not Started`.

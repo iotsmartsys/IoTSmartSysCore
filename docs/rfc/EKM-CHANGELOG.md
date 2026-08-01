@@ -1539,3 +1539,56 @@ implementação permanece não autorizada.
 
 O Arquiteto deve completar `BCS-DEC-006` quanto ao comportamento legado e à
 atribuição direta aos campos públicos antes de nova autoria integral.
+
+## EKM-CHG-0025 — Resolução da mutabilidade da identidade e análise complementar
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Registrar as decisões finais do Arquiteto para `BCS-DEC-006`, reconciliar seus
+efeitos normativos e determinar, como Engenheiro Analista, se a versão integral
+0.6 pode ser implementada sem outra decisão ausente.
+
+### Decisões confirmadas
+
+- `capability_name` e `type` passam a ser imutáveis: o builder deve resolvê-los,
+  validá-los e finalizá-los antes do registro; depois disso, a API preserva
+  leitura e remove atribuição pública;
+- `rename()` e `applyRenamedName()` permanecem públicos, obsoletos e com retorno
+  `void`, mas não alteram a identidade de uma capability registrada;
+- os métodos `SmartSysApp::add*Capability()` mantêm os ponteiros atualmente
+  devolvidos para as capabilities já registradas.
+
+### Resultado da análise
+
+A revisão da versão 0.6 foi promovida para `Implementable`, preservando a
+especificação como `Proposed`, a implementação como `Not Started` e a entrega
+como `Not Ready`. BCS-002, BCS-020, BCS-022, BCS-AC-002 e BCS-AC-021 passaram a
+definir e comprovar finalização pré-registro, leitura sem atribuição, ausência de
+mutação pelos métodos obsoletos, manutenção dos retornos `void` e preservação
+dos ponteiros públicos. `EKM-GAP-0011` foi encerrada.
+
+A confrontação integral de BCS-001 a BCS-029, BCS-AC-001 a BCS-AC-028,
+decisões, falhas, relações, dependências e gates não encontrou outra decisão
+normativa, de produto ou arquitetura ausente. `BCS-DEC-001` permanece fora do
+escopo e não bloqueante. A falha conhecida do baseline `esp32_dev` continua uma
+dependência externa com contrato responsável em `BCS-DEC-003`; ela não impede
+implementabilidade, mas continuará reprovando BCS-AC-022 até ser corrigida e o
+build canônico terminar com sucesso.
+
+### Validações e limitações
+
+Foram executadas inspeção estática das superfícies públicas e validação de
+integridade textual. Nenhum código, teste ou configuração de implementação foi
+alterado; nenhum build, teste funcional, upload ou validação física foi
+iniciado. `Implementable` não autoriza implementação.
+
+### Próximo passo
+
+Uma ordem posterior do Arquiteto é necessária para iniciar a implementação
+integral de `IOTSSC-BINARY-COMMAND-STATE@0.6`. A correção do baseline
+`esp32_dev`, se ainda necessária, permanece entrega separada conforme
+`BCS-DEC-003`.
