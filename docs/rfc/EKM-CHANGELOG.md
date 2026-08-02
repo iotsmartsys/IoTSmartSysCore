@@ -1986,3 +1986,12 @@ A especificação está `Active` / `Validated` / `Ready for Integration`. Não s
 declara Concluída [`Done`]: nenhuma integração à `main` foi confirmada nesta
 atuação. A promoção para `Done` depende de confirmação explícita futura do
 Arquiteto de que o resultado foi integrado à referência de produção.
+
+### Reconciliação de consistência
+
+Na conferência final da atuação, o Revisor corrigiu duas referências residuais
+do mapa de conhecimento que ainda descreviam a implementação como
+`Proposed`/`In Progress`, acrescentou `EKM-CHG-0032` à trilha histórica do mapa
+e tornou explicitamente histórica a frase de abertura da seção 12 da
+especificação. Não houve mudança de requisito, código ou decisão, nem execução
+de build, teste, upload ou validação física adicional.

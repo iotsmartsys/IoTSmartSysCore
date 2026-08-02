@@ -34,7 +34,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Proposed`/`In Progress` (`EKM-CHG-0026`, `EKM-CHG-0027`); identidade 63/31 somente para leitura implementada, mas a revisão encontrou classificação incorreta de falhas NVS, substituição incompleta de `blink` e evidência insuficiente do writer assíncrono |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -217,3 +217,8 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   versão 0.6 para `Implemented`. BCS-REV-003 permanece `Deferred` por
   `BCS-DEC-007`. Validação física (seção 8.5) e aprovação de integração
   continuam pendentes de decisão do Arquiteto.
+- `EKM-CHG-0032`: registra a validação física e a aprovação explícita do
+  Arquiteto, promove a persistência binária 0.6 para
+  `Active`/`Validated`/`Ready for Integration` e fecha `EKM-CHG-0026` por
+  objetivo cumprido. `Done` permanece condicionado à confirmação de integração
+  à `main`; BCS-REV-003 e as suítes em quarentena continuam como dívida futura.

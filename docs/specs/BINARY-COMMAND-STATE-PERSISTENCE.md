@@ -992,11 +992,12 @@ versão anterior, ela:
 - preserva `BCS-DEC-001` como pendente não bloqueante e registra
   `BCS-DEC-002` a `BCS-DEC-007` como confirmadas.
 
-Os estados normativo, de implementação e de entrega permanecem `Proposed`,
-`Not Started` e `Not Ready`. A revisão independente da versão 0.6 registrada em
-`EKM-CHG-0023` encontrou `BCS-DEC-006`; após as decisões do Arquiteto, a análise
-integral complementar em `EKM-CHG-0025` promove a revisão para `Implementable`,
-sem reutilizar o estado de versões anteriores.
+A versão 0.6 iniciou este ciclo como `Proposed`, `Not Started` e `Not Ready`.
+A revisão independente registrada em `EKM-CHG-0023` encontrou `BCS-DEC-006`;
+após as decisões do Arquiteto, a análise integral complementar em
+`EKM-CHG-0025` promoveu a revisão para `Implementable`, sem reutilizar o estado
+de versões anteriores. As atuações posteriores registradas nas subseções 12.5
+a 12.11 culminam nos estados atuais apresentados no cabeçalho desta fonte.
 
 ### 12.1 Revisão de implementabilidade da versão 0.5
 
