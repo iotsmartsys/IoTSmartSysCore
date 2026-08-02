@@ -45,3 +45,13 @@ do que benefício.
 
 O primeiro artefato de navegação do piloto é a
 [árvore do conhecimento](KNOWLEDGE-MAP.md).
+
+## Registro do piloto
+
+O Consultor de Arquitetura preparou o contrato e o mapa sob supervisão do
+Arquiteto, somente para Bootstrap + Registry de NVS. O mapa Mermaid foi
+confirmado pelo Arquiteto como representação próxima ao resultado pretendido.
+A validação confrontou documentação e código e aprovou a integridade textual;
+build e testes não foram executados por não haver mudança funcional. Como o
+Consultor elaborou o material, este resultado não constitui revisão
+independente.
