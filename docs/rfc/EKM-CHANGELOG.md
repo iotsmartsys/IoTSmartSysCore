@@ -1595,7 +1595,8 @@ integral de `IOTSSC-BINARY-COMMAND-STATE@0.6`. A correção do baseline
 
 ## EKM-CHG-0026 — Implementação da persistência de estados binários 0.6
 
-**Estado:** Open
+**Estado:** Closed (fechada por `EKM-CHG-0032`, após validação física e
+aprovação do Arquiteto)
 
 **Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
 
@@ -1684,6 +1685,14 @@ O Arquiteto deve decidir sobre a correção autorizada do baseline `esp32_dev` e
 das quatro suítes preexistentes quebradas, e disponibilizar um alvo ESP32-S3
 para que `pio test -e esp32s3_test` e BCS-AC-024 possam alcançar estado
 terminal.
+
+### Fechamento
+
+Os impedimentos acima foram resolvidos por `EKM-CHG-0030` (BCS-REV-001/002 e
+baseline) e confirmados por `EKM-CHG-0031` (gate estático). O Arquiteto validou
+a implementação e o firmware em hardware e aprovou a promoção; `EKM-CHG-0032`
+registra essa evidência e promove os estados. Esta transação é encerrada com
+objetivo cumprido.
 
 ## EKM-CHG-0027 — Revisão técnica da implementação da persistência binária 0.6
 
@@ -1932,3 +1941,48 @@ física (seção 8.5) nem autorização de integração, que continuam condicion
 a validação suficiente do Tech Lead e decisão explícita do Arquiteto.
 Recomenda-se ao Arquiteto autorizar a etapa de validação física em hardware
 como próximo passo.
+
+## EKM-CHG-0032 — Validação física do Arquiteto e promoção final da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Registrar, como Engenheiro Revisor, a validação física e a aprovação
+explícita do Arquiteto recebidas em ordem direta, e promover os estados do
+ciclo técnico conforme a saída do perfil de Revisor.
+
+### Evidência humana recebida
+
+O Arquiteto declarou ter validado pessoalmente a implementação e o firmware da
+versão 0.6 e aprovou explicitamente a promoção ao próximo ator. Esta atuação
+não reexecuta nem substitui essa validação: registra-a como recebida, conforme
+a regra de que, com validação do Tech Lead e aprovação do Arquiteto já
+fornecidas, o Revisor registra a evidência sem repetir a decisão nem criar
+aprovação própria.
+
+### Promoções
+
+- Estado normativo: Proposta → Vigente [`Active`];
+- Estado da implementação: Implementada → Validada [`Validated`];
+- Estado da entrega: Não pronta → Pronta para integração
+  [`Ready for Integration`];
+- `EKM-CHG-0026` (implementação integral da versão 0.6) é fechada, por
+  objetivo cumprido e validado.
+
+### Lacunas preservadas
+
+- `BCS-DEC-001` (factory reset) continua pendente e fora de escopo;
+- `BCS-REV-003` continua `Deferred` por `BCS-DEC-007`;
+- as 18 suítes preexistentes continuam `SKIPPED` por quarentena vigente;
+- `BCS-AC-024` e a margem de pilha de `BCS-AC-028` continuam sem oráculo
+  automatizado próprio.
+
+### Resultado
+
+A especificação está `Active` / `Validated` / `Ready for Integration`. Não se
+declara Concluída [`Done`]: nenhuma integração à `main` foi confirmada nesta
+atuação. A promoção para `Done` depende de confirmação explícita futura do
+Arquiteto de que o resultado foi integrado à referência de produção.

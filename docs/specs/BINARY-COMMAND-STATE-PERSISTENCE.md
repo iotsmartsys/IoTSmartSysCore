@@ -6,11 +6,11 @@
 
 **Versão:** 0.6
 
-**Estado normativo:** Proposta [`Proposed`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Implementável [`Implementable`]
 
@@ -1485,6 +1485,56 @@ ordem. Recomenda-se ao Arquiteto autorizar a etapa de validação física em
 hardware (seção 8.5, ao menos duas capabilities de identidades distintas,
 ciclo completo de desligar/religar) como próximo passo para viabilizar
 `Validated` e a eventual integração à `main`.
+
+### 12.11 — Validação física do Arquiteto e promoção final do ciclo técnico
+
+**Resultado:** promovida ao estado normativo Vigente [`Active`], à
+implementação Validada [`Validated`] e à entrega Pronta para integração
+[`Ready for Integration`].
+
+O Arquiteto declarou, em ordem direta ao Engenheiro Revisor, ter validado
+pessoalmente a implementação e o firmware da versão 0.6 e aprovou
+explicitamente a promoção ao próximo ator. Esta seção registra essa evidência
+humana recebida, conforme a saída do perfil de Revisor, sem reinterpretá-la
+nem substituí-la por verificação própria: a validação em hardware exigida pela
+seção 8.5 é responsabilidade do Arquiteto/Tech Lead, não do Revisor, e não foi
+reexecutada nem detalhada nesta atuação além do que foi declarado.
+
+Com a validação humana registrada, o gate estático da seção 8.4 já confirmado
+em 12.10 (build canônico `SUCCESS`, `git diff --check` aprovado, achados
+BCS-REV-001/002 fechados, matriz BCS-AC preservada) e a aprovação explícita do
+Arquiteto, os três estados do ciclo técnico desta versão são promovidos:
+
+- **Estado normativo:** Proposta → Vigente [`Active`];
+- **Estado da implementação:** Implementada → Validada [`Validated`];
+- **Estado da entrega:** Não pronta → Pronta para integração
+  [`Ready for Integration`].
+
+A transação `EKM-CHG-0026` (implementação integral da versão 0.6, aberta desde
+`In Progress`) é encerrada, pois seu objetivo foi cumprido e validado.
+
+#### Lacunas e limitações que permanecem abertas
+
+- `BCS-DEC-001` (factory reset apagar ou não o snapshot binário) continua
+  explicitamente pendente e fora do escopo autorizado desta versão;
+- `BCS-REV-003` (seams/oráculos insuficientes do escritor assíncrono para
+  BCS-AC-028) permanece dívida técnica `Deferred` por `BCS-DEC-007`, para
+  reativação futura junto com as 18 suítes em quarentena;
+- as suítes preexistentes seguem `SKIPPED` por `test_ignore` nominal; sua
+  reativação exige decisão específica do Arquiteto sobre maturidade de testes;
+- `BCS-AC-024` e a margem de pilha de `BCS-AC-028` permanecem sem evidência
+  automatizada própria desta atuação (a validação declarada pelo Arquiteto
+  cobre o critério físico da seção 8.5, não substitui os oráculos
+  automatizados quando as suítes forem reativadas).
+
+#### Encerramento
+
+Não se declara Concluída [`Done`]: a existência desta aprovação não comprova,
+por si só, integração à referência de produção (`main`). Esta atuação não
+realizou merge, release, deploy nem upload. Quando o Arquiteto confirmar
+explicitamente que o resultado aceito foi integrado à `main`, a entrega deve
+ser promovida para Concluída [`Done`] em atuação específica que registre essa
+evidência.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 

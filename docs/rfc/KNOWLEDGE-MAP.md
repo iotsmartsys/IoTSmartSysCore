@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (revisão estática independente promove a persistência binária 0.6 a Implemented)
+**Última atualização:** 01/08/2026 (validação física do Arquiteto promove a persistência binária 0.6 a Active/Validated/Ready for Integration)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Implemented (versão 0.6) — revisão estática independente em `EKM-CHG-0031` confirma BCS-REV-001/002 corrigidos, gate da seção 8.4 satisfeito (`pio run -e esp32_dev` `SUCCESS`, `git diff --check` aprovado, sem achados abertos) e promove a implementação; entrega permanece `Not Ready` até validação física (seção 8.5) e decisão do Arquiteto |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
