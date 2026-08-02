@@ -10,63 +10,52 @@ Espressif deposita nele serviços construídos para o boot, e `ServiceManager`
 fornece os pontos de acesso. Dois domínios usam NVS sem compartilhar namespace
 ou modelo de dados: settings e estados binários de capabilities.
 
-## Árvore
+## Mapa do fluxo
 
-```text
-Bootstrap + Registry de NVS
+```mermaid
+flowchart TD
+    APP["SmartSysApp::SmartSysApp()"] --> SM["ServiceManager::init()"]
 
-├── 1. Construção do grafo de serviços
-│   ├── SmartSysApp::SmartSysApp()
-│   │   └── ServiceManager::init()
-│   ├── ServiceManager::ServiceManager()
-│   │   ├── ServiceProvider::init()
-│   │   ├── getPlatformServiceRegistrar()
-│   │   └── EspressifPlatformServiceRegistrar::registerPlatformServices()
-│   │       ├── registra logger e time provider
-│   │       ├── registra SettingsManager, SettingsGate e settings provider
-│   │       ├── registra WiFiManager
-│   │       ├── registra EspNvsBinaryCapabilityStateProvider
-│   │       └── carrega uma vez o snapshot binário da NVS para memória
-│   └── ServiceManager::registerServices()
-│       └── conecta logger e time provider aos acessos globais do Core
-│
-├── 2. Inicialização em SmartSysApp::setup()
-│   ├── ativa o writer assíncrono de estados binários
-│   └── ConnectivityBootstrap::run()
-│       └── SettingsManager::init()
-│           └── EspIdfNvsSettingsProvider::load()
-│               ├── settings válidos → cache disponível
-│               └── ausência/falha → caminho de provisioning
-│
-├── 3. Seleção do caminho de boot
-│   ├── Provisioning
-│   │   └── ProvisioningController::begin(); setup retorna
-│   └── Operacional
-│       ├── WiFiManager::begin()
-│       ├── CapabilityController::setup()
-│       │   └── CapabilityManager::setup()
-│       ├── dispatcher e MQTT
-│       └── tasks de runtime
-│
-├── 4. Restauração de uma capability binária
-│   ├── BinaryCommandCapability::setup()
-│   │   ├── inicializa o adapter de hardware
-│   │   └── consulta tryGet(capability_name, type)
-│   ├── tryGet lê somente o snapshot em memória
-│   ├── registro encontrado
-│   │   └── aplica pelo caminho normal de comando e confirma por read-back
-│   └── ausente, inválido, rejeitado ou não confirmado
-│       └── preserva o estado obtido do hardware como baseline
-│
-└── 5. Persistência durante o runtime
-    ├── transição estável confirmada pela capability
-    ├── requestSave(capability_name, type, isOn)
-    │   └── atualiza o estado desejado em memória e retorna sem acessar NVS
-    └── writer único
-        ├── consolida a mudança mais recente de cada identidade
-        ├── grava o snapshot no namespace exclusivo
-        ├── executa commit
-        └── só após sucesso atualiza a visão do último snapshot persistido
+    subgraph GRAPH["1. Construção do grafo de serviços"]
+        SM --> SP["ServiceProvider::init()"]
+        SM --> PR["getPlatformServiceRegistrar()"]
+        PR --> ER["EspressifPlatformServiceRegistrar"]
+        ER --> REG["Registra logger, time, settings, Wi-Fi e storage binário"]
+        REG --> LOGTIME["ServiceManager conecta Log e Time"]
+        REG --> BSLOAD["loadSnapshot() lê iotbcs/state uma vez"]
+        BSLOAD --> BSCACHE["Snapshot binário em memória"]
+    end
+
+    subgraph BOOT["2. Inicialização e escolha do boot"]
+        APP --> SETUP["SmartSysApp::setup()"]
+        SETUP --> WRITER["Ativa writer binário assíncrono"]
+        WRITER --> CB["ConnectivityBootstrap::run()"]
+        CB --> SINIT["SettingsManager::init()"]
+        SINIT --> SLOAD["EspIdfNvsSettingsProvider::load() lê iotsys/settings"]
+        SLOAD -->|"settings válidos"| WIFI["Boot operacional: WiFiManager::begin()"]
+        SLOAD -->|"ausência, falha ou settings inválidos"| PROV["ProvisioningController::begin() e retorno"]
+        WIFI --> CAPSETUP["CapabilityController → CapabilityManager::setup()"]
+        CAPSETUP --> RUNTIME["Dispatcher, MQTT e tasks de runtime"]
+    end
+
+    subgraph RESTORE["3. Restauração das capabilities binárias"]
+        CAPSETUP --> HWSETUP["BinaryCommandCapability inicializa o adapter"]
+        HWSETUP --> TRYGET["tryGet(capability_name, type)"]
+        BSCACHE -.->|"consulta sem nova leitura NVS"| TRYGET
+        TRYGET -->|"registro encontrado"| APPLY["Aplica pelo caminho normal de comando"]
+        APPLY --> READBACK["Confirma por read-back e adota como baseline"]
+        TRYGET -->|"ausente ou inválido"| DEFAULT["Preserva o estado atual do hardware como baseline"]
+        APPLY -->|"rejeitado ou não confirmado"| DEFAULT
+    end
+
+    subgraph SAVE["4. Persistência durante o runtime"]
+        RUNTIME --> TRANSITION["Transição estável confirmada"]
+        TRANSITION --> REQUEST["requestSave() atualiza o desejado em memória"]
+        REQUEST -->|"retorna sem acessar NVS"| ASYNC["Writer único consolida por identidade"]
+        ASYNC --> COMMIT["Grava e executa commit em iotbcs/state"]
+        COMMIT -->|"sucesso"| BSCACHE
+        COMMIT -->|"falha"| KEEP["Mantém estado lógico e de hardware; último commit permanece"]
+    end
 ```
 
 ## Dois domínios NVS no mesmo bootstrap
