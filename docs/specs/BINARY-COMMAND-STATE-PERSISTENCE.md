@@ -8,7 +8,7 @@
 
 **Estado normativo:** Proposta [`Proposed`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -1396,6 +1396,95 @@ confirmar estaticamente o encerramento de BCS-REV-001 e BCS-REV-002, confrontar
 o gate atualizado e emitir recomendação de promoção. Esta implementação não
 promove a si própria: os estados permanecem `Proposed`, `In Progress`, `Not
 Ready` e `Implementable` até a revisão.
+
+### 12.10 — Confirmação estática independente de BCS-REV-001/002 e do gate atualizado
+
+**Resultado:** aprovada para promoção da implementação a Implementada
+[`Implemented`]. Estado normativo, de entrega e de implementabilidade
+inalterados.
+
+Atuação do Engenheiro Revisor solicitada pela seção 12.9: confirmar
+estaticamente o encerramento de `BCS-REV-001` e `BCS-REV-002`, confrontar o
+gate atualizado da seção 8.4 e emitir recomendação de promoção. A revisão
+comparou `git diff 0d7f151..HEAD -- src/` e confirmou que, desde a entrega de
+código original, apenas três arquivos de produção foram alterados —
+`src/Contracts/Capabilities/LEDCapability.h`,
+`src/Core/Capabilities/LEDCapability.cpp` e
+`src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.cpp`
+— mais `platformio.ini`, autorizado separadamente por `BCS-DEC-003`. Nenhuma
+outra área já confirmada pelas revisões das seções 12.6/12.8 (identidade,
+protocolo comum, escritor assíncrono, grafo de serviços, provisioning) foi
+tocada, portanto essas conclusões permanecem válidas sem necessidade de nova
+inspeção integral.
+
+#### Achados
+
+1. **BCS-REV-001 — encerrado.** Em
+   `EspNvsBinaryCapabilityStateProvider::loadSnapshot()`, a abertura do
+   namespace e a consulta de metadado do blob agora tratam somente
+   `ESP_ERR_NVS_NOT_FOUND` como ausência com retorno `Ok`; qualquer outro
+   `esp_err_t` é registrado em log e devolvido via `mapEspErr()` como falha de
+   storage observável. Satisfaz BCS-017 e BCS-021.
+2. **BCS-REV-002 — encerrado.** `LEDCapability` agora sobrescreve
+   `applyCommand()`: todo comando explícito — alcançado tanto por
+   `turnOn()`/`turnOff()`/`toggle()`/`power()` quanto pelo caminho de comando
+   remoto em `CapabilityCommandProcessor::process()`, que despacha por
+   `ICommandCapability::applyCommand` virtual — encerra `blink`
+   (`blinking=false`, `blinkInterval=0`) antes de aplicar o comando, executa
+   read-back via `syncFromHardware()` e consolida o estado estável uma única
+   vez via `confirmStableState()`; a deduplicação existente
+   (`_hasStableRequest`/`_lastStableIsOn`) impede uma segunda solicitação
+   quando `syncFromHardware()` já sinalizou a mudança. As alternâncias do
+   próprio temporizador continuam usando a chamada qualificada ao método base
+   e permanecem transitórias. Satisfaz BCS-013, BCS-016 e `BCS-DEC-002`.
+3. **BCS-REV-003 — permanece `Deferred`.** Nenhuma alteração de código a
+   afeta nesta atuação; a classificação de `BCS-DEC-007` continua vigente e
+   não integra o gate atual.
+
+Nenhum novo achado funcional ou de segurança foi identificado por inspeção
+estática nos três arquivos alterados nem nas áreas adjacentes que os
+consomem (`CapabilityHelpers.h`, `ICommandCapability.h`,
+`CapabilityCommandProcessor.cpp`).
+
+#### Evidência
+
+| Verificação | Resultado terminal |
+|---|---|
+| `git diff 0d7f151..HEAD -- src/` | Confirma o recorte exato dos três arquivos de produção corrigidos; nenhuma regressão de escopo. |
+| `pio run -e esp32_dev` (rebuild limpo, executado nesta atuação) | `SUCCESS` — RAM 24,1%, Flash 90,1%. BCS-AC-022 deixa de estar bloqueado pelo baseline. |
+| `git diff --check` | Aprovado, sem erros. |
+| `configs/esp32s3-test.ini` | Enumeração nominal das 18 suítes em `test_ignore`, sem curinga, conforme `BCS-DEC-007`; nenhuma suíte foi compilada ou executada nesta atuação. |
+
+#### Limitações da revisão
+
+- Revisão exclusivamente estática e de build; nenhuma validação em hardware
+  foi realizada. A validação física da seção 8.5 permanece pendente para a
+  promoção a `Validated`.
+- As 18 suítes em quarentena não foram compiladas nem executadas, por decisão
+  vigente (`BCS-DEC-007`); nenhum resultado delas constitui evidência desta
+  revisão. A matriz BCS-AC permanece com os critérios dependentes classificados
+  `Deferred`, nunca promovidos por inferência.
+- `BCS-AC-024` e a medição de margem de pilha de `BCS-AC-028` continuam não
+  verificados por ausência de alvo ESP32-S3 conectado.
+
+#### Recomendação do Revisor
+
+Os quatro critérios do gate da seção 8.4 estão satisfeitos: `pio run
+-e esp32_dev` termina em `SUCCESS`; `git diff --check` está aprovado; a
+revisão estática terminal não encontrou achados funcionais ou de segurança
+abertos, com `BCS-REV-001` e `BCS-REV-002` confirmados corrigidos e
+`BCS-REV-003` corretamente `Deferred`; e a matriz BCS-AC permanece preservada
+sem promoção artificial de critérios dependentes de suítes em quarentena.
+Por isso a implementação é promovida para Implementada [`Implemented`].
+
+Esta promoção não constitui aprovação normativa (`Active`), validação física
+(`Validated`, seção 8.5) nem autorização de integração (`Ready for
+Integration`/`Done`) — essas permanecem condicionadas a validação suficiente
+do Tech Lead e decisão explícita do Arquiteto, que não foram fornecidas nesta
+ordem. Recomenda-se ao Arquiteto autorizar a etapa de validação física em
+hardware (seção 8.5, ao menos duas capabilities de identidades distintas,
+ciclo completo de desligar/religar) como próximo passo para viabilizar
+`Validated` e a eventual integração à `main`.
 
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 

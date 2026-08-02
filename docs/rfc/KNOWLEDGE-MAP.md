@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (correção dos achados da persistência binária 0.6)
+**Última atualização:** 01/08/2026 (revisão estática independente promove a persistência binária 0.6 a Implemented)
 
 ## 1. Governança
 
@@ -24,7 +24,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | In Progress (versão 0.6) — BCS-REV-001/002 corrigidos pelo Implementador em `EKM-CHG-0030` e build `esp32_dev` aprovado; BCS-REV-003 permanece `Deferred` por `BCS-DEC-007`; aguarda nova revisão estática independente, sem promoção própria |
+| Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Proposed | Implemented (versão 0.6) — revisão estática independente em `EKM-CHG-0031` confirma BCS-REV-001/002 corrigidos, gate da seção 8.4 satisfeito (`pio run -e esp32_dev` `SUCCESS`, `git diff --check` aprovado, sem achados abertos) e promove a implementação; entrega permanece `Not Ready` até validação física (seção 8.5) e decisão do Arquiteto |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -210,3 +210,10 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   separadamente o ajuste versionado do environment `esp32_dev` conforme
   `BCS-DEC-003` e obtém build canônico `SUCCESS`; testes permanecem em
   quarentena e uma nova revisão estática independente é solicitada.
+- `EKM-CHG-0031`: revisão técnica independente confirma estaticamente o
+  encerramento de BCS-REV-001/002, reexecuta `pio run -e esp32_dev` em rebuild
+  limpo (`SUCCESS`) e `git diff --check` (aprovado), confronta o gate da seção
+  8.4 sem usar suítes em quarentena como evidência e promove a implementação da
+  versão 0.6 para `Implemented`. BCS-REV-003 permanece `Deferred` por
+  `BCS-DEC-007`. Validação física (seção 8.5) e aprovação de integração
+  continuam pendentes de decisão do Arquiteto.

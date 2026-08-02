@@ -1874,3 +1874,61 @@ A especificação permanece `Proposed`, a implementação `In Progress`, a entre
 `Not Ready` e a revisão de implementabilidade `Implementable`. Solicita-se nova
 revisão estática independente para confirmar o encerramento de BCS-REV-001/002
 e emitir recomendação de promoção; BCS-REV-003 permanece `Deferred`.
+
+## EKM-CHG-0031 — Revisão estática independente promove a persistência binária 0.6 a Implemented
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Atuação do Engenheiro Revisor solicitada pela seção 12.9: confirmar
+estaticamente o encerramento de `BCS-REV-001` e `BCS-REV-002`, confrontar o
+gate atualizado da seção 8.4 e emitir recomendação de promoção.
+
+### Revisão
+
+- `git diff 0d7f151..HEAD -- src/` confirma que, desde a entrega de código
+  original, apenas `LEDCapability.h`, `LEDCapability.cpp` e
+  `EspNvsBinaryCapabilityStateProvider.cpp` foram alterados em produção, mais
+  `platformio.ini` (autorizado separadamente por `BCS-DEC-003`). As áreas já
+  confirmadas pelas revisões anteriores (identidade, protocolo comum, escritor
+  assíncrono, grafo de serviços, provisioning) não foram tocadas;
+- `BCS-REV-001` confirmado corrigido: `loadSnapshot()` trata somente
+  `ESP_ERR_NVS_NOT_FOUND` como ausência; qualquer outro erro de abertura ou de
+  consulta de metadado é registrado e devolvido como falha de storage;
+- `BCS-REV-002` confirmado corrigido: `LEDCapability::applyCommand()` encerra
+  `blink` para todo comando explícito — inclusive pelo caminho de comando
+  remoto, que despacha por `ICommandCapability::applyCommand` virtual —, aplica
+  pelo protocolo comum, faz read-back e consolida o estado estável no máximo
+  uma vez, com a deduplicação existente prevenindo dupla solicitação;
+  alternâncias do próprio temporizador continuam transitórias;
+- `BCS-REV-003` permanece `Deferred` por `BCS-DEC-007`, sem alteração de código
+  nesta atuação e sem integrar o gate atual;
+- nenhum novo achado funcional ou de segurança foi identificado por inspeção
+  estática nos arquivos alterados e nas áreas adjacentes que os consomem.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev` (rebuild limpo, executado nesta atuação): `SUCCESS`
+  — RAM 24,1%, Flash 90,1%;
+- `git diff --check`: aprovado, sem erros;
+- `configs/esp32s3-test.ini`: enumeração nominal das 18 suítes em
+  `test_ignore` confirmada, sem curinga, conforme `BCS-DEC-007`; nenhuma suíte
+  foi compilada ou executada nesta atuação;
+- revisão exclusivamente estática e de build; nenhuma validação em hardware
+  foi realizada; `BCS-AC-024` e a margem de pilha de `BCS-AC-028` continuam não
+  verificados por ausência de alvo ESP32-S3;
+- nenhum upload, release ou deploy foi realizado.
+
+### Resultado
+
+Os quatro critérios do gate da seção 8.4 estão satisfeitos. A implementação da
+versão 0.6 é promovida para Implementada [`Implemented`]. A especificação
+permanece `Proposed`, a entrega `Not Ready` e a revisão de implementabilidade
+`Implementable`: esta atuação não constitui aprovação normativa, validação
+física (seção 8.5) nem autorização de integração, que continuam condicionadas
+a validação suficiente do Tech Lead e decisão explícita do Arquiteto.
+Recomenda-se ao Arquiteto autorizar a etapa de validação física em hardware
+como próximo passo.
