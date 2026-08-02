@@ -233,23 +233,38 @@ namespace iotsmartsys::platform::espressif
 
         nvs_handle_t h;
         err = _nvs.open(NVS_NAMESPACE, NVS_READONLY, &h);
-        if (err != ESP_OK)
+        if (err == ESP_ERR_NVS_NOT_FOUND)
         {
             // No namespace yet (first boot / erased NVS) is a legitimate absence,
             // not a failure (BCS-011): the cache stays empty and defaults apply.
             logger().info("BinaryCapabilityState", "No stored snapshot (rc=%d); using defaults.", static_cast<int>(err));
             return StateResult::Ok;
         }
+        if (err != ESP_OK)
+        {
+            // BCS-017/BCS-021: only NOT_FOUND means absence. An unavailable or
+            // otherwise failing namespace remains an observable storage failure.
+            logger().error("BinaryCapabilityState", "NVS namespace open failed on read (rc=%d).", static_cast<int>(err));
+            return mapEspErr(err);
+        }
 
         // Metadata-only query: it does not copy blob content and therefore is
         // not the single data read allowed by BCS-007.
         std::size_t required = 0;
         err = _nvs.getBlob(h, NVS_KEY, nullptr, &required);
-        if (err != ESP_OK)
+        if (err == ESP_ERR_NVS_NOT_FOUND)
         {
             _nvs.close(h);
             logger().info("BinaryCapabilityState", "No stored snapshot key (rc=%d); using defaults.", static_cast<int>(err));
             return StateResult::Ok;
+        }
+        if (err != ESP_OK)
+        {
+            _nvs.close(h);
+            // BCS-017/BCS-021: metadata read failures are storage failures and
+            // must never be reported as a missing key.
+            logger().error("BinaryCapabilityState", "Snapshot metadata read failed (rc=%d).", static_cast<int>(err));
+            return mapEspErr(err);
         }
 
         if (required != sizeof(StoredSnapshot))

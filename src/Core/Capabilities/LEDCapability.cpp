@@ -25,9 +25,9 @@ namespace iotsmartsys::core
                 transientCycle = true;
                 beginTransientCycle();
                 if (isOn())
-                    turnOff();
+                    BinaryCommandCapability::applyCommand(CapabilityCommand{type.c_str(), STATE_OFF});
                 else
-                    turnOn();
+                    BinaryCommandCapability::applyCommand(CapabilityCommand{type.c_str(), STATE_ON});
             }
         }
 
@@ -36,6 +36,31 @@ namespace iotsmartsys::core
         if (transientCycle)
         {
             endTransientCycle();
+        }
+    }
+
+    void LEDCapability::applyCommand(CapabilityCommand command)
+    {
+        const bool replacesBlink = blinking;
+        if (replacesBlink)
+        {
+            // BCS-DEC-002/BCS-REV-002: every explicit command replaces blink.
+            // Timer-owned transitions bypass this override above, so they remain
+            // transient and do not terminate their own mode.
+            blinking = false;
+            blinkInterval = 0;
+        }
+
+        BinaryCommandCapability::applyCommand(command);
+
+        if (replacesBlink)
+        {
+            // Confirm immediately because the current logical value may already
+            // equal the requested value. syncFromHardware() persists a changed
+            // value; confirmStableState() covers the unchanged case. The common
+            // stable-state deduplication guarantees at most one request.
+            syncFromHardware();
+            confirmStableState();
         }
     }
 

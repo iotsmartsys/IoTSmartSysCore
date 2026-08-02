@@ -13,6 +13,7 @@ namespace iotsmartsys::core
             : LEDCapability(capability_name.c_str(), hardwareAdapter, event_sink) {}
 
         void handle() override;
+        void applyCommand(CapabilityCommand command) override;
 
         void executeCommand(const char *state);
         void blink(unsigned long intervalMs);
