@@ -1830,3 +1830,47 @@ ordenada, mantendo as suítes em quarentena.
 A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
 `Not Ready` e a revisão de implementabilidade `Implementable`. Não há aprovação
 de integração.
+
+## EKM-CHG-0030 — Correção dos achados da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Corrigir, como Engenheiro Implementador, BCS-REV-001 e BCS-REV-002, entregar
+separadamente a correção mínima do baseline `esp32_dev` autorizada por
+`BCS-DEC-003` e devolver o resultado a nova revisão estática.
+
+### Implementação
+
+- o provider NVS aceita como ausência somente `ESP_ERR_NVS_NOT_FOUND` em open e
+  na consulta de metadados. Demais erros são registrados e retornados como
+  falha de storage;
+- `LEDCapability::applyCommand()` encerra `blink` para qualquer comando
+  explícito, aplica e confirma o valor pelo protocolo comum e consolida no
+  máximo uma solicitação estável. Alternâncias internas do timer usam o caminho
+  base qualificado e permanecem transitórias;
+- em commit separado, `esp32_dev` passou a mapear os dois identificadores
+  lógicos de LED usados pelo entrypoint local para `LED_PIN` e
+  `ESP32_LED_BUILTIN`. O arquivo local ignorado `src/main.cpp` não foi
+  incorporado nem modificado como fonte versionada.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `SUCCESS`, com firmware compilado e linkado, 24,1% de
+  RAM e 90,1% de flash;
+- a tentativa anterior bloqueada pela permissão do lock global do PlatformIO
+  não iniciou compilação e não é contada como evidência;
+- `git diff --check`: aprovado antes do registro documental;
+- nenhuma suíte foi compilada ou executada, conforme `BCS-DEC-007`;
+- nenhum upload, validação física, release ou deploy foi realizado.
+
+### Resultado e próximo passo
+
+As correções foram implementadas, mas a atuação não promove a própria entrega.
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`. Solicita-se nova
+revisão estática independente para confirmar o encerramento de BCS-REV-001/002
+e emitir recomendação de promoção; BCS-REV-003 permanece `Deferred`.

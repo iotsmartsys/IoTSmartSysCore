@@ -1347,6 +1347,56 @@ permanecem em quarentena e não integram essa recomendação. Os estados
 `Proposed`, `In Progress`, `Not Ready` e `Implementable` permanecem
 inalterados, sem aprovação de integração.
 
+### 12.9 Correção dos achados BCS-REV-001/002 e do baseline
+
+**Estado da implementação:** Em andamento [`In Progress`], aguardando nova
+revisão estática.
+
+O Engenheiro Implementador realizou o recorte ordenado pelo Arquiteto:
+
+- **BCS-REV-001 corrigido em código:** somente `ESP_ERR_NVS_NOT_FOUND` na
+  abertura do namespace ou na consulta de metadados do blob segue o fluxo de
+  ausência com retorno `Ok`. Qualquer outro erro agora produz log de falha de
+  storage e retorna o `StateResult` mapeado, preservando a distinção exigida por
+  BCS-017 e BCS-021;
+- **BCS-REV-002 corrigido em código:** `LEDCapability` sobrescreve
+  `applyCommand()` para que todo comando explícito — inclusive o recebido pelo
+  processor MQTT ou pelas APIs `turnOn`, `turnOff`, `toggle` e `power` — encerre
+  `blink`, aplique o comando pelo protocolo comum, faça read-back e consolide o
+  estado estável. Se o estado lógico mudar, `syncFromHardware()` solicita a
+  persistência; se já coincidir, `confirmStableState()` cobre o caso. A
+  deduplicação comum garante no máximo uma solicitação. As alternâncias do
+  temporizador chamam qualificadamente o caminho base, permanecem transitórias
+  e não encerram o próprio modo;
+- **baseline corrigido separadamente conforme BCS-DEC-003:** o environment
+  versionado `esp32_dev` mapeia `ESP32_LED_GREEN` para `LED_PIN` e
+  `ESP32_LED_BLUE` para `ESP32_LED_BUILTIN`. A correção não versiona nem altera
+  como fonte do repositório o `src/main.cpp` local, que permanece ignorado pela
+  política vigente.
+
+#### Evidência terminal
+
+| Verificação | Resultado |
+|---|---|
+| `pio run -e esp32_dev` após as correções | `SUCCESS` — firmware compilado e linkado; RAM 24,1% e flash 90,1%. BCS-AC-022 deixa de estar reprovado pelo baseline. |
+| Inspeção de BCS-REV-001 | Fluxos `open` e `getBlob` distinguem nominalmente `ESP_ERR_NVS_NOT_FOUND` dos demais erros antes de registrar e retornar. |
+| Inspeção de BCS-REV-002 | Todos os comandos explícitos convergem no override de `applyCommand()`; a alternância interna do timer usa chamada qualificada ao base e continua transitória. |
+| Suítes de teste | Não compiladas nem executadas, conforme `BCS-DEC-007`; critérios dependentes permanecem `Deferred`. |
+| `git diff --check` antes do registro documental | Aprovado, sem erros. |
+
+A primeira tentativa de build após a edição não iniciou compilação por falta de
+permissão no lock global do PlatformIO. A repetição autorizada alcançou estado
+terminal `SUCCESS`; somente ela constitui evidência do build. Nenhum upload,
+teste, validação física, release ou deploy foi realizado.
+
+#### Próximo passo
+
+Solicita-se nova atuação independente do Tech Lead/Engenheiro Revisor para
+confirmar estaticamente o encerramento de BCS-REV-001 e BCS-REV-002, confrontar
+o gate atualizado e emitir recomendação de promoção. Esta implementação não
+promove a si própria: os estados permanecem `Proposed`, `In Progress`, `Not
+Ready` e `Implementable` até a revisão.
+
 ## 13. Revisão de implementabilidade da versão 0.2 (histórico contestado)
 
 **Resultado histórico:** Implementável [`Implementable`]
