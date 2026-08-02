@@ -1995,3 +1995,38 @@ do mapa de conhecimento que ainda descreviam a implementação como
 e tornou explicitamente histórica a frase de abertura da seção 12 da
 especificação. Não houve mudança de requisito, código ou decisão, nem execução
 de build, teste, upload ou validação física adicional.
+
+## EKM-CHG-0033 — Retrospectiva EKOM da persistência de comandos binários
+
+**Estado:** Open — aguardando confirmação final do Arquiteto
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Revisar o experimento multiagente que produziu e validou a persistência binária
+0.6 e classificar, pela métrica experimental EKOM 2.1, as combinações
+observáveis de perfil executor e papel.
+
+### Resultado preparado
+
+O relatório
+`docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` separa resultado
+funcional de conformidade EKOM, pontua as execuções com evidência suficiente,
+registra descontos, eliminatórios, conflitos de independência e limitações de
+comparabilidade e propõe recomendações para novos experimentos.
+
+O resultado funcional do ciclo está validado, mas nenhum perfil é qualificado
+como `Accepted`: a amostra pertence essencialmente a uma especificação e um
+contexto, houve variação material entre execuções e uma parte das avaliações é
+de pair, não independente.
+
+### Limites
+
+- nenhuma especificação funcional é reaberta ou promovida;
+- testes, build, upload e validação física não são reexecutados;
+- BCS-REV-003 e a quarentena das suítes permanecem inalterados;
+- a atribuição `Claude Fable 5` presente nas promoções finais permanece
+  separada da relação inicial Sonnet/Opus;
+- a classificação aguarda confirmação explícita do Arquiteto antes de commit e
+  push.

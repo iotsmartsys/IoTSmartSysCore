@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (validação física do Arquiteto promove a persistência binária 0.6 a Active/Validated/Ready for Integration)
+**Última atualização:** 01/08/2026 (retrospectiva EKOM da persistência binária preparada e pendente de confirmação)
 
 ## 1. Governança
 
@@ -13,6 +13,7 @@
 | Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.19 |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
 | Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
+| Experimento EKOM da persistência binária | `docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` | Experimental | Pending Architect Confirmation |
 
 ## 2. Fontes normativas
 
@@ -222,3 +223,6 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   `Active`/`Validated`/`Ready for Integration` e fecha `EKM-CHG-0026` por
   objetivo cumprido. `Done` permanece condicionado à confirmação de integração
   à `main`; BCS-REV-003 e as suítes em quarentena continuam como dívida futura.
+- `EKM-CHG-0033`: retrospectiva do experimento multiagente e classificação de
+  adequação dos perfis executores pela métrica experimental EKOM 2.1; registro
+  preparado pelo Consultor e pendente de confirmação final do Arquiteto.
