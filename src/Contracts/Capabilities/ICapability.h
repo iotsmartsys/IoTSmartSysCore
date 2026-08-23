@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <string>
 #include <vector>
 #include "Contracts/Events/CapabilityStateChanged.h"
 #include "Contracts/Events/ICapabilityEventSink.h"
@@ -11,11 +13,65 @@
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Providers/Time.h"
 
+namespace iotsmartsys::app
+{
+    // forward-declare the builder: it is the only component allowed to fix a
+    // capability's definitive identity, and it does so before registration.
+    class CapabilitiesBuilder;
+}
+
 namespace iotsmartsys::core
 {
     // forward-declare ICommandCapability so ICapability can expose a
     // safe runtime-query method without requiring RTTI (dynamic_cast).
     struct ICommandCapability;
+    struct ICapability;
+
+    // BCS-002/BCS-DEC-005: public identity limits, measured in bytes of the
+    // UTF-8 representation before the first '\0' and excluding the terminator.
+    static constexpr std::size_t kMaxCapabilityNameBytes = 63;
+    static constexpr std::size_t kMaxCapabilityTypeBytes = 31;
+
+    // BCS-DEC-006: identity field that stays publicly readable exactly like the
+    // previous public std::string member, but offers no public assignment.
+    // Only ICapability (constructors and the builder-only finalization) can set
+    // it, so the identity used by the registry, the cache and the storage can
+    // never diverge after registration.
+    class CapabilityIdentityField
+    {
+    public:
+        CapabilityIdentityField(const CapabilityIdentityField &) = default;
+
+        const char *c_str() const { return _value.c_str(); }
+        bool empty() const { return _value.empty(); }
+        std::size_t size() const { return _value.size(); }
+        std::size_t length() const { return _value.size(); }
+        const std::string &str() const { return _value; }
+        operator const std::string &() const { return _value; }
+
+    private:
+        friend struct ICapability;
+
+        CapabilityIdentityField() = default;
+        explicit CapabilityIdentityField(const char *value) : _value(value ? value : "") {}
+        CapabilityIdentityField &operator=(const CapabilityIdentityField &) = default;
+
+        std::string _value;
+    };
+
+    inline bool operator==(const CapabilityIdentityField &lhs, const std::string &rhs) { return lhs.str() == rhs; }
+    inline bool operator==(const std::string &lhs, const CapabilityIdentityField &rhs) { return lhs == rhs.str(); }
+    inline bool operator==(const CapabilityIdentityField &lhs, const char *rhs) { return lhs.str() == (rhs ? rhs : ""); }
+    inline bool operator==(const char *lhs, const CapabilityIdentityField &rhs) { return (lhs ? lhs : "") == rhs.str(); }
+    inline bool operator!=(const CapabilityIdentityField &lhs, const std::string &rhs) { return !(lhs == rhs); }
+    inline bool operator!=(const std::string &lhs, const CapabilityIdentityField &rhs) { return !(lhs == rhs); }
+    inline bool operator!=(const CapabilityIdentityField &lhs, const char *rhs) { return !(lhs == rhs); }
+    inline bool operator!=(const char *lhs, const CapabilityIdentityField &rhs) { return !(lhs == rhs); }
+
+    inline std::string operator+(const std::string &lhs, const CapabilityIdentityField &rhs) { return lhs + rhs.str(); }
+    inline std::string operator+(const CapabilityIdentityField &lhs, const std::string &rhs) { return lhs.str() + rhs; }
+    inline std::string operator+(const char *lhs, const CapabilityIdentityField &rhs) { return std::string(lhs ? lhs : "") + rhs.str(); }
+    inline std::string operator+(const CapabilityIdentityField &lhs, const char *rhs) { return lhs.str() + (rhs ? rhs : ""); }
 
     struct ICapability
     {
@@ -66,8 +122,9 @@ namespace iotsmartsys::core
             return nullptr;
         }
 
-        std::string capability_name;
-        std::string type;
+        // BCS-002/BCS-DEC-006: publicly readable, never publicly assignable.
+        CapabilityIdentityField capability_name;
+        CapabilityIdentityField type;
         std::string value;
 
         void updateState(const char *value)
@@ -108,25 +165,32 @@ namespace iotsmartsys::core
             
         }
 
-        void applyRenamedName(const char *device_id)
-        {
-            this->capability_name = std::string(device_id) + "_" + this->type;
-        }
+        // BCS-DEC-006/BCS-022: kept public and `void` for source compatibility,
+        // but deprecated and inert. The definitive identity is resolved,
+        // validated and fixed by the builder before registration, so a legacy
+        // call silently preserves the current capability_name and type.
+        [[deprecated("capability identity is immutable after registration (BCS-DEC-006)")]]
+        void applyRenamedName(const char *) {}
 
-        void rename(const char *new_capability_name)
-        {
-            this->capability_name = new_capability_name;
-        }
+        [[deprecated("capability identity is immutable after registration (BCS-DEC-006)")]]
+        void rename(const char *) {}
 
         // Overloads accepting std::string
-        void applyRenamedName(const std::string &device_id)
-        {
-            applyRenamedName(device_id.c_str());
-        }
+        [[deprecated("capability identity is immutable after registration (BCS-DEC-006)")]]
+        void applyRenamedName(const std::string &) {}
 
-        void rename(const std::string &new_capability_name)
+        [[deprecated("capability identity is immutable after registration (BCS-DEC-006)")]]
+        void rename(const std::string &) {}
+
+    private:
+        friend class iotsmartsys::app::CapabilitiesBuilder;
+
+        // Builder-only seam used before registration to fix the definitive name
+        // resolved from the configuration or generated automatically. There is
+        // no counterpart available once the capability is registered.
+        void finalizeIdentity(const char *definitive_name)
         {
-            rename(new_capability_name.c_str());
+            this->capability_name = CapabilityIdentityField(definitive_name);
         }
 
     protected:

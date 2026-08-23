@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IServiceProvider.h"
+#include "IBinaryCapabilityStateProvider.h"
 
 namespace iotsmartsys::core
 {
@@ -20,6 +21,7 @@ namespace iotsmartsys::core
         void setSettingsGate(settings::ISettingsGate *gate);
         void setSettingsManager(settings::SettingsManager *manager);
         void setWiFiManager(core::WiFiManager *wifi);
+        void setBinaryCapabilityStateProvider(providers::IBinaryCapabilityStateProvider *provider);
 
         // IServiceProvider
         ILogger *logger() const override;
@@ -30,6 +32,7 @@ namespace iotsmartsys::core
 
         settings::SettingsManager *getSettingsManager() const override;
         core::WiFiManager *getWiFiManager() const override;
+        providers::IBinaryCapabilityStateProvider *getBinaryCapabilityStateProvider() const override;
 
         // útil para debug (opcional)
         bool isReady() const;
@@ -45,6 +48,7 @@ namespace iotsmartsys::core
         settings::ISettingsGate *_settingsGate{nullptr};
         settings::SettingsManager *_settingsManager{nullptr};
         core::WiFiManager *_wifiManager{nullptr};
+        providers::IBinaryCapabilityStateProvider *_binaryCapabilityStateProvider{nullptr};
     };
 
 } // namespace iotsmartsys::core

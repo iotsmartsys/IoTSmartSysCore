@@ -2,6 +2,8 @@
 #include "Contracts/Providers/ServiceProvider.h"
 #include "Platform/Arduino/Interpreters/ValveHardwareCommandInterpreter.h"
 
+#include <cstring>
+
 namespace iotsmartsys::app
 {
 
@@ -102,6 +104,48 @@ namespace iotsmartsys::app
         return mem;
     }
 
+    bool CapabilitiesBuilder::resolveIdentity(const char *configuredName, const char *type, std::string &outName)
+    {
+        if (_count >= _capsMax)
+        {
+            return false;
+        }
+
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+
+        const size_t typeLen = type ? std::strlen(type) : 0;
+        if (typeLen == 0 || typeLen > iotsmartsys::core::kMaxCapabilityTypeBytes)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER", "Rejected capability type of %u bytes (limit %u); nothing was registered.",
+                              static_cast<unsigned>(typeLen),
+                              static_cast<unsigned>(iotsmartsys::core::kMaxCapabilityTypeBytes));
+            }
+            return false;
+        }
+
+        // An omitted name keeps the vigent automatic generation; the limit is
+        // then checked over the generated definitive name.
+        outName = (configuredName && *configuredName)
+                      ? std::string(configuredName)
+                      : (_deviceIdentityProvider.getDeviceID() + "_" + std::string(type));
+
+        if (outName.empty() || outName.size() > iotsmartsys::core::kMaxCapabilityNameBytes)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER", "Rejected capability name of %u bytes for type '%s' (limit %u); nothing was registered.",
+                              static_cast<unsigned>(outName.size()), type,
+                              static_cast<unsigned>(iotsmartsys::core::kMaxCapabilityNameBytes));
+            }
+            outName.clear();
+            return false;
+        }
+
+        return true;
+    }
+
     bool CapabilitiesBuilder::registerCapability(ICapability *cap, void (*destructor)(void *))
     {
         if (_count >= _capsMax)
@@ -109,11 +153,17 @@ namespace iotsmartsys::app
             return false;
         }
 
-        if (cap->capability_name.empty())
+        // BCS-002/BCS-DEC-006: the definitive identity is resolved, validated
+        // and fixed here, before the capability occupies a slot. After this
+        // point neither capability_name nor type can change.
+        std::string definitiveName;
+        if (!resolveIdentity(cap->capability_name.empty() ? nullptr : cap->capability_name.c_str(),
+                             cap->type.c_str(),
+                             definitiveName))
         {
-            auto deviceId = _deviceIdentityProvider.getDeviceID();
-            cap->capability_name = deviceId + "_" + cap->type;
+            return false;
         }
+        cap->finalizeIdentity(definitiveName.c_str());
 
         _caps[_count] = cap;
         _capDestructors[_count] = destructor;
@@ -205,11 +255,14 @@ namespace iotsmartsys::app
 
     iotsmartsys::core::LightCapability *CapabilitiesBuilder::addLight(const LightConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, LIGHT_ACTUATOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::LightCapability>(
             name,
             *hardwareAdapter, &_eventSink);
@@ -218,11 +271,14 @@ namespace iotsmartsys::app
     // --------------------------- addSwitch ---------------------------
     iotsmartsys::core::SwitchCapability *CapabilitiesBuilder::addSwitch(const SwitchConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, SWITCH_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::SwitchCapability>(
             name,
             *hardwareAdapter, &_eventSink);
@@ -231,11 +287,14 @@ namespace iotsmartsys::app
     // --------------------------- addPushButton ---------------------------
     iotsmartsys::core::PushButtonCapability *CapabilitiesBuilder::addPushButton(const PushButtonConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, PUSH_BUTTON_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::PushButtonCapability>(
             name,
             *hardwareAdapter,
@@ -246,11 +305,14 @@ namespace iotsmartsys::app
     // --------------------------- addTouchButton ---------------------------
     iotsmartsys::core::TouchButtonCapability *CapabilitiesBuilder::addTouchButton(const TouchButtonConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, BUTTON_TOUCH_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::TouchButtonCapability>(
             name,
             *hardwareAdapter,
@@ -261,11 +323,14 @@ namespace iotsmartsys::app
     // --------------------------- addValve ---------------------------
     iotsmartsys::core::ValveCapability *CapabilitiesBuilder::addValve(const ValveConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, VALVE_ACTUATOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         auto *cap = createCapability<iotsmartsys::core::ValveCapability>(
             name,
             *hardwareAdapter,
@@ -290,11 +355,14 @@ namespace iotsmartsys::app
     // --------------------------- addLED ---------------------------
     iotsmartsys::core::LEDCapability *CapabilitiesBuilder::addLED(const LightConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, LED_ACTUATOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::LEDCapability>(
             name,
             *hardwareAdapter,
@@ -305,11 +373,14 @@ namespace iotsmartsys::app
 
     iotsmartsys::core::AlarmCapability *CapabilitiesBuilder::addAlarm(const AlarmConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, ALARM_ACTUATOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::AlarmCapability>(
             name,
             cfg.ringDurationMs,
@@ -320,11 +391,14 @@ namespace iotsmartsys::app
     // --------------------------- addDoorSensor ---------------------------
     iotsmartsys::core::DoorSensorCapability *CapabilitiesBuilder::addDoorSensor(const DoorSensorConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, DOOR_SENSOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createInputAdapter(cfg.GPIO, iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON, iotsmartsys::core::InputPullMode::PULL_UP);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::DoorSensorCapability>(
             name,
             *hardwareAdapter,
@@ -334,11 +408,14 @@ namespace iotsmartsys::app
     // --------------------------- addPirSensor ---------------------------
     iotsmartsys::core::PirSensorCapability *CapabilitiesBuilder::addPirSensor(const PirSensorConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, PIR_SENSOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createInputAdapter(cfg.GPIO, cfg.highIsOn ? iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON : iotsmartsys::core::HardwareDigitalLogic::LOW_IS_ON, iotsmartsys::core::InputPullMode::NONE);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::PirSensorCapability>(
             name,
             *hardwareAdapter,
@@ -349,6 +426,10 @@ namespace iotsmartsys::app
     // --------------------------- addClapSensor ---------------------------
     iotsmartsys::core::ClapSensorCapability *CapabilitiesBuilder::addClapSensor(const ClapSensorConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, CLAP_SENSOR_TYPE, name))
+            return nullptr;
+
         const auto logic = cfg.highIsOn ? iotsmartsys::core::HardwareDigitalLogic::HIGH_IS_ON
                                         : iotsmartsys::core::HardwareDigitalLogic::LOW_IS_ON;
         const auto pullMode = cfg.highIsOn ? iotsmartsys::core::InputPullMode::PULL_DOWN
@@ -358,7 +439,6 @@ namespace iotsmartsys::app
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::ClapSensorCapability>(
             name.c_str(),
             *hardwareAdapter,
@@ -369,11 +449,14 @@ namespace iotsmartsys::app
     // --------------------------- addSwitchPlug ---------------------------
     iotsmartsys::core::SwitchPlugCapability *CapabilitiesBuilder::addSwitchPlug(const SwitchConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, SWITCH_PLUG_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createOutputAdapter(cfg.GPIO, cfg.highIsOn);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::SwitchPlugCapability>(
             name,
             *hardwareAdapter,
@@ -383,11 +466,14 @@ namespace iotsmartsys::app
     // --------------------------- addWaterFlowHallSensor ---------------------------
     iotsmartsys::core::WaterFlowHallSensorCapability *CapabilitiesBuilder::addWaterFlowHallSensor(const WaterFlowHallSensorConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, WATER_FLOW_SENSOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapter = createInputAdapter(cfg.GPIO);
         if (!hardwareAdapter)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::WaterFlowHallSensorCapability>(
             name,
             *hardwareAdapter,
@@ -422,7 +508,10 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, TEMPERATURE_SENSOR_TYPE, name))
+            return nullptr;
+
         return createCapability<iotsmartsys::core::TemperatureSensorCapability>(
             name,
             *static_cast<iotsmartsys::core::ITemperatureSensor *>(cfg.sensor),
@@ -435,7 +524,10 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, HUMIDITY_SENSOR_TYPE, name))
+            return nullptr;
+
         return createCapability<iotsmartsys::core::HumiditySensorCapability>(
             name,
             *static_cast<iotsmartsys::core::IHumiditySensor *>(cfg.sensor),
@@ -448,7 +540,10 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, DISTANCE_SENSOR_TYPE, name))
+            return nullptr;
+
         return createCapability<iotsmartsys::core::DistanceCapability>(
             name,
             *static_cast<iotsmartsys::core::IDistanceSensor *>(cfg.sensor),
@@ -482,7 +577,10 @@ namespace iotsmartsys::app
         if (!cfg.sensor)
             return nullptr;
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, LIGHT_SENSOR_TYPE, name))
+            return nullptr;
+
         return createCapability<iotsmartsys::core::LuminosityCapability>(
             name,
             *static_cast<iotsmartsys::core::ILuminositySensor *>(cfg.sensor),
@@ -514,6 +612,10 @@ namespace iotsmartsys::app
     // --------------------------- addGarageControlCapability ---------------------------
     iotsmartsys::core::GarageControlCapability *CapabilitiesBuilder::addGarageControlCapability(const GarageControlConfig &cfg)
     {
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, GARAGE_ACTUATOR_TYPE, name))
+            return nullptr;
+
         auto *hardwareAdapterOpen = createOutputAdapter(cfg.GPIO_OPEN, true);
         if (!hardwareAdapterOpen)
             return nullptr;
@@ -546,7 +648,6 @@ namespace iotsmartsys::app
                 return nullptr;
         }
 
-        auto name = cfg.capability_name ? std::string(cfg.capability_name) : std::string();
         return createCapability<iotsmartsys::core::GarageControlCapability>(
             name,
             cfg.debounceTimeMs,

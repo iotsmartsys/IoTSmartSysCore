@@ -15,6 +15,11 @@ namespace iotsmartsys::core
         class ISettingsGate;
     }
 
+    namespace providers
+    {
+        class IBinaryCapabilityStateProvider;
+    }
+
     class IServiceProvider
     {
     public:
@@ -28,6 +33,8 @@ namespace iotsmartsys::core
 
         virtual settings::SettingsManager *getSettingsManager() const = 0;
         virtual core::WiFiManager *getWiFiManager() const = 0;
+
+        virtual providers::IBinaryCapabilityStateProvider *getBinaryCapabilityStateProvider() const = 0;
     };
 
 } // namespace iotsmartsys::core

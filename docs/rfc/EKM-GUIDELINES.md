@@ -4,9 +4,9 @@
 
 **Estado da fonte:** Vigente
 
-**Versão do documento:** 1.13
+**Versão do documento:** 1.15
 
-**Versão do modelo EKM:** 1.17
+**Versão do modelo EKM:** 1.19
 
 **Escopo:** Todo o repositório
 
@@ -31,7 +31,7 @@ permanecem factuais mesmo quando o Arquiteto aceita o risco.
 Git registra commits, autoria, diferenças, branches e linhagem. Não duplique
 esses dados manualmente nas fontes EKM.
 
-Estas diretrizes adotam o modelo 1.17 do repositório de referência
+Estas diretrizes adotam o modelo 1.19 do repositório de referência
 `EKM-guidelines`. Regras específicas deste projeto prevalecem somente no
 escopo declarado.
 
@@ -48,6 +48,20 @@ Autor da Especificação
 Implementação exige especificação Implementável [`Implementable`]. Precisa de
 esclarecimento [`Needs Clarification`] retorna a decisão ao Arquiteto sem
 alteração parcial da implementação.
+
+Critérios obrigatórios devem permitir uma asserção objetiva do cenário, do
+resultado observável e da evidência terminal. Compilação não substitui
+execução; critério falho, não executado ou não verificável impede
+`Implemented`.
+
+Na autoria, cada requisito obrigatório deve estar relacionado a critério que
+explicite condição inicial, ação, resultado observável e evidência terminal. A
+especificação só segue para análise quando um executor independente consegue
+converter o resultado em asserção sem tomar nova decisão funcional ou
+arquitetural, e quando a evidência consegue reprovar uma implementação
+incompatível plausível. Doubles preservam a semântica material substituída; o
+gate automatizável permanece separado das validações humanas, físicas ou de
+integração posteriores.
 
 Cada ator atualiza a especificação, promove os estados sustentados pela própria
 etapa e entrega o resultado por commit e push. Não existe um ator separado

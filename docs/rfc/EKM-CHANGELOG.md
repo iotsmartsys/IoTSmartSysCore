@@ -45,7 +45,7 @@ A fundação EKM foi instituída sem modificar código, build, workflow, testes 
 
 ## EKM-CHG-0002 — Especificação dos exemplos executáveis
 
-**Estado:** Open
+**Estado:** Closed
 
 **Data:** 22/07/2026
 
@@ -492,3 +492,1541 @@ deploy foi produzida.
   representa a autorização e as decisões recebidas e autorizou commit e push.
   A confirmação não declara validação técnica independente, integração à
   `main`, release ou deploy.
+
+## EKM-CHG-0009 — Persistência de estados de comandos binários
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.1`
+
+### Objetivo
+
+Restaurar no boot o último estado registrado de cada capability derivada de
+`BinaryCommandCapability` e registrar em NVS toda mudança lógica confirmada.
+
+### Intenção confirmada
+
+- todas as capabilities abrangidas devem aplicar no boot o último estado
+  registrado;
+- o registro deve usar NVS;
+- a leitura deve ser leve;
+- cada mudança de estado deve ser registrada.
+
+### Solução proposta
+
+- contrato de storage no Core e provedor NVS em `Platform/Espressif`;
+- snapshot compacto, versionado e isolado do blob de settings;
+- uma leitura de dados por boot e consultas posteriores em cache;
+- identidade por `capability_name` definitivo e `type`;
+- persistência do estado semântico binário, convertido para o vocabulário de
+  cada capability;
+- commit a cada transição confirmada, sem gravação para repetição do mesmo
+  valor;
+- restauração somente após aplicação aceita e leitura de confirmação do
+  adapter;
+- falhas de storage não bloqueiam nem revertem o runtime.
+
+### Decisão pendente
+
+`BCS-DEC-001` registra que a ordem não definiu se factory reset deve apagar o
+snapshot. A recomendação, ainda não confirmada, é apagar o namespace da
+funcionalidade junto com os demais dados persistentes do dispositivo.
+
+### Resultado da autoria
+
+`IOTSSC-BINARY-COMMAND-STATE@0.1` foi criada como `Proposed` / `Not Started` /
+`Not Ready` / `Pending Review`. Nenhum código de implementação, teste funcional,
+build, upload, release ou deploy integra esta etapa.
+
+### Resultado da análise de implementabilidade
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+As fontes técnicas confirmam ponto comum em `BinaryCommandCapability`, retorno
+de aceitação e read-back no contrato do adapter, identidade definitiva antes de
+`CapabilityManager::setup()`, composição por `ServiceProvider` e registrar de
+plataforma, precedente NVS versionado e testes Unity com NVS real. O recorte
+pode ser implementado sem alterar APIs públicas ou criar estrutura fora da
+fronteira arquitetural já autorizada.
+
+`BCS-DEC-001` permanece pendente, mas foi classificada como não bloqueante:
+factory reset está fora do escopo desta especificação e não deve ser alterado
+pela implementação. Nenhum código, teste, build funcional, upload, release ou
+deploy foi executado nesta etapa. Uma ordem posterior do Arquiteto continua
+obrigatória para implementar.
+
+## EKM-CHG-0010 — Implementação da persistência de estados de comandos binários
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.1`
+
+### Objetivo
+
+Implementar o recorte completo autorizado por `EKM-CHG-0009`: contrato de
+storage no Core, provedor Espressif em NVS, integração em
+`BinaryCommandCapability` e testes PlatformIO/Unity.
+
+### Ordem recebida
+
+O Arquiteto confirmou explicitamente o início da implementação, com recorte
+completo e resultado-alvo `Implemented` sustentado por build e testes
+automatizáveis.
+
+### Resultado
+
+`IOTSSC-BINARY-COMMAND-STATE@0.1` foi promovida para `Implemented` (estado
+normativo `Proposed` preservado; fora da responsabilidade deste papel). Ver a
+seção 14 da especificação para o detalhamento completo do código alterado,
+testes criados e evidência material.
+
+### Impedimentos pré-existentes resolvidos mediante autorização do Arquiteto
+
+- `configs/esp32s3-test.ini` referenciava um ambiente `env:base32` inexistente,
+  bloqueando `pio test -e esp32s3_test` para todo o repositório, não apenas
+  para este recorte. Corrigido para `env:base_esp`.
+- `src/main.cpp` (arquivo local, listado em `*main.cpp` no `.gitignore` e não
+  versionado) não guardava `setup()`/`loop()` contra `UNIT_TEST_MAIN`,
+  colidindo com qualquer teste Unity. Guarda adicionada localmente; não gera
+  diff versionado.
+
+### Validações
+
+- `pio run -e esp32_dev`: aprovado.
+- `pio test -e esp32s3_test --without-uploading --without-testing`: testes
+  desta especificação e os testes pré-existentes compatíveis compilaram e
+  passaram na etapa de build; testes pré-existentes já desalinhados de outras
+  APIs do projeto (anteriores a esta transação) continuam falhando por
+  motivos não relacionados.
+- `pio test -e esp32s3_test` com upload real: não observável nesta sessão por
+  ausência de hardware ESP32-S3 conectado — limitação registrada, não
+  alegada como evidência.
+- `git diff --check`: aprovado.
+
+### Limitações preservadas
+
+- `BCS-DEC-001` (factory reset) permanece pendente e não bloqueante.
+- Validação em hardware permanece pendente e é responsabilidade do Engenheiro
+  Revisor para a promoção a `Validated`.
+- Este registro não promove `Validated` nem `Done`, e não autoriza upload,
+  release ou deploy.
+
+### Resultado da revisão do Tech Lead
+
+**Resultado:** alterações necessárias. A implementação foi reconciliada para
+`In Progress`; a especificação permanece `Proposed`, a entrega permanece
+`Not Ready` e esta transação continua `Open`.
+
+Foram identificados achados materiais na restauração de válvula sem o
+interpreter, no protocolo ausente de sincronização/persistência do LED, na
+aceitação de snapshot sem validação de integridade, no tratamento potencialmente
+fatal ou indistinto de falhas NVS e no truncamento silencioso da identidade.
+A cobertura também não atende todos os tipos, blink, instrumentação de leituras
+ou injeção separada de falhas de open, write e commit.
+
+O build `esp32_dev` e a compilação direcionada dos dois novos testes foram
+aprovados. A compilação reportou zero casos executados. A tentativa direcionada
+de executar os testes terminou em erro de upload, também com zero casos
+executados, por ausência de ESP32-S3 conectado. Não houve validação física.
+
+A seção 15 da especificação registra classificação, requisitos afetados,
+evidências e recomendação. Nenhum código foi corrigido nesta revisão e nenhuma
+aprovação, integração, release ou deploy foi declarada.
+
+## EKM-CHG-0011 — Adoção de critérios de aceite assertáveis
+
+**Estado:** Closed
+
+**Especificação relacionada:** Não aplicável
+
+### Objetivo
+
+Adotar localmente a EKM 1.18, tornando explícito que critérios obrigatórios
+precisam permitir asserção objetiva de cenário, resultado observável e
+evidência terminal.
+
+### Evidência e decisão
+
+A implementação experimental de persistência binária compilou e criou testes,
+mas a revisão encontrou mocks semanticamente incompatíveis, classes concretas
+fora do caminho supostamente comum, corrupção sem oráculo suficiente e zero
+casos executados usados para sustentar `Implemented`.
+
+O Arquiteto decidiu restaurar posteriormente o recorte funcional ao estado
+anterior à implementação, tornar seus critérios simples e assertáveis e repetir
+o experimento. A EKM oficial foi preparada como 1.18 para generalizar somente a
+regra demonstrada: critérios distinguem aprovação, reprovação e ausência de
+execução; doubles preservam semântica material; compilação não comprova
+comportamento executado.
+
+### Resultado preparado
+
+`AGENTS.md`, diretrizes locais e mapa foram reconciliados com a EKM 1.18.
+Nenhum código funcional, teste ou estado da especificação foi alterado nesta
+atuação de governança. A reversão e a nova autoria pertencem à atuação
+sequencial posterior.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e operações:** evoluir a EKM oficial, reconciliar a adoção local,
+  validar consistência e, após confirmação final, criar commits e push.
+- **Resultado:** regra assertável preparada na EKM 1.18 e adoção local
+  reconciliada.
+- **Limitações:** eficácia ainda não demonstrada; o Consultor participou da
+  solução e não constitui revisão independente.
+- **Significado solicitado:** confirmar este registro e autorizar commit e push
+  nos dois repositórios, sem declarar eficácia, validação funcional, integração,
+  release ou deploy.
+
+## EKM-CHG-0012 — Adoção local do procedimento de autoria assertável
+
+**Estado:** Closed
+
+**Especificação relacionada:** Não aplicável
+
+### Objetivo
+
+Adotar localmente a EKM 1.19 e tornar operacional a responsabilidade do Autor
+de elaborar critérios de aceite rastreáveis, falsificáveis e independentes de
+novas decisões durante a implementação.
+
+### Resultado
+
+`AGENTS.md`, as diretrizes locais e o mapa de conhecimento foram reconciliados
+com a EKM 1.19. A diretriz local determina que cada requisito obrigatório seja
+relacionado a condição inicial, ação, resultado observável e evidência
+terminal; um executor independente deve conseguir converter o resultado em
+asserção, e a evidência deve conseguir reprovar uma implementação incompatível
+plausível.
+
+O perfil oficial continua sendo a fonte integral do procedimento. A diretriz
+local preserva apenas a regra necessária para roteamento e aplicação no
+projeto, sem duplicar o perfil.
+
+Nenhuma especificação, implementação funcional, teste, configuração de runtime,
+release ou deploy foi alterado nesta transação.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura.
+- **Ordem e operações:** atualizar o IoTSmartSysCore para a última versão da
+  EKM, reconciliar somente a governança local, validar consistência e, após
+  confirmação final, criar commit e realizar push.
+- **Resultado:** roteamento, diretrizes e mapa reconciliados com a EKM 1.19.
+- **Limitações:** a eficácia da diretriz será avaliada na repetição do
+  experimento. O Consultor participou da formulação e da adoção e não constitui
+  revisão independente desse mecanismo.
+- **Significado da confirmação:** autorizar este registro, commit e push, sem
+  aprovar a especificação funcional, implementação, integração, release ou
+  deploy.
+
+## EKM-CHG-0013 — Correção assertável da persistência de comandos binários
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Corrigir a especificação após o experimento da versão 0.1, tornando cada
+requisito obrigatório verificável por cenário, ação, resultado observável e
+evidência terminal conforme a EKM 1.19.
+
+### Intenção e decisões confirmadas
+
+A intenção funcional permanece inalterada: restaurar no boot o último estado
+binário validamente registrado para cada capability abrangida e persistir toda
+transição confirmada. O Arquiteto determinou que os critérios sejam claros,
+simples e suficientes para que o agente executor consiga afirmar ou reprovar a
+própria implementação.
+
+`BCS-DEC-001`, sobre factory reset, permanece pendente, fora do escopo e não
+bloqueante.
+
+### Resultado da autoria
+
+A versão 0.2:
+
+- relaciona BCS-001 a BCS-023 a critérios BCS-AC-001 a BCS-AC-022;
+- exige evidência terminal capaz de distinguir aprovação, reprovação e ausência
+  de execução;
+- torna reprováveis valve sem interpreter, LED fora do protocolo comum,
+  corrupção validada apenas por tamanho/versão, falhas NVS confundidas com
+  ausência, identidade truncada e testes compilados com zero casos executados;
+- define fidelidade material mínima para doubles de adapter, interpreter, NVS,
+  storage e relógio;
+- separa o gate automatizável de `Implemented` da validação física posterior.
+
+A especificação foi deixada como `Proposed` / `Not Started` / `Not Ready` /
+`Pending Review`. O Autor não executou análise de implementabilidade, alteração
+de código, testes funcionais ou build.
+
+### Limitação material
+
+Os artefatos da tentativa experimental 0.1 ainda existem nesta branch e não
+constituem implementação da versão 0.2. Sua restauração pertence a uma operação
+separada, fora do papel do Autor, e deve ocorrer antes de uma nova implementação
+controlada para não contaminar o experimento.
+
+## EKM-CHG-0014 — Revisão de implementabilidade da persistência binária 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se `IOTSSC-BINARY-COMMAND-STATE@0.2`
+pode ser implementada sem decisão normativa, de produto ou arquitetura
+ausente, sem reutilizar a conclusão de implementabilidade da versão 0.1.
+
+### Resultado da análise
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+Confrontação com o estado atual do repositório confirmou que os pontos de
+composição já exigidos existem (`BinaryCommandCapability` como ponto comum,
+`ICommandCapability`/adapter com aceitação e leitura, identidade definitiva
+antes de `CapabilityManager::setup()`, `ServiceProvider` +
+`EspressifPlatformServiceRegistrar` como precedente de composição,
+`common::StateResult` com granularidade suficiente). Os artefatos
+experimentais da versão 0.1 ainda presentes na branch (`BinaryCommandCapability::restoreFromStorage()`,
+`LEDCapability::handle()`, `EspNvsBinaryCapabilityStateProvider`) reproduzem,
+ponto a ponto, os desvios que os fatos observados da versão 0.2 registraram
+(valve sem interpreter no restore, LED fora do protocolo comum, integridade
+validada apenas por tamanho/versão, truncamento silencioso de identidade).
+Cada desvio tem correção alcançável dentro da arquitetura vigente e já descrita
+pelos requisitos BCS-002, BCS-004, BCS-006, BCS-012 e BCS-016; nenhum exige
+novo contrato, nova camada ou decisão do Arquiteto.
+
+`pio run -e esp32_dev` foi executado nesta sessão apenas para verificar fato e
+terminou `SUCCESS` (Flash 89.8%, RAM 23.8%) com o código experimental 0.1 ainda
+presente. `pio test -e esp32s3_test` foi executado e terminou `ERRORED` na
+etapa de upload para todas as suítes, por exigir um ESP32-S3 conectado
+(`upload_port` fixo), incluindo os testes já existentes da própria
+funcionalidade — condição ambiental preexistente do projeto, não uma lacuna
+desta especificação.
+
+`BCS-DEC-001` permanece pendente e classificada como não bloqueante, sem
+mudança em relação à revisão da versão 0.1.
+
+### Limitação material
+
+Nenhum código, teste, configuração, build funcional, upload, release ou deploy
+foi alterado por esta análise. Os artefatos experimentais 0.1 permanecem como
+material de partida e não constituem evidência aceita para a versão 0.2; uma
+nova implementação controlada continua pendente de ordem do Arquiteto.
+
+## EKM-CHG-0015 — Implementação controlada da persistência binária 0.2
+
+**Estado:** Open
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo
+
+Como Engenheiro Implementador, sob ordem do Arquiteto, corrigir os desvios
+ponto a ponto identificados em `EKM-CHG-0014` (revisão de implementabilidade
+0.2) nos artefatos experimentais 0.1 ainda presentes na branch, sem criar novo
+contrato, nova camada ou abstração transversal.
+
+### Alterações materiais
+
+- `src/Core/Capabilities/CapabilityHelpers.h`: `restoreFromStorage()` passou a
+  percorrer `command_interpreter` (quando presente) tanto para o comando de
+  restauração quanto para a leitura de confirmação, em vez de chamar
+  `command_hardware_adapter.applyCommand()`/`getStateValue()` diretamente.
+  Corrige BCS-004/BCS-009/BCS-010 para `ValveCapability` (5.3).
+- `src/Core/Capabilities/LEDCapability.cpp`: `handle()` passou a chamar
+  `syncFromHardware()` incondicionalmente (além do avanço de blink quando
+  ativo), preservando publicação/persistência também fora do blink. Corrige o
+  desvio "LED fora do protocolo comum" (BCS-016).
+- `src/Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.*`:
+  adicionado campo `checksum` (FNV-1a sobre versão + todos os registros,
+  ativos ou não) validado em `loadSnapshot()`; `copyField()` passou a rejeitar
+  (não truncar) identidade que não cabe no buffer interno, e `save()` valida o
+  comprimento antes de gravar. Corrige BCS-002/BCS-006/BCS-012.
+- Testes e doubles ajustados para a fidelidade exigida em 8.2: `MockBinaryHardwareAdapter`
+  passou a rejeitar vocabulário fora de `on`/`off`/`toggle` (como
+  `OutputHardwareAdapter`) e a implementar `getState()` de fato;
+  `test_binary_command_capability_state.cpp` passou a configurar
+  `ValveHardwareCommandInterpreter` real nos casos de valve e ganhou casos
+  para o protocolo de `LEDCapability::handle()` fora e dentro de blink (com
+  `MockTimeProvider` controlável); `test_binary_capability_state_storage.cpp`
+  ganhou casos de identidade sobredimensionada rejeitada e de corrupção de
+  byte único no cabeçalho e em registro ativo.
+
+### Validações executadas
+
+- `pio run -e esp32_dev`: `SUCCESS` (Flash 89.8%, RAM 23.8%).
+- `git diff --check`: aprovado, sem erros.
+- `pio test -e esp32s3_test --filter test_binary_command_capability_state --filter test_binary_capability_state_storage`:
+  compilação e upload tentados; ambas as suítes terminaram `ERRORED` na etapa
+  de upload por exigir um ESP32-S3 físico conectado (`upload_port` fixo em
+  `configs/esp32s3-test.ini`), indisponível nesta sessão — mesma pré-condição
+  ambiental já registrada em `EKM-CHG-0014`. A compilação dos testes (etapa
+  anterior ao upload) não reportou erro.
+
+### Limitação material
+
+O gate de `Implemented` (spec 8.4) exige `pio test -e esp32s3_test` com estado
+terminal aprovado e casos desta especificação efetivamente executados; essa
+evidência depende de hardware ESP32-S3 físico não disponível nesta sessão. A
+implementação desta transação permanece `In Progress` até essa evidência
+existir; nenhum critério da matriz BCS-AC foi promovido a aprovado sem
+execução real. `BCS-DEC-001` permanece pendente e não bloqueante, sem
+alteração do fluxo de factory reset.
+
+## EKM-CHG-0016 — Validação consultiva da implementação binária 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.2`
+
+### Objetivo e limite
+
+Confrontar, como Consultor de Arquitetura, a implementação produzida em
+`EKM-CHG-0015` com BCS-AC-001 a BCS-AC-022, sem corrigir código e sem promover
+estado pertencente ao Engenheiro Revisor.
+
+O Consultor participou da formulação dos critérios e da autoria da versão 0.2;
+esta validação é tecnicamente confrontativa, mas não constitui revisão
+independente.
+
+### Resultado
+
+O gate de `Implemented` não foi atendido. A implementação permanece corretamente
+`In Progress`.
+
+| Classificação | Critérios |
+|---|---|
+| Aprovado | BCS-AC-022 |
+| Reprovado | BCS-AC-002, BCS-AC-006, BCS-AC-007, BCS-AC-011, BCS-AC-012, BCS-AC-016, BCS-AC-020 |
+| Não verificado | BCS-AC-001, BCS-AC-003, BCS-AC-004, BCS-AC-005, BCS-AC-008, BCS-AC-009, BCS-AC-010, BCS-AC-013, BCS-AC-014, BCS-AC-015, BCS-AC-017, BCS-AC-018, BCS-AC-019, BCS-AC-021 |
+
+### Achados materiais
+
+1. **Alto — identidade longa continua incompatível com o contrato.**
+   A especificação exige preservar integralmente todo nome e tipo aceito pela
+   configuração pública e BCS-AC-002 reprova rejeição por limite interno menor
+   que o público. O provedor rejeita nomes a partir de 48 bytes e o teste novo
+   afirma que essa rejeição é o resultado esperado. A API pública usa
+   `std::string`/`const char *` e não declara esse limite. O agente inverteu o
+   oráculo explícito em vez de implementar o resultado exigido.
+2. **Alto — recuperação NVS pode apagar settings e abortar o runtime.**
+   `ensureNvsInit()` ainda executa `ESP_ERROR_CHECK(nvs_flash_erase())`.
+   A operação apaga a partição NVS inteira, não apenas o namespace da
+   funcionalidade, e a macro pode abortar. Isso viola isolamento de settings,
+   continuidade do runtime e tratamento não fatal.
+3. **Alto — falha de storage ainda é confundida com ausência.**
+   `loadSnapshot()` converte qualquer erro de `nvs_open()` e da consulta inicial
+   de `nvs_get_blob()` em `Ok`/ausência. Somente `ESP_ERR_NVS_NOT_FOUND` poderia
+   representar ausência; os demais erros precisam permanecer distinguíveis.
+   Falhas de write e commit também caem no fallback `StorageReadFail`, embora os
+   logs citem operações diferentes.
+4. **Alto — snapshot estruturalmente inválido ainda pode ser aceito.**
+   O checksum detecta mutação não acompanhada de recomputação, mas após validá-lo
+   o provedor não verifica `used`, `isOn` nem terminação das identidades.
+   Snapshot com checksum coerente e campos semanticamente inválidos é aceito;
+   `strcmp()` pode alcançar campos sem terminador. BCS-AC-007 permanece
+   funcionalmente reprovado.
+5. **Alto — ausência ou falha de restore da valve não preserva seu vocabulário.**
+   O caminho de sucesso passou a usar o interpreter, mas o fallback final ainda
+   chama `getStateValue()` diretamente. Para valve, o adapter devolve `off`/`on`
+   e o estado lógico esperado é `closed`/`open`. No primeiro `handle()`, a
+   conversão posterior pode ainda criar uma transição e persistência que
+   BCS-AC-011 proíbe no primeiro boot.
+6. **Alto — cobertura obrigatória permanece incompleta.**
+   Não há casos dedicados para Switch Plug e Light, ordem completa de restore,
+   namespace sentinela, validade estrutural, contadores NVS, todas as origens de
+   comando, injeção por operação NVS, reboot após write/commit falho, mudança de
+   identidade, logs e preservação completa da API/limite.
+
+As correções de valve no caminho de sucesso e de LED dentro/fora de blink são
+coerentes com os respectivos oráculos por inspeção. Sem execução dos testes,
+BCS-AC-004 e BCS-AC-015 permanecem não verificados, não aprovados.
+
+### Evidências terminais
+
+- `pio run -e esp32_dev`: `SUCCESS`; RAM 23,8%, Flash 89,8%.
+- `pio test -e esp32s3_test`: estado terminal de erro; 15 suítes coletadas,
+  zero aprovadas. As duas suítes desta funcionalidade compilaram e falharam no
+  upload por ausência de hardware; outras suítes também possuem erros de
+  compilação preexistentes. Zero casos comportamentais desta especificação
+  foram executados.
+- `git diff --check`: aprovado.
+- inspeção estática confrontou o delta da implementação, os doubles, os testes,
+  o adapter Arduino real, o interpreter da valve, o contrato de identidade e
+  as operações NVS.
+
+### Interpretação do experimento
+
+A EKM 1.19 melhorou o resultado de governança: o Implementador registrou
+explicitamente critérios parciais ou não verificados e não promoveu falso
+`Implemented`.
+
+Ela não garantiu completude da implementação. O agente concentrou-se nos
+achados conhecidos da versão 0.1, deixou critérios obrigatórios para “próximos
+passos”, associou BCS-AC-007 ao contador de leituras que pertence a BCS-AC-009
+e contrariou diretamente BCS-AC-002 ao testar rejeição de identidade longa como
+sucesso.
+
+Além disso, os artefatos 0.1 não foram restaurados antes da análise e da
+implementação 0.2. O agente trabalhou sobre a solução anterior e seus achados;
+portanto, esta execução não isola o efeito da nova especificação sobre uma
+implementação iniciada do zero.
+
+### Registro da atuação do Consultor
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura.
+- **Ordem e operações:** validar a implementação produzida pelo Claude Sonnet 5
+  contra a especificação 0.2, executar validações pertinentes e registrar o
+  resultado, sem corrigir código nem promover estados do Revisor.
+- **Resultado:** gate não atendido; 1 critério aprovado, 7 reprovados e 14 não
+  verificados; implementação corretamente preservada como `In Progress`.
+- **Validações:** build canônico aprovado, suíte canônica terminal com zero
+  suítes aprovadas e integridade textual aprovada.
+- **Limitações e independência:** ausência de hardware impediu execução das
+  suítes da funcionalidade; outras suítes possuem erros preexistentes. O
+  Consultor participou da formulação e autoria da versão 0.2 e não constitui
+  revisão independente.
+- **Significado da confirmação:** autorizar o fechamento deste registro, commit
+  e push somente da documentação, sem aprovar implementação, promover estado,
+  aceitar risco ou autorizar correção funcional, integração, release ou deploy.
+
+## EKM-CHG-0017 — Revisão de implementabilidade da persistência binária 0.3
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.3`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se `IOTSSC-BINARY-COMMAND-STATE@0.3`
+pode ser implementada sem decisão normativa, de produto ou arquitetura
+ausente, sem reutilizar a conclusão de implementabilidade da versão 0.2
+(`EKM-CHG-0014`).
+
+### Resultado da análise
+
+A revisão foi promovida para `Implementable`, preservando a especificação como
+`Proposed`, a implementação como `Not Started` e a entrega como `Not Ready`.
+
+A versão 0.3 corrige a 0.2 para tornar obrigatórias BCS-024 (identidade única
+do grafo de `ServiceManager`/`ServiceProvider`) e BCS-025 (preservação do
+provisionamento BLE). BCS-001 a BCS-023 mantêm a implementabilidade já
+sustentada pela análise da seção 13 do documento e pelas correções já aplicadas
+em `EKM-CHG-0015` (commit `5ac3921`); esta transação concentrou a verificação
+independente no acréscimo BCS-024/BCS-025.
+
+`src/Core/Providers/ServiceManager.cpp` confirma, no código atual, a causa raiz
+exatamente como descrita na seção 2.1 da especificação: `init()` e
+`instance()` declaram cada um sua própria variável `static ServiceManager`
+local, formando duas instâncias. `ProvisioningController.cpp` (linha 93) chama
+`ServiceManager::instance()` de forma síncrona a partir do callback de
+conclusão do provisionamento BLE, reproduzindo o segundo trecho da cadeia
+causal do abort em `BTC_TASK`. O componente irmão
+`src/Core/Providers/ServiceProvider.cpp`, no mesmo diretório, já implementa o
+padrão exigido (um único `static` em `instance()`, com `init()` delegando para
+ele) — precedente equivalente mais próximo que demonstra a correção como
+alteração local e mecânica, sem novo contrato, camada ou decisão do Arquiteto.
+`SettingsManager::save()` já é síncrono e já antecede o restart controlado no
+fluxo vigente de `ProvisioningController::setupProvisioning()`, confirmando que
+a ordem exigida por BCS-025 já existe e que o defeito de 2.1 está na duplicação
+do grafo, não na ordem de gravação.
+
+### Achado material não bloqueante
+
+`pio run -e esp32_dev`, executado nesta sessão apenas para verificação de fato,
+terminou `FAILED` em `src/main.cpp` (`ESP32_LED_GREEN`/`ESP32_LED_BLUE` não
+declarados para `board = esp32dev`; esses símbolos só existem no pinout
+ESP32-S3). `git diff main -- src/main.cpp
+src/Platform/Espressif/Pinouts/ platformio.ini` não retorna diferença: a falha
+já existe em `main`, é anterior e alheia a toda a cadeia `EKM-CHG-0009` a
+`EKM-CHG-0016`, e `src/main.cpp`/`src/Platform/Espressif/Pinouts/` não integram
+o conhecimento afetado desta especificação. Registrado para o Arquiteto: sem
+uma ordem separada autorizando essa correção, o Implementador pode não
+conseguir produzir a evidência `pio run -e esp32_dev` `SUCCESS` exigida pelo
+gate 8.4, mesmo com BCS-001 a BCS-025 corretamente implementados.
+
+`BCS-DEC-001` permanece pendente e classificada como não bloqueante, sem
+mudança em relação às revisões anteriores.
+
+### Limitação material
+
+Nenhum código, teste, configuração, build funcional, upload, release ou deploy
+foi alterado por esta análise. Uma nova ordem do Arquiteto é necessária para
+iniciar a implementação do acréscimo BCS-024/BCS-025.
+
+## EKM-CHG-0018 — Avaliação consultiva da persistência binária 0.3
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.3`
+
+### Objetivo e limite
+
+Registrar, como Consultor de Arquitetura, os riscos de comportamento em
+hardware, as inconsistências materiais da revisão de implementabilidade 0.3 e
+as correções recomendadas para uma futura autoria. Esta avaliação não altera
+requisitos nem promove ou reverte estados pertencentes ao Autor, Analista,
+Implementador ou Revisor.
+
+O estado formal `Implementable` produzido em `EKM-CHG-0017` permanece
+registrado, mas sua fundamentação está contestada pelos achados abaixo. Não se
+recomenda iniciar nova implementação até o Autor reconciliar o contrato e uma
+nova atuação independente do Engenheiro Analista confrontar a versão
+resultante.
+
+### Inconsistências da revisão 0.3
+
+1. **Garantia de concorrência inexistente.** A seção 15 afirma que a
+   inicialização de estática local é thread-safe por garantia do C++11. O
+   build base e o environment `esp32s3_ia` usam explicitamente
+   `-fno-threadsafe-statics`. O precedente de `ServiceProvider` continua útil,
+   mas a correção precisa ser sustentada pela ordem observável de inicialização
+   antes das tasks, não por uma garantia desativada da toolchain.
+2. **Reuso contraditório da revisão 0.2.** A revisão declara não reutilizar a
+   conclusão anterior e, simultaneamente, preserva BCS-001 a BCS-023 com base na
+   seção histórica e na implementação 0.2. Uma revisão incremental pode ser
+   proposta, mas não pode ser apresentada como revisão integral independente
+   sem confrontar novamente todo o contrato vigente.
+3. **Gate obrigatório sem caminho de aprovação.** O gate 8.4 exige
+   `pio run -e esp32_dev` com `SUCCESS`; a própria análise obteve `FAILED` por
+   causa preexistente e declarou sua correção fora do recorte. Enquanto o
+   Arquiteto não autorizar a correção do baseline ou outro oráculo equivalente,
+   o Implementador não consegue satisfazer integralmente a especificação.
+4. **Conclusão causal excessiva.** A duplicação de `ServiceManager` explica o
+   panic observado, mas não comprova que seja a única correção necessária para
+   BCS-025. `SettingsManager::save()` retorna falha, porém o callback ignora o
+   retorno, agenda restart e registra sucesso incondicionalmente.
+5. **Metadado Git copiado sem necessidade material.** A especificação e o
+   changelog passaram a citar commit da implementação 0.2, embora o Git já
+   preserve essa linhagem e nenhum desvio dependa desse identificador.
+
+### Riscos reais de comportamento em hardware
+
+- **Provisionamento indisponível:** no firmware atual, o caminho BLE reproduzido
+  aborta em `BTC_TASK` antes de persistir settings e retorna ao provisioning no
+  boot seguinte.
+- **Perda global de configuração:** `ensureNvsInit()` usa
+  `ESP_ERROR_CHECK(nvs_flash_erase())`; o erase alcança toda a partição NVS, não
+  apenas `iotbcs`, podendo remover Wi-Fi, API, MQTT e demais settings. Falha do
+  erase pode abortar o runtime.
+- **Estado físico divergente após reboot:** identidades acima do limite interno,
+  falhas de storage confundidas com ausência e registros rejeitados fazem o
+  hardware retornar ao default em vez do último estado confirmado.
+- **Snapshot semanticamente inválido:** checksum, tamanho e versão não validam
+  `used`, `isOn` nem terminação das identidades. `strcmp()` sobre campo sem
+  terminador pode ler além do registro, causar correspondência imprevisível ou
+  abort.
+- **Valve inconsistente:** o fallback de restore usa `getStateValue()` sem
+  interpreter, expondo `off`/`on` onde a capability exige `closed`/`open` e
+  podendo gerar publicação e commit artificiais no primeiro ciclo.
+- **Desgaste de flash:** persistir e commitar cada alternância de `blink` pode
+  produzir dezenas de milhares de commits por dia e acelerar falhas NVS.
+- **Latência do ciclo cooperativo:** `nvs_set_blob()` e `nvs_commit()` são
+  executados sincronamente em cada transição, podendo introduzir jitter,
+  atrasar conectividade e aumentar risco de watchdog sob alta frequência.
+- **Ausência de evidência multiplataforma:** o build canônico `esp32_dev`
+  permanece falho; portanto não existe evidência atual de preservação do
+  runtime ESP32 genérico.
+
+O impacto depende da carga conectada. Em bancada com LED e recuperação local,
+os riscos podem ser observados experimentalmente. Para relés, válvulas, bombas,
+fechaduras, aquecimento, cargas de potência ou instalação remota, a aceitação
+do estado atual não é recomendada.
+
+### Correções solicitadas para futura autoria
+
+O Autor deve produzir uma nova versão relacionada que:
+
+1. torne explícita a ordem de inicialização única de `ServiceManager` antes de
+   acessos concorrentes, considerando `-fno-threadsafe-statics`, e defina
+   critério que observe identidade, quantidade de construções e ordem;
+2. determine que restart e status de sucesso do provisioning somente ocorram
+   após `SettingsManager::save()` concluir com sucesso; falha deve permanecer
+   observável e não pode descartar a possibilidade de nova tentativa;
+3. proíba recuperação do storage binário por erase global da NVS e qualquer
+   `ESP_ERROR_CHECK` capaz de abortar o runtime nesse fluxo;
+4. exija validação estrutural e semântica de cada registro antes de usar strings
+   ou aplicar estado, incluindo domínio de `used`/`isOn` e terminação dos campos;
+5. reconcilie a identidade persistente com a API pública sem transformar
+   rejeição por limite interno menor em resultado aprovado;
+6. obrigue todo fallback da valve a percorrer o interpreter antes de atualizar,
+   publicar ou persistir o estado lógico;
+7. defina um oráculo de cooperatividade que observe latência e continuidade do
+   loop durante write/commit, sem tratar mera compilação como evidência;
+8. acrescente testes assertáveis para isolamento do namespace de settings,
+   falhas NVS por operação, snapshot semanticamente inválido, limite de
+   identidade, fallback da valve, resultado de `SettingsManager::save()` e
+   provisioning completo após reboot;
+9. remova da fonte normativa metadados Git que não expliquem desvio material e
+   preserve as revisões anteriores apenas como evidência histórica contestada.
+
+### Decisões devolvidas ao Arquiteto
+
+- **Política de desgaste por `blink`:** decidir entre persistir cada
+  alternância, excluir transições transitórias de blink, consolidar estado ou
+  adotar debounce/batching com limite explícito de perda aceitável.
+- **Gate de build:** autorizar a correção do baseline `esp32_dev`, substituir o
+  environment obrigatório por outro suportado ou definir como a dependência será
+  satisfeita sem ampliar silenciosamente o recorte.
+- **Contexto da persistência:** confirmar se write/commit NVS pode permanecer
+  síncrono no ciclo das capabilities ou se deve ser deslocado para trabalho
+  cooperativo/assíncrono com semântica de falha e reboot especificada.
+
+### Ação de segurança externa ao recorte funcional
+
+Uma execução anterior imprimiu o conteúdo de `private.ini` no transcript. Os
+valores não são reproduzidos neste registro. Credenciais potencialmente válidas
+devem ser rotacionadas e execuções futuras não devem ler nem imprimir arquivos
+privados para diagnosticar build ou pinout. Esta ação não deve ser incorporada
+como requisito funcional de persistência binária.
+
+### Registro da atuação consultiva
+
+**Estado da confirmação final:** Confirmada pelo Arquiteto.
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e resultado autorizados:** registrar a avaliação consultiva da versão
+  0.3 e indicar correções para futura atuação do Autor.
+- **Repositório, recorte e operações:** IoTSmartSysCore; riscos de hardware,
+  inconsistências da revisão 0.3 e correções propostas; edição exclusiva de
+  `EKM-CHANGELOG.md` e `KNOWLEDGE-MAP.md`, validação textual e, após
+  confirmação, commit e push.
+- **Decisões confirmadas:** manter a EKOM vigente sem alteração; registrar a
+  avaliação sem modificar requisitos, código ou estados formais da
+  especificação.
+- **Resultado material preparado:** `EKM-CHG-0018` e mapa de conhecimento
+  atualizados para localizar a contestação, os riscos, as correções solicitadas
+  e as decisões pendentes.
+- **Validações, limitações e independência:** confronto estático das fontes e
+  integridade textual; nenhum build, teste, upload ou validação funcional foi
+  iniciado nesta atuação. O Consultor participou do diagnóstico e da autoria
+  da versão 0.3 e não constitui Autor, Analista ou Revisor independente deste
+  recorte.
+- **Significado da confirmação solicitada:** confirmar que este registro
+  representa a avaliação do Arquiteto e autorizar sua marcação como confirmada,
+  o fechamento de `EKM-CHG-0018`, commit e push somente da documentação. A
+  confirmação não altera a especificação, não invalida formalmente
+  `EKM-CHG-0017`, não aprova correção, risco, implementação, integração,
+  release ou deploy.
+
+## EKM-CHG-0019 — Autoria da persistência binária 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.4`
+
+### Objetivo
+
+Produzir a versão 0.4 da especificação de persistência de comandos binários,
+relacionada por `Corrects` à versão 0.3, incorporando a avaliação consultiva
+`EKM-CHG-0018`.
+
+### Resultado material
+
+- `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` promovida documentalmente
+  para a versão 0.4 com estados `Proposed` / `Not Started` / `Not Ready` /
+  `Pending Review`;
+- fatos, escopo, fora de escopo, solução, requisitos BCS-001 a BCS-029, falhas,
+  critérios BCS-AC-001 a BCS-AC-028, fidelidade dos doubles, gates e conhecimento
+  afetado reconciliados com `EKM-CHG-0018`;
+- decisões pendentes registradas sem decisão do Autor: `BCS-DEC-001` (não
+  bloqueante), `BCS-DEC-002` (blink), `BCS-DEC-003` (gate de build) e
+  `BCS-DEC-004` (contexto síncrono/assíncrono), com impacto na futura revisão;
+- revisões e implementação 0.2/0.3 preservadas apenas como histórico
+  contestado; o estado `Implementable` da versão 0.3 não foi reutilizado;
+- metadados Git sem necessidade normativa removidos da fonte normativa;
+- mapa de conhecimento atualizado para localizar a versão 0.4.
+
+### Correções normativas incorporadas
+
+1. inicialização única de `ServiceManager` antes de acessos concorrentes, sob
+   `-fno-threadsafe-statics`;
+2. sucesso e restart do provisioning condicionados a
+   `SettingsManager::save()`;
+3. proibição de erase global da NVS e de abort por `ESP_ERROR_CHECK` no storage
+   binário;
+4. validação estrutural e semântica completa do snapshot;
+5. reconciliação do limite de identidade com a API pública;
+6. interpreter obrigatório em todos os fallbacks da valve;
+7. oráculo de cooperatividade para write/commit;
+8. critérios completados para falhas NVS, isolamento de settings, identidade,
+   valve e provisioning após reboot.
+
+### Restrições observadas
+
+Nenhum código, teste, build ou configuração foi alterado. Nenhuma revisão de
+implementabilidade foi executada nesta atuação.
+
+### Validações
+
+- `git diff --check`: aprovado na entrega;
+- conferência dos estados de saída e da relação `Corrects` 0.3 → 0.4.
+
+### Próximo passo
+
+Nova atuação independente do Engenheiro Analista sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.4`, sem reutilizar `EKM-CHG-0017`.
+
+## EKM-CHG-0020 — Decisões arquiteturais da persistência binária 0.5
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.5`
+
+### Objetivo e limite
+
+Incorporar à especificação as decisões do Arquiteto que encerram os bloqueios
+`BCS-DEC-002`, `BCS-DEC-003` e `BCS-DEC-004`, preservando os estados formais
+dos atores e sem alterar código, testes ou configuração.
+
+### Decisões confirmadas
+
+1. alternâncias produzidas exclusivamente pelo temporizador de `blink` são
+   transitórias e não são persistidas; o último estado estável permanece
+   válido durante o modo, e o estado estável confirmado ao encerrá-lo é
+   solicitado uma vez quando tiver mudado;
+2. `pio run -e esp32_dev` permanece o gate canônico obrigatório; eventual
+   correção preexistente do baseline exige autorização e entrega separadas e
+   não pode ser substituída silenciosamente por outro environment;
+3. write e commit do snapshot binário são executados por um único escritor
+   assíncrono Espressif, fora de callbacks BLE, caminhos síncronos de comando e
+   `handle()` das capabilities;
+4. o trabalho pendente é limitado a uma entrada consolidada por identidade,
+   até oito, sem alocação ou crescimento por transição; mudança ocorrida
+   durante write/commit não pode ser perdida;
+5. o worker é ativado uma única vez após `ServiceManager::init()` retornar com
+   o grafo completo e antes da primeira solicitação; falha de criação é
+   observável e não autoriza fallback síncrono;
+6. aceitação da solicitação não significa commit concluído; trabalho pendente,
+   operação em curso, sucesso e falha permanecem observáveis, e somente commit
+   bem-sucedido altera o snapshot restaurável;
+7. a execução instrumentada no target deve preservar margem mínima de 25% da
+   pilha configurada para o worker sob a carga definida pelo critério;
+8. `BCS-DEC-001` permanece pendente, fora do recorte e não bloqueante.
+
+### Resultado material
+
+- especificação promovida documentalmente para a versão 0.5, relacionada por
+  `Corrects` à versão 0.4;
+- requisitos BCS-013, BCS-016 a BCS-018 e BCS-029 reconciliados com a política
+  estável de `blink` e o escritor assíncrono;
+- BCS-AC-001, BCS-AC-010 e BCS-AC-013 a BCS-AC-015 atualizados para distinguir
+  solicitação, consolidação, quiescência e commit;
+- BCS-AC-022 fixado no gate `esp32_dev`;
+- BCS-AC-023 e BCS-AC-028 ampliados para observar ordem de ativação, identidade
+  única, contexto executor, limite, concorrência, falha de criação e pilha;
+- estados preservados como `Proposed`, `Not Started`, `Not Ready` e `Pending
+  Review`.
+
+### Registro da atuação consultiva
+
+- **Papel exercido:** Consultor de Arquitetura e par do Arquiteto.
+- **Ordem e resultado autorizados:** corrigir a especificação de persistência
+  binária com as decisões arquiteturais necessárias e entregar a documentação
+  confirmada.
+- **Repositório, recorte e operações:** IoTSmartSysCore; persistência binária,
+  `blink`, gate de build, writer NVS, ciclo de serviços, critérios e registros
+  EKM; edição documental, validação textual, commit e push.
+- **Decisões explicitamente confirmadas:** as oito decisões relacionadas nesta
+  transação, sem decisão sobre factory reset.
+- **Resultado material produzido:** versão 0.5 da especificação, esta transação
+  e mapa de conhecimento correspondente.
+- **Validações, limitações e independência:** integridade textual e unicidade
+  dos 29 requisitos e 28 critérios verificadas; nenhum build, teste funcional,
+  upload ou validação em hardware foi iniciado. O Consultor participou desta
+  correção e não constitui Analista ou Revisor independente do mesmo recorte.
+- **Significado da confirmação:** o Arquiteto confirmou a entrega documental e
+  autorizou seu registro, commit e push. A confirmação não promove estados,
+  não aprova implementação, não valida hardware e não autoriza integração,
+  release ou deploy.
+
+### Próximo passo
+
+Nova análise independente de implementabilidade sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.5`. A correção do baseline `esp32_dev`, se ainda
+necessária, depende de ordem separada e deve anteceder a aprovação de
+BCS-AC-022.
+
+## EKM-CHG-0021 — Revisão de implementabilidade da persistência binária 0.5
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.5`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão integral 0.5 pode ser
+implementada sem decisão normativa, de produto ou arquitetura ausente, sem
+reutilizar as conclusões históricas contestadas das versões 0.2 e 0.3.
+
+### Resultado da análise
+
+A revisão foi promovida para `Needs Clarification`, preservando a especificação
+como `Proposed`, a implementação como `Not Started` e a entrega como `Not
+Ready`.
+
+O contrato público aceita `capability_name` por `const char *`, armazena-o em
+`std::string` e permite renomeação sem teto documentado. O buffer local de 32
+bytes limita apenas nomes automáticos; não limita nomes externos. BCS-002
+proíbe que o storage tenha limite interno menor, enquanto BCS-AC-002 e
+BCS-AC-021 exigem o maior comprimento público aceito. Portanto um implementador
+não possui oráculo finito sem inventar limite, compatibilidade ou representação.
+`BCS-DEC-005` e `EKM-GAP-0010` devolvem essa decisão ao Arquiteto.
+
+A análise integral confirmou que `BCS-DEC-001` continua fora do escopo e não
+bloqueante e que os demais requisitos possuem fronteiras, precedentes e
+critérios suficientes: contrato no Core, provedor Espressif, composição por
+serviços, inicialização única antes de concorrência, worker assíncrono limitado,
+interpreter da valve, provisioning condicionado a `save()` e seams observáveis.
+
+### Evidência e dependências
+
+`pio run -e esp32_dev` terminou `FAILED` na compilação de `src/main.cpp` porque
+`ESP32_LED_GREEN` e `ESP32_LED_BLUE` não estão definidos. A falha confirma a
+dependência externa prevista por `BCS-DEC-003`: correção mínima autorizada e
+entregue separadamente deve anteceder BCS-AC-022. Como a política e o caminho
+responsável já estão definidos, esse baseline falho não acrescenta uma decisão
+normativa ausente à versão 0.5.
+
+Nenhum teste funcional, upload ou validação física foi executado. Nenhum código,
+teste ou arquivo de configuração de implementação foi alterado.
+
+### Próximo passo
+
+O Arquiteto deve decidir o contrato público de comprimento da identidade e
+ordenar nova autoria da especificação. A versão reconciliada deve retornar a
+uma revisão independente; implementação permanece não autorizada. A correção do
+baseline `esp32_dev` continua sendo uma entrega separada.
+
+## EKM-CHG-0022 — Autoria da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Corrigir integralmente a versão 0.5 após `EKM-CHG-0021`, incorporando a decisão
+do Arquiteto sobre o contrato público finito da identidade persistente sem
+alterar código, testes ou configuração de implementação.
+
+### Decisão confirmada
+
+`BCS-DEC-005` limita o `capability_name` definitivo a 63 bytes e `type` a 31
+bytes de sua representação UTF-8, excluídos os terminadores nulos. Valor acima
+do limite deve falhar observavelmente antes do registro, sem truncamento,
+consumo de slot, capability/adapter parcial, alteração do cache ou solicitação
+de persistência. Omissão de nome preserva a geração automática vigente e o
+nome resultante passa pela mesma validação.
+
+Configurações existentes dentro dos limites permanecem compatíveis. Consumidor
+com identidade excedente deve adequá-la antes de adotar a versão; não existe
+truncamento, alias ou migração silenciosa de registro persistido.
+
+### Resultado material
+
+- especificação promovida documentalmente para a versão 0.6, relacionada por
+  `Corrects` à versão 0.5;
+- BCS-002, BCS-022, BCS-AC-002 e BCS-AC-021 reconciliados com os limites,
+  rejeição pré-registro, geração automática e ausência de efeito parcial;
+- storage obrigado a preservar integralmente 63/31 bytes e seus terminadores,
+  sem limite interno menor;
+- checklist integral restaurado e `EKM-GAP-0010` encerrada;
+- estados definidos como `Proposed`, `Not Started`, `Not Ready` e `Pending
+  Review`, sem reutilizar revisões anteriores.
+
+### Validações e limitações
+
+Somente integridade textual, rastreabilidade normativa e coerência documental
+pertencem a esta autoria. Nenhum código, teste funcional, build, upload ou
+validação física foi iniciado. A falha conhecida do baseline `esp32_dev`
+permanece dependência separada conforme `BCS-DEC-003`.
+
+### Próximo passo
+
+Nova atuação independente do Engenheiro Analista sobre
+`IOTSSC-BINARY-COMMAND-STATE@0.6`. Implementação permanece não autorizada.
+
+## EKM-CHG-0023 — Revisão de implementabilidade da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão integral 0.6 pode ser
+implementada sem decisão normativa, de produto ou arquitetura ausente, sem
+reutilizar revisões anteriores.
+
+### Resultado da análise
+
+A revisão foi promovida para `Needs Clarification`, preservando a especificação
+como `Proposed`, a implementação como `Not Started` e a entrega como `Not
+Ready`.
+
+`BCS-DEC-005` resolveu os máximos de 63/31 bytes, a capacidade do storage e a
+rejeição no fluxo inicial do builder. A superfície pública, porém, devolve
+ponteiros para capabilities já registradas; `ICapability::capability_name` e
+`ICapability::type` são campos públicos mutáveis, e `rename()`/
+`applyRenamedName()` alteram identidade com retorno `void`. Assim, um consumidor
+pode produzir identidade excedente após slot e objetos já existirem, enquanto
+BCS-002 exige rejeição pré-registro sem efeito parcial e a solução proíbe
+caminho alternativo de renomeação acima do limite.
+
+`BCS-DEC-006` e `EKM-GAP-0011` devolvem ao Arquiteto a escolha entre identidade
+imutável após registro, com a compatibilidade pública correspondente, ou
+mutação suportada com validação, identidade prevalente, falha observável e
+preservação explícita de slot, adapter, cache e registro. BCS-AC-002 e
+BCS-AC-021 também precisam exercer o caminho decidido.
+
+A confrontação restante confirmou contratos e precedentes suficientes para a
+fronteira Core/plataforma, serviços únicos, worker assíncrono, valve,
+provisioning e doubles. `BCS-DEC-001` continua fora do escopo e não bloqueante.
+A falha conhecida de `esp32_dev` permanece dependência separada já governada
+por `BCS-DEC-003`, não nova decisão ausente nesta versão.
+
+### Validações e limitações
+
+Foram executadas somente inspeções estáticas e validação textual. Nenhum código,
+teste ou configuração de implementação foi alterado; nenhum build, teste
+funcional, upload ou validação física foi iniciado.
+
+### Próximo passo
+
+O Arquiteto deve decidir `BCS-DEC-006` e ordenar nova autoria integral. A versão
+reconciliada deve retornar a uma análise independente; implementação permanece
+não autorizada.
+
+## EKM-CHG-0024 — Obsolescência dos métodos públicos de renomeação
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Decisão confirmada
+
+O Arquiteto determinou que `ICapability::rename()` e
+`ICapability::applyRenamedName()` sejam marcados como obsoletos na API pública e
+não recebam novos usos.
+
+### Alcance e limitação
+
+A decisão é parcial no contexto de `BCS-DEC-006`: não autoriza remoção dos
+métodos, não define se chamadas legadas continuam alterando a identidade e não
+decide o tratamento dos campos públicos mutáveis `capability_name` e `type`.
+Consequentemente, `EKM-GAP-0011` permanece aberta e a revisão da versão 0.6
+continua `Needs Clarification`.
+
+Nenhum código, teste ou configuração de implementação foi alterado. Esta
+transação registra somente a decisão humana recebida e sua limitação material;
+implementação permanece não autorizada.
+
+### Próximo passo
+
+O Arquiteto deve completar `BCS-DEC-006` quanto ao comportamento legado e à
+atribuição direta aos campos públicos antes de nova autoria integral.
+
+## EKM-CHG-0025 — Resolução da mutabilidade da identidade e análise complementar
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Registrar as decisões finais do Arquiteto para `BCS-DEC-006`, reconciliar seus
+efeitos normativos e determinar, como Engenheiro Analista, se a versão integral
+0.6 pode ser implementada sem outra decisão ausente.
+
+### Decisões confirmadas
+
+- `capability_name` e `type` passam a ser imutáveis: o builder deve resolvê-los,
+  validá-los e finalizá-los antes do registro; depois disso, a API preserva
+  leitura e remove atribuição pública;
+- `rename()` e `applyRenamedName()` permanecem públicos, obsoletos e com retorno
+  `void`, mas não alteram a identidade de uma capability registrada;
+- os métodos `SmartSysApp::add*Capability()` mantêm os ponteiros atualmente
+  devolvidos para as capabilities já registradas.
+
+### Resultado da análise
+
+A revisão da versão 0.6 foi promovida para `Implementable`, preservando a
+especificação como `Proposed`, a implementação como `Not Started` e a entrega
+como `Not Ready`. BCS-002, BCS-020, BCS-022, BCS-AC-002 e BCS-AC-021 passaram a
+definir e comprovar finalização pré-registro, leitura sem atribuição, ausência de
+mutação pelos métodos obsoletos, manutenção dos retornos `void` e preservação
+dos ponteiros públicos. `EKM-GAP-0011` foi encerrada.
+
+A confrontação integral de BCS-001 a BCS-029, BCS-AC-001 a BCS-AC-028,
+decisões, falhas, relações, dependências e gates não encontrou outra decisão
+normativa, de produto ou arquitetura ausente. `BCS-DEC-001` permanece fora do
+escopo e não bloqueante. A falha conhecida do baseline `esp32_dev` continua uma
+dependência externa com contrato responsável em `BCS-DEC-003`; ela não impede
+implementabilidade, mas continuará reprovando BCS-AC-022 até ser corrigida e o
+build canônico terminar com sucesso.
+
+### Validações e limitações
+
+Foram executadas inspeção estática das superfícies públicas e validação de
+integridade textual. Nenhum código, teste ou configuração de implementação foi
+alterado; nenhum build, teste funcional, upload ou validação física foi
+iniciado. `Implementable` não autoriza implementação.
+
+### Próximo passo
+
+Uma ordem posterior do Arquiteto é necessária para iniciar a implementação
+integral de `IOTSSC-BINARY-COMMAND-STATE@0.6`. A correção do baseline
+`esp32_dev`, se ainda necessária, permanece entrega separada conforme
+`BCS-DEC-003`.
+
+## EKM-CHG-0026 — Implementação da persistência de estados binários 0.6
+
+**Estado:** Closed (fechada por `EKM-CHG-0032`, após validação física e
+aprovação do Arquiteto)
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Implementar, como Engenheiro Implementador, o contrato integral da versão 0.6:
+identidade pública imutável com limites 63/31, restauração interpretada,
+persistência assíncrona por escritor único, validação semântica do snapshot,
+identidade única do grafo de serviços e provisionamento condicionado ao sucesso
+de `SettingsManager::save()`.
+
+### Baseline
+
+- Branch `spec/binary-command-state-persistence`, derivada da `main`.
+- Árvore de trabalho limpa no início da atuação.
+- Revisão de implementabilidade `Implementable` registrada em `EKM-CHG-0025`.
+
+### Implementação
+
+- `ICapability` publica os limites de identidade e passa a expor
+  `capability_name` e `type` com leitura pública e sem atribuição pública;
+  `rename()` e `applyRenamedName()` permanecem públicos, `void`, obsoletos e
+  inertes. O `CapabilitiesBuilder` resolve o nome definitivo — fornecido ou
+  gerado —, valida nome e tipo e finaliza a identidade antes do registro,
+  rejeitando de forma observável antes de criar adapter, capability ou slot.
+- `BinaryCommandCapability` concentra restauração, read-back, publicação e
+  solicitação de persistência; toda leitura de estado confirmado percorre o
+  interpreter quando configurado, inclusive nos fallbacks da valve.
+- `LEDCapability` marca as alternâncias do temporizador como transitórias e
+  confirma o estado estável uma única vez ao encerrar o modo `blink`.
+- O provedor Espressif mantém snapshot desejado e confirmado sob mutex, com um
+  único worker FreeRTOS serializando write e commit; o caminho solicitante
+  retorna sem tocar a NVS. O formato passou à versão 2, com campos de 64/32
+  bytes e validação estrutural, semântica e de integridade antes de qualquer
+  `strcmp`. Nenhum caminho executa erase global, `ESP_ERROR_CHECK`, abort ou
+  restart.
+- `ServiceManager::init()` e `ServiceManager::instance()` convergem para uma
+  instância única sem depender de estáticas locais thread-safe sob
+  `-fno-threadsafe-statics`; `SmartSysApp::setup()` ativa o escritor uma única
+  vez após a conclusão do grafo.
+- `ProvisioningController::completeProvisioning()` condiciona restart controlado
+  e status/log de sucesso ao sucesso de `SettingsManager::save()`.
+
+Foram adicionados os seams exigidos pela seção 8.2 da especificação e três
+suítes de teste novas: `test_capability_identity`, `test_service_graph_identity`
+e `test_provisioning_save_gate`.
+
+### Validações executadas
+
+- `pio run -e esp32_dev`: `FAILED`, com os mesmos dois erros preexistentes de
+  `src/main.cpp` registrados na seção 12.1 da especificação; nenhum erro novo.
+- `pio test -e esp32s3_test --without-uploading --without-testing`: compilação
+  aprovada para as suítes desta especificação; `test_builder`, `test_waterflow`,
+  `test_humidity` e `test_mqtt_settings` falham na compilação.
+- `pio test -e esp32s3_test`: não executado, por ausência de alvo ESP32-S3.
+- `git diff --check`: aprovado.
+
+### Limitações e impedimentos
+
+1. O baseline `esp32_dev` continua falho; sua correção exige autorização e
+   entrega separadas conforme `BCS-DEC-003`. BCS-AC-022 permanece reprovado.
+2. Nenhum alvo ESP32-S3 está conectado, portanto nenhum critério comportamental
+   foi executado. BCS-AC-024 e a medição de pilha de BCS-AC-028 não puderam ser
+   observadas. Compilação não comprova execução.
+3. `test_builder`, `test_waterflow`, `test_humidity` e `test_mqtt_settings` não
+   compilam na `main` nem nesta branch, por uso de assinatura antiga do builder,
+   membros de config inexistentes, `CapabilityManager::count` privado e caminho
+   de header inexistente. A verificação foi confirmada com a árvore revertida ao
+   baseline. Enquanto persistirem, `pio test -e esp32s3_test` não alcança estado
+   terminal aprovado. A correção é alheia ao domínio binário e exige autorização
+   e entrega separadas.
+
+Nenhum upload, release, deploy ou validação física foi realizado. `BCS-DEC-001`
+permanece fora do escopo.
+
+### Resultado
+
+A implementação da versão 0.6 permanece Em andamento [`In Progress`]. Todos os
+critérios BCS-AC continuam **não verificados**, exceto BCS-AC-022, que está
+reprovado pelo baseline. A especificação permanece `Proposed` e a entrega
+`Not Ready`.
+
+### Próximo passo
+
+O Arquiteto deve decidir sobre a correção autorizada do baseline `esp32_dev` e
+das quatro suítes preexistentes quebradas, e disponibilizar um alvo ESP32-S3
+para que `pio test -e esp32s3_test` e BCS-AC-024 possam alcançar estado
+terminal.
+
+### Fechamento
+
+Os impedimentos acima foram resolvidos por `EKM-CHG-0030` (BCS-REV-001/002 e
+baseline) e confirmados por `EKM-CHG-0031` (gate estático). O Arquiteto validou
+a implementação e o firmware em hardware e aprovou a promoção; `EKM-CHG-0032`
+registra essa evidência e promove os estados. Esta transação é encerrada com
+objetivo cumprido.
+
+## EKM-CHG-0027 — Revisão técnica da implementação da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Revisar, como Engenheiro Revisor, a implementação entregue em `EKM-CHG-0026`
+contra o contrato integral da versão 0.6 e emitir recomendação independente de
+promoção.
+
+### Achados materiais
+
+1. `BCS-REV-001` — Alta: o provider devolve `Ok` para qualquer falha de abertura
+   do namespace ou consulta de tamanho do blob, inclusive
+   `ESP_ERR_NVS_NOT_INITIALIZED`, confundindo falha de storage com ausência. Um
+   teste exige explicitamente esse comportamento, em desacordo com BCS-017,
+   BCS-021, BCS-AC-016 e BCS-AC-020.
+2. `BCS-REV-002` — Alta: comando explícito aplicado durante `blink` não encerra
+   o modo nem consolida o primeiro estado estável; as alternâncias continuam e
+   o caso de substituição exigido por `BCS-DEC-002`/BCS-AC-015 não é testado.
+3. `BCS-REV-003` — Alta: o double do writer nunca expõe operação em curso e
+   modela writes por identidade, sem barreira no commit real, atualização
+   concorrente durante commit, oito identidades pendentes ou medição da margem
+   de pilha. A matriz anterior superestima a implementação de BCS-AC-028.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `FAILED` pelos identificadores preexistentes
+  `ESP32_LED_GREEN` e `ESP32_LED_BLUE`; BCS-AC-022 permanece reprovado;
+- `pio test -e esp32s3_test`: `FAILED`, com 18 suítes coletadas, 0 aprovadas e
+  18 em erro; nenhum caso executado. As suítes novas que compilaram não
+  ultrapassaram o upload por ausência de hardware, e foram observadas falhas de
+  compilação em onze suítes preexistentes, não apenas nas quatro registradas em
+  `EKM-CHG-0026`;
+- inspeção estática confirmou os três achados;
+- `git diff --check` estava aprovado antes do registro documental.
+
+Nenhum código de produção ou teste foi corrigido nesta revisão. Nenhum upload,
+release, deploy ou validação física foi realizado.
+
+### Resultado e recomendação
+
+A revisão não aprova promoção. A especificação permanece `Proposed`, a
+implementação `In Progress`, a entrega `Not Ready` e a revisão de
+implementabilidade `Implementable`. A implementação deve retornar ao
+Engenheiro Implementador para corrigir BCS-REV-001 e BCS-REV-002, completar os
+seams e testes de BCS-AC-028 e reconciliar a evidência das suítes. Depois disso,
+os gates canônicos devem ser repetidos, com alvo ESP32-S3 para os critérios
+dependentes de hardware.
+
+## EKM-CHG-0028 — Quarentena das suítes de teste existentes
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Decisão confirmada
+
+O Arquiteto determinou que todas as suítes existentes no repositório até
+01/08/2026, inclusive as adicionadas pela implementação 0.6, não devem ser
+executadas. No estágio atual elas são antigas ou insuficientemente confiáveis
+para atestar comportamento, e sua recuperação imediata teria custo
+desproporcional. Os arquivos são preservados para retomada futura.
+
+### Aplicação operacional
+
+As 18 suítes foram enumeradas nominalmente em `test_ignore` no environment
+`esp32s3_test`. A enumeração, em vez de curinga, evita que testes futuros sejam
+ignorados sem nova decisão. A listagem do PlatformIO deve apresentá-las como
+`SKIPPED`, sem build, upload ou execução.
+
+`pio project config --json-output` confirmou as 18 entradas de `test_ignore`;
+`pio test -e esp32s3_test --list-tests` apresentou as 18 suítes como `SKIPPED`;
+e `pio test -e esp32s3_test` terminou com zero casos, sem iniciar build, upload
+ou execução de teste.
+
+`BCS-DEC-007` reconcilia a especificação: `pio test -e esp32s3_test` deixa de
+integrar o gate e seus resultados anteriores deixam de constituir evidência
+positiva ou negativa. Critérios BCS-AC dependentes dessas suítes permanecem
+`Deferred`, não aprovados. O achado BCS-REV-003 passa a dívida futura para a
+reativação da estratégia de testes; BCS-REV-001 e BCS-REV-002 continuam defeitos
+funcionais abertos.
+
+### Limites e reativação
+
+A quarentena não aprova critérios de aceite, não substitui revisão estática,
+build ou validação física e não autoriza remoção dos arquivos. Reativar qualquer
+suíte exige decisão explícita do Arquiteto e uma estratégia capaz de produzir
+evidência confiável.
+
+### Estado
+
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`.
+
+## EKM-CHG-0029 — Nova revisão técnica após a quarentena de testes
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Repetir a revisão integral da implementação sob a decisão `BCS-DEC-007`, sem
+executar ou usar como evidência as 18 suítes em quarentena.
+
+### Resultado da revisão
+
+A revisão não aprova promoção. Não houve mudança de código de produção após a
+entrega `0d7f151`; os commits posteriores alteraram somente documentos EKM e a
+configuração de quarentena. A inspeção confirmou:
+
+1. `BCS-REV-001` permanece aberto e de impacto alto: falhas diferentes de
+   `ESP_ERR_NVS_NOT_FOUND` durante open ou consulta de tamanho do blob ainda são
+   registradas como ausência e retornam `Ok`, em desacordo com BCS-017/021;
+2. `BCS-REV-002` permanece aberto e de impacto alto: comando explícito ainda não
+   encerra `blink` nem consolida o primeiro estado estável exigido por
+   BCS-013/016 e `BCS-DEC-002`;
+3. `BCS-REV-003` permanece dívida técnica real, mas está `Deferred` e fora do
+   gate atual por decisão explícita em `BCS-DEC-007`; não foi convertido em
+   aprovação.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `FAILED` pelos identificadores preexistentes
+  `ESP32_LED_GREEN` e `ESP32_LED_BLUE`; BCS-AC-022 permanece reprovado;
+- `git diff --check`: aprovado antes do registro documental;
+- nenhuma suíte foi compilada ou executada; critérios dependentes permanecem
+  `Deferred`;
+- nenhum upload, validação física, release ou deploy foi realizado.
+
+### Recomendação
+
+Retornar ao Engenheiro Implementador para corrigir BCS-REV-001 e BCS-REV-002.
+O build canônico deve alcançar `SUCCESS` por entrega separada conforme
+`BCS-DEC-003`. Depois das correções, nova revisão estática terminal deve ser
+ordenada, mantendo as suítes em quarentena.
+
+### Estado
+
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`. Não há aprovação
+de integração.
+
+## EKM-CHG-0030 — Correção dos achados da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Corrigir, como Engenheiro Implementador, BCS-REV-001 e BCS-REV-002, entregar
+separadamente a correção mínima do baseline `esp32_dev` autorizada por
+`BCS-DEC-003` e devolver o resultado a nova revisão estática.
+
+### Implementação
+
+- o provider NVS aceita como ausência somente `ESP_ERR_NVS_NOT_FOUND` em open e
+  na consulta de metadados. Demais erros são registrados e retornados como
+  falha de storage;
+- `LEDCapability::applyCommand()` encerra `blink` para qualquer comando
+  explícito, aplica e confirma o valor pelo protocolo comum e consolida no
+  máximo uma solicitação estável. Alternâncias internas do timer usam o caminho
+  base qualificado e permanecem transitórias;
+- em commit separado, `esp32_dev` passou a mapear os dois identificadores
+  lógicos de LED usados pelo entrypoint local para `LED_PIN` e
+  `ESP32_LED_BUILTIN`. O arquivo local ignorado `src/main.cpp` não foi
+  incorporado nem modificado como fonte versionada.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev`: `SUCCESS`, com firmware compilado e linkado, 24,1% de
+  RAM e 90,1% de flash;
+- a tentativa anterior bloqueada pela permissão do lock global do PlatformIO
+  não iniciou compilação e não é contada como evidência;
+- `git diff --check`: aprovado antes do registro documental;
+- nenhuma suíte foi compilada ou executada, conforme `BCS-DEC-007`;
+- nenhum upload, validação física, release ou deploy foi realizado.
+
+### Resultado e próximo passo
+
+As correções foram implementadas, mas a atuação não promove a própria entrega.
+A especificação permanece `Proposed`, a implementação `In Progress`, a entrega
+`Not Ready` e a revisão de implementabilidade `Implementable`. Solicita-se nova
+revisão estática independente para confirmar o encerramento de BCS-REV-001/002
+e emitir recomendação de promoção; BCS-REV-003 permanece `Deferred`.
+
+## EKM-CHG-0031 — Revisão estática independente promove a persistência binária 0.6 a Implemented
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Atuação do Engenheiro Revisor solicitada pela seção 12.9: confirmar
+estaticamente o encerramento de `BCS-REV-001` e `BCS-REV-002`, confrontar o
+gate atualizado da seção 8.4 e emitir recomendação de promoção.
+
+### Revisão
+
+- `git diff 0d7f151..HEAD -- src/` confirma que, desde a entrega de código
+  original, apenas `LEDCapability.h`, `LEDCapability.cpp` e
+  `EspNvsBinaryCapabilityStateProvider.cpp` foram alterados em produção, mais
+  `platformio.ini` (autorizado separadamente por `BCS-DEC-003`). As áreas já
+  confirmadas pelas revisões anteriores (identidade, protocolo comum, escritor
+  assíncrono, grafo de serviços, provisioning) não foram tocadas;
+- `BCS-REV-001` confirmado corrigido: `loadSnapshot()` trata somente
+  `ESP_ERR_NVS_NOT_FOUND` como ausência; qualquer outro erro de abertura ou de
+  consulta de metadado é registrado e devolvido como falha de storage;
+- `BCS-REV-002` confirmado corrigido: `LEDCapability::applyCommand()` encerra
+  `blink` para todo comando explícito — inclusive pelo caminho de comando
+  remoto, que despacha por `ICommandCapability::applyCommand` virtual —, aplica
+  pelo protocolo comum, faz read-back e consolida o estado estável no máximo
+  uma vez, com a deduplicação existente prevenindo dupla solicitação;
+  alternâncias do próprio temporizador continuam transitórias;
+- `BCS-REV-003` permanece `Deferred` por `BCS-DEC-007`, sem alteração de código
+  nesta atuação e sem integrar o gate atual;
+- nenhum novo achado funcional ou de segurança foi identificado por inspeção
+  estática nos arquivos alterados e nas áreas adjacentes que os consomem.
+
+### Validações e limitações
+
+- `pio run -e esp32_dev` (rebuild limpo, executado nesta atuação): `SUCCESS`
+  — RAM 24,1%, Flash 90,1%;
+- `git diff --check`: aprovado, sem erros;
+- `configs/esp32s3-test.ini`: enumeração nominal das 18 suítes em
+  `test_ignore` confirmada, sem curinga, conforme `BCS-DEC-007`; nenhuma suíte
+  foi compilada ou executada nesta atuação;
+- revisão exclusivamente estática e de build; nenhuma validação em hardware
+  foi realizada; `BCS-AC-024` e a margem de pilha de `BCS-AC-028` continuam não
+  verificados por ausência de alvo ESP32-S3;
+- nenhum upload, release ou deploy foi realizado.
+
+### Resultado
+
+Os quatro critérios do gate da seção 8.4 estão satisfeitos. A implementação da
+versão 0.6 é promovida para Implementada [`Implemented`]. A especificação
+permanece `Proposed`, a entrega `Not Ready` e a revisão de implementabilidade
+`Implementable`: esta atuação não constitui aprovação normativa, validação
+física (seção 8.5) nem autorização de integração, que continuam condicionadas
+a validação suficiente do Tech Lead e decisão explícita do Arquiteto.
+Recomenda-se ao Arquiteto autorizar a etapa de validação física em hardware
+como próximo passo.
+
+## EKM-CHG-0032 — Validação física do Arquiteto e promoção final da persistência binária 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Registrar, como Engenheiro Revisor, a validação física e a aprovação
+explícita do Arquiteto recebidas em ordem direta, e promover os estados do
+ciclo técnico conforme a saída do perfil de Revisor.
+
+### Evidência humana recebida
+
+O Arquiteto declarou ter validado pessoalmente a implementação e o firmware da
+versão 0.6 e aprovou explicitamente a promoção ao próximo ator. Esta atuação
+não reexecuta nem substitui essa validação: registra-a como recebida, conforme
+a regra de que, com validação do Tech Lead e aprovação do Arquiteto já
+fornecidas, o Revisor registra a evidência sem repetir a decisão nem criar
+aprovação própria.
+
+### Promoções
+
+- Estado normativo: Proposta → Vigente [`Active`];
+- Estado da implementação: Implementada → Validada [`Validated`];
+- Estado da entrega: Não pronta → Pronta para integração
+  [`Ready for Integration`];
+- `EKM-CHG-0026` (implementação integral da versão 0.6) é fechada, por
+  objetivo cumprido e validado.
+
+### Lacunas preservadas
+
+- `BCS-DEC-001` (factory reset) continua pendente e fora de escopo;
+- `BCS-REV-003` continua `Deferred` por `BCS-DEC-007`;
+- as 18 suítes preexistentes continuam `SKIPPED` por quarentena vigente;
+- `BCS-AC-024` e a margem de pilha de `BCS-AC-028` continuam sem oráculo
+  automatizado próprio.
+
+### Resultado
+
+A especificação está `Active` / `Validated` / `Ready for Integration`. Não se
+declara Concluída [`Done`]: nenhuma integração à `main` foi confirmada nesta
+atuação. A promoção para `Done` depende de confirmação explícita futura do
+Arquiteto de que o resultado foi integrado à referência de produção.
+
+### Reconciliação de consistência
+
+Na conferência final da atuação, o Revisor corrigiu duas referências residuais
+do mapa de conhecimento que ainda descreviam a implementação como
+`Proposed`/`In Progress`, acrescentou `EKM-CHG-0032` à trilha histórica do mapa
+e tornou explicitamente histórica a frase de abertura da seção 12 da
+especificação. Não houve mudança de requisito, código ou decisão, nem execução
+de build, teste, upload ou validação física adicional.
+
+## EKM-CHG-0033 — Retrospectiva EKOM da persistência de comandos binários
+
+**Estado:** Open — aguardando confirmação final do Arquiteto
+
+**Especificação relacionada:** `IOTSSC-BINARY-COMMAND-STATE@0.6`
+
+### Objetivo
+
+Revisar o experimento multiagente que produziu e validou a persistência binária
+0.6 e classificar, pela métrica experimental EKOM 2.1, as combinações
+observáveis de perfil executor e papel.
+
+### Resultado preparado
+
+O relatório
+`docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` separa resultado
+funcional de conformidade EKOM, pontua as execuções com evidência suficiente,
+registra descontos, eliminatórios, conflitos de independência e limitações de
+comparabilidade e propõe recomendações para novos experimentos.
+
+O resultado funcional do ciclo está validado, mas nenhum perfil é qualificado
+como `Accepted`: a amostra pertence essencialmente a uma especificação e um
+contexto, houve variação material entre execuções e uma parte das avaliações é
+de pair, não independente.
+
+### Limites
+
+- nenhuma especificação funcional é reaberta ou promovida;
+- testes, build, upload e validação física não são reexecutados;
+- BCS-REV-003 e a quarentena das suítes permanecem inalterados;
+- a atribuição `Claude Fable 5` presente nas promoções finais permanece
+  separada da relação inicial Sonnet/Opus;
+- a classificação aguarda confirmação explícita do Arquiteto antes de commit e
+  push.

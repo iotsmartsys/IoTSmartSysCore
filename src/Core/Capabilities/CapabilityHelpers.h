@@ -2,6 +2,7 @@
 
 #include "Contracts/Capabilities/IInputCapability.h"
 #include "Contracts/Capabilities/ICommandCapability.h"
+#include "Contracts/Providers/ServiceProvider.h"
 #include <cmath>
 #include <string>
 
@@ -119,6 +120,16 @@ namespace iotsmartsys::core
         {
         }
 
+        // BCS-009/BCS-010/BCS-011: adapter is initialized first, then a valid
+        // persisted record is applied and confirmed by read-back before the
+        // capability is considered initialized; absence/invalidity preserves
+        // the default flow.
+        void setup() override
+        {
+            command_hardware_adapter.setup();
+            restoreFromStorage();
+        }
+
         void handle() override
         {
             syncFromHardware();
@@ -150,28 +161,154 @@ namespace iotsmartsys::core
         }
 
     protected:
-        void syncFromHardware()
+        // BCS-004/BCS-028: the confirmed hardware state is always read through
+        // the configured interpreter when one exists. A valve must never promote
+        // the adapter's off/on into its own logical state, in restore, sync or
+        // any fallback.
+        std::string readConfirmedState()
         {
-            std::string hwState;
             if (command_interpreter)
             {
                 IHardwareState hwStateObj = command_hardware_adapter.getState();
-                hwState = command_interpreter->interpretState(hwStateObj);
+                return command_interpreter->interpretState(hwStateObj);
             }
-            else
-            {
-                hwState = command_hardware_adapter.getStateValue();
-            }
+            return command_hardware_adapter.getStateValue();
+        }
+
+        void syncFromHardware()
+        {
+            const std::string hwState = readConfirmedState();
 
             if (hwState != value)
             {
                 updateState(hwState);
+                // BCS-013/BCS-016: every confirmed transition (remote command,
+                // public API, adapter-observed sync, derived-class automation
+                // such as blink) funnels through this single point.
+                requestPersistIfStable(hwState);
             }
         }
 
+        // BCS-DEC-002: alternations produced exclusively by the blink timer stay
+        // applied, confirmed and published, but never reach the writer. The
+        // derived class marks the cycle it owns; the common path decides.
+        void beginTransientCycle() { _transientCycle = true; }
+        void endTransientCycle() { _transientCycle = false; }
+
+        // BCS-DEC-002/BCS-AC-015: when blink ends, the current confirmed value
+        // becomes stable again and is requested once, only if it differs from
+        // the last stable value already requested.
+        void confirmStableState() { requestPersistIfStable(value); }
+
     private:
+        providers::IBinaryCapabilityStateProvider *stateStorage() const
+        {
+            return ServiceProvider::instance().getBinaryCapabilityStateProvider();
+        }
+
+        // BCS-009/BCS-011/BCS-012/BCS-020: consult the boot cache by identity
+        // (capability_name, type); apply and confirm by read-back before
+        // treating the restored value as the logical state. Absence, an
+        // identity mismatch or a rejected/unconfirmed command preserve the
+        // default flow untouched, without persisting anything (BCS-011).
+        void restoreFromStorage()
+        {
+            auto *storage = stateStorage();
+            bool restoredOn = false;
+            if (storage && !capability_name.empty() &&
+                storage->tryGet(capability_name.c_str(), type.c_str(), restoredOn))
+            {
+                const std::string &target = restoredOn ? _onValue : _offValue;
+                // BCS-004/5.3: restoration must go through the same
+                // interpreted path as a normal command, so ValveCapability's
+                // on/off <-> open/closed conversion applies here too.
+                bool accepted;
+                if (command_interpreter)
+                {
+                    IHardwareCommand hwCommand = command_interpreter->interpretCommand(
+                        CapabilityCommand{type.c_str(), target.c_str()});
+                    accepted = command_hardware_adapter.applyCommand(hwCommand);
+                }
+                else
+                {
+                    accepted = command_hardware_adapter.applyCommand(target.c_str());
+                }
+
+                if (accepted)
+                {
+                    const std::string confirmed = readConfirmedState();
+
+                    if (confirmed == target)
+                    {
+                        updateState(confirmed);
+                        seedStableBaseline(confirmed);
+                        logger.info("BinaryCommandCapability", "Restored '%s' to '%s'.", capability_name.c_str(), confirmed.c_str());
+                        return;
+                    }
+                    logger.warn("BinaryCommandCapability", "Restore of '%s' not confirmed by adapter; keeping default.", capability_name.c_str());
+                }
+                else
+                {
+                    logger.warn("BinaryCommandCapability", "Adapter rejected restore command for '%s'; keeping default.", capability_name.c_str());
+                }
+            }
+
+            // BCS-011/BCS-028: the default flow also goes through the
+            // interpreter, so a valve never adopts the adapter's off/on.
+            const std::string current = readConfirmedState();
+            updateState(current);
+            seedStableBaseline(current);
+        }
+
+        // Records the state the device already boots with, so a later stable
+        // confirmation that merely repeats it produces no write (BCS-011/BCS-014).
+        void seedStableBaseline(const std::string &confirmedValue)
+        {
+            if (confirmedValue != _onValue && confirmedValue != _offValue)
+                return;
+            _hasStableRequest = true;
+            _lastStableIsOn = (confirmedValue == _onValue);
+        }
+
+        // BCS-013/BCS-014/BCS-015/BCS-017/BCS-018/BCS-029: signals the
+        // asynchronous writer for the two semantic states only (never the
+        // transitory "toggle" command), skips requests that would repeat the
+        // last stable value, excludes blink alternations, and never reverts an
+        // already-applied hardware/logical state when the request is refused.
+        void requestPersistIfStable(const std::string &confirmedValue)
+        {
+            if (confirmedValue != _onValue && confirmedValue != _offValue)
+                return;
+
+            // The alternation belongs to the blink timer: it stays applied,
+            // confirmed and published, but the last stable value persists.
+            if (_transientCycle)
+                return;
+
+            const bool newIsOn = (confirmedValue == _onValue);
+            if (_hasStableRequest && _lastStableIsOn == newIsOn)
+                return;
+
+            _hasStableRequest = true;
+            _lastStableIsOn = newIsOn;
+
+            auto *storage = stateStorage();
+            if (!storage || capability_name.empty())
+                return;
+
+            const auto result = storage->requestSave(capability_name.c_str(), type.c_str(), newIsOn);
+            if (result != common::StateResult::Ok)
+            {
+                logger.error("BinaryCommandCapability", "Persist request refused for '%s' (rc=%d); hardware/logical state unaffected.",
+                             capability_name.c_str(), static_cast<int>(result));
+            }
+        }
+
         std::string _offValue;
         std::string _onValue;
+        bool _transientCycle{false};
+        bool _hasStableRequest{false};
+        bool _lastStableIsOn{false};
     };
 
     // Helper for polling numeric sensors with interval and minimal change tolerance.

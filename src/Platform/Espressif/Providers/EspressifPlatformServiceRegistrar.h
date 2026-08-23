@@ -15,6 +15,7 @@
 #endif
 #include "Platform/Espressif/Settings/EspIdfSettingsParser.h"
 #include "Platform/Espressif/Settings/Providers/EspIdfNvsSettingsProvider.h"
+#include "Platform/Espressif/Capabilities/Providers/EspNvsBinaryCapabilityStateProvider.h"
 
 namespace iotsmartsys::platform::espressif
 {
@@ -24,6 +25,12 @@ namespace iotsmartsys::platform::espressif
         static EspressifPlatformServiceRegistrar &instance();
 
         void registerPlatformServices(iotsmartsys::core::ServiceProvider &sp) override;
+
+        // BCS-024/BCS-AC-023: observable evidence that the platform services are
+        // registered and the binary snapshot is read exactly once per boot.
+        // The counters are never reset, so a second graph would show up here.
+        static std::uint32_t registrationCount();
+        static std::uint32_t snapshotLoadCount();
 
     private:
         EspressifPlatformServiceRegistrar();
@@ -41,5 +48,6 @@ namespace iotsmartsys::platform::espressif
         core::settings::SettingsGateImpl settingsGate_;
         core::settings::SettingsManager settingsManager_;
         core::WiFiManager wifiManager_;
+        platform::espressif::EspNvsBinaryCapabilityStateProvider binaryCapabilityStateProvider_;
     };
 } // namespace iotsmartsys::platform::espressif
