@@ -2030,3 +2030,59 @@ de pair, não independente.
   separada da relação inicial Sonnet/Opus;
 - a classificação aguarda confirmação explícita do Arquiteto antes de commit e
   push.
+
+## EKM-CHG-0034 — Autoria da especificação de leitura de corrente contínua
+
+**Estado:** Open — aguardando Análise de Implementabilidade
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.1`
+
+### Objetivo
+
+Registrar como fonte normativa a funcionalidade de medição de corrente
+contínua, separada em Hardware Adapter (`ICurrentSensor`, implementado por
+`ACS712C30ACurrentSensor`) e Capability (`CurrentSensorCapability`), seguindo o
+precedente `IGlpMeter` / `HX711WeightMeter` / `GlpMeterKgCapability`.
+
+### Baseline
+
+- Branch `spec/current-sensing-capability`, derivada de `main`.
+- Alterações preexistentes e não relacionadas na árvore de trabalho preservadas
+  fora do delta desta transação.
+
+### Fontes criadas ou alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md` (criada);
+- `docs/rfc/KNOWLEDGE-MAP.md` (fonte normativa e cobertura);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Decisões incorporadas
+
+`CUR-DEC-001` a `CUR-DEC-009`: recorte exclusivo de corrente contínua; sem
+persistência da calibração de zero; critério de publicação pelo precedente
+`GlpMeterKgCapability`; identidade por `resolveIdentity`; fábrica, builder e
+`SmartSysApp` no recorte em forma aditiva; nome `ACS712C30ACurrentSensor`;
+nenhum artefato de teste no recorte; nenhuma exigência de canal ou faixa
+específica de pino analógico; `CURRENT_SENSOR_TYPE` igual a
+`"Current Sensor (A)"`.
+
+### Restrições
+
+Transação exclusivamente documental. Nenhum código, build, workflow, teste,
+environment ou comportamento de runtime foi alterado. Os cálculos elétricos
+estão descritos de forma autossuficiente na seção 6 da especificação, sem
+depender de leitura de código.
+
+### Validações requeridas
+
+- `git diff --check`: aprovado;
+- delta restrito à especificação criada, ao mapa de conhecimento e a este
+  changelog;
+- relações normativas confrontadas com `PUBLIC-API-COMPATIBILITY` e
+  `CORE-RUNTIME-LIFECYCLE`, ambas preservadas.
+
+### Resultado
+
+A especificação `IOTSSC-CURRENT-SENSOR` foi registrada na versão 0.1 em
+`Draft`, com implementação `Not Started` e revisão de implementabilidade
+`Pending Review`. Nenhuma implementação foi autorizada ou iniciada.

@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 01/08/2026 (retrospectiva EKOM da persistência binária preparada e pendente de confirmação)
+**Última atualização:** 25/08/2026 (autoria da especificação de leitura de corrente contínua)
 
 ## 1. Governança
 
@@ -25,6 +25,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
+| Leitura de corrente contínua | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft | Not Started |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -35,7 +36,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura de corrente contínua especificada em `Draft` por `IOTSSC-CURRENT-SENSOR@0.1`, sem implementação |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -226,3 +227,7 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 - `EKM-CHG-0033`: retrospectiva do experimento multiagente e classificação de
   adequação dos perfis executores pela métrica experimental EKOM 2.1; registro
   preparado pelo Consultor e pendente de confirmação final do Arquiteto.
+- `EKM-CHG-0034`: autoria da especificação `IOTSSC-CURRENT-SENSOR@0.1`, que
+  contrata a medição de corrente contínua em Hardware Adapter e Capability como
+  extensão aditiva; permanece em `Draft`, com implementação `Not Started` e
+  análise de implementabilidade pendente.
