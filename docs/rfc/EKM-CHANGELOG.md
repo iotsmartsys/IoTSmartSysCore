@@ -2030,3 +2030,63 @@ de pair, não independente.
   separada da relação inicial Sonnet/Opus;
 - a classificação aguarda confirmação explícita do Arquiteto antes de commit e
   push.
+
+## EKM-CHG-0035 — Autoria da especificação do console de tela
+
+**Estado:** Open — aguardando Análise de Implementabilidade
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Registrar como fonte normativa a incorporação de um console de tela ao core,
+como ferramenta de diagnóstico construída sobre o mesmo padrão do logging:
+contrato em `Contracts`, implementação em `Platform`, fachada estática com
+implementação nula por default, ativação opt-in por build e custo nulo quando
+desativada.
+
+### Baseline
+
+- Branch `spec/screen-console-tooling`, derivada de
+  `spec/current-sensing-capability` para preservar a sequência do changelog e do
+  mapa de conhecimento.
+- Alterações preexistentes e não relacionadas na árvore de trabalho preservadas
+  fora do delta desta transação.
+
+### Fontes criadas ou alteradas
+
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md` (criada);
+- `docs/rfc/KNOWLEDGE-MAP.md` (fonte normativa e cobertura);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Decisões incorporadas
+
+`SCR-DEC-001` a `SCR-DEC-010`: primitiva de escrita por cor abstrata com
+atalhos por severidade; registro no grafo de serviços com fachada estática
+`Screen`; `ScreenMirrorLogger` no recorte, opcional e não instalado por default;
+aposentadoria do componente inerte `Display_ST7789_170_320`; suporte restrito a
+ST7789 sobre SPI; quebra de texto longo em linhas consecutivas; histórico de
+capacidade fixa de 24 linhas; nomes contratados dos componentes; nenhum
+artefato de teste no recorte; flag `IOTSMARTSYS_SCREEN_CONSOLE_ENABLED` com
+default `0`.
+
+### Restrições
+
+Transação exclusivamente documental. Nenhum código, build, workflow, teste,
+environment ou comportamento de runtime foi alterado. A remoção prevista em
+`SCR-038` é contrato para a Implementação, não efeito desta transação.
+
+### Validações requeridas
+
+- `git diff --check`: aprovado;
+- delta restrito à especificação criada, ao mapa de conhecimento e a este
+  changelog;
+- relações normativas confrontadas com `PUBLIC-API-COMPATIBILITY`,
+  `CORE-RUNTIME-LIFECYCLE` e `RELEASE-AND-DISTRIBUTION`, todas preservadas;
+- dependências de display confirmadas como já declaradas em `library.json`.
+
+### Resultado
+
+A especificação `IOTSSC-SCREEN-CONSOLE` foi registrada na versão 0.1 em
+`Draft`, com implementação `Not Started` e revisão de implementabilidade
+`Pending Review`. Nenhuma implementação foi autorizada ou iniciada.
