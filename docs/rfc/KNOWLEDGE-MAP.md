@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 25/08/2026 (autoria da especificação de leitura de corrente contínua)
+**Última atualização:** 25/08/2026 (autoria das especificações de leitura de corrente contínua e do console de tela)
 
 ## 1. Governança
 
@@ -26,6 +26,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Leitura de corrente contínua | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft | Not Started |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft | Not Started |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -42,7 +43,7 @@
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
-| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
+| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela especificado em `Draft` por `IOTSSC-SCREEN-CONSOLE@0.1`, incluindo a aposentadoria do componente inerte `src/Infra/display/Display_ST7789_170_320` |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
 | Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
@@ -231,3 +232,8 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   contrata a medição de corrente contínua em Hardware Adapter e Capability como
   extensão aditiva; permanece em `Draft`, com implementação `Not Started` e
   análise de implementabilidade pendente.
+- `EKM-CHG-0035`: autoria da especificação `IOTSSC-SCREEN-CONSOLE@0.1`, que
+  incorpora um console de tela como ferramenta de diagnóstico no padrão do
+  logging, opt-in por build, e aposenta o componente inerte
+  `Display_ST7789_170_320`; permanece em `Draft`, com implementação
+  `Not Started` e análise de implementabilidade pendente.
