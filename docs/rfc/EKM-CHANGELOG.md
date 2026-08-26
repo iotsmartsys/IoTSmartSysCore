@@ -2146,3 +2146,65 @@ environment ou comportamento de runtime foi alterado. A remoção prevista em
 A especificação `IOTSSC-SCREEN-CONSOLE` foi registrada na versão 0.1 em
 `Draft`, com implementação `Not Started` e revisão de implementabilidade
 `Pending Review`. Nenhuma implementação foi autorizada ou iniciada.
+
+## EKM-CHG-0036 — Análise de implementabilidade do console de tela 0.1
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão 0.1 do console de tela pode
+ser implementada dentro da baseline e do recorte autorizados, sem decisão
+normativa ausente, pré-requisito arquitetural ou evidência prévia
+indispensável.
+
+### Resultado da análise
+
+Classificação **Pronta** [`Ready`]. Nenhum bloqueador. A revisão de
+implementabilidade da especificação passa a `Implementable`; estado normativo
+permanece `Draft`, implementação `Not Started` e entrega `Not Applicable`.
+
+O padrão contratado tem precedente equivalente e vigente no logging
+(`ILogger`, `Log`/`DefaultLogger`, `ArduinoSerialLogger` e alimentação da
+fachada por `ServiceManager::registerServices`), e a extensão é aditiva, fora
+do ciclo cooperativo. `IServiceProvider` tem um único implementador no
+repositório, o que admite a adição de SCR-034 preservando SCR-037. O componente
+de SCR-038 é inerte de fato: guarda `ST7789_170x320_ENABLED`, não definido por
+nenhum environment, e referencia identificadores inexistentes.
+
+Confrontados 40 requisitos, 10 critérios de aceite, 10 decisões e as 5 bordas
+da seção 7, além de `EKM-GAP-0001` a `EKM-GAP-0011`, nenhum aplicável. Não
+existe relatório anterior nesta linhagem a reconciliar.
+
+### Restrições registradas
+
+Cinco restrições materiais não bloqueantes constam do relatório: ausência de
+environment que construa o caminho habilitado e de `lib_deps` gráfico em
+`base_esp`; ausência de mapa de link para SCR-AC-002; referências textuais ao
+componente removido fora do conhecimento afetado declarado; consumo duplo do
+`va_list` em `ScreenMirrorLogger`; e assimetria do meio de SCR-AC-001 entre as
+seções 8 e 9.
+
+### Fontes criadas ou alteradas
+
+- `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md`
+  (criado);
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md` (revisão de implementabilidade e
+  seção 12);
+- `docs/rfc/KNOWLEDGE-MAP.md` (destino de relatórios e estado da fonte);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Validações e limitações
+
+`git diff --check` aprovado. Somente inspeção estática: nenhum código, teste,
+configuração ou environment foi alterado; nenhum build, teste, upload ou
+validação física foi iniciado. Destino `docs/reports/` criado por autorização
+explícita do Arquiteto nesta atuação. Branch de trabalho derivada de
+`spec/current-sensing-capability`, conforme baseline de `EKM-CHG-0035`.
+
+### Próximo passo
+
+A implementação da versão 0.1 depende de ordem explícita do Arquiteto; o
+Analista não a autoriza nem a inicia.
