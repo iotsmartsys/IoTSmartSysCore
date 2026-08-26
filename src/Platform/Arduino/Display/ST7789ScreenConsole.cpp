@@ -159,18 +159,14 @@ namespace iotsmartsys::platform::arduino
         }
 
         const std::int16_t width = display_.width();
-        const std::int16_t height = display_.height();
         const std::int16_t margin = static_cast<std::int16_t>(
             std::min<std::uint16_t>(config_.horizontalMargin, static_cast<std::uint16_t>(std::max<std::int16_t>(0, width))));
         const std::int16_t bandWidth = std::max<std::int16_t>(0, width - (2 * margin));
-        const std::int16_t startY = static_cast<std::int16_t>(
-            std::max<std::int32_t>(0, static_cast<std::int32_t>(height) -
-                                          static_cast<std::int32_t>(count_ * lineHeight_)));
 
         for (std::size_t position = 0; position < count_; ++position)
         {
             const std::size_t index = (head_ + position) % kHistoryCapacity;
-            const std::int16_t y = static_cast<std::int16_t>(startY + (position * lineHeight_));
+            const std::int16_t y = static_cast<std::int16_t>(position * lineHeight_);
             display_.fillRect(margin, y, bandWidth, lineHeight_, config_.backgroundColor);
             display_.setCursor(margin, y);
             display_.setTextColor(toNativeColor(lines_[index].color), config_.backgroundColor);

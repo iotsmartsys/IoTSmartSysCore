@@ -2356,3 +2356,61 @@ a orientação resultante permanece pendente de confirmação física.
 
 Relatório da correção:
 `docs/reports/2026-08-26T162253Z-0.2-c9fad5d6-implementation-correction-report.md`.
+
+## EKM-CHG-0041 — Ancoragem do console de tela no topo da área útil 0.3
+
+**Estado:** Open — implementação de software concluída; validação física pendente
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
+
+### Objetivo
+
+Emendar a disposição das linhas do console de tela, que passa da ancoragem na
+base para a ancoragem no topo da área útil, e implementar a mudança na
+implementação ST7789.
+
+### Condições de entrada
+
+- ordem explícita do Arquiteto encadeando autoria, análise e implementação;
+- análise `Ready` da versão 0.3 registrada nesta mesma transação;
+- branch `spec/screen-console-tooling` descendente de `main`, com árvore limpa;
+- implementação permanece `In Progress`; upload e validação física não estão
+  autorizados neste recorte.
+
+### Autoria
+
+O uso do exemplo `screen_console` na placa Ideaspark demonstrou que o
+comportamento contratado até 0.2 estava corretamente implementado, mas não
+correspondia à disposição pretendida pelo Arquiteto. A decisão `SCR-DEC-014`
+inverte a ancoragem; `SCR-012`, `SCR-013`, `SCR-AC-003` e a visão geral da
+seção 1 foram emendados. `SCR-014`, `SCR-AC-004` e `SCR-AC-006` permanecem
+inalterados, pois a rolagem e o descarte com a área útil cheia não mudam.
+
+### Análise
+
+Versão 0.3 confrontada integralmente e classificada Pronta [`Ready`], sem
+bloqueador normativo, arquitetural, de impacto ou de evidência prévia. A
+revisão volta a `Implementable`.
+
+### Implementação
+
+- `ST7789ScreenConsole::render()` passa a ancorar o bloco na primeira linha da
+  área útil, com a ordenada de cada banda em `position * lineHeight_`;
+- a leitura de altura do painel foi removida da função por ficar sem uso; a
+  leitura de `begin()` que dimensiona a capacidade visível foi preservada;
+- README do exemplo `screen_console` reconciliado com a nova disposição.
+
+### Evidências e estado
+
+`pio run -e esp32_dev` e `pio run -e example_screen_console_esp32_dev`
+alcançaram `SUCCESS` com código de saída 0. `git diff --check` foi aprovado.
+Nenhum teste, upload ou validação física foi executado; `SCR-AC-003` a
+`SCR-AC-008`, `SCR-AC-013` e a parcela instrumentada de `SCR-AC-001` permanecem
+`Not Executed` e o estado normativo continua `In Progress`.
+
+A orientação dos glifos observada na placa permanece assunto independente, não
+governado por esta versão e não corrigido nesta transação.
+
+Relatórios:
+`docs/reports/2026-08-26T203103Z-0.3-71f40ba6-implementability-analysis.md` e
+`docs/reports/2026-08-26T203432Z-0.3-71f40ba6-implementation-report.md`.

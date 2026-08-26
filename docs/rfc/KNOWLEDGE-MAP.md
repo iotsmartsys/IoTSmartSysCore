@@ -26,7 +26,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft 0.2 — revisão de implementabilidade `Implementable` (`EKM-CHG-0039`) | In Progress; software 0.2 implementado em `EKM-CHG-0040`, validação física pendente |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft 0.3 — revisão de implementabilidade `Implementable` (`EKM-CHG-0041`) | In Progress; software 0.3 implementado em `EKM-CHG-0041`, validação física pendente |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -253,3 +253,6 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 - `EKM-CHG-0040`: exemplo executável `screen_console`, seleção pelo runner e
   environment dedicado implementados; builds canônico e habilitado aprovados,
   com validação física fora do recorte autorizado.
+- `EKM-CHG-0041`: autoria, análise `Ready` e implementação de
+  `IOTSSC-SCREEN-CONSOLE@0.3`; o bloco de linhas do console passa a ser
+  ancorado no topo da área útil, com validação física ainda pendente.
