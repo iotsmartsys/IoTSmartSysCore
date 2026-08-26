@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 25/08/2026 (autoria da especificação do console de tela)
+**Última atualização:** 26/08/2026 (análise de implementabilidade do console de tela e criação do destino de relatórios)
 
 ## 1. Governança
 
@@ -13,6 +13,7 @@
 | Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.19 |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
 | Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
+| Relatórios de execução dos papéis | `docs/reports/` | Operacional | Active — destino criado em `EKM-CHG-0036`; relatórios são imutáveis e cada execução cria arquivo novo |
 | Experimento EKOM da persistência binária | `docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` | Experimental | Pending Architect Confirmation |
 
 ## 2. Fontes normativas
@@ -25,7 +26,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft | Not Started |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft — revisão de implementabilidade `Implementable` (`EKM-CHG-0036`) | Not Started |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -42,7 +43,7 @@
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
-| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
+| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela especificado em `Draft` por `IOTSSC-SCREEN-CONSOLE@0.1`, com análise de implementabilidade `Ready` e sem implementação iniciada, incluindo a aposentadoria do componente inerte `src/Infra/display/Display_ST7789_170_320` |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
 | Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
@@ -232,3 +233,9 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   logging, opt-in por build, e aposenta o componente inerte
   `Display_ST7789_170_320`; permanece em `Draft`, com implementação
   `Not Started` e análise de implementabilidade pendente.
+- `EKM-CHG-0036`: análise de implementabilidade de `IOTSSC-SCREEN-CONSOLE@0.1`
+  classificada como Pronta [`Ready`], sem bloqueador; a revisão passa a
+  `Implementable` e cinco restrições não bloqueantes ficam registradas no
+  relatório
+  `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md`.
+  A implementação continua dependente de ordem explícita do Arquiteto.

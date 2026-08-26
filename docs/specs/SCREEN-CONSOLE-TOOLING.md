@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Nova [`New`], com aposentadoria [`Retires`] do componente
 inerte `src/Infra/display/Display_ST7789_170_320.{h,cpp}`
@@ -329,6 +329,13 @@ Nenhuma lacuna bloqueante registrada nesta versão.
 ## 12. Estado da especificação
 
 Versão 0.1 registrada em `Draft`, com as decisões `SCR-DEC-001` a
-`SCR-DEC-010` incorporadas. A versão segue para Análise de Implementabilidade.
+`SCR-DEC-010` incorporadas.
 
-Nenhuma implementação foi iniciada e nenhuma validação foi executada.
+A Análise de Implementabilidade da versão 0.1 foi executada e classificou a
+versão como Pronta [`Ready`], sem bloqueador normativo, arquitetural ou de
+evidência prévia. O relatório é
+`docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md` e
+registra cinco restrições materiais não bloqueantes para o handoff.
+
+Nenhuma implementação foi iniciada e nenhuma validação foi executada. A
+implementação depende de ordem explícita do Arquiteto para esta versão.
