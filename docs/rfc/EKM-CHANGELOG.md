@@ -2266,3 +2266,50 @@ teste foi criado, alterado ou executado. A implementação permanece `In Progres
 ### Relatório
 
 `docs/reports/2026-08-26T141607Z-0.1-de05f6a6-implementation-report.md`.
+
+## EKM-CHG-0038 — Autoria do exemplo executável do console de tela 0.2
+
+**Estado:** Open — aguardando Análise de Implementabilidade
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Complementar o contrato do console de tela com um exemplo executável de uso,
+selecionado pelo runner versionado, construível por environment próprio e capaz
+de demonstrar o `ScreenMirrorLogger` na placa Ideaspark ESP32 1.9 inch TFT LCD.
+
+### Decisões incorporadas
+
+- o exemplo integra `examples/executable/screen_console/` e é referenciado por
+  `src/ExecutableExampleRunner.cpp`; o `src/main.cpp` permanece a aplicação
+  padrão e não é alterado;
+- o environment `example_screen_console_esp32_dev` herda `env:esp32_dev`,
+  habilita o console e declara as dependências gráficas;
+- a configuração do exemplo usa ST7789 170 × 320, `CS=GPIO15`, `DC=GPIO2`,
+  `RST=GPIO4`, `SCLK=GPIO18`, `MOSI=GPIO23` e backlight `GPIO32`;
+- a demonstração constrói, registra e inicializa o console e instala
+  explicitamente `ScreenMirrorLogger` sobre o logger corrente;
+- nenhum artefato ou execução de teste passa a integrar o recorte; o exemplo,
+  sua documentação, seu environment e seu build são evidências próprias.
+
+### Relações e estado
+
+`IOTSSC-HW-EXAMPLES@1.1` é preservada: o novo exemplo usa o runner e a seleção
+por environment vigentes. A versão normativa passa de 0.1 para 0.2 e permanece
+`Draft`; a revisão de implementabilidade retorna de `Implementable` para
+`Pending Review`, pois o relatório `Ready` existente governa somente 0.1. A
+implementação permanece `In Progress` e ainda não representa o contrato 0.2.
+
+### Fontes alteradas
+
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Limites
+
+Atuação exclusivamente normativa e documental. Nenhum código, exemplo,
+environment, dependência, teste, build, upload ou validação física foi criado,
+alterado ou executado. O pinout do anexo fornecido pelo Arquiteto foi tratado
+somente como evidência técnica, sem instrução documental paralela.
