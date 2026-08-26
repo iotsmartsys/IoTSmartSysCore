@@ -2208,3 +2208,61 @@ explícita do Arquiteto nesta atuação. Branch de trabalho derivada de
 
 A implementação da versão 0.1 depende de ordem explícita do Arquiteto; o
 Analista não a autoriza nem a inicia.
+
+## EKM-CHG-0037 — Implementação do console de tela 0.1
+
+**Estado:** Open — implementação em andamento
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Implementar e validar o console de tela como ferramenta de diagnóstico conforme
+a versão 0.1 autorizada, preservando os contratos públicos, o ciclo cooperativo
+e o comportamento existente quando a funcionalidade estiver desativada.
+
+### Entrada
+
+- ordem explícita do Arquiteto para implementar a versão 0.1;
+- análise de implementabilidade `Ready` registrada em `EKM-CHG-0036`;
+- branch `spec/screen-console-tooling`, derivada de `main`, sincronizada com o
+  upstream e com árvore limpa no início da atuação.
+
+### Estado inicial
+
+A implementação passa mecanicamente de Não iniciada [`Not Started`] para Em
+andamento [`In Progress`]. Nenhum código ou validação havia sido executado no
+momento desta transição.
+
+### Implementação e decisões locais
+
+- contrato `IScreenConsole`, paleta `ScreenColor`, fachada `Screen` e
+  `NoOpScreenConsole` adicionados em `Contracts`;
+- `ST7789ScreenConsole` implementado sob a flag default 0, com configuração
+  integral, histórico circular fixo de 24 linhas, quebra de texto e redesenho de
+  faixas ocupadas;
+- `ScreenMirrorLogger` implementado como decorador opcional, com cópias
+  independentes do `va_list` e mapeamento de cores por nível;
+- grafo de serviços estendido aditivamente e fachada alimentada pelo registro;
+- componente inerte `Display_ST7789_170_320.{h,cpp}` removido.
+
+### Evidências
+
+- `pio run -e esp32_dev`: `SUCCESS`, estado terminal, código 0, Arduino/ESP32,
+  target `esp32_dev`;
+- inspeção do ELF e objetos: nenhuma implementação ST7789 ou dependência gráfica
+  linkada com a flag 0; decorador não instalado eliminado pelo linker;
+- busca textual: nenhum consumidor dos símbolos removidos permanece em `src/`;
+- `git diff --check`: aprovado.
+
+### Limitações e estado
+
+SCR-AC-003 a SCR-AC-008 e a execução instrumentada de SCR-AC-001 permanecem
+`Not Executed`, pois exigem hardware e ordem operacional explícita. O caminho
+habilitado não foi construído porque nenhum environment vigente ativa a flag e
+as dependências gráficas não constam do `lib_deps` de `base_esp`. Nenhum
+teste foi criado, alterado ou executado. A implementação permanece `In Progress`.
+
+### Relatório
+
+`docs/reports/2026-08-26T141607Z-0.1-de05f6a6-implementation-report.md`.
