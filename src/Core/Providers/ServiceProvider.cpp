@@ -1,4 +1,5 @@
 #include "Contracts/Providers/ServiceProvider.h"
+#include "Contracts/Display/Screen.h"
 
 namespace iotsmartsys::core
 {
@@ -19,6 +20,11 @@ namespace iotsmartsys::core
     }
 
     void ServiceProvider::setLogger(ILogger *logger) { _logger = logger; }
+    void ServiceProvider::setScreenConsole(IScreenConsole *console)
+    {
+        _screenConsole = console;
+        Screen::setConsole(console);
+    }
     void ServiceProvider::setTime(ITimeProvider *time) { _time = time; }
 
     void ServiceProvider::setSettings(settings::IReadOnlySettingsProvider *settings) { _settingsProvider = settings; }
@@ -28,6 +34,7 @@ namespace iotsmartsys::core
     void ServiceProvider::setBinaryCapabilityStateProvider(providers::IBinaryCapabilityStateProvider *provider) { _binaryCapabilityStateProvider = provider; }
 
     ILogger *ServiceProvider::logger() const { return _logger; }
+    IScreenConsole *ServiceProvider::screenConsole() const { return _screenConsole; }
     ITimeProvider *ServiceProvider::time() const { return _time; }
 
     settings::IReadOnlySettingsProvider *ServiceProvider::getSettingsProvider() const { return _settingsProvider; }

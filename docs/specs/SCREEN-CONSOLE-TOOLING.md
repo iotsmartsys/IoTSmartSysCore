@@ -8,7 +8,7 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
@@ -337,5 +337,19 @@ evidência prévia. O relatório é
 `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md` e
 registra cinco restrições materiais não bloqueantes para o handoff.
 
-Nenhuma implementação foi iniciada e nenhuma validação foi executada. A
-implementação depende de ordem explícita do Arquiteto para esta versão.
+A implementação foi iniciada por ordem explícita do Arquiteto para a versão
+0.1 e permanece Em andamento [`In Progress`]. Nenhuma validação foi executada
+até o registro desta transição.
+
+### Implementação da versão 0.1
+
+O código do recorte foi implementado e o build canônico com
+`IOTSMARTSYS_SCREEN_CONSOLE_ENABLED=0` alcançou `SUCCESS`. A inspeção do ELF
+não encontrou símbolos da implementação ST7789 nem das bibliotecas gráficas, e
+a busca textual confirmou a ausência de consumidores dos símbolos aposentados.
+
+A execução está registrada no relatório
+`docs/reports/2026-08-26T141607Z-0.1-de05f6a6-implementation-report.md`.
+O estado permanece Em andamento [`In Progress`]: SCR-AC-003 a SCR-AC-008 e a
+parcela instrumentada de SCR-AC-001 permanecem `Not Executed`, sem autorização
+operacional para hardware. Nenhum teste integra ou foi executado no recorte.

@@ -7,6 +7,7 @@ namespace iotsmartsys::core
 {
 
     class ILogger;
+    class IScreenConsole;
     class ITimeProvider;
 
     namespace settings
@@ -26,6 +27,7 @@ namespace iotsmartsys::core
         virtual ~IServiceProvider() = default;
 
         virtual ILogger *logger() const = 0;
+        virtual IScreenConsole *screenConsole() const = 0;
         virtual ITimeProvider *time() const = 0;
 
         virtual settings::IReadOnlySettingsProvider *getSettingsProvider() const = 0;

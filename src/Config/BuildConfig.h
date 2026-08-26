@@ -40,6 +40,10 @@
 #endif
 #endif
 
+#ifndef IOTSMARTSYS_SCREEN_CONSOLE_ENABLED
+#define IOTSMARTSYS_SCREEN_CONSOLE_ENABLED 0
+#endif
+
 #ifndef IOTSMARTSYS_API_URL
 #define IOTSMARTSYS_API_URL "https://api.iotsmartsys.tech/devices/api/v1/devices"
 #endif
