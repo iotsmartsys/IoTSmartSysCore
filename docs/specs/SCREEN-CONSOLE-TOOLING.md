@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -12,10 +12,11 @@
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Implementável [`Implementable`]
+**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
 
 **Relação normativa:** Nova [`New`], com aposentadoria [`Retires`] do componente
-inerte `src/Infra/display/Display_ST7789_170_320.{h,cpp}`
+inerte `src/Infra/display/Display_ST7789_170_320.{h,cpp}` e preservação
+[`Preserves`] de `IOTSSC-HW-EXAMPLES@1.1`
 
 ## 1. Objetivo e contexto
 
@@ -48,6 +49,8 @@ recente esteja sempre visível na parte inferior.
   (`ScreenMirrorLogger`);
 - registro do console no grafo de serviços, em forma aditiva;
 - ativação por flag de build, com custo nulo quando desativada;
+- exemplo executável de uso do console e do `ScreenMirrorLogger`, selecionado
+  pelo runner versionado e por environment próprio;
 - aposentadoria do componente inerte `Display_ST7789_170_320`.
 
 ## 3. Fora de escopo
@@ -72,6 +75,7 @@ recente esteja sempre visível na parte inferior.
 | `ST7789ScreenConsole` | `src/Platform/Arduino/Display/` | `ArduinoSerialLogger` |
 | `ScreenMirrorLogger` | `src/Platform/Arduino/Logging/` | — (novo, decorador) |
 | Registro do console | `src/Contracts/Providers/ServiceProvider.*`, `src/Contracts/Providers/IServiceProvider.h`, `src/Core/Providers/ServiceManager.*` | registro do logger |
+| Exemplo executável | `examples/executable/screen_console/`, `src/ExecutableExampleRunner.cpp`, `configs/executable_examples.ini` | padrão de `basic_light` |
 
 A separação é normativa: `Contracts` define o console em termos abstratos e não
 conhece biblioteca gráfica; `Platform` implementa a renderização; nenhum
@@ -203,6 +207,41 @@ componente de negócio conhece o display.
 - **SCR-040:** nenhum consumidor do projeto pode referenciar os símbolos
   removidos após a implementação.
 
+### 5.10 Exemplo executável
+
+- **SCR-041:** deve existir o exemplo executável
+  `examples/executable/screen_console/example.hpp`, acompanhado de README com
+  objetivo, configuração, pinout, comandos, montagem, validação manual,
+  resultado esperado, limitações e riscos, conforme o padrão de
+  `examples/executable/basic_light`.
+- **SCR-042:** o exemplo deve ser selecionado pelo runner versionado
+  `src/ExecutableExampleRunner.cpp` por meio da macro exclusiva
+  `IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE`; `src/main.cpp` não integra o recorte e
+  continua sendo a aplicação padrão.
+- **SCR-043:** deve existir o environment estável
+  `example_screen_console_esp32_dev`, herdando `env:esp32_dev`, excluindo
+  `src/main.cpp`, habilitando `APP_EXAMPLE_RUNNER=1` e
+  `IOTSMARTSYS_SCREEN_CONSOLE_ENABLED=1`, selecionando exclusivamente o exemplo
+  e declarando as dependências Adafruit ST7789/GFX necessárias.
+- **SCR-044:** o exemplo governa a placa Ideaspark ESP32 1.9 inch TFT LCD
+  Display Board com controlador ST7789 e área nativa de 170 × 320 pixels. Sua
+  configuração deve usar `CS=GPIO15`, `DC=GPIO2`, `RST=GPIO4`, `SCLK=GPIO18`,
+  `MOSI=GPIO23` e backlight `GPIO32`; esses valores pertencem ao exemplo e não
+  se tornam defaults da implementação de plataforma.
+- **SCR-045:** o `setup()` do exemplo deve construir o console com configuração
+  completa, registrá-lo no `ServiceProvider`, chamar `begin()` e instalar
+  explicitamente um `ScreenMirrorLogger` decorando o logger corrente antes de
+  emitir a mensagem diagnóstica demonstrativa.
+- **SCR-046:** o `loop()` do exemplo deve preservar o processamento cooperativo
+  por `SmartSysApp::handle()` e não deve escrever continuamente no display em
+  caminho quente.
+- **SCR-047:** o exemplo deve produzir no boot ao menos uma mensagem de
+  diagnóstico pelo logger decorado, observável simultaneamente na saída serial
+  e no console, e deve identificar o example id, a placa, as dimensões e a
+  pinagem sem revelar segredo.
+- **SCR-048:** o catálogo `examples/README.md` deve referenciar o novo exemplo e
+  seu environment sem alterar os contratos dos exemplos existentes.
+
 ## 6. Fluxo esperado
 
 1. O environment do consumidor define `IOTSMARTSYS_SCREEN_CONSOLE_ENABLED=1`.
@@ -215,6 +254,10 @@ componente de negócio conhece o display.
 6. Qualquer código pode escrever no console por `Screen::get()`, sem conhecer o
    painel.
 7. Sem a flag, ou sem registro, toda escrita resolve para a implementação nula.
+8. Para o uso de referência, o environment
+   `example_screen_console_esp32_dev` seleciona o exemplo pelo runner, constrói
+   o console Ideaspark com sua pinagem, instala `ScreenMirrorLogger` e preserva
+   `app.handle()` no loop.
 
 ## 7. Falhas e condições de borda
 
@@ -231,6 +274,9 @@ componente de negócio conhece o display.
   transferência SPI. Esta é característica contratada, não defeito: o console é
   ferramenta de diagnóstico e não deve ser usado em caminho quente do ciclo
   cooperativo.
+- **Exemplo fora do environment próprio:** a ausência das macros obrigatórias
+  de seleção ou configuração deve causar erro de build compreensível; o exemplo
+  não pode assumir silenciosamente outro painel ou pinout.
 
 ## 8. Critérios de aceite e validações
 
@@ -260,25 +306,45 @@ componente de negócio conhece o display.
 - **SCR-AC-010:** após a remoção de SCR-038, nenhuma referência aos símbolos
   retirados permanece no repositório e o build canônico continua com sucesso.
   Meio: busca textual e build canônico.
+- **SCR-AC-011:** `pio run -e example_screen_console_esp32_dev` alcança estado
+  terminal com sucesso, vincula exatamente um par `setup()`/`loop()` e contém a
+  implementação ST7789 habilitada. Meio: build e inspeção de símbolos do ELF.
+- **SCR-AC-012:** o delta do exemplo demonstra construção, registro, `begin()`
+  e instalação explícita de `ScreenMirrorLogger`, preserva `app.handle()` e
+  referencia a pinagem de SCR-044 sem criar defaults de plataforma. Meio:
+  inspeção do delta e build do environment.
+- **SCR-AC-013:** após upload do environment próprio na placa Ideaspark, a
+  mensagem diagnóstica de boot aparece na serial e na última linha visível do
+  display, com a cor correspondente ao nível emitido. Meio: hardware,
+  comparando serial e tela.
+- **SCR-AC-014:** o README do exemplo e o catálogo documentam environment,
+  controlador, dimensões, pinagem, montagem, comandos e resultado esperado sem
+  credenciais. Meio: inspeção documental.
 
-A validação física de SCR-AC-003 a SCR-AC-008 exige hardware e permissão
-operacional explícita do Arquiteto. Enquanto não executada, permanece
+A validação física de SCR-AC-003 a SCR-AC-008 e SCR-AC-013 exige hardware e
+permissão operacional explícita do Arquiteto. Enquanto não executada, permanece
 `Not Executed` e não pode ser convertida em evidência aprovada.
 
 ## 9. Testes
 
-**Nenhum artefato de teste integra o recorte desta versão.** Esta
-especificação não exige criar, ampliar, reestruturar ou executar suítes
-automatizadas, e nenhuma execução de teste é condição de aceite.
+**Nenhum artefato de teste integra o recorte desta versão.** Esta especificação
+não exige criar, ampliar, reestruturar ou executar suítes automatizadas, e
+nenhuma execução de teste é condição de aceite. O exemplo executável, seu
+README, sua seleção no runner e seu environment integram explicitamente o
+recorte, mas não constituem uma suíte de teste.
 
-As evidências previstas são o build canônico (SCR-AC-002, SCR-AC-010), a
-inspeção do delta (SCR-AC-001, SCR-AC-009, SCR-AC-010) e a validação física sob
-ordem explícita (SCR-AC-003 a SCR-AC-008).
+As evidências previstas são o build canônico (SCR-AC-002, SCR-AC-010), o build
+do exemplo (SCR-AC-011, SCR-AC-012), a inspeção do delta (SCR-AC-001,
+SCR-AC-009, SCR-AC-010, SCR-AC-012, SCR-AC-014) e a validação física sob ordem
+explícita (SCR-AC-003 a SCR-AC-008, SCR-AC-013).
 
 ## 10. Conhecimento afetado
 
 - `docs/rfc/KNOWLEDGE-MAP.md`: nova fonte normativa e cobertura de plataforma;
 - `docs/rfc/EKM-CHANGELOG.md`: transação de autoria desta especificação.
+- `examples/README.md`: catálogo do novo exemplo executável;
+- `examples/executable/screen_console/README.md`: uso, montagem e validação da
+  placa Ideaspark.
 
 ## 11. Relações, decisões e lacunas
 
@@ -297,6 +363,10 @@ ordem explícita (SCR-AC-003 a SCR-AC-008).
 - `docs/specs/CURRENT-SENSING-CAPABILITY.md` — independente. Aquela
   especificação contrata diagnóstico por `ILogger` e é beneficiada pelo
   espelhamento de 5.6 sem ser emendada.
+- `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` — preservada. O novo exemplo usa
+  o runner e o contrato de catálogo vigentes, mantém `src/main.cpp` como
+  aplicação padrão e acrescenta um environment executável sem redefinir a
+  infraestrutura geral de exemplos.
 - `src/Infra/display/Display_ST7789_170_320.{h,cpp}` — **aposentado**
   [`Retires`] conforme 5.9. Nenhuma fonte normativa vigente governa esse
   componente; ele é código inerte remanescente.
@@ -321,19 +391,29 @@ ordem explícita (SCR-AC-003 a SCR-AC-008).
 - **SCR-DEC-009:** nenhuma criação ou execução de teste integra o recorte.
 - **SCR-DEC-010:** a flag de ativação é `IOTSMARTSYS_SCREEN_CONSOLE_ENABLED`,
   com default `0`.
+- **SCR-DEC-011:** o exemplo de uso é versionado no catálogo executável e
+  referenciado por `src/ExecutableExampleRunner.cpp`; `src/main.cpp` não é
+  alterado.
+- **SCR-DEC-012:** o environment do exemplo é
+  `example_screen_console_esp32_dev`, derivado de `env:esp32_dev`, e governa a
+  placa Ideaspark e a pinagem registrada em SCR-044.
+- **SCR-DEC-013:** o exemplo demonstra obrigatoriamente `ScreenMirrorLogger`,
+  além da construção e do registro do console.
 
 ### Lacunas
 
-Nenhuma lacuna bloqueante registrada nesta versão.
+Nenhuma lacuna bloqueante registrada na autoria da versão 0.2. A suficiência
+técnica e a confrontação da implementação existente pertencem à nova Análise de
+Implementabilidade.
 
 ## 12. Estado da especificação
 
-Versão 0.1 registrada em `Draft`, com as decisões `SCR-DEC-001` a
-`SCR-DEC-010` incorporadas.
+Versão 0.2 registrada em `Draft`, com as decisões `SCR-DEC-001` a
+`SCR-DEC-013` incorporadas.
 
-A Análise de Implementabilidade da versão 0.1 foi executada e classificou a
-versão como Pronta [`Ready`], sem bloqueador normativo, arquitetural ou de
-evidência prévia. O relatório é
+A Análise de Implementabilidade da versão 0.1 foi executada e classificou
+somente aquela versão como Pronta [`Ready`], sem bloqueador normativo,
+arquitetural ou de evidência prévia. O relatório histórico é
 `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md` e
 registra cinco restrições materiais não bloqueantes para o handoff.
 
@@ -353,3 +433,16 @@ A execução está registrada no relatório
 O estado permanece Em andamento [`In Progress`]: SCR-AC-003 a SCR-AC-008 e a
 parcela instrumentada de SCR-AC-001 permanecem `Not Executed`, sem autorização
 operacional para hardware. Nenhum teste integra ou foi executado no recorte.
+
+### Autoria da versão 0.2
+
+Por decisão do Arquiteto, a versão 0.2 acrescenta ao recorte o exemplo
+executável `screen_console`, selecionado pelo runner versionado, com environment
+derivado de `env:esp32_dev`, configuração da placa Ideaspark registrada em
+SCR-044 e demonstração obrigatória de `ScreenMirrorLogger`.
+
+A alteração normativa posterior ao `Ready` de 0.1 invalida sua aplicabilidade à
+versão corrente. A revisão de implementabilidade volta a Pendente de revisão
+[`Pending Review`]. A implementação permanece Em andamento [`In Progress`],
+pois os artefatos e evidências acrescentados por SCR-041 a SCR-048 e
+SCR-AC-011 a SCR-AC-014 ainda não foram implementados ou executados.
