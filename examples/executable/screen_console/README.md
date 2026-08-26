@@ -39,10 +39,10 @@ O upload requer que a porta da placa esteja disponível e corretamente configura
 1. Com a placa desenergizada, confirme o modelo Ideaspark ESP32 1.9 inch TFT LCD e a ausência de conexões conflitantes nos GPIOs reservados ao painel.
 2. Conecte a placa por USB, grave o environment próprio e abra o monitor serial a 115200 baud.
 3. Aguarde a inicialização do runtime e localize a mensagem com `id=screen_console`, placa, controlador, dimensões e todos os pinos.
-4. Confirme que a mesma mensagem de nível `Info` aparece na serial e, em orientação horizontal, quebrada em linhas quando necessário na base da área útil do display em branco.
+4. Confirme que a mesma mensagem de nível `Info` aparece na serial e, em orientação horizontal, quebrada em linhas quando necessário a partir do topo da área útil do display em branco.
 5. Mantenha o dispositivo em execução e confirme que o loop cooperativo permanece responsivo, sem escrita contínua no painel.
 
-Resultado esperado: o build seleciona apenas este exemplo; após o boot, a mensagem diagnóstica aparece na serial e no display em orientação horizontal, com seu trecho mais recente na base da tela. O `SmartSysApp::handle()` continua sendo chamado no `loop()`.
+Resultado esperado: o build seleciona apenas este exemplo; após o boot, a mensagem diagnóstica aparece na serial e no display em orientação horizontal, com o bloco ancorado no topo da tela e seu trecho mais recente ao final do bloco. O `SmartSysApp::handle()` continua sendo chamado no `loop()`.
 
 ## Limitações e riscos
 

@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.2
+**Versão:** 0.3
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -35,9 +35,10 @@ Esta especificação replica esse padrão para uma saída visual: contrato em
 `Contracts`, implementação em `Platform`, fachada estática com implementação
 nula, ativação opt-in por build e custo zero quando desativada.
 
-O console apresenta mensagens em linhas coloridas ancoradas na base da tela,
-rolando as anteriores para cima como um terminal, de modo que a mensagem mais
-recente esteja sempre visível na parte inferior.
+O console apresenta mensagens em linhas coloridas ancoradas no topo da tela,
+crescendo para baixo como um terminal, de modo que a mensagem mais recente
+esteja sempre ao final do bloco escrito. Preenchida a área útil, as linhas
+anteriores rolam para cima e a mais antiga é descartada.
 
 ## 2. Escopo
 
@@ -122,10 +123,12 @@ componente de negócio conhece o display.
 
 ### 5.4 Comportamento do console
 
-- **SCR-012:** cada escrita ocupa a linha imediatamente acima do rodapé, e as
+- **SCR-012:** o bloco de linhas é ancorado no topo da área útil. Cada escrita
+  ocupa a primeira linha livre abaixo do bloco; preenchida a área útil, as
   linhas anteriores sobem uma posição.
-- **SCR-013:** a mensagem escrita mais recentemente deve estar sempre encostada
-  na base da área útil da tela.
+- **SCR-013:** a mensagem escrita mais recentemente deve ser sempre a última
+  linha do bloco. Ela só encosta na base da área útil quando o bloco preenche
+  toda a área.
 - **SCR-014:** quando o histórico excede a capacidade visível, a linha mais
   antiga é descartada.
 - **SCR-015:** texto mais largo que a área útil deve ocupar linhas consecutivas,
@@ -288,8 +291,8 @@ componente de negócio conhece o display.
   linka implementação de painel. Meio: build canônico e inspeção do mapa de
   link.
 - **SCR-AC-003:** com a flag em `1` e o console registrado, escritas sucessivas
-  aparecem em linhas distintas, a mais recente sempre na base da área útil.
-  Meio: hardware.
+  aparecem em linhas distintas, o bloco começa na primeira linha da área útil e
+  a mais recente é sempre a última do bloco. Meio: hardware.
 - **SCR-AC-004:** ultrapassada a capacidade visível, a linha mais antiga
   desaparece e nenhuma linha intermediária é perdida. Meio: hardware.
 - **SCR-AC-005:** texto mais largo que a área útil ocupa linhas consecutivas com
@@ -399,6 +402,10 @@ explícita (SCR-AC-003 a SCR-AC-008, SCR-AC-013).
   placa Ideaspark e a pinagem registrada em SCR-044.
 - **SCR-DEC-013:** o exemplo demonstra obrigatoriamente `ScreenMirrorLogger`,
   além da construção e do registro do console.
+- **SCR-DEC-014:** o bloco de linhas é ancorado no topo da área útil e cresce
+  para baixo, substituindo a ancoragem na base contratada até a versão 0.2. A
+  rolagem para cima e o descarte da linha mais antiga com a área útil cheia
+  permanecem inalterados.
 
 ### Lacunas
 
@@ -473,3 +480,57 @@ O estado permanece Em andamento [`In Progress`]: SCR-AC-003 a SCR-AC-008,
 SCR-AC-013 e a parcela instrumentada de SCR-AC-001 permanecem `Not Executed`
 por exigirem hardware e ordem operacional explícita. Nenhum teste ou upload foi
 executado.
+
+### Autoria da versão 0.3
+
+Por decisão do Arquiteto, registrada em `SCR-DEC-014`, a ancoragem do bloco de
+linhas passa da base para o topo da área útil. A alteração emenda `SCR-012`,
+`SCR-013`, `SCR-AC-003` e a visão geral da seção 1; `SCR-014`, `SCR-AC-004` e
+`SCR-AC-006` permanecem inalterados, pois a rolagem para cima e o descarte da
+linha mais antiga com a área útil cheia não mudam.
+
+A decisão originou-se do uso do exemplo `screen_console` na placa Ideaspark: o
+comportamento contratado até 0.2 foi implementado corretamente, mas não
+corresponde à disposição pretendida pelo Arquiteto. Não se trata de defeito de
+implementação nem de parâmetro de rotação do painel, que permanece assunto
+independente e não resolvido.
+
+Nenhuma outra autoridade normativa governa a disposição das linhas do console;
+a emenda é interna a esta especificação, que permanece em Rascunho [`Draft`] e
+nunca teve versão concluída. Nenhuma assinatura, default ou comportamento
+público de outra fonte é alterado.
+
+A alteração normativa posterior ao `Ready` de 0.2 invalida sua aplicabilidade à
+versão corrente. A revisão de implementabilidade passa a Pendente [`Pending`] e
+a implementação permanece Em andamento [`In Progress`] até nova análise e ordem
+explícita do Arquiteto.
+
+### Análise de implementabilidade da versão 0.3
+
+A versão 0.3 foi analisada integralmente e classificada como Pronta [`Ready`],
+sem bloqueador normativo, arquitetural, de impacto ou de evidência prévia. O
+relatório é
+`docs/reports/2026-08-26T203103Z-0.3-71f40ba6-implementability-analysis.md`.
+
+A revisão volta a Implementável [`Implementable`]. A análise registra cinco
+restrições materiais não bloqueantes, entre elas que `SCR-AC-003` permanece
+`Not Executed` por exigir hardware e que a orientação dos glifos observada na
+placa Ideaspark é assunto independente, não governado por esta versão.
+
+### Implementação da versão 0.3
+
+A implementação foi iniciada por ordem explícita do Arquiteto, sob a transação
+`EKM-CHG-0041`, após a classificação `Ready` da versão corrente. O recorte
+autorizado compreende a ancoragem contratada por `SCR-012`, `SCR-013`,
+`SCR-AC-003` e `SCR-DEC-014`; upload e validação física permanecem não
+autorizados.
+
+`ST7789ScreenConsole::render()` passou a ancorar o bloco na primeira linha da
+área útil e o README do exemplo foi reconciliado. Os builds canônico e
+habilitado alcançaram `SUCCESS`. O relatório é
+`docs/reports/2026-08-26T203432Z-0.3-71f40ba6-implementation-report.md`.
+
+O estado permanece Em andamento [`In Progress`]: `SCR-AC-003` a `SCR-AC-008`,
+`SCR-AC-013` e a parcela instrumentada de `SCR-AC-001` permanecem
+`Not Executed` por exigirem hardware e ordem operacional explícita. Nenhum teste
+ou upload foi executado.
