@@ -2417,7 +2417,7 @@ Relatórios:
 
 ## EKM-CHG-0042 — Validação final do console de tela 0.3
 
-**Estado:** Open — pronta para integração
+**Estado:** Closed
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
 
@@ -2454,5 +2454,17 @@ textual não encontrou consumidor dos símbolos aposentados no código.
 As transações `EKM-CHG-0035`, `EKM-CHG-0037`, `EKM-CHG-0038`,
 `EKM-CHG-0040` e `EKM-CHG-0041` são fechadas pelo resultado validado da versão
 0.3. Nenhum teste automatizado integra o recorte e nenhum upload foi executado
-nesta atuação. A promoção para Concluída [`Done`] depende da integração efetiva
-à `main`.
+nesta atuação.
+
+### Integração e encerramento
+
+O recorte validado foi integrado e sincronizado em `main`. A composição de
+integração foi derivada diretamente da referência de produção e transportou
+somente os commits do console, excluindo a especificação não relacionada de
+leitura de corrente contínua que era ancestral da branch original. A busca
+final confirmou a ausência desse artefato e de seus registros na composição
+integrada.
+
+Com a integração em estado terminal, a entrega é promovida de Pronta para
+integração [`Ready for Integration`] para Concluída [`Done`] e esta transação é
+encerrada.
