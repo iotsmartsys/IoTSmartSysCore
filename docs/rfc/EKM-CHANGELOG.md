@@ -2291,3 +2291,52 @@ remediação externa ou bloqueador anterior sem disposição.
   build, teste, upload ou hardware foi alterado ou executado;
 - build habilitado e validações físicas permanecem evidências posteriores da
   Implementação/Revisão, não condições prévias desta classificação.
+
+## EKM-CHG-0040 — Implementação do exemplo executável do console de tela 0.2
+
+**Estado:** Open — implementação de software concluída; validação física pendente
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Implementar o exemplo executável `screen_console`, sua seleção pelo runner
+versionado e o environment `example_screen_console_esp32_dev`, demonstrando o
+`ScreenMirrorLogger` com a configuração Ideaspark contratada pela versão 0.2.
+
+### Condições de entrada
+
+- ordem explícita do Arquiteto recebida;
+- revisão de implementabilidade `Ready` registrada em `EKM-CHG-0039`;
+- branch `spec/screen-console-tooling` descendente de `main`, sincronizada com
+  seu upstream e com árvore limpa;
+- implementação permanece `In Progress`; upload e validação física não estão
+  autorizados neste recorte.
+
+### Implementação
+
+- exemplo `examples/executable/screen_console/` criado com configuração
+  Ideaspark completa, documentação e `SmartSysApp::handle()` cooperativo;
+- runner ampliado com a seleção exclusiva
+  `IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE`;
+- environment `example_screen_console_esp32_dev` criado a partir de
+  `env:esp32_dev`, sem `src/main.cpp`, com flag habilitada e dependências
+  Adafruit GFX/ST7789;
+- `ScreenMirrorLogger` instalado depois de `SmartSysApp::setup()` e usado para
+  a mensagem diagnóstica de boot.
+
+### Evidências e estado
+
+`pio run -e esp32_dev` e
+`pio run -e example_screen_console_esp32_dev` alcançaram `SUCCESS`. O ELF do
+exemplo contém um único par `setup()`/`loop()` e os símbolos
+`ST7789ScreenConsole`, `ScreenMirrorLogger` e `Adafruit_ST7789`; o ELF canônico
+não contém implementação gráfica. `src/main.cpp` permaneceu inalterado e não
+foi compilado pelo environment do exemplo. `git diff --check` foi aprovado.
+
+Nenhum teste, upload ou validação física foi executado. SCR-AC-003 a
+SCR-AC-008, SCR-AC-013 e a parcela instrumentada de SCR-AC-001 permanecem
+`Not Executed`; portanto, o estado normativo continua `In Progress`.
+
+Relatório:
+`docs/reports/2026-08-26T154955Z-0.2-d49f8216-implementation-report.md`.
