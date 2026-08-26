@@ -6,6 +6,7 @@ Os exemplos executáveis são aplicações Arduino reais selecionadas por enviro
 |---|---|---|
 | [`basic_light`](executable/basic_light/README.md) | `example_basic_light_mcb_r1` | saída/relé GPIO 26 da MCB R1 |
 | [`environment_dht`](executable/environment_dht/README.md) | `example_environment_dht_mcb_r1` | DHT11 no GPIO 23 da MCB R1 |
+| [`screen_console`](executable/screen_console/README.md) | `example_screen_console_esp32_dev` | Ideaspark ESP32 1.9 inch TFT LCD, ST7789 170 × 320 |
 
 Fluxo comum:
 
@@ -15,7 +16,7 @@ pio run -e <environment> -t upload
 pio device monitor -e <environment>
 ```
 
-Cada environment herda o perfil `example_board_iotsmartsys_mcb_r1`, exclui apenas `src/main.cpp`, habilita o runner e seleciona exatamente uma aplicação. Para incluir um novo exemplo:
+Cada environment herda o perfil de runtime da placa correspondente, exclui apenas `src/main.cpp`, habilita o runner e seleciona exatamente uma aplicação. Para incluir um novo exemplo:
 
 1. crie `examples/executable/<id>/example.hpp` com um único `setup()`/`loop()` e um README completo;
 2. adicione um seletor mutuamente exclusivo em `src/ExecutableExampleRunner.cpp`;

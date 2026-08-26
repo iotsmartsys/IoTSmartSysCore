@@ -455,3 +455,21 @@ relatório é
 A revisão passa a Implementável [`Implementable`]; a implementação permanece
 Em andamento [`In Progress`] e nenhuma implementação, build, teste, upload ou
 validação física da versão 0.2 foi iniciada por esta análise.
+
+### Implementação da versão 0.2
+
+A implementação foi iniciada por ordem explícita do Arquiteto, sob a transação
+`EKM-CHG-0040`, após a classificação `Ready` da versão corrente. O recorte
+autorizado compreende os artefatos e as evidências de SCR-041 a SCR-048 e
+SCR-AC-011 a SCR-AC-014; upload e validação física permanecem não autorizados.
+
+O exemplo, o runner, o environment e a documentação foram implementados. Os
+builds canônico e habilitado alcançaram `SUCCESS`; a inspeção do ELF confirmou
+um único par `setup()`/`loop()`, presença de ST7789 no exemplo e ausência da
+implementação gráfica na baseline. O relatório é
+`docs/reports/2026-08-26T154955Z-0.2-d49f8216-implementation-report.md`.
+
+O estado permanece Em andamento [`In Progress`]: SCR-AC-003 a SCR-AC-008,
+SCR-AC-013 e a parcela instrumentada de SCR-AC-001 permanecem `Not Executed`
+por exigirem hardware e ordem operacional explícita. Nenhum teste ou upload foi
+executado.
