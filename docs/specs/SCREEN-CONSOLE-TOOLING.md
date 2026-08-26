@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Implementável [`Implementable`]
 
@@ -547,9 +547,13 @@ Os builds `pio run -e esp32_dev` e
 presença da implementação ST7789 no exemplo e um único par `setup()`/`loop()`.
 A busca textual não encontrou consumidor dos símbolos aposentados no código.
 
-Por decisão explícita do Arquiteto, a versão 0.3 passa a Vigente [`Active`], a
-implementação passa a Validada [`Validated`] e a entrega passa a Pronta para
+Por decisão explícita do Arquiteto, a versão 0.3 passou a Vigente [`Active`], a
+implementação passou a Validada [`Validated`] e a entrega passou a Pronta para
 integração [`Ready for Integration`]. A confrontação foi executada pelo
 Consultor de Arquitetura como par do Arquiteto e não é apresentada como revisão
-independente. A promoção para Concluída [`Done`] depende da integração efetiva
-à `main`.
+independente.
+
+O recorte validado foi posteriormente integrado e sincronizado em `main`, sem
+incorporar a especificação não relacionada de leitura de corrente contínua que
+existia como ancestral da branch original. Com a confirmação terminal da
+integração à referência de produção, a entrega passa a Concluída [`Done`].
