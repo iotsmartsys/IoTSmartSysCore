@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Pendente de revisão [`Pending Review`]
+**Revisão de implementabilidade:** Implementável [`Implementable`]
 
 **Relação normativa:** Nova [`New`], com aposentadoria [`Retires`] do componente
 inerte `src/Infra/display/Display_ST7789_170_320.{h,cpp}` e preservação
@@ -442,7 +442,16 @@ derivado de `env:esp32_dev`, configuração da placa Ideaspark registrada em
 SCR-044 e demonstração obrigatória de `ScreenMirrorLogger`.
 
 A alteração normativa posterior ao `Ready` de 0.1 invalida sua aplicabilidade à
-versão corrente. A revisão de implementabilidade volta a Pendente de revisão
-[`Pending Review`]. A implementação permanece Em andamento [`In Progress`],
-pois os artefatos e evidências acrescentados por SCR-041 a SCR-048 e
-SCR-AC-011 a SCR-AC-014 ainda não foram implementados ou executados.
+versão corrente. A implementação permanece Em andamento [`In Progress`], pois
+os artefatos e evidências acrescentados por SCR-041 a SCR-048 e SCR-AC-011 a
+SCR-AC-014 ainda não foram implementados ou executados.
+
+### Análise de implementabilidade da versão 0.2
+
+A versão 0.2 foi analisada integralmente e classificada como Pronta [`Ready`],
+sem bloqueador normativo, arquitetural, de impacto ou de evidência prévia. O
+relatório é
+`docs/reports/2026-08-26T153635Z-0.2-e827ebd6-implementability-analysis.md`.
+A revisão passa a Implementável [`Implementable`]; a implementação permanece
+Em andamento [`In Progress`] e nenhuma implementação, build, teste, upload ou
+validação física da versão 0.2 foi iniciada por esta análise.
