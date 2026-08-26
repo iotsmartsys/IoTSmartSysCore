@@ -2089,7 +2089,7 @@ A especificação `IOTSSC-CURRENT-SENSOR` foi registrada na versão 0.1 em
 
 ## EKM-CHG-0035 — Autoria da especificação do console de tela
 
-**Estado:** Open — aguardando Análise de Implementabilidade
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
 
@@ -2211,7 +2211,7 @@ Analista não a autoriza nem a inicia.
 
 ## EKM-CHG-0037 — Implementação do console de tela 0.1
 
-**Estado:** Open — implementação em andamento
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
 
@@ -2269,7 +2269,7 @@ teste foi criado, alterado ou executado. A implementação permanece `In Progres
 
 ## EKM-CHG-0038 — Autoria do exemplo executável do console de tela 0.2
 
-**Estado:** Open — aguardando Análise de Implementabilidade
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
 
@@ -2350,7 +2350,7 @@ remediação externa ou bloqueador anterior sem disposição.
 
 ## EKM-CHG-0040 — Implementação do exemplo executável do console de tela 0.2
 
-**Estado:** Open — implementação de software concluída; validação física pendente
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
 
@@ -2415,7 +2415,7 @@ Relatório da correção:
 
 ## EKM-CHG-0041 — Ancoragem do console de tela no topo da área útil 0.3
 
-**Estado:** Open — implementação de software concluída; validação física pendente
+**Estado:** Closed — validada pelo Arquiteto em `EKM-CHG-0042`
 
 **Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
 
@@ -2470,3 +2470,45 @@ governado por esta versão e não corrigido nesta transação.
 Relatórios:
 `docs/reports/2026-08-26T203103Z-0.3-71f40ba6-implementability-analysis.md` e
 `docs/reports/2026-08-26T203432Z-0.3-71f40ba6-implementation-report.md`.
+
+## EKM-CHG-0042 — Validação final do console de tela 0.3
+
+**Estado:** Open — pronta para integração
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
+
+### Objetivo
+
+Registrar a validação física e a decisão final do Arquiteto, confrontar as
+evidências de software e promover a versão 0.3 para integração à referência de
+produção.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter executado os testes em hardware e
+validado a implementação. A confirmação cobre `SCR-AC-003` a `SCR-AC-008`,
+`SCR-AC-013` e a parcela instrumentada de `SCR-AC-001`. Esta transação registra
+a evidência recebida sem alegar reexecução ou substituir a decisão humana.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, atuando como par do Arquiteto e sem alegação de
+independência, confrontou implementação, especificação e evidências sem
+identificar defeito bloqueante. `pio run -e esp32_dev` e
+`pio run -e example_screen_console_esp32_dev` alcançaram `SUCCESS`. A inspeção
+dos ELFs confirmou ausência da implementação gráfica na baseline, presença da
+implementação ST7789 no exemplo e um único par `setup()`/`loop()`. A busca
+textual não encontrou consumidor dos símbolos aposentados no código.
+
+### Promoções
+
+- Estado normativo: Rascunho → Vigente [`Active`];
+- Estado da implementação: Em andamento → Validada [`Validated`];
+- Estado da entrega: Não aplicável → Pronta para integração
+  [`Ready for Integration`].
+
+As transações `EKM-CHG-0035`, `EKM-CHG-0037`, `EKM-CHG-0038`,
+`EKM-CHG-0040` e `EKM-CHG-0041` são fechadas pelo resultado validado da versão
+0.3. Nenhum teste automatizado integra o recorte e nenhum upload foi executado
+nesta atuação. A promoção para Concluída [`Done`] depende da integração efetiva
+à `main`.

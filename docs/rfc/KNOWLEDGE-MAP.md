@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 26/08/2026 (análise de implementabilidade do console de tela 0.2)
+**Última atualização:** 26/08/2026 (validação final do console de tela 0.3)
 
 ## 1. Governança
 
@@ -27,7 +27,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Leitura de corrente contínua | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft | Not Started |
-| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft 0.3 — revisão de implementabilidade `Implementable` (`EKM-CHG-0041`) | In Progress; software 0.3 implementado em `EKM-CHG-0041`, validação física pendente |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Ready for Integration` por validação física e decisão explícita do Arquiteto (`EKM-CHG-0042`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -44,10 +44,10 @@
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
-| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; software do console de tela 0.2 implementado com caminho ST7789 opt-in e exemplo Ideaspark; validação física pendente |
+| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela ST7789 opt-in e exemplo Ideaspark validados em hardware (`EKM-CHG-0042`) |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado e construído em `EKM-CHG-0040`; validação física do catálogo permanece pendente |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado em `EKM-CHG-0040` e validado em hardware em `EKM-CHG-0042` |
 
 ## 4. Lacunas
 
@@ -261,3 +261,6 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 - `EKM-CHG-0041`: autoria, análise `Ready` e implementação de
   `IOTSSC-SCREEN-CONSOLE@0.3`; o bloco de linhas do console passa a ser
   ancorado no topo da área útil, com validação física ainda pendente.
+- `EKM-CHG-0042`: registra a validação física e a decisão explícita do
+  Arquiteto, a confrontação consultiva final e a promoção de
+  `IOTSSC-SCREEN-CONSOLE@0.3` para `Active`/`Validated`/`Ready for Integration`.
