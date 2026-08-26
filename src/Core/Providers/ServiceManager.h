@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Contracts/Display/Screen.h"
 #include "Contracts/Logging/Log.h"
 #include "Contracts/Providers/ServiceProvider.h"
 #include "Contracts/Providers/Time.h"
@@ -14,6 +15,7 @@ namespace iotsmartsys::core
         static ServiceManager &instance();
 
         ILogger &logger();
+        IScreenConsole &screenConsole();
         ITimeProvider &timeProvider();
         settings::SettingsManager &settingsManager();
         settings::ISettingsGate &settingsGate();

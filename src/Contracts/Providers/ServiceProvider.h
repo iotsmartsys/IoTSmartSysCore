@@ -15,6 +15,7 @@ namespace iotsmartsys::core
 
         // Registro (bootstrap)
         void setLogger(ILogger *logger);
+        void setScreenConsole(IScreenConsole *console);
         void setTime(ITimeProvider *time);
 
         void setSettings(settings::IReadOnlySettingsProvider *settings);
@@ -25,6 +26,7 @@ namespace iotsmartsys::core
 
         // IServiceProvider
         ILogger *logger() const override;
+        IScreenConsole *screenConsole() const override;
         ITimeProvider *time() const override;
 
         settings::IReadOnlySettingsProvider *getSettingsProvider() const override;
@@ -42,6 +44,7 @@ namespace iotsmartsys::core
 
     private:
         ILogger *_logger{nullptr};
+        IScreenConsole *_screenConsole{nullptr};
         ITimeProvider *_time{nullptr};
 
         settings::IReadOnlySettingsProvider *_settingsProvider{nullptr};

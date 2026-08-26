@@ -1,6 +1,7 @@
 #if defined(APP_EXAMPLE_RUNNER)
 
-#if (defined(IOTSMARTSYS_EXAMPLE_BASIC_LIGHT) + defined(IOTSMARTSYS_EXAMPLE_ENVIRONMENT_DHT)) != 1
+#if (defined(IOTSMARTSYS_EXAMPLE_BASIC_LIGHT) + defined(IOTSMARTSYS_EXAMPLE_ENVIRONMENT_DHT) + \
+     defined(IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE)) != 1
 #error "Example environment must select exactly one IOTSMARTSYS_EXAMPLE_* application"
 #endif
 
@@ -8,6 +9,8 @@
 #include "../examples/executable/basic_light/example.hpp"
 #elif defined(IOTSMARTSYS_EXAMPLE_ENVIRONMENT_DHT)
 #include "../examples/executable/environment_dht/example.hpp"
+#elif defined(IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE)
+#include "../examples/executable/screen_console/example.hpp"
 #endif
 
 #endif
