@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 26/08/2026 (autoria da versão 0.2 do console de tela)
+**Última atualização:** 26/08/2026 (análise de implementabilidade do console de tela 0.2)
 
 ## 1. Governança
 
@@ -27,7 +27,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Leitura de corrente contínua | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft | Not Started |
-| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft 0.2 — revisão de implementabilidade `Pending Review` (`EKM-CHG-0038`) | In Progress; implementação 0.1 registrada em `EKM-CHG-0037` |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Draft 0.2 — revisão de implementabilidade `Implementable` (`EKM-CHG-0039`) | In Progress; implementação 0.1 registrada em `EKM-CHG-0037` |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -44,10 +44,10 @@
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
-| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela especificado em `Draft` por `IOTSSC-SCREEN-CONSOLE@0.2`, com revisão `Pending Review` e implementação 0.1 como baseline parcial, incluindo a aposentadoria do componente inerte `src/Infra/display/Display_ST7789_170_320` |
+| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela especificado em `Draft` por `IOTSSC-SCREEN-CONSOLE@0.2`, com revisão `Implementable` e implementação 0.1 como baseline parcial, incluindo a aposentadoria do componente inerte `src/Infra/display/Display_ST7789_170_320` |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Infraestrutura vigente preservada; `screen_console` contratado por `IOTSSC-SCREEN-CONSOLE@0.2` e pendente de análise/implementação; validação física do catálogo permanece pendente |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Infraestrutura vigente preservada; `screen_console` contratado por `IOTSSC-SCREEN-CONSOLE@0.2`, com análise `Ready` e implementação pendente; validação física do catálogo permanece pendente |
 
 ## 4. Lacunas
 
@@ -252,3 +252,6 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   executável `screen_console`, selecionado pelo runner e pelo environment
   `example_screen_console_esp32_dev`, com pinagem Ideaspark e demonstração de
   `ScreenMirrorLogger`. A versão corrente retorna a `Pending Review`.
+- `EKM-CHG-0039`: análise integral de `IOTSSC-SCREEN-CONSOLE@0.2` classificada
+  como Pronta [`Ready`], sem bloqueador; a revisão passa a `Implementable` e a
+  implementação permanece `In Progress`.

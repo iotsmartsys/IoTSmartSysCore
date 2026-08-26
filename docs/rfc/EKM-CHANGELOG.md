@@ -2313,3 +2313,37 @@ Atuação exclusivamente normativa e documental. Nenhum código, exemplo,
 environment, dependência, teste, build, upload ou validação física foi criado,
 alterado ou executado. O pinout do anexo fornecido pelo Arquiteto foi tratado
 somente como evidência técnica, sem instrução documental paralela.
+
+## EKM-CHG-0039 — Análise de implementabilidade do console de tela 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Determinar se a versão 0.2 pode acrescentar o exemplo executável Ideaspark ao
+runner e ao environment `esp32_dev` dentro da baseline e do recorte vigentes.
+
+### Resultado
+
+Classificação **Pronta** [`Ready`]. Nenhum bloqueador normativo, arquitetural,
+de impacto ou de evidência prévia. O runner, o catálogo e o padrão de
+environments existentes admitem a extensão aditiva; o pinout explícito é
+permitido para a board genérica sem pinout normativo; e a ordem de instalação
+do decorador pode preservar o reset de `Log` executado por `SmartSysApp::setup()`.
+
+Foram confrontados 48 requisitos, 14 critérios de aceite, 13 decisões, 6
+bordas, `EKM-GAP-0001` a `EKM-GAP-0011` e as autoridades relacionadas. O
+challenge limitado não encontrou contradição, critério insatisfazível,
+remediação externa ou bloqueador anterior sem disposição.
+
+### Fontes e limitações
+
+- relatório criado:
+  `docs/reports/2026-08-26T153635Z-0.2-e827ebd6-implementability-analysis.md`;
+- especificação, mapa e esta transação reconciliados para `Implementable`;
+- somente inspeção estática: nenhum código, exemplo, environment, dependência,
+  build, teste, upload ou hardware foi alterado ou executado;
+- build habilitado e validações físicas permanecem evidências posteriores da
+  Implementação/Revisão, não condições prévias desta classificação.
