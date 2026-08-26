@@ -24,8 +24,9 @@
 #error "screen_console requires all EXAMPLE_SCREEN_*_PIN macros"
 #endif
 
-#if !defined(EXAMPLE_SCREEN_NATIVE_WIDTH) || !defined(EXAMPLE_SCREEN_NATIVE_HEIGHT)
-#error "screen_console requires EXAMPLE_SCREEN_NATIVE_WIDTH and EXAMPLE_SCREEN_NATIVE_HEIGHT"
+#if !defined(EXAMPLE_SCREEN_NATIVE_WIDTH) || !defined(EXAMPLE_SCREEN_NATIVE_HEIGHT) || \
+    !defined(EXAMPLE_SCREEN_ROTATION)
+#error "screen_console requires native dimensions and EXAMPLE_SCREEN_ROTATION"
 #endif
 
 namespace executable_example
@@ -48,7 +49,7 @@ void setup()
         true,
         EXAMPLE_SCREEN_NATIVE_WIDTH,
         EXAMPLE_SCREEN_NATIVE_HEIGHT,
-        0,
+        EXAMPLE_SCREEN_ROTATION,
         1,
         2,
         1,

@@ -2396,3 +2396,19 @@ SCR-AC-008, SCR-AC-013 e a parcela instrumentada de SCR-AC-001 permanecem
 
 Relatório:
 `docs/reports/2026-08-26T154955Z-0.2-d49f8216-implementation-report.md`.
+
+### Correção de orientação do exemplo
+
+Após o Arquiteto relatar que a configuração inicial exibia texto de cabeça
+para baixo e solicitar apresentação horizontal, o environment passou a definir
+`EXAMPLE_SCREEN_ROTATION=1`. O exemplo consome obrigatoriamente essa
+configuração e passa a usar área lógica paisagem de 320 × 170, preservando as
+dimensões nativas 170 × 320 e todos os defaults de plataforma.
+
+Os builds `pio run -e example_screen_console_esp32_dev` e
+`pio run -e esp32_dev` alcançaram `SUCCESS`, ambos com código 0, e
+`git diff --check` foi aprovado. Nenhum teste, upload ou monitor foi executado;
+a orientação resultante permanece pendente de confirmação física.
+
+Relatório da correção:
+`docs/reports/2026-08-26T162253Z-0.2-c9fad5d6-implementation-correction-report.md`.
