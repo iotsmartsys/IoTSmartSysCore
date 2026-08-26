@@ -16,8 +16,9 @@ O environment usa a definição genérica `esp32dev` com o painel integrado ST77
 | LCD backlight | 32 | `EXAMPLE_SCREEN_BACKLIGHT_PIN` |
 | Largura nativa | 170 px | `EXAMPLE_SCREEN_NATIVE_WIDTH` |
 | Altura nativa | 320 px | `EXAMPLE_SCREEN_NATIVE_HEIGHT` |
+| Rotação | 1 (paisagem) | `EXAMPLE_SCREEN_ROTATION` |
 
-A configuração usa rotação 0, texto tamanho 1, margem horizontal de 2 pixels, espaçamento de 1 pixel, fundo preto, texto padrão branco e backlight ativo em nível alto.
+A configuração usa rotação 1, produzindo área lógica horizontal de 320 × 170 pixels, texto tamanho 1, margem horizontal de 2 pixels, espaçamento de 1 pixel, fundo preto, texto padrão branco e backlight ativo em nível alto.
 
 ## Montagem
 
@@ -38,10 +39,10 @@ O upload requer que a porta da placa esteja disponível e corretamente configura
 1. Com a placa desenergizada, confirme o modelo Ideaspark ESP32 1.9 inch TFT LCD e a ausência de conexões conflitantes nos GPIOs reservados ao painel.
 2. Conecte a placa por USB, grave o environment próprio e abra o monitor serial a 115200 baud.
 3. Aguarde a inicialização do runtime e localize a mensagem com `id=screen_console`, placa, controlador, dimensões e todos os pinos.
-4. Confirme que a mesma mensagem de nível `Info` aparece na serial e, quebrada em linhas quando necessário, na base da área útil do display em branco.
+4. Confirme que a mesma mensagem de nível `Info` aparece na serial e, em orientação horizontal, quebrada em linhas quando necessário na base da área útil do display em branco.
 5. Mantenha o dispositivo em execução e confirme que o loop cooperativo permanece responsivo, sem escrita contínua no painel.
 
-Resultado esperado: o build seleciona apenas este exemplo; após o boot, a mensagem diagnóstica aparece na serial e no display, com seu trecho mais recente na base da tela. O `SmartSysApp::handle()` continua sendo chamado no `loop()`.
+Resultado esperado: o build seleciona apenas este exemplo; após o boot, a mensagem diagnóstica aparece na serial e no display em orientação horizontal, com seu trecho mais recente na base da tela. O `SmartSysApp::handle()` continua sendo chamado no `loop()`.
 
 ## Limitações e riscos
 
