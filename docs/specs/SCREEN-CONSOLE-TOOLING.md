@@ -6,11 +6,11 @@
 
 **Versão:** 0.3
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não aplicável [`Not Applicable`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Implementável [`Implementable`]
 
@@ -363,9 +363,6 @@ explícita (SCR-AC-003 a SCR-AC-008, SCR-AC-013).
   `adafruit/Adafruit ST7735 and ST7789 Library` e
   `adafruit/Adafruit GFX Library` já constam de `library.json`; nenhuma
   dependência publicada é acrescentada.
-- `docs/specs/CURRENT-SENSING-CAPABILITY.md` — independente. Aquela
-  especificação contrata diagnóstico por `ILogger` e é beneficiada pelo
-  espelhamento de 5.6 sem ser emendada.
 - `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` — preservada. O novo exemplo usa
   o runner e o contrato de catálogo vigentes, mantém `src/main.cpp` como
   aplicação padrão e acrescenta um environment executável sem redefinir a
@@ -534,3 +531,25 @@ O estado permanece Em andamento [`In Progress`]: `SCR-AC-003` a `SCR-AC-008`,
 `SCR-AC-013` e a parcela instrumentada de `SCR-AC-001` permanecem
 `Not Executed` por exigirem hardware e ordem operacional explícita. Nenhum teste
 ou upload foi executado.
+
+### Validação final da versão 0.3
+
+O Arquiteto confirmou em ordem direta ter executado os testes em hardware e
+validado a implementação. A evidência humana cobre as validações físicas de
+`SCR-AC-003` a `SCR-AC-008`, `SCR-AC-013` e a parcela instrumentada de
+`SCR-AC-001`; esta atuação registra a confirmação recebida sem alegar
+reexecução dos testes.
+
+A confrontação consultiva final não encontrou defeito bloqueante no recorte.
+Os builds `pio run -e esp32_dev` e
+`pio run -e example_screen_console_esp32_dev` foram repetidos e alcançaram
+`SUCCESS`; a inspeção dos ELFs confirmou a exclusão gráfica na baseline, a
+presença da implementação ST7789 no exemplo e um único par `setup()`/`loop()`.
+A busca textual não encontrou consumidor dos símbolos aposentados no código.
+
+Por decisão explícita do Arquiteto, a versão 0.3 passa a Vigente [`Active`], a
+implementação passa a Validada [`Validated`] e a entrega passa a Pronta para
+integração [`Ready for Integration`]. A confrontação foi executada pelo
+Consultor de Arquitetura como par do Arquiteto e não é apresentada como revisão
+independente. A promoção para Concluída [`Done`] depende da integração efetiva
+à `main`.
