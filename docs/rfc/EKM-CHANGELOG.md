@@ -2912,3 +2912,23 @@ APIs preexistentes.
 entrega `Not Applicable` e revisão de implementabilidade `Pending Review`. A
 versão 0.5 e suas evidências permanecem históricas. Nenhum código de produção,
 teste ou configuração de build foi alterado nesta transação.
+
+## EKM-CHG-0050 — Análise de implementabilidade da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Confrontar integralmente a versão 0.6, sua cadência configurável, a baseline
+Arduino/ESP32, a compatibilidade pública e os achados anteriores.
+
+### Resultado
+
+Classificação **Pronta** [`Ready`], sem bloqueadores. O relatório
+`docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`
+registra a cobertura, o challenge, a reconciliação anterior e quatro restrições
+não bloqueantes. A especificação permanece `Draft`, com implementação
+`Not Started` e entrega `Not Applicable`; esta análise não autoriza
+implementação, conclusão ou integração.

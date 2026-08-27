@@ -12,7 +12,7 @@
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Revisão pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Relação normativa:** Corrige a versão 0.5 [`Corrects`]
 
@@ -861,7 +861,8 @@ permanece reservada à nova análise formal.
 ## 14. Estado da especificação
 
 Versão 0.6 registrada em `Draft`, com implementação `Not Started`, entrega
-`Not Applicable` e revisão de implementabilidade `Pending Review`.
+`Not Applicable` e revisão de implementabilidade `Ready`, conforme o relatório
+`docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`.
 
 A correção 0.6 acrescenta `capabilityEvaluationIntervalMs`, CUR-055 a CUR-058,
 CUR-AC-018 e CUR-DEC-023. A mudança resolve a ausência de contrato para a
