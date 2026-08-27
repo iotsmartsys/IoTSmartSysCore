@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.2
+**Versão:** 0.3
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -14,7 +14,7 @@
 
 **Revisão de implementabilidade:** Pendente [`Pending Review`]
 
-**Relação normativa:** Nova [`New`]
+**Relação normativa:** Corrige a versão 0.2 [`Corrects`]
 
 ## 1. Objetivo e contexto
 
@@ -32,6 +32,10 @@ São admitidos dois perfis iniciais:
   alimentação oficialmente garantida para o ACS712 original e sujeito à
   validação integral do projeto.
 
+O único target contratado nesta versão é o ESP32 clássico com ADC em
+`FULL_RANGE`, resolvido pelo adapter como `ADC_11db`. Outros SoCs exigem perfil
+próprio antes de serem considerados suportados.
+
 ## 2. Escopo
 
 - Hardware Adapter de corrente contínua;
@@ -43,7 +47,8 @@ São admitidos dois perfis iniciais:
 - API pública aditiva `SmartSysApp::addCurrentSensor()`;
 - ownership do adapter e da capability pela aplicação;
 - diagnóstico por `iotsmartsys::core::ILogger`;
-- validação física separada para cada perfil.
+- validação física separada para cada perfil;
+- target ESP32 clássico e limites utilizáveis do ADC nos dois extremos.
 
 ## 3. Fora de escopo
 
@@ -55,7 +60,10 @@ São admitidos dois perfis iniciais:
   durante a validação;
 - alteração do limite de oito capabilities ou do ciclo cooperativo de
   `handle()`;
-- suporte universal do ACS712 original à alimentação de 3,3 V.
+- suporte universal do ACS712 original à alimentação de 3,3 V;
+- suporte a ESP32-C3, ESP32-C6, ESP32-S3 ou herança automática dos limites do
+  ESP32 clássico;
+- registro central de GPIO para capabilities e adapters preexistentes.
 
 ## 4. Componentes e tipos públicos
 
@@ -73,6 +81,8 @@ alimentação e limites. A capability controla a cadência e não recalcula corr
 
 ```cpp
 enum class CurrentMeasurementStatus {
+    NOT_READY,
+    ESTIMATED,
     VALID,
     OUT_OF_CALIBRATED_RANGE,
     OVERCURRENT_OR_SATURATION
@@ -91,12 +101,21 @@ struct CurrentMeasurement {
 };
 ```
 
-A validade numérica final é:
+A presença de valor numérico é:
 
 ```cpp
-numericValueValid =
-    measurementStatus == CurrentMeasurementStatus::VALID &&
+numericValuePresent =
+    (measurementStatus == CurrentMeasurementStatus::ESTIMATED ||
+     measurementStatus == CurrentMeasurementStatus::VALID) &&
     supplyStatus != CurrentSupplyStatus::SUPPLY_OUT_OF_RANGE;
+```
+
+A exatidão contratada somente pode ser afirmada quando:
+
+```cpp
+contractAccuracyGuaranteed =
+    measurementStatus == CurrentMeasurementStatus::VALID &&
+    supplyStatus == CurrentSupplyStatus::IN_RANGE;
 ```
 
 ## 5. Requisitos
@@ -107,11 +126,13 @@ numericValueValid =
   `setup()`, `handle()` e `lastStateReadMillis()`.
 - **CUR-002:** `ICurrentSensor` deve devolver a última `CurrentMeasurement`
   estável sem executar aquisição.
-- **CUR-003:** antes da primeira leitura concluída, `currentA` não possui valor
-  e `lastStateReadMillis()` permanece inalterado.
-- **CUR-004:** `handle()` deve ser cooperativo, sem espera indefinida, laço de
-  espera por evento externo ou trabalho acima de uma amostra composta
-  configurada.
+- **CUR-003:** antes da primeira leitura concluída, o estado é `NOT_READY`,
+  `currentA` não possui valor e `lastStateReadMillis()` permanece inalterado.
+- **CUR-004:** `handle()` deve ser cooperativo: executa no máximo uma leitura
+  ADC por oportunidade elegível, respeita intervalo mínimo de
+  `sampleIntervalUs`, não usa espera ativa e mantém estado interno acumulado
+  até completar a amostra composta. Não pode adquirir 500 ou 2.000 amostras de
+  forma bloqueante.
 - **CUR-005:** `lastStateReadMillis()` deve refletir a última leitura concluída
   com sucesso, inclusive quando seu estado impede valor numérico válido.
 
@@ -125,6 +146,7 @@ id
 adcPin
 adcResolutionBits
 adcAttenuation
+adcMinimumMv
 adcMaximumMv
 supplyNominalMv
 supplyValidMinimumMv
@@ -158,21 +180,23 @@ supplyMonitorToVccRatio
 - **CUR-007:** os defaults comuns são: resolução de 12 bits; atenuação abstrata
   `FULL_RANGE`; polaridade `+1,0`; modo `STARTUP_AND_ON_REQUEST`; aquecimento
   inicial `60000 ms`; acomodação de recalibração `2000 ms`; `2000` amostras de
-  zero; `500` amostras por leitura; `lowPassAlpha = 1,0`; intervalo entre
+  zero; `500` amostras por leitura; `sampleIntervalUs = 1000`;
+  `lowPassAlpha = 1,0`; intervalo entre
   leituras `500 ms`; faixa morta e mínimo reportável `0,05 A`; faixa calibrada
   por magnitude de `0,50 A` a `15,00 A`; faixa física de `−30,00 A` a
   `+30,00 A`; erro absoluto `0,10 A`; erro relativo `5,0%`.
-- **CUR-008:** `adcPin` e `id` não possuem default válido.
-  `maximumZeroDeviationMv` é obrigatório por perfil, `adcMaximumMv` é
-  obrigatório por target e `sampleIntervalUs` é obrigatório por
-  perfil/target. Os três permanecem `TBD` nesta versão e não podem receber
-  defaults universais silenciosos.
-- **CUR-009:** `FULL_RANGE` é abstração do contrato. O adapter do target deve
-  convertê-la para a atenuação específica da plataforma, sem presumir faixa
-  útil idêntica em todos os ESP32.
-- **CUR-010:** `adcMaximumMv` representa o limite efetivamente utilizável pelo
-  ADC no target e na atenuação selecionada; não equivale automaticamente à
-  alimentação nominal de 3,3 V.
+- **CUR-008:** `adcPin` e `id` não possuem default válido. No target ESP32
+  clássico contratado, `adcMinimumMv = 150`, `adcMaximumMv = 3100` e
+  `maximumZeroDeviationMv = 100` aplicam-se aos dois perfis elétricos.
+- **CUR-009:** `FULL_RANGE` é abstração do contrato e, no ESP32 clássico, deve
+  ser convertida pelo adapter para `ADC_11db`. ESP32-C3, ESP32-C6, ESP32-S3 e
+  outros SoCs não herdam silenciosamente atenuação ou limites; cada target deve
+  declarar seus próprios limites antes de ser suportado.
+- **CUR-010:** `adcMinimumMv` e `adcMaximumMv` representam os limites
+  efetivamente utilizáveis pelo ADC no target e na atenuação selecionada. Uma
+  leitura do sinal de corrente menor ou igual ao limite inferior ou maior ou
+  igual ao superior caracteriza saturação; os limites não equivalem
+  automaticamente à alimentação nominal de 3,3 V.
 - **CUR-011:** `lowPassAlpha = 1,0` desabilita filtragem exponencial adicional;
   inicialmente, a redução de ruído decorre somente da média composta.
 
@@ -191,8 +215,10 @@ supplyMonitorToVccRatio
   próximo `handle()`; solicitação durante calibração em curso é descartada com
   WARN.
 - **CUR-017:** uma amostra composta é a média aritmética das leituras calibradas
-  em mV, espaçadas por `sampleIntervalUs`. A calibração usa
-  `zeroCalibrationSamples`; a medição usa `samplesPerReading`.
+  em mV, espaçadas por pelo menos `sampleIntervalUs`. A calibração usa
+  `zeroCalibrationSamples`; a medição usa `samplesPerReading`. Cada chamada
+  elegível de `handle()` acrescenta no máximo uma leitura ao acumulador, sem
+  bloquear até a conclusão da média.
 - **CUR-018:** concluída a média, o filtro passa-baixa configurado por
   `lowPassAlpha` é aplicado antes da qualificação e publicação.
 
@@ -217,17 +243,19 @@ I = polaridade ×
 
 ### 5.5 Faixa e estados
 
-- **CUR-024:** para `0,50 A ≤ |I| ≤ 15,00 A`, a medição pode ser `VALID`
-  quando as demais condições de validade forem satisfeitas.
+- **CUR-024:** antes da primeira medição concluída, o estado é `NOT_READY` e
+  `currentA` é ausente. Para `|I| < 0,05 A`, o estado é `ESTIMATED` e
+  `currentA = 0,000 A`. Para `0,05 A ≤ |I| < 0,50 A`, o estado é `ESTIMATED`
+  e `currentA` contém o valor estimado. Para `0,50 A ≤ |I| ≤ 15,00 A`, o
+  estado é `VALID` quando as demais condições de validade forem satisfeitas.
 - **CUR-025:** para `15,00 A < |I| ≤ 30,00 A`, o estado é
-  `OUT_OF_CALIBRATED_RANGE` e `currentA` não possui valor publicável como
-  medição válida.
+  `OUT_OF_CALIBRATED_RANGE` e `currentA` é ausente.
 - **CUR-026:** para `|I| > 30,00 A` ou saturação do ADC, o estado é
-  `OVERCURRENT_OR_SATURATION` e `currentA` não possui valor publicável como
-  medição válida.
-- **CUR-027:** entre `0,05 A` e `0,50 A` em magnitude, o resultado pode ser
-  apresentado apenas como estimativa, sem garantia de exatidão. A representação
-  desse resultado permanece pendente na seção 13.
+  `OVERCURRENT_OR_SATURATION` e `currentA` é ausente.
+- **CUR-027:** `ESTIMATED` possui valor numérico, mas nunca afirma a exatidão
+  contratada. `VALID` com `NOT_MONITORED` possui valor numérico, mas também não
+  afirma exatidão porque a condição de alimentação não foi comprovada. A
+  exatidão contratada exige simultaneamente `VALID` e `IN_RANGE`.
 - **CUR-028:** a resolução apresentada deve ser `0,01 A` ou melhor; resolução
   não implica exatidão.
 - **CUR-029:** com corrente constante, a variação pico a pico das leituras
@@ -274,23 +302,53 @@ estável durante a vida da aplicação e não pode ser liberado pelo consumidor.
 - **CUR-039:** `SmartSysApp` possui adapter e capability, copia ou mantém a
   configuração de forma segura e libera os recursos em seu encerramento.
 - **CUR-040:** a aplicação deve impedir ou rejeitar identificadores e pinos
-  conflitantes. O alcance de consumidores considerado conflito de pino
-  permanece pendente na seção 13.
+  conflitantes. Deve rejeitar GPIO sem capacidade ADC ou reservado pelo target,
+  `adcPin` igual a `supplyMonitorAdcPin`, reutilização de qualquer desses pinos
+  por outro sensor de corrente registrado na mesma instância e identificador já
+  usado por qualquer capability. Conflitos com adapters ou capabilities
+  preexistentes sem metadados de GPIO ficam fora do escopo e suas APIs não têm
+  comportamento alterado.
 - **CUR-041:** o factory pode permanecer somente como detalhe interno e seam de
   injeção; a aplicação consumidora não precisa acessá-lo para registrar o sensor.
 - **CUR-042:** a capability deve expor acesso não proprietário à última
   `CurrentMeasurement`, ao zero calibrado e à solicitação de recalibração.
-- **CUR-043:** a publicação ocorre na primeira avaliação concluída e quando
-  qualquer campo do envelope mudar. Leitura inválida nunca é publicada como
-  corrente numérica válida.
-- **CUR-044:** o envelope deve ser publicado como unidade indivisível. Sua
-  representação no canal textual de `ICapability::updateState` permanece
-  pendente na seção 13.
+- **CUR-043:** a publicação ocorre na primeira avaliação concluída e depois
+  quando a representação normalizada do envelope mudar. Leitura sem valor
+  numérico presente nunca é publicada como corrente numérica válida.
+- **CUR-044:** o envelope deve ser publicado como unidade indivisível no
+  `value` textual UTF-8 de `ICapability`, em JSON compacto, sem espaços ou
+  quebra de linha e com propriedades na ordem fixa `currentA`,
+  `measurementStatus`, `supplyStatus`. `currentA` presente usa exatamente três
+  casas decimais, ponto independente de locale e zero negativo normalizado para
+  `0.000`; valor ausente usa `null`; os tokens de estado são exatamente os nomes
+  das enumerações; nenhuma propriedade é omitida. Exemplos normativos:
+
+```json
+{"currentA":0.742,"measurementStatus":"VALID","supplyStatus":"NOT_MONITORED"}
+{"currentA":0.231,"measurementStatus":"ESTIMATED","supplyStatus":"IN_RANGE"}
+{"currentA":null,"measurementStatus":"OUT_OF_CALIBRATED_RANGE","supplyStatus":"IN_RANGE"}
+```
 - **CUR-045:** o limite de oito capabilities, a configuração anterior a
   `SmartSysApp::setup()` e todas as assinaturas, defaults e semânticas públicas
   preexistentes permanecem preservados.
 
 ## 6. Perfis elétricos iniciais
+
+### 6.0 Target `ESP32_CLASSIC_ADC_11DB`
+
+| Campo | Valor |
+|---|---|
+| SoC | ESP32 clássico |
+| `adcResolutionBits` | `12` |
+| `adcAttenuation` | `FULL_RANGE`, resolvida como `ADC_11db` |
+| `adcMinimumMv` | `150 mV` |
+| `adcMaximumMv` | `3100 mV` |
+| `sampleIntervalUs` | `1000 µs` |
+| `maximumZeroDeviationMv` | `100 mV` |
+
+Os limites valem inicialmente para ambos os perfis elétricos. O desvio máximo
+de zero admite a variação ratiométrica esperada dentro de cada faixa de
+alimentação, mas rejeita zero excessivamente distante do centro nominal.
 
 ### 6.1 `ACS712_30A_5V`
 
@@ -303,9 +361,10 @@ estável durante a vida da aplicação e não pode ser liberado pelo consumidor.
 | `nominalZeroAdcMv` | `1666,7 mV` |
 | `sensitivityAdcMvPerA` inicial | `43,05 mV/A` |
 | `qualification` | `MANUFACTURER_SUPPORTED` |
-| `maximumZeroDeviationMv` | `TBD` |
-| `adcMaximumMv` | `TBD` por target |
-| `sampleIntervalUs` | `TBD` por perfil/target |
+| `maximumZeroDeviationMv` | `100 mV` |
+| `adcMinimumMv` | `150 mV` |
+| `adcMaximumMv` | `3100 mV` |
+| `sampleIntervalUs` | `1000 µs` |
 
 `MANUFACTURER_SUPPORTED` qualifica somente a alimentação do ACS712. Módulo,
 divisor, ADC, calibração e firmware continuam sujeitos à validação do projeto.
@@ -321,9 +380,10 @@ divisor, ADC, calibração e firmware continuam sujeitos à validação do proje
 | `nominalZeroAdcMv` | `1650,0 mV` |
 | `sensitivityAdcMvPerA` inicial | `43,56 mV/A` |
 | `qualification` | `PROJECT_VALIDATED` |
-| `maximumZeroDeviationMv` | `TBD` |
-| `adcMaximumMv` | `TBD` por target |
-| `sampleIntervalUs` | `TBD` por perfil/target |
+| `maximumZeroDeviationMv` | `100 mV` |
+| `adcMinimumMv` | `150 mV` |
+| `adcMaximumMv` | `3100 mV` |
+| `sampleIntervalUs` | `1000 µs` |
 
 A sensibilidade teórica inicial decorre de:
 
@@ -338,16 +398,17 @@ bancada ou de futuras revisões de hardware.
 
 ## 7. Fluxo esperado
 
-1. A aplicação preenche `CurrentSensorConfig` com um perfil e os valores
-   específicos do target ainda sem default universal.
+1. A aplicação preenche `CurrentSensorConfig` com um perfil elétrico e o perfil
+   contratado do target ESP32 clássico.
 2. Antes de `SmartSysApp::setup()`, chama `app.addCurrentSensor(config)`.
 3. A aplicação valida identidade, slots, configuração e conflitos, constrói e
    passa a possuir adapter e capability.
 4. `setup()` configura o ADC e inicia o aquecimento de 60 segundos.
 5. Após aquecimento com corrente zero e alimentação estável, o adapter calibra o
-   zero e passa a produzir medições.
+   zero incrementalmente, com uma leitura ADC por oportunidade elegível, e
+   passa a produzir medições pelo mesmo mecanismo cooperativo.
 6. Cada `SmartSysApp::handle()` aciona a capability e o adapter; a capability
-   publica o envelope em cadência de até `1000 ms`.
+   publica o envelope normalizado em cadência de até `1000 ms`.
 7. Recalibração solicitada pela capability começa no próximo `handle()`, após
    verificar suas pré-condições e cumprir acomodação de 2 segundos.
 
@@ -368,10 +429,14 @@ saída.
 
 ## 9. Falhas e condições de borda
 
-- **Configuração inválida:** campo obrigatório ausente, limite incoerente,
+- **Configuração inválida:** campo obrigatório ausente, limite ADC incoerente,
   amostras iguais a zero, razão ou sensibilidade não positiva, polaridade fora
   de `+1,0` ou `−1,0`, ou `lowPassAlpha` fora de `(0,1]` impede registro
   parcial e produz diagnóstico.
+- **Target ou GPIO inválido:** target não contratado, GPIO sem ADC, reservado,
+  repetido no mesmo sensor ou reutilizado por outro sensor de corrente da mesma
+  aplicação impede registro; identificador já usado por qualquer capability
+  também impede registro.
 - **Zero inválido:** diferença entre zero calibrado e nominal acima de
   `maximumZeroDeviationMv` impede medições válidas.
 - **Recalibração sem pré-condição:** ausência de garantia de corrente zero,
@@ -382,7 +447,8 @@ saída.
 - **Alimentação fora da faixa:** produz `SUPPLY_OUT_OF_RANGE` e remove o valor
   numérico válido.
 - **Faixa não calibrada e saturação:** produzem os estados da seção 5.5, sem
-  corrente numérica válida.
+  corrente numérica; leitura do sinal nos limites `adcMinimumMv` ou
+  `adcMaximumMv`, ou além deles, é saturação.
 - **Reinício:** descarta o zero anterior e reinicia aquecimento e calibração.
 - **Falha de capacidade, identidade ou conflito:** retorna `nullptr`, registra
   a causa e não consome slot nem deixa adapter ou capability parcial.
@@ -391,7 +457,9 @@ saída.
 
 - **CUR-AC-001:** cada perfil materializa exatamente seus valores elétricos
   iniciais, sem tratar `43,05` ou `43,56 mV/A` como constante universal.
-  Meio: inspeção da configuração e do cálculo.
+  O target ESP32 clássico materializa `ADC_11db`, `150–3100 mV`, `1000 µs` e
+  desvio máximo de zero de `100 mV`, sem herança por outro SoC. Meio: inspeção
+  da configuração e do cálculo.
 - **CUR-AC-002:** alterar `zeroADC`, `sensitivityAdcMvPerA` ou polaridade
   altera o resultado segundo CUR-019, sem dependência direta da alimentação.
   Meio: inspeção com dois conjuntos distintos.
@@ -440,23 +508,30 @@ seções 5.5 e 5.6.
 O critério é aprovado somente quando, nos dois perfis, todos os pontos
 aplicáveis respeitam erro, sinal, estabilidade e tempo; o zero retorna à faixa;
 a alimentação observada permanece dentro do perfil; e nenhum valor inválido ou
-saturado é apresentado como medição válida. Enquanto qualquer `TBD` da seção
-13 permanecer aberto, o procedimento não constitui gate terminal executável.
+saturado é apresentado como medição válida.
 
 - **CUR-AC-005:** com polaridade `−1,0`, os pontos assinados invertem o sinal e
   preservam módulo e tolerância de CUR-DC-004. Meio: validação física.
-- **CUR-AC-006:** com corrente constante, envelopes idênticos não são
-  republicados; alterado valor ou estado, o novo envelope é publicado na
-  avaliação seguinte, respeitando `1000 ms`. Meio: hardware.
-- **CUR-AC-007:** `|I| < 0,05 A` produz zero exato; `|I| = 0,05 A` não é
-  suprimido automaticamente. Meio: hardware com corrente ajustável.
+- **CUR-AC-006:** cada exemplo normativo de CUR-044 é produzido byte a byte,
+  incluindo ordem, três casas, `null`, tokens e ausência de espaços; envelopes
+  normalizados idênticos não são republicados e qualquer alteração gera nova
+  publicação na avaliação seguinte, respeitando `1000 ms`. Meio: execução
+  instrumentada e hardware.
+- **CUR-AC-007:** antes da primeira medição, o envelope contém `NOT_READY` e
+  `null`; `|I| < 0,05 A` produz `ESTIMATED` e `0.000`; `|I| = 0,05 A` produz
+  estimativa não suprimida; `|I| = 0,50 A` pode produzir `VALID`. Meio:
+  hardware com corrente ajustável.
 - **CUR-AC-008:** solicitação de recalibração retorna sem calibrar e somente
   começa no `handle()` seguinte quando todas as pré-condições forem satisfeitas.
   Meio: hardware e logs.
 - **CUR-AC-009:** cada classe de configuração inválida ou zero inválido impede
-  medição e registro parcial conforme a seção 9. Meio: execução instrumentada.
-- **CUR-AC-010:** `handle()` do adapter e da capability preserva o ciclo
-  cooperativo e o atendimento de outra capability ativa. Meio: hardware.
+  medição e registro parcial; também são rejeitados GPIO sem ADC, reservado,
+  repetido ou usado por outro sensor de corrente da instância, além de
+  identificador já usado por qualquer capability. Meio: execução instrumentada.
+- **CUR-AC-010:** cada oportunidade elegível de `handle()` executa no máximo
+  uma leitura ADC, respeita `1000 µs`, não espera ativamente e preserva o
+  atendimento de outra capability durante o acúmulo de 500 ou 2.000 amostras.
+  Meio: hardware e instrumentação de chamadas ADC.
 - **CUR-AC-011:** `pio run -e esp32_dev` alcança estado terminal com sucesso.
   Meio: build canônico.
 - **CUR-AC-012:** APIs públicas preexistentes permanecem compatíveis; o novo
@@ -465,9 +540,10 @@ saturado é apresentado como medição válida. Enquanto qualquer `TBD` da seç�
 - **CUR-AC-013:** com monitor independente presente, tensões dentro e fora dos
   limites produzem `IN_RANGE` e `SUPPLY_OUT_OF_RANGE`; sem monitor, somente
   `NOT_MONITORED` é possível. Meio: hardware ou injeção instrumentada.
-- **CUR-AC-014:** sinais equivalentes a `15 A < |I| ≤ 30 A`, `|I| > 30 A`
-  e saturação produzem os estados correspondentes, com `currentA` ausente.
-  Meio: injeção instrumentada.
+- **CUR-AC-014:** sinais equivalentes a `15 A < |I| ≤ 30 A`, `|I| > 30 A`,
+  tensão menor ou igual a `150 mV` e tensão maior ou igual a `3100 mV` produzem
+  os estados correspondentes, com `currentA` ausente. Meio: injeção
+  instrumentada.
 
 A execução física ou instrumentada de CUR-AC-003, CUR-DC-004,
 CUR-AC-005 a CUR-AC-010 e CUR-AC-012 a CUR-AC-014 exige hardware ou bancada e
@@ -483,12 +559,12 @@ suítes exige nova decisão de escopo.
 
 ## 12. Conhecimento afetado
 
-- `docs/rfc/KNOWLEDGE-MAP.md`: versão, perfis e lacunas bloqueantes;
-- `docs/rfc/EKM-CHANGELOG.md`: autoria da versão 0.2;
-- relatório de implementabilidade 0.1: histórico imutável cujo bloqueador de
-  tolerância é respondido por CUR-DC-004.
+- `docs/rfc/KNOWLEDGE-MAP.md`: versão e encerramento das lacunas da versão 0.2;
+- `docs/rfc/EKM-CHANGELOG.md`: autoria da versão 0.3;
+- relatórios de implementabilidade 0.1 e 0.2: históricos imutáveis cujos
+  bloqueadores foram incorporados às versões posteriores.
 
-## 13. Relações, decisões e lacunas
+## 13. Relações e decisões
 
 ### Relações normativas
 
@@ -497,8 +573,10 @@ suítes exige nova decisão de escopo.
 - `docs/specs/CORE-RUNTIME-LIFECYCLE.md` — preservada por configuração antes
   de `setup()`, oito slots e processamento cooperativo.
 
-A relação permanece **Nova** [`New`]. O perfil de 3,3 V é contrato próprio
-desta fonte e não amplia o suporte geral de plataforma.
+A versão 0.3 **Corrige** [`Corrects`] a versão 0.2 ao incorporar as decisões que
+encerram seus bloqueadores. A fonte permanece uma extensão aditiva em relação
+às APIs preexistentes. O perfil de 3,3 V é contrato próprio desta fonte e não
+amplia o suporte geral de plataforma.
 
 ### Decisões do Arquiteto
 
@@ -520,32 +598,37 @@ desta fonte e não amplia o suporte geral de plataforma.
 - **CUR-DEC-008:** sobrefaixa e saturação não publicam corrente numérica válida;
   validação acima de 15 A pode usar injeção instrumental.
 - **CUR-DEC-009:** nenhum artefato de teste automatizado integra a versão.
-- **CUR-DEC-010:** `FULL_RANGE` é abstração por target; `adcMaximumMv` não é
-  presumido a partir da tensão nominal.
+- **CUR-DEC-010:** `FULL_RANGE` é abstração por target; `adcMinimumMv` e
+  `adcMaximumMv` não são presumidos a partir da tensão nominal.
 - **CUR-DEC-011:** o perfil 3,3 V é principal nas placas existentes; 5 V é
   alternativa de bancada ou hardware futuro.
-- **CUR-DEC-012:** `maximumZeroDeviationMv`, `adcMaximumMv` e frequência de
-  amostragem podem permanecer `TBD` no Draft, mas bloqueiam implementabilidade.
+- **CUR-DEC-012:** o target inicial é o ESP32 clássico com `FULL_RANGE`
+  convertido para `ADC_11db`, limites utilizáveis de `150–3100 mV`, intervalo
+  de amostragem de `1000 µs` e desvio máximo de zero de `100 mV`; nenhum outro
+  SoC herda esses valores silenciosamente.
+- **CUR-DEC-013:** aquisição e calibração são máquinas cooperativas, com no
+  máximo uma leitura ADC por oportunidade elegível de `handle()` e estado
+  acumulado entre chamadas.
+- **CUR-DEC-014:** `NOT_READY` e `ESTIMATED` completam os estados públicos;
+  presença numérica e garantia de exatidão são qualificações distintas.
+- **CUR-DEC-015:** conflitos obrigatórios de GPIO ficam contidos aos sensores
+  de corrente da mesma instância, às capacidades e reservas do target e à
+  igualdade entre pinos do próprio sensor; identidade conflita com qualquer
+  capability.
+- **CUR-DEC-016:** o `value` textual é o JSON compacto normalizado de CUR-044 e
+  sua representação byte a byte governa detecção de mudança.
 
-### Lacunas bloqueantes
-
-- **CUR-GAP-001:** definir `maximumZeroDeviationMv` para cada perfil.
-- **CUR-GAP-002:** definir `adcMaximumMv` para cada target suportado.
-- **CUR-GAP-003:** definir `sampleIntervalUs` por perfil/target.
-- **CUR-GAP-004:** definir a representação no envelope para estimativas entre
-  `0,05 A` e `0,50 A`; os três estados confirmados não distinguem estimativa de
-  medição `VALID` com exatidão garantida.
-- **CUR-GAP-005:** delimitar quais consumidores e reservas de GPIO participam
-  da rejeição de pinos conflitantes, sem alterar silenciosamente comportamento
-  público preexistente.
-- **CUR-GAP-006:** definir a representação textual estável do envelope no
-  `value` de `ICapability`, cuja API vigente publica texto.
+As decisões `CUR-DEC-012` a `CUR-DEC-016` encerram no contrato da versão 0.3 as
+lacunas `CUR-GAP-001` a `CUR-GAP-006` registradas na versão 0.2. Não há lacuna
+normativa aberta conhecida nesta versão; a conclusão de implementabilidade
+permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.2 registrada em `Draft`, com implementação `Not Started` e revisão de
+Versão 0.3 registrada em `Draft`, com implementação `Not Started` e revisão de
 implementabilidade `Pending Review`.
 
-CUR-DC-004 substitui o critério anterior de exatidão e resolve a ausência de
-tolerância registrada na análise 0.1. A versão não é elegível à implementação enquanto
-CUR-GAP-001 a CUR-GAP-006 permanecerem abertos.
+Esta revisão material incorpora as decisões do Arquiteto que respondem ao
+relatório de implementabilidade 0.2. A versão somente se torna elegível à
+implementação se uma nova análise formal a classificar como `Ready` e houver
+ordem explícita do Arquiteto para implementar a versão 0.3.

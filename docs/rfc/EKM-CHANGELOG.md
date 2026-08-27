@@ -2095,7 +2095,7 @@ autorizou a versão 0.2 em `EKM-CHG-0035`.
 
 ## EKM-CHG-0035 — Autoria da especificação de corrente fotovoltaica 0.2
 
-**Estado:** Open — lacunas normativas bloqueiam implementabilidade
+**Estado:** Superseded — versão 0.2 substituída pelo Draft 0.3
 
 **Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.2`
 
@@ -2155,6 +2155,70 @@ envelope. Todas são bloqueantes antes de nova análise de implementabilidade.
 
 ### Resultado
 
-`IOTSSC-CURRENT-SENSOR@0.2` permanece `Draft`, `Not Started` e
+`IOTSSC-CURRENT-SENSOR@0.2` permaneceu `Draft`, `Not Started` e
 `Pending Review`. CUR-DC-004 responde ao bloqueador da análise 0.1, mas a versão
 não é elegível à implementação enquanto `EKM-GAP-0012` permanecer aberto.
+
+A análise formal
+`docs/reports/2026-08-27T005456Z-0.2-f5d3f2a4-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect` e confirmou os
+seis bloqueadores consolidados em `EKM-GAP-0012`. O Arquiteto decidiu seus
+contratos e autorizou a versão 0.3 em `EKM-CHG-0036`.
+
+## EKM-CHG-0036 — Autoria da especificação de corrente fotovoltaica 0.3
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.3`
+
+### Objetivo
+
+Incorporar as decisões normativas do Arquiteto que respondem integralmente ao
+relatório de implementabilidade 0.2, preservando a versão 0.2 e seu relatório
+como histórico e sem alterar código de produção ou testes.
+
+### Decisões incorporadas
+
+- target inicial ESP32 clássico, com `FULL_RANGE` resolvida como `ADC_11db`,
+  faixa utilizável de `150–3100 mV`, `sampleIntervalUs = 1000` e
+  `maximumZeroDeviationMv = 100`, aplicáveis aos dois perfis elétricos;
+- `adcMinimumMv` adicionado ao contrato e ausência de herança silenciosa desses
+  limites por ESP32-C3, ESP32-C6, ESP32-S3 ou outro SoC;
+- aquisição e calibração incrementais, com no máximo uma leitura ADC por
+  oportunidade elegível de `handle()`, sem espera ativa ou lote bloqueante;
+- estados públicos `NOT_READY` e `ESTIMATED`, separando presença de valor
+  numérico de garantia contratada de exatidão;
+- rejeição de conflitos limitada aos sensores de corrente da mesma instância,
+  às capacidades e reservas do target e ao identificador já usado por qualquer
+  capability, sem registro central transversal de GPIO;
+- envelope textual UTF-8 em JSON compacto normalizado, com ordem fixa, três
+  casas decimais, tokens estáveis, `null` e comparação byte a byte.
+
+### Reconciliação
+
+`EKM-GAP-0012` foi encerrada: `CUR-DEC-012` a `CUR-DEC-016` substituem os seis
+parâmetros ou contratos pendentes da versão 0.2. A relação normativa passa a
+`Corrects` em relação à versão 0.2. Os relatórios de análise 0.1 e 0.2
+permanecem imutáveis. `PUBLIC-API-COMPATIBILITY` e
+`CORE-RUNTIME-LIFECYCLE` continuam preservadas pela extensão aditiva, ownership
+vigente, limite de oito slots, configuração prévia e aquisição cooperativa.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências e limites
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.3;
+- integridade e rastreabilidade documentais confrontadas com a baseline;
+- nenhum código, teste, build, upload ou validação física iniciado, por se
+  tratar de atuação exclusivamente documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.3` permanece `Draft`, `Not Started` e `Pending Review`.
+A especificação foi encaminhada para nova análise formal de implementabilidade;
+nenhuma implementação está autorizada antes de classificação `Ready` aplicável
+à versão 0.3 e ordem explícita posterior do Arquiteto.
