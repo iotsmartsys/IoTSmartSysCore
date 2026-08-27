@@ -1,26 +1,31 @@
-# Knowledge Map — IoTSmartSysCore
+# EKOM — Mapa da Fonte Única da Verdade do IoTSmartSysCore
 
-**Status:** Active
+**Classe da fonte:** Normativa
 
-**Última atualização:** 27/08/2026 (integração da leitura de corrente 0.6)
+**Estado da fonte:** Vigente
+
+**Última atualização:** 27/08/2026 (migração para EKOM 4.6)
 
 ## 1. Governança
 
 | Área | Fonte | Tipo | Estado |
 |---|---|---|---|
-| Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKM 1.19 |
+| Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKOM 4.6 |
 | Adaptador para Claude Code | `CLAUDE.md` | Operacional | Active |
-| Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.19 |
+| Diretrizes locais EKOM | `docs/rfc/EKOM-GUIDELINES.md` | Normativo | Active — EKOM 4.6 |
+| Diretrizes EKM legadas | `docs/rfc/EKM-GUIDELINES.md` | Histórico | Superseded |
+| Decisões arquiteturais locais | `docs/adr/` | Normativo | Active |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
-| Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
+| Histórico e transações EKOM | `docs/rfc/EKOM-CHANGELOG.md` | Operacional | Active |
+| Histórico e transações EKM | `docs/rfc/EKM-CHANGELOG.md` | Histórico | Closed |
 | Relatórios de execução dos papéis | `docs/reports/` | Operacional | Active — destino criado em `EKM-CHG-0036`; relatórios são imutáveis e cada execução cria arquivo novo |
 | Experimento EKOM da persistência binária | `docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` | Experimental | Pending Architect Confirmation |
 
-## 2. Fontes normativas
+## 2. Índice de domínios e autoridade
 
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
-| Governança EKM 1.19 | `docs/rfc/EKM-GUIDELINES.md` | Active | Implemented |
+| Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -32,7 +37,7 @@
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
-## 3. Cobertura de adoção
+### 2.1 Cobertura de adoção
 
 | Domínio | Cobertura | Entradas principais | Observação |
 |---|---|---|---|
@@ -49,7 +54,39 @@
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
 | Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` validado em hardware em `EKM-CHG-0042`; `current_sensor` validado em hardware em `EKM-CHG-0052` |
 
-## 4. Lacunas
+## 3. Árvore de conhecimento
+
+```text
+IoTSmartSysCore
+├── Governança EKOM
+│   ├── roteamento e diretrizes locais
+│   ├── especificações e decisões
+│   └── relatórios, transações, lacunas e débitos
+├── Runtime Arduino/ESP32
+│   ├── SmartSysApp e lifecycle cooperativo
+│   ├── capabilities, builders e hardware adapters
+│   └── settings, conectividade, provisioning e OTA
+├── Interfaces e integrações
+│   ├── API pública da biblioteca
+│   ├── MQTT, HTTP/HTTPS e UART
+│   └── persistência NVS
+└── Evidências e distribuição
+    ├── exemplos executáveis e validação física
+    ├── testes PlatformIO/Unity
+    └── build e release
+```
+
+## 4. Diagrama de relações
+
+```mermaid
+flowchart LR
+    APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
+    CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
+    CORE -->|"Transporte"| MQTT["Broker MQTT"]
+    CORE -->|"Configuração e persistência"| SETTINGS["Settings API e NVS"]
+```
+
+## 5. Lacunas
 
 ### EKM-GAP-0001 — Evidência de compatibilidade pública
 
@@ -158,7 +195,22 @@ da falha e mantém o valor escalar vazio nesses estados. A versão também revog
 o JSON dentro de `ICapability::value` e move os estados para campos opcionais do
 evento. O encerramento não antecipa o resultado da nova análise formal.
 
-## 5. Baseline inicial
+## 6. Débitos técnicos
+
+Nenhum débito técnico está registrado sob a guarda do EKOM 4.6. Referências
+históricas a “dívida futura” não constituem aceitação de débito sem decisão
+explícita do Arquiteto, identidade `EKOM-DEBT-NNNN` e critério de quitação.
+
+## 7. Manutenção
+
+**Namespace vigente:** `EKOM` para novas transações, lacunas e débitos;
+`EKM` é preservado para identificadores legados.
+
+Atualize índice, árvore e diagrama quando autoridade, contenção,
+responsabilidade ou relação material mudar. Somente o Arquiteto determina
+conclusão ou reabertura e aceita ou quita débito técnico.
+
+### 7.1 Baseline inicial
 
 - Branch: `main`.
 - Commit: `0c6d5e63eb09d826beba2e16a3085c1a8f814668`.
@@ -167,7 +219,10 @@ evento. O encerramento não antecipa o resultado da nova análise formal.
 - ESP8266: não suportado.
 - Release: tags na branch `main`, com publicação pelo GitHub Actions no PlatformIO.
 
-## 6. Evolução da governança
+### 7.2 Evolução da governança
+
+- `EKOM-CHG-0001`: adota o EKOM 4.6 para novas atuações, preserva o histórico
+  EKM 1.x sem reinterpretação retroativa e institui os ativos `EKOM-*` vigentes.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.

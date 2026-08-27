@@ -2,13 +2,16 @@
 
 **Classe da fonte:** Normativa
 
-**Estado da fonte:** Vigente
+**Estado da fonte:** Histórica — substituída por `EKOM-GUIDELINES.md`
 
 **Versão do documento:** 1.15
 
 **Versão do modelo EKM:** 1.19
 
 **Escopo:** Todo o repositório
+
+Esta fonte preserva o contrato aplicado às atuações EKM 1.x. Novas atuações são
+governadas por `docs/rfc/EKOM-GUIDELINES.md` e pelo EKOM 4.6 externo.
 
 ## 1. Autoridade
 
