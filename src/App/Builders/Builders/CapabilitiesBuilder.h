@@ -32,6 +32,7 @@
 #include "Contracts/Capabilities/Managers/CapabilityManager.h"
 #include "Contracts/Capabilities/LuminosityCapability.h"
 #include "Contracts/Capabilities/GarageControlCapability.h"
+#include "Contracts/Capabilities/CurrentSensorCapability.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
@@ -87,6 +88,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensor(const OperationalColorSensorConfig &cfg);
         iotsmartsys::core::LuminosityCapability *addLuminosityCapability(const LuminositySensorConfig &cfg);
         iotsmartsys::core::GarageControlCapability *addGarageControlCapability(const GarageControlConfig &cfg);
+        iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
+            const iotsmartsys::core::CurrentSensorConfig &cfg);
 
     private:
         iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;
@@ -96,6 +99,7 @@ namespace iotsmartsys::app
             if (_count >= _capsMax)
                 return nullptr;
 
+            const size_t originalArenaOffset = _arenaOffset;
             void *memcap = allocateAligned(sizeof(TCap), alignof(TCap));
             if (!memcap)
                 return nullptr;
@@ -110,6 +114,7 @@ namespace iotsmartsys::app
             if (!registerCapability(cap, dtor))
             {
                 cap->~TCap();
+                _arenaOffset = originalArenaOffset;
                 return nullptr;
             }
 
@@ -130,6 +135,9 @@ namespace iotsmartsys::app
         // invoke it before creating any adapter or capability, so a rejected
         // identity consumes no slot and leaves no partial artefact behind.
         bool resolveIdentity(const char *configuredName, const char *type, std::string &outName);
+        bool validateCurrentSensorConfig(const iotsmartsys::core::CurrentSensorConfig &cfg) const;
+        bool currentSensorPinInUse(int pin) const;
+        bool capabilityIdentityInUse(const std::string &name) const;
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;
         iotsmartsys::core::ICapabilityEventSink &_eventSink;
@@ -146,6 +154,11 @@ namespace iotsmartsys::app
         uint8_t *_arena{nullptr};
         size_t _arenaBytes{0};
         size_t _arenaOffset{0};
+
+        int _currentSensorPins[16] = {};
+        size_t _currentSensorPinCount{0};
+        std::string _currentSensorIds[8];
+        size_t _currentSensorIdCount{0};
     };
 
 } // namespace iotsmartsys::app

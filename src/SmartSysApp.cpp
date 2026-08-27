@@ -128,7 +128,10 @@ namespace iotsmartsys
 #endif
     }
 
-    SmartSysApp::~SmartSysApp() = default;
+    SmartSysApp::~SmartSysApp()
+    {
+        builder_.reset();
+    }
 
     void SmartSysApp::configureFactoryResetButton(iotsmartsys::app::PushButtonConfig cfg)
     {
@@ -214,6 +217,7 @@ namespace iotsmartsys
 
     void SmartSysApp::setup()
     {
+        setupStarted_ = true;
         serviceManager_.setLogLevel(core::LogLevel::Info);
         core::Log::setLogger(&logger_);
         delay(3000);
@@ -735,6 +739,19 @@ namespace iotsmartsys
     iotsmartsys::core::GarageControlCapability *SmartSysApp::addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg)
     {
         return builder_.addGarageControlCapability(cfg);
+    }
+
+    iotsmartsys::core::CurrentSensorCapability *SmartSysApp::addCurrentSensor(
+        iotsmartsys::core::CurrentSensorConfig config)
+    {
+        if (setupStarted_)
+        {
+            logger_.error("App",
+                          "Current sensor '%s' rejected: capabilities must be registered before setup().",
+                          config.id.c_str());
+            return nullptr;
+        }
+        return builder_.addCurrentSensor(config);
     }
 
 } // namespace iotsmartsys

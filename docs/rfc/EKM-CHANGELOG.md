@@ -2291,3 +2291,60 @@ cooperativa e pelos oito slots vigentes.
 A especificação foi encaminhada para nova análise formal de implementabilidade;
 nenhuma implementação está autorizada antes de classificação `Ready` aplicável
 à versão 0.4 e ordem explícita posterior do Arquiteto.
+
+O relatório formal
+`docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`
+classificou a versão 0.4 como `Ready`, descartou os dois bloqueadores da versão
+0.3 e tornou a revisão elegível à ordem explícita de implementação registrada
+em `EKM-CHG-0038`.
+
+## EKM-CHG-0038 — Implementação da leitura de corrente fotovoltaica 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.4`
+
+### Objetivo
+
+Implementar integralmente a versão 0.4 classificada como `Ready`, preservando o
+runtime Arduino/ESP32, o valor escalar e os consumidores existentes, sem criar
+testes automatizados nem executar operações físicas não autorizadas.
+
+### Implementação
+
+- adicionados os tipos públicos, dois perfis elétricos, `ICurrentSensor`, o
+  adapter `ACS712C30ACurrentSensor` e `CurrentSensorCapability`;
+- implementadas máquinas cooperativas de aquecimento, calibração, recalibração
+  e leitura, com ADC calibrado em mV, média, filtro, faixas, saturação, estados
+  assinados e monitor opcional da alimentação;
+- `CapabilityStateChanged` e `MqttSink` passaram a emitir os dois estados apenas
+  quando presentes, mantendo construtores, `value`, payload legado e anúncio;
+- `CapabilitiesBuilder` e `SmartSysApp::addCurrentSensor()` implementam
+  validação completa, conflitos locais, ownership, identidade e rollback sem
+  registro parcial; a destruição da aplicação libera os objetos da arena;
+- o target rejeita SoCs não contratados e reserva ADC2 por conflito com o Wi-Fi
+  do runtime, usando ADC1 e `ADC_11db` no ESP32 clássico;
+- corrigida a configuração efetiva de C++17: `build_unflags` deixou de remover
+  o mesmo `-std=gnu++17` declarado em `build_flags`.
+
+### Evidências e limites
+
+- `git diff --check`: aprovado;
+- primeiro `pio run -e esp32_dev`: `FAILED` (código 1), revelando remoção
+  indevida de C++17; causa corrigida no recorte;
+- build intermediário: `SUCCESS` (código 0, 25,683 s);
+- build final `pio run -e esp32_dev`: `SUCCESS` (código 0, 11,552 s), RAM
+  `81244/327680` e flash `1829269/2031616` bytes;
+- nenhum teste automatizado foi criado ou executado, conforme o recorte;
+- validações físicas e instrumentadas, upload, monitor, release e deploy não
+  foram executados e permanecem `Not Executed` quando aplicáveis.
+
+O relatório
+`docs/reports/2026-08-27T021250Z-0.4-968b321a-implementation-report.md`
+registra decisões locais, evidências e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.4` permanece `Draft`, passa a `Implemented` e conserva
+a entrega `Not Applicable`. A análise aplicável é `Ready`; o resultado foi
+encaminhado à revisão técnica, sem declaração de conclusão ou integração.

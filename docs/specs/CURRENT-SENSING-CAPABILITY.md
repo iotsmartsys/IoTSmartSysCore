@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Relação normativa:** Corrige a versão 0.3 [`Corrects`]
 
@@ -733,10 +733,11 @@ permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.4 registrada em `Draft`, com implementação `Not Started` e revisão de
-implementabilidade `Pending Review`.
+Versão 0.4 registrada em `Draft`, com implementação `Implemented` e revisão de
+implementabilidade `Ready` conforme o relatório
+`docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`.
 
 Esta revisão material incorpora as decisões do Arquiteto que respondem ao
-relatório de implementabilidade 0.3. A versão somente se torna elegível à
-implementação se uma nova análise formal a classificar como `Ready` e houver
-ordem explícita do Arquiteto para implementar a versão 0.4.
+relatório de implementabilidade 0.3. A implementação foi produzida após análise
+formal `Ready` e ordem explícita do Arquiteto; permanece encaminhada à revisão
+técnica, sem declaração de conclusão ou integração.

@@ -3,6 +3,7 @@
 #include "pins.h"
 #include <Arduino.h>
 #include <atomic>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include "Config/BuildConfig.h"
@@ -109,6 +110,8 @@ namespace iotsmartsys
                 iotsmartsys::core::WaterFlowHallSensorCapability *addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg);
                 iotsmartsys::core::LuminosityCapability *addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg);
                 iotsmartsys::core::GarageControlCapability *addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg);
+                iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
+                    iotsmartsys::core::CurrentSensorConfig config);
 
         private:
                 static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);
@@ -156,7 +159,7 @@ namespace iotsmartsys
                 void (*capDtors_[8])(void *) = {};
                 void *adapterSlots_[8] = {};
                 void (*adapterDtors_[8])(void *) = {};
-                uint8_t arena_[2048] = {};
+                alignas(std::max_align_t) uint8_t arena_[4096] = {};
 
                 app::CapabilitiesBuilder builder_;
 
@@ -186,5 +189,6 @@ namespace iotsmartsys
                 TaskHandle_t networkTask_{nullptr};
                 TaskHandle_t transportTask_{nullptr};
                 core::SerialTransportChannel *uart_;
+                bool setupStarted_{false};
         };
 } // namespace iotsmartsys

@@ -87,6 +87,7 @@ namespace iotsmartsys::core
 #define SWITCH_PLUG_TYPE "Switch Plug"
 
 #define TEMPERATURE_SENSOR_TYPE "Temperature Sensor"
+#define CURRENT_SENSOR_TYPE "Current Sensor (A)"
 
 #define BUTTON_PRESSED "pressed"
 #define BUTTON_NO_PRESSED "undetected"
