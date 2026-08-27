@@ -49,6 +49,10 @@ namespace iotsmartsys::core
         {
             Log::setLogger(logger);
         }
+        if (auto *console = serviceProvider_.screenConsole())
+        {
+            Screen::setConsole(console);
+        }
         if (auto *time = serviceProvider_.time())
         {
             Time::setProvider(time);
@@ -59,6 +63,7 @@ namespace iotsmartsys::core
     {
         return *serviceProvider_.logger();
     }
+    IScreenConsole &ServiceManager::screenConsole() { return Screen::get(); }
     ITimeProvider &ServiceManager::timeProvider() { return *serviceProvider_.time(); }
     settings::SettingsManager &ServiceManager::settingsManager() { return *serviceProvider_.getSettingsManager(); }
     settings::ISettingsGate &ServiceManager::settingsGate() { return *serviceProvider_.getSettingsGate(); }

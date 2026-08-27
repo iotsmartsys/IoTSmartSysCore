@@ -2091,9 +2091,447 @@ A análise formal
 `docs/reports/2026-08-26T223239Z-0.1-af120342-implementability-analysis.md`
 classificou a versão como `Not Ready — Specification Defect` por ausência de
 tolerância objetiva em CUR-AC-004. O Arquiteto respondeu ao bloqueador e
-autorizou a versão 0.2 em `EKM-CHG-0035`.
+autorizou a versão 0.2 em `EKM-CHG-0043`.
 
-## EKM-CHG-0035 — Autoria da especificação de corrente fotovoltaica 0.2
+## EKM-CHG-0035 — Autoria da especificação do console de tela
+
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Registrar como fonte normativa a incorporação de um console de tela ao core,
+como ferramenta de diagnóstico construída sobre o mesmo padrão do logging:
+contrato em `Contracts`, implementação em `Platform`, fachada estática com
+implementação nula por default, ativação opt-in por build e custo nulo quando
+desativada.
+
+### Baseline
+
+- Branch `spec/screen-console-tooling`, derivada de
+  `spec/current-sensing-capability` para preservar a sequência do changelog e do
+  mapa de conhecimento.
+- Alterações preexistentes e não relacionadas na árvore de trabalho preservadas
+  fora do delta desta transação.
+
+### Fontes criadas ou alteradas
+
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md` (criada);
+- `docs/rfc/KNOWLEDGE-MAP.md` (fonte normativa e cobertura);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Decisões incorporadas
+
+`SCR-DEC-001` a `SCR-DEC-010`: primitiva de escrita por cor abstrata com
+atalhos por severidade; registro no grafo de serviços com fachada estática
+`Screen`; `ScreenMirrorLogger` no recorte, opcional e não instalado por default;
+aposentadoria do componente inerte `Display_ST7789_170_320`; suporte restrito a
+ST7789 sobre SPI; quebra de texto longo em linhas consecutivas; histórico de
+capacidade fixa de 24 linhas; nomes contratados dos componentes; nenhum
+artefato de teste no recorte; flag `IOTSMARTSYS_SCREEN_CONSOLE_ENABLED` com
+default `0`.
+
+### Restrições
+
+Transação exclusivamente documental. Nenhum código, build, workflow, teste,
+environment ou comportamento de runtime foi alterado. A remoção prevista em
+`SCR-038` é contrato para a Implementação, não efeito desta transação.
+
+### Validações requeridas
+
+- `git diff --check`: aprovado;
+- delta restrito à especificação criada, ao mapa de conhecimento e a este
+  changelog;
+- relações normativas confrontadas com `PUBLIC-API-COMPATIBILITY`,
+  `CORE-RUNTIME-LIFECYCLE` e `RELEASE-AND-DISTRIBUTION`, todas preservadas;
+- dependências de display confirmadas como já declaradas em `library.json`.
+
+### Resultado
+
+A especificação `IOTSSC-SCREEN-CONSOLE` foi registrada na versão 0.1 em
+`Draft`, com implementação `Not Started` e revisão de implementabilidade
+`Pending Review`. Nenhuma implementação foi autorizada ou iniciada.
+
+## EKM-CHG-0036 — Análise de implementabilidade do console de tela 0.1
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Determinar, como Engenheiro Analista, se a versão 0.1 do console de tela pode
+ser implementada dentro da baseline e do recorte autorizados, sem decisão
+normativa ausente, pré-requisito arquitetural ou evidência prévia
+indispensável.
+
+### Resultado da análise
+
+Classificação **Pronta** [`Ready`]. Nenhum bloqueador. A revisão de
+implementabilidade da especificação passa a `Implementable`; estado normativo
+permanece `Draft`, implementação `Not Started` e entrega `Not Applicable`.
+
+O padrão contratado tem precedente equivalente e vigente no logging
+(`ILogger`, `Log`/`DefaultLogger`, `ArduinoSerialLogger` e alimentação da
+fachada por `ServiceManager::registerServices`), e a extensão é aditiva, fora
+do ciclo cooperativo. `IServiceProvider` tem um único implementador no
+repositório, o que admite a adição de SCR-034 preservando SCR-037. O componente
+de SCR-038 é inerte de fato: guarda `ST7789_170x320_ENABLED`, não definido por
+nenhum environment, e referencia identificadores inexistentes.
+
+Confrontados 40 requisitos, 10 critérios de aceite, 10 decisões e as 5 bordas
+da seção 7, além de `EKM-GAP-0001` a `EKM-GAP-0011`, nenhum aplicável. Não
+existe relatório anterior nesta linhagem a reconciliar.
+
+### Restrições registradas
+
+Cinco restrições materiais não bloqueantes constam do relatório: ausência de
+environment que construa o caminho habilitado e de `lib_deps` gráfico em
+`base_esp`; ausência de mapa de link para SCR-AC-002; referências textuais ao
+componente removido fora do conhecimento afetado declarado; consumo duplo do
+`va_list` em `ScreenMirrorLogger`; e assimetria do meio de SCR-AC-001 entre as
+seções 8 e 9.
+
+### Fontes criadas ou alteradas
+
+- `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md`
+  (criado);
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md` (revisão de implementabilidade e
+  seção 12);
+- `docs/rfc/KNOWLEDGE-MAP.md` (destino de relatórios e estado da fonte);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Validações e limitações
+
+`git diff --check` aprovado. Somente inspeção estática: nenhum código, teste,
+configuração ou environment foi alterado; nenhum build, teste, upload ou
+validação física foi iniciado. Destino `docs/reports/` criado por autorização
+explícita do Arquiteto nesta atuação. Branch de trabalho derivada de
+`spec/current-sensing-capability`, conforme baseline de `EKM-CHG-0035`.
+
+### Próximo passo
+
+A implementação da versão 0.1 depende de ordem explícita do Arquiteto; o
+Analista não a autoriza nem a inicia.
+
+## EKM-CHG-0037 — Implementação do console de tela 0.1
+
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.1`
+
+### Objetivo
+
+Implementar e validar o console de tela como ferramenta de diagnóstico conforme
+a versão 0.1 autorizada, preservando os contratos públicos, o ciclo cooperativo
+e o comportamento existente quando a funcionalidade estiver desativada.
+
+### Entrada
+
+- ordem explícita do Arquiteto para implementar a versão 0.1;
+- análise de implementabilidade `Ready` registrada em `EKM-CHG-0036`;
+- branch `spec/screen-console-tooling`, derivada de `main`, sincronizada com o
+  upstream e com árvore limpa no início da atuação.
+
+### Estado inicial
+
+A implementação passa mecanicamente de Não iniciada [`Not Started`] para Em
+andamento [`In Progress`]. Nenhum código ou validação havia sido executado no
+momento desta transição.
+
+### Implementação e decisões locais
+
+- contrato `IScreenConsole`, paleta `ScreenColor`, fachada `Screen` e
+  `NoOpScreenConsole` adicionados em `Contracts`;
+- `ST7789ScreenConsole` implementado sob a flag default 0, com configuração
+  integral, histórico circular fixo de 24 linhas, quebra de texto e redesenho de
+  faixas ocupadas;
+- `ScreenMirrorLogger` implementado como decorador opcional, com cópias
+  independentes do `va_list` e mapeamento de cores por nível;
+- grafo de serviços estendido aditivamente e fachada alimentada pelo registro;
+- componente inerte `Display_ST7789_170_320.{h,cpp}` removido.
+
+### Evidências
+
+- `pio run -e esp32_dev`: `SUCCESS`, estado terminal, código 0, Arduino/ESP32,
+  target `esp32_dev`;
+- inspeção do ELF e objetos: nenhuma implementação ST7789 ou dependência gráfica
+  linkada com a flag 0; decorador não instalado eliminado pelo linker;
+- busca textual: nenhum consumidor dos símbolos removidos permanece em `src/`;
+- `git diff --check`: aprovado.
+
+### Limitações e estado
+
+SCR-AC-003 a SCR-AC-008 e a execução instrumentada de SCR-AC-001 permanecem
+`Not Executed`, pois exigem hardware e ordem operacional explícita. O caminho
+habilitado não foi construído porque nenhum environment vigente ativa a flag e
+as dependências gráficas não constam do `lib_deps` de `base_esp`. Nenhum
+teste foi criado, alterado ou executado. A implementação permanece `In Progress`.
+
+### Relatório
+
+`docs/reports/2026-08-26T141607Z-0.1-de05f6a6-implementation-report.md`.
+
+## EKM-CHG-0038 — Autoria do exemplo executável do console de tela 0.2
+
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Complementar o contrato do console de tela com um exemplo executável de uso,
+selecionado pelo runner versionado, construível por environment próprio e capaz
+de demonstrar o `ScreenMirrorLogger` na placa Ideaspark ESP32 1.9 inch TFT LCD.
+
+### Decisões incorporadas
+
+- o exemplo integra `examples/executable/screen_console/` e é referenciado por
+  `src/ExecutableExampleRunner.cpp`; o `src/main.cpp` permanece a aplicação
+  padrão e não é alterado;
+- o environment `example_screen_console_esp32_dev` herda `env:esp32_dev`,
+  habilita o console e declara as dependências gráficas;
+- a configuração do exemplo usa ST7789 170 × 320, `CS=GPIO15`, `DC=GPIO2`,
+  `RST=GPIO4`, `SCLK=GPIO18`, `MOSI=GPIO23` e backlight `GPIO32`;
+- a demonstração constrói, registra e inicializa o console e instala
+  explicitamente `ScreenMirrorLogger` sobre o logger corrente;
+- nenhum artefato ou execução de teste passa a integrar o recorte; o exemplo,
+  sua documentação, seu environment e seu build são evidências próprias.
+
+### Relações e estado
+
+`IOTSSC-HW-EXAMPLES@1.1` é preservada: o novo exemplo usa o runner e a seleção
+por environment vigentes. A versão normativa passa de 0.1 para 0.2 e permanece
+`Draft`; a revisão de implementabilidade retorna de `Implementable` para
+`Pending Review`, pois o relatório `Ready` existente governa somente 0.1. A
+implementação permanece `In Progress` e ainda não representa o contrato 0.2.
+
+### Fontes alteradas
+
+- `docs/specs/SCREEN-CONSOLE-TOOLING.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Limites
+
+Atuação exclusivamente normativa e documental. Nenhum código, exemplo,
+environment, dependência, teste, build, upload ou validação física foi criado,
+alterado ou executado. O pinout do anexo fornecido pelo Arquiteto foi tratado
+somente como evidência técnica, sem instrução documental paralela.
+
+## EKM-CHG-0039 — Análise de implementabilidade do console de tela 0.2
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Determinar se a versão 0.2 pode acrescentar o exemplo executável Ideaspark ao
+runner e ao environment `esp32_dev` dentro da baseline e do recorte vigentes.
+
+### Resultado
+
+Classificação **Pronta** [`Ready`]. Nenhum bloqueador normativo, arquitetural,
+de impacto ou de evidência prévia. O runner, o catálogo e o padrão de
+environments existentes admitem a extensão aditiva; o pinout explícito é
+permitido para a board genérica sem pinout normativo; e a ordem de instalação
+do decorador pode preservar o reset de `Log` executado por `SmartSysApp::setup()`.
+
+Foram confrontados 48 requisitos, 14 critérios de aceite, 13 decisões, 6
+bordas, `EKM-GAP-0001` a `EKM-GAP-0011` e as autoridades relacionadas. O
+challenge limitado não encontrou contradição, critério insatisfazível,
+remediação externa ou bloqueador anterior sem disposição.
+
+### Fontes e limitações
+
+- relatório criado:
+  `docs/reports/2026-08-26T153635Z-0.2-e827ebd6-implementability-analysis.md`;
+- especificação, mapa e esta transação reconciliados para `Implementable`;
+- somente inspeção estática: nenhum código, exemplo, environment, dependência,
+  build, teste, upload ou hardware foi alterado ou executado;
+- build habilitado e validações físicas permanecem evidências posteriores da
+  Implementação/Revisão, não condições prévias desta classificação.
+
+## EKM-CHG-0040 — Implementação do exemplo executável do console de tela 0.2
+
+**Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.2`
+
+### Objetivo
+
+Implementar o exemplo executável `screen_console`, sua seleção pelo runner
+versionado e o environment `example_screen_console_esp32_dev`, demonstrando o
+`ScreenMirrorLogger` com a configuração Ideaspark contratada pela versão 0.2.
+
+### Condições de entrada
+
+- ordem explícita do Arquiteto recebida;
+- revisão de implementabilidade `Ready` registrada em `EKM-CHG-0039`;
+- branch `spec/screen-console-tooling` descendente de `main`, sincronizada com
+  seu upstream e com árvore limpa;
+- implementação permanece `In Progress`; upload e validação física não estão
+  autorizados neste recorte.
+
+### Implementação
+
+- exemplo `examples/executable/screen_console/` criado com configuração
+  Ideaspark completa, documentação e `SmartSysApp::handle()` cooperativo;
+- runner ampliado com a seleção exclusiva
+  `IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE`;
+- environment `example_screen_console_esp32_dev` criado a partir de
+  `env:esp32_dev`, sem `src/main.cpp`, com flag habilitada e dependências
+  Adafruit GFX/ST7789;
+- `ScreenMirrorLogger` instalado depois de `SmartSysApp::setup()` e usado para
+  a mensagem diagnóstica de boot.
+
+### Evidências e estado
+
+`pio run -e esp32_dev` e
+`pio run -e example_screen_console_esp32_dev` alcançaram `SUCCESS`. O ELF do
+exemplo contém um único par `setup()`/`loop()` e os símbolos
+`ST7789ScreenConsole`, `ScreenMirrorLogger` e `Adafruit_ST7789`; o ELF canônico
+não contém implementação gráfica. `src/main.cpp` permaneceu inalterado e não
+foi compilado pelo environment do exemplo. `git diff --check` foi aprovado.
+
+Nenhum teste, upload ou validação física foi executado. SCR-AC-003 a
+SCR-AC-008, SCR-AC-013 e a parcela instrumentada de SCR-AC-001 permanecem
+`Not Executed`; portanto, o estado normativo continua `In Progress`.
+
+Relatório:
+`docs/reports/2026-08-26T154955Z-0.2-d49f8216-implementation-report.md`.
+
+### Correção de orientação do exemplo
+
+Após o Arquiteto relatar que a configuração inicial exibia texto de cabeça
+para baixo e solicitar apresentação horizontal, o environment passou a definir
+`EXAMPLE_SCREEN_ROTATION=1`. O exemplo consome obrigatoriamente essa
+configuração e passa a usar área lógica paisagem de 320 × 170, preservando as
+dimensões nativas 170 × 320 e todos os defaults de plataforma.
+
+Os builds `pio run -e example_screen_console_esp32_dev` e
+`pio run -e esp32_dev` alcançaram `SUCCESS`, ambos com código 0, e
+`git diff --check` foi aprovado. Nenhum teste, upload ou monitor foi executado;
+a orientação resultante permanece pendente de confirmação física.
+
+Relatório da correção:
+`docs/reports/2026-08-26T162253Z-0.2-c9fad5d6-implementation-correction-report.md`.
+
+## EKM-CHG-0041 — Ancoragem do console de tela no topo da área útil 0.3
+
+**Estado:** Closed — validada pelo Arquiteto em `EKM-CHG-0042`
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
+
+### Objetivo
+
+Emendar a disposição das linhas do console de tela, que passa da ancoragem na
+base para a ancoragem no topo da área útil, e implementar a mudança na
+implementação ST7789.
+
+### Condições de entrada
+
+- ordem explícita do Arquiteto encadeando autoria, análise e implementação;
+- análise `Ready` da versão 0.3 registrada nesta mesma transação;
+- branch `spec/screen-console-tooling` descendente de `main`, com árvore limpa;
+- implementação permanece `In Progress`; upload e validação física não estão
+  autorizados neste recorte.
+
+### Autoria
+
+O uso do exemplo `screen_console` na placa Ideaspark demonstrou que o
+comportamento contratado até 0.2 estava corretamente implementado, mas não
+correspondia à disposição pretendida pelo Arquiteto. A decisão `SCR-DEC-014`
+inverte a ancoragem; `SCR-012`, `SCR-013`, `SCR-AC-003` e a visão geral da
+seção 1 foram emendados. `SCR-014`, `SCR-AC-004` e `SCR-AC-006` permanecem
+inalterados, pois a rolagem e o descarte com a área útil cheia não mudam.
+
+### Análise
+
+Versão 0.3 confrontada integralmente e classificada Pronta [`Ready`], sem
+bloqueador normativo, arquitetural, de impacto ou de evidência prévia. A
+revisão volta a `Implementable`.
+
+### Implementação
+
+- `ST7789ScreenConsole::render()` passa a ancorar o bloco na primeira linha da
+  área útil, com a ordenada de cada banda em `position * lineHeight_`;
+- a leitura de altura do painel foi removida da função por ficar sem uso; a
+  leitura de `begin()` que dimensiona a capacidade visível foi preservada;
+- README do exemplo `screen_console` reconciliado com a nova disposição.
+
+### Evidências e estado
+
+`pio run -e esp32_dev` e `pio run -e example_screen_console_esp32_dev`
+alcançaram `SUCCESS` com código de saída 0. `git diff --check` foi aprovado.
+Nenhum teste, upload ou validação física foi executado; `SCR-AC-003` a
+`SCR-AC-008`, `SCR-AC-013` e a parcela instrumentada de `SCR-AC-001` permanecem
+`Not Executed` e o estado normativo continua `In Progress`.
+
+A orientação dos glifos observada na placa permanece assunto independente, não
+governado por esta versão e não corrigido nesta transação.
+
+Relatórios:
+`docs/reports/2026-08-26T203103Z-0.3-71f40ba6-implementability-analysis.md` e
+`docs/reports/2026-08-26T203432Z-0.3-71f40ba6-implementation-report.md`.
+
+## EKM-CHG-0042 — Validação final do console de tela 0.3
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-SCREEN-CONSOLE@0.3`
+
+### Objetivo
+
+Registrar a validação física e a decisão final do Arquiteto, confrontar as
+evidências de software e promover a versão 0.3 para integração à referência de
+produção.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter executado os testes em hardware e
+validado a implementação. A confirmação cobre `SCR-AC-003` a `SCR-AC-008`,
+`SCR-AC-013` e a parcela instrumentada de `SCR-AC-001`. Esta transação registra
+a evidência recebida sem alegar reexecução ou substituir a decisão humana.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, atuando como par do Arquiteto e sem alegação de
+independência, confrontou implementação, especificação e evidências sem
+identificar defeito bloqueante. `pio run -e esp32_dev` e
+`pio run -e example_screen_console_esp32_dev` alcançaram `SUCCESS`. A inspeção
+dos ELFs confirmou ausência da implementação gráfica na baseline, presença da
+implementação ST7789 no exemplo e um único par `setup()`/`loop()`. A busca
+textual não encontrou consumidor dos símbolos aposentados no código.
+
+### Promoções
+
+- Estado normativo: Rascunho → Vigente [`Active`];
+- Estado da implementação: Em andamento → Validada [`Validated`];
+- Estado da entrega: Não aplicável → Pronta para integração
+  [`Ready for Integration`].
+
+As transações `EKM-CHG-0035`, `EKM-CHG-0037`, `EKM-CHG-0038`,
+`EKM-CHG-0040` e `EKM-CHG-0041` são fechadas pelo resultado validado da versão
+0.3. Nenhum teste automatizado integra o recorte e nenhum upload foi executado
+nesta atuação.
+
+### Integração e encerramento
+
+O recorte validado foi integrado e sincronizado em `main`. A composição de
+integração foi derivada diretamente da referência de produção e transportou
+somente os commits do console, excluindo a especificação não relacionada de
+leitura de corrente contínua que era ancestral da branch original. A busca
+final confirmou a ausência desse artefato e de seus registros na composição
+integrada.
+
+Com a integração em estado terminal, a entrega é promovida de Pronta para
+integração [`Ready for Integration`] para Concluída [`Done`] e esta transação é
+encerrada.
+
+## EKM-CHG-0043 — Autoria da especificação de corrente fotovoltaica 0.2
 
 **Estado:** Superseded — versão 0.2 substituída pelo Draft 0.3
 
@@ -2163,9 +2601,9 @@ A análise formal
 `docs/reports/2026-08-27T005456Z-0.2-f5d3f2a4-implementability-analysis.md`
 classificou a versão como `Not Ready — Specification Defect` e confirmou os
 seis bloqueadores consolidados em `EKM-GAP-0012`. O Arquiteto decidiu seus
-contratos e autorizou a versão 0.3 em `EKM-CHG-0036`.
+contratos e autorizou a versão 0.3 em `EKM-CHG-0044`.
 
-## EKM-CHG-0036 — Autoria da especificação de corrente fotovoltaica 0.3
+## EKM-CHG-0044 — Autoria da especificação de corrente fotovoltaica 0.3
 
 **Estado:** Superseded — versão 0.3 substituída pelo Draft 0.4
 
@@ -2228,9 +2666,9 @@ A análise formal
 classificou a versão como `Not Ready — Specification Defect`: faltavam o estado
 da alimentação antes da primeira amostra válida e a transição observável após
 calibração de zero inválida. O Arquiteto decidiu esses contratos, revogou o JSON
-dentro de `value` e autorizou a versão 0.4 em `EKM-CHG-0037`.
+dentro de `value` e autorizou a versão 0.4 em `EKM-CHG-0045`.
 
-## EKM-CHG-0037 — Autoria da especificação de corrente fotovoltaica 0.4
+## EKM-CHG-0045 — Autoria da especificação de corrente fotovoltaica 0.4
 
 **Estado:** Closed
 
@@ -2296,9 +2734,9 @@ O relatório formal
 `docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`
 classificou a versão 0.4 como `Ready`, descartou os dois bloqueadores da versão
 0.3 e tornou a revisão elegível à ordem explícita de implementação registrada
-em `EKM-CHG-0038`.
+em `EKM-CHG-0046`.
 
-## EKM-CHG-0038 — Implementação da leitura de corrente fotovoltaica 0.4
+## EKM-CHG-0046 — Implementação da leitura de corrente fotovoltaica 0.4
 
 **Estado:** Closed
 

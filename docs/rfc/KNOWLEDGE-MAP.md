@@ -13,6 +13,7 @@
 | Diretrizes locais | `docs/rfc/EKM-GUIDELINES.md` | Normativo | Active — EKM 1.19 |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
 | Histórico e transações | `docs/rfc/EKM-CHANGELOG.md` | Operacional | Active |
+| Relatórios de execução dos papéis | `docs/reports/` | Operacional | Active — destino criado em `EKM-CHG-0036`; relatórios são imutáveis e cada execução cria arquivo novo |
 | Experimento EKOM da persistência binária | `docs/rfc/EKOM-EXPERIMENT-BINARY-COMMAND-STATE-PERSISTENCE.md` | Experimental | Pending Architect Confirmation |
 
 ## 2. Fontes normativas
@@ -25,6 +26,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
+| Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.4 — Ready | Implemented — revisão técnica e validação física/instrumentada pendentes |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
@@ -42,10 +44,10 @@
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
-| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado |
+| Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela ST7789 opt-in e exemplo Ideaspark validados em hardware (`EKM-CHG-0042`) |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | Technical Readiness `Implementable`; correção de pinout implementada e validada estaticamente; validação física pendente |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado em `EKM-CHG-0040` e validado em hardware em `EKM-CHG-0042` |
 
 ## 4. Lacunas
 
@@ -257,21 +259,53 @@ evento. O encerramento não antecipa o resultado da nova análise formal.
   contrata a medição de corrente contínua em Hardware Adapter e Capability como
   extensão aditiva; permanece em `Draft`, com implementação `Not Started` e
   análise de implementabilidade pendente.
-- `EKM-CHG-0035`: autoria da versão 0.2 de
+- `EKM-CHG-0035`: autoria da especificação `IOTSSC-SCREEN-CONSOLE@0.1`, que
+  incorpora um console de tela como ferramenta de diagnóstico no padrão do
+  logging, opt-in por build, e aposenta o componente inerte
+  `Display_ST7789_170_320`; permanece em `Draft`, com implementação
+  `Not Started` e análise de implementabilidade pendente.
+- `EKM-CHG-0036`: análise de implementabilidade de `IOTSSC-SCREEN-CONSOLE@0.1`
+  classificada como Pronta [`Ready`], sem bloqueador; a revisão passa a
+  `Implementable` e cinco restrições não bloqueantes ficam registradas no
+  relatório
+  `docs/reports/2026-08-26T012514Z-0.1-5cc6e5eb-implementability-analysis.md`.
+  A implementação continua dependente de ordem explícita do Arquiteto.
+- `EKM-CHG-0037`: implementação de `IOTSSC-SCREEN-CONSOLE@0.1`; código do
+  recorte e build canônico com a flag 0 concluídos, sem símbolos ST7789 no ELF.
+  A implementação permanece `In Progress` porque as validações físicas e a
+  execução instrumentada autorizável permanecem `Not Executed`.
+- `EKM-CHG-0038`: autoria de `IOTSSC-SCREEN-CONSOLE@0.2`; acrescenta o exemplo
+  executável `screen_console`, selecionado pelo runner e pelo environment
+  `example_screen_console_esp32_dev`, com pinagem Ideaspark e demonstração de
+  `ScreenMirrorLogger`. A versão corrente retorna a `Pending Review`.
+- `EKM-CHG-0039`: análise integral de `IOTSSC-SCREEN-CONSOLE@0.2` classificada
+  como Pronta [`Ready`], sem bloqueador; a revisão passa a `Implementable` e a
+  implementação permanece `In Progress`.
+- `EKM-CHG-0040`: exemplo executável `screen_console`, seleção pelo runner e
+  environment dedicado implementados; builds canônico e habilitado aprovados,
+  com validação física fora do recorte autorizado.
+- `EKM-CHG-0041`: autoria, análise `Ready` e implementação de
+  `IOTSSC-SCREEN-CONSOLE@0.3`; o bloco de linhas do console passa a ser
+  ancorado no topo da área útil, com validação física ainda pendente.
+- `EKM-CHG-0042`: registra a validação física e a decisão explícita do
+  Arquiteto, a confrontação consultiva final e a promoção de
+  `IOTSSC-SCREEN-CONSOLE@0.3` para `Active`/`Validated`; a integração à `main`
+  conclui a entrega como `Done`.
+- `EKM-CHG-0043`: autoria da versão 0.2 de
   `IOTSSC-CURRENT-SENSOR`, que incorpora os perfis elétricos de 5 V e 3,3 V,
   `CUR-DC-004`, o envelope de estados e a API com ownership da aplicação;
   permaneceu em `Draft` e foi classificada como `Not Ready — Specification
   Defect` pelo relatório de implementabilidade 0.2.
-- `EKM-CHG-0036`: autoria da versão 0.3 de
+- `EKM-CHG-0044`: autoria da versão 0.3 de
   `IOTSSC-CURRENT-SENSOR`, que incorpora as decisões do Arquiteto sobre limites
   do ESP32 clássico, aquisição cooperativa, estimativas, conflitos locais de
   GPIO e JSON textual, encerra `EKM-GAP-0012` e foi classificada como `Not Ready
   — Specification Defect` pelo relatório de implementabilidade 0.3.
-- `EKM-CHG-0037`: autoria da versão 0.4 de
+- `EKM-CHG-0045`: autoria da versão 0.4 de
   `IOTSSC-CURRENT-SENSOR`, que preserva `value` escalar, adiciona estados
   opcionais ao evento de mudança, resolve as bordas de calibração e alimentação,
   encerra `EKM-GAP-0013` e mantém `Pending Review`.
-- `EKM-CHG-0038`: implementação integral de `IOTSSC-CURRENT-SENSOR@0.4` após
+- `EKM-CHG-0046`: implementação integral de `IOTSSC-CURRENT-SENSOR@0.4` após
   análise `Ready`, com adapter cooperativo ACS712-30A, perfis 5 V/3,3 V,
   capability e evento aditivo, registro público atômico e build canônico
   aprovado; validações físicas e instrumentadas permanecem `Not Executed` e o
