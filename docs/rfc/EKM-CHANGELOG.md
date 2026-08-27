@@ -2033,7 +2033,7 @@ de pair, não independente.
 
 ## EKM-CHG-0034 — Autoria da especificação de leitura de corrente contínua
 
-**Estado:** Open — aguardando Análise de Implementabilidade
+**Estado:** Superseded — versão 0.1 substituída pelo Draft 0.2
 
 **Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.1`
 
@@ -2086,3 +2086,75 @@ depender de leitura de código.
 A especificação `IOTSSC-CURRENT-SENSOR` foi registrada na versão 0.1 em
 `Draft`, com implementação `Not Started` e revisão de implementabilidade
 `Pending Review`. Nenhuma implementação foi autorizada ou iniciada.
+
+A análise formal
+`docs/reports/2026-08-26T223239Z-0.1-af120342-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect` por ausência de
+tolerância objetiva em CUR-AC-004. O Arquiteto respondeu ao bloqueador e
+autorizou a versão 0.2 em `EKM-CHG-0035`.
+
+## EKM-CHG-0035 — Autoria da especificação de corrente fotovoltaica 0.2
+
+**Estado:** Open — lacunas normativas bloqueiam implementabilidade
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.2`
+
+### Objetivo
+
+Incorporar a decisão do Arquiteto que substitui CUR-AC-004 por CUR-DC-004,
+delimita a medição entre painel fotovoltaico e entrada do buck e contrata dois
+perfis configuráveis do ACS712-30A, com estados explícitos de medição e
+alimentação.
+
+### Baseline
+
+- Branch `spec/current-sensing-capability`, derivada de `main`.
+- Árvore limpa no início da atuação.
+- Relatório de análise 0.1 preservado como histórico imutável.
+
+### Decisões incorporadas
+
+- perfis `ACS712_30A_5V` (`MANUFACTURER_SUPPORTED`) e
+  `ACS712_30A_3V3` (`PROJECT_VALIDATED`), com sensibilidades iniciais de
+  `43,05 mV/A` e `43,56 mV/A`;
+- cálculo referido ao ADC, aquecimento inicial de 60 segundos, recalibração com
+  2 segundos de acomodação e zero separado da configuração nominal;
+- faixa calibrada de `0,50–15,00 A` em magnitude, erro
+  `max(0,10 A; 5%)`, faixa morta de `0,05 A`, estabilidade e resposta;
+- envelope indivisível com estados de medição e alimentação, incluindo
+  `NOT_MONITORED`, sobrefaixa e saturação sem valor numérico válido;
+- API aditiva `app.addCurrentSensor(CurrentSensorConfig)`, com adapter e
+  capability pertencentes à aplicação e ponteiro retornado não proprietário,
+  conforme o padrão vigente;
+- validação separada por perfil, incluindo `15,00 A`, `−0,50 A`, `−5,00 A` e
+  injeção instrumental acima de 15 A;
+- nenhum artefato de teste automatizado integra o recorte.
+
+### Lacunas
+
+`EKM-GAP-0012` consolida `CUR-GAP-001` a `CUR-GAP-006`: valores de
+`maximumZeroDeviationMv`, `adcMaximumMv` e `sampleIntervalUs`; representação da
+faixa estimada; alcance de conflitos de GPIO; e representação textual do
+envelope. Todas são bloqueantes antes de nova análise de implementabilidade.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.2;
+- baseline de ownership e falha confrontada com
+  `PUBLIC-API-COMPATIBILITY`;
+- ciclo, oito slots e configuração prévia confrontados com
+  `CORE-RUNTIME-LIFECYCLE`;
+- nenhum build, teste, upload ou validação física iniciado, por se tratar de
+  atuação documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.2` permanece `Draft`, `Not Started` e
+`Pending Review`. CUR-DC-004 responde ao bloqueador da análise 0.1, mas a versão
+não é elegível à implementação enquanto `EKM-GAP-0012` permanecer aberto.

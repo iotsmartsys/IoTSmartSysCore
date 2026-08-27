@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 25/08/2026 (autoria da especificação de leitura de corrente contínua)
+**Última atualização:** 26/08/2026 (autoria da versão 0.2 da leitura de corrente)
 
 ## 1. Governança
 
@@ -25,7 +25,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Leitura de corrente contínua | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft | Not Started |
+| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.2 — lacunas bloqueantes | Not Started |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -36,7 +36,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura de corrente contínua especificada em `Draft` por `IOTSSC-CURRENT-SENSOR@0.1`, sem implementação |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.2` em `Draft`, sem implementação e bloqueada por `EKM-GAP-0012` |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -130,6 +130,17 @@ com retorno `void`, mas não alteram a identidade registrada. Os ponteiros
 devolvidos por `SmartSysApp::add*Capability()` permanecem como estão. BCS-002,
 BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 
+### EKM-GAP-0012 — Contrato incompleto da medição de corrente 0.2
+
+**Estado:** Open
+
+`IOTSSC-CURRENT-SENSOR@0.2` depende da definição de
+`maximumZeroDeviationMv`, `adcMaximumMv` e `sampleIntervalUs` por perfil/target,
+da representação das estimativas abaixo de `0,50 A`, do alcance da rejeição de
+conflitos de GPIO e da representação textual do envelope de medição. As seis
+lacunas estão detalhadas como `CUR-GAP-001` a `CUR-GAP-006` e bloqueiam
+implementabilidade.
+
 ## 5. Baseline inicial
 
 - Branch: `main`.
@@ -186,10 +197,10 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   Clarification`; `EKM-GAP-0011` registra a decisão ausente sobre mutação da
   identidade pública depois do registro.
 - `EKM-CHG-0024`: decisão parcial do Arquiteto marca `rename()` e
-  `applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
+`applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
   a revisão da versão 0.6.
 - `EKM-CHG-0025`: o Arquiteto completa `BCS-DEC-006`; a análise integral fecha
-  `EKM-GAP-0011` e promove a revisão da versão 0.6 para `Implementable`,
+`EKM-GAP-0011` e promove a revisão da versão 0.6 para `Implementable`,
   preservando implementação `Not Started`.
 - `EKM-CHG-0026`: implementação integral da versão 0.6 em código e testes; a
   implementação permanece `In Progress` porque nenhum critério comportamental
@@ -231,3 +242,7 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   contrata a medição de corrente contínua em Hardware Adapter e Capability como
   extensão aditiva; permanece em `Draft`, com implementação `Not Started` e
   análise de implementabilidade pendente.
+- `EKM-CHG-0035`: autoria da versão 0.2 de
+  `IOTSSC-CURRENT-SENSOR`, que incorpora os perfis elétricos de 5 V e 3,3 V,
+  `CUR-DC-004`, o envelope de estados e a API com ownership da aplicação;
+  permanece em `Draft` e bloqueada por `EKM-GAP-0012`.

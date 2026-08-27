@@ -1,10 +1,10 @@
-# Especificação — Leitura de corrente contínua
+# Especificação — Leitura de corrente contínua fotovoltaica
 
 **ID:** IOTSSC-CURRENT-SENSOR
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -18,62 +18,86 @@
 
 ## 1. Objetivo e contexto
 
-Contratar a medição de **corrente contínua** no runtime do IoTSmartSysCore.
+Contratar a medição de corrente contínua entre o painel fotovoltaico e a entrada
+do conversor buck no runtime do IoTSmartSysCore, usando o ACS712-30A.
 
-O ecossistema já reporta grandezas físicas por meio do par Hardware Adapter mais
-Capability: o adapter isola o sensor e entrega uma leitura estável, e a
-capability reporta essa leitura ao ecossistema em cadência controlada. O
-precedente equivalente mais próximo é `IGlpMeter`, implementado por
-`HX711WeightMeter` e reportado por `GlpMeterKgCapability`.
+O adapter possui aquisição, calibração, qualificação da leitura e monitoramento
+opcional da alimentação; a capability publica um único envelope com valor e
+estados.
 
-Não existe hoje contrato para medição de corrente. Esta especificação define:
+São admitidos dois perfis iniciais:
 
-- `ICurrentSensor`, contrato de Hardware Adapter responsável por fornecer
-  leitura estável de corrente em ampères;
-- `ACS712C30ACurrentSensor`, implementação para sensor de efeito Hall
-  ACS712-30A com saída analógica condicionada por divisor resistivo;
-- `CurrentSensorCapability`, responsável por reportar a corrente medida.
-
-Esta especificação descreve a funcionalidade de forma autossuficiente. Nenhuma
-leitura de código preexistente é necessária para implementá-la, e ela não
-descreve migração, adaptação ou preservação de qualquer código de bancada
-anterior.
+- `ACS712_30A_5V`, cuja alimentação do ACS712 é suportada pelo fabricante;
+- `ACS712_30A_3V3`, qualificado como `PROJECT_VALIDATED`, fora da faixa de
+  alimentação oficialmente garantida para o ACS712 original e sujeito à
+  validação integral do projeto.
 
 ## 2. Escopo
 
-- contrato de Hardware Adapter de corrente contínua;
-- implementação para ACS712-30A com divisor resistivo de condicionamento;
-- calibração do ponto de zero e recalibração sob demanda;
-- amostragem, média, faixa morta e cadência que produzem leitura estável;
-- capability que reporta a corrente medida;
-- extensão aditiva da fábrica de sensores e da API pública de registro de
-  capabilities;
-- registro de diagnóstico por `iotsmartsys::core::ILogger`.
+- Hardware Adapter de corrente contínua;
+- perfis elétricos de 5 V com divisor e 3,3 V sem divisor;
+- calibração de zero inicial e recalibração sob demanda;
+- amostragem, média, filtro configurável, faixa morta e cadência;
+- qualificação da medição, da faixa e da alimentação;
+- capability e envelope único de publicação;
+- API pública aditiva `SmartSysApp::addCurrentSensor()`;
+- ownership do adapter e da capability pela aplicação;
+- diagnóstico por `iotsmartsys::core::ILogger`;
+- validação física separada para cada perfil.
 
 ## 3. Fora de escopo
 
 - corrente alternada e valor eficaz (`RMS`);
-- potência, energia acumulada, fator de potência e medição de tensão;
+- potência, energia acumulada, fator de potência e tensão do painel;
 - persistência da calibração;
 - comandos remotos de calibração por MQTT, HTTP ou provisionamento;
-- detecção de sobrefaixa, proteção ou corte de carga;
+- proteção elétrica, corte de carga ou produção física obrigatória de 30 A
+  durante a validação;
 - alteração do limite de oito capabilities ou do ciclo cooperativo de
-  `handle()`.
+  `handle()`;
+- suporte universal do ACS712 original à alimentação de 3,3 V.
 
-## 4. Componentes e responsabilidades
+## 4. Componentes e tipos públicos
 
 | Componente | Local | Responsabilidade |
 |---|---|---|
-| `ICurrentSensor` | `src/Contracts/Sensors/` | Contrato do Hardware Adapter de corrente |
-| `ACS712C30ACurrentSensor` | `src/Platform/Arduino/Sensors/` | Aquisição analógica, calibração de zero, filtragem e faixa morta |
-| `CurrentSensorCapability` | `src/Contracts/Capabilities/` e `src/Core/Capabilities/` | Avaliação periódica e publicação do estado |
+| `ICurrentSensor` | `src/Contracts/Sensors/` | Última medição estável, calibração e estados |
+| `ACS712C30ACurrentSensor` | `src/Platform/Arduino/Sensors/` | Aquisição ADC, zero, conversão, filtragem, alimentação e limites |
+| `CurrentSensorCapability` | `src/Contracts/Capabilities/` e `src/Core/Capabilities/` | Acionamento do adapter e publicação do envelope |
+| Tipos de corrente | `src/Contracts/Sensors/` | Configuração, perfis, qualificações, estados e envelope |
 | `CURRENT_SENSOR_TYPE` | `src/Contracts/Capabilities/ICapabilityType.h` | Tipo público da capability |
-| `CurrentSensorCreationConfig` e `createCurrentSensor()` | `src/Contracts/Sensors/ISensorFactory.h` e `src/Infra/Factories/SensorFactory.*` | Construção do adapter |
-| `CurrentSensorConfig` e registro público | `src/App/Builders/Configs/CapabilityConfig.h`, `src/App/Builders/Builders/CapabilitiesBuilder.*` e `src/SmartSysApp.*` | Registro da capability pela API pública |
+| Registro público | `src/App/Builders/` e `src/SmartSysApp.*` | Construção, ownership, identidade, slots e registro |
 
-A separação é normativa: o adapter é a única fronteira que conhece aquisição
-analógica, calibração e filtragem; a capability não executa conversão elétrica,
-apenas reporta o valor entregue pelo adapter.
+Somente o adapter conhece aquisição, calibração, conversão elétrica, filtragem,
+alimentação e limites. A capability controla a cadência e não recalcula corrente.
+
+```cpp
+enum class CurrentMeasurementStatus {
+    VALID,
+    OUT_OF_CALIBRATED_RANGE,
+    OVERCURRENT_OR_SATURATION
+};
+
+enum class CurrentSupplyStatus {
+    IN_RANGE,
+    SUPPLY_OUT_OF_RANGE,
+    NOT_MONITORED
+};
+
+struct CurrentMeasurement {
+    std::optional<float> currentA;
+    CurrentMeasurementStatus measurementStatus;
+    CurrentSupplyStatus supplyStatus;
+};
+```
+
+A validade numérica final é:
+
+```cpp
+numericValueValid =
+    measurementStatus == CurrentMeasurementStatus::VALID &&
+    supplyStatus != CurrentSupplyStatus::SUPPLY_OUT_OF_RANGE;
+```
 
 ## 5. Requisitos
 
@@ -81,316 +105,447 @@ apenas reporta o valor entregue pelo adapter.
 
 - **CUR-001:** `ICurrentSensor` deve derivar de `IHardwareAdapter` e preservar
   `setup()`, `handle()` e `lastStateReadMillis()`.
-- **CUR-002:** `ICurrentSensor` deve expor `float getAmperes() const`,
-  devolvendo a última leitura estável em ampères, com sinal, sem executar
-  aquisição.
-- **CUR-003:** antes da primeira leitura concluída, `getAmperes()` deve
-  devolver `0,0 A`.
-- **CUR-004:** `handle()` deve ser cooperativo: retorna sem esperas
-  indefinidas, sem laços de espera por evento externo e sem consumir mais do que
-  a duração de uma amostra composta configurada.
-- **CUR-005:** `lastStateReadMillis()` deve refletir o instante da última
-  leitura concluída com sucesso.
+- **CUR-002:** `ICurrentSensor` deve devolver a última `CurrentMeasurement`
+  estável sem executar aquisição.
+- **CUR-003:** antes da primeira leitura concluída, `currentA` não possui valor
+  e `lastStateReadMillis()` permanece inalterado.
+- **CUR-004:** `handle()` deve ser cooperativo, sem espera indefinida, laço de
+  espera por evento externo ou trabalho acima de uma amostra composta
+  configurada.
+- **CUR-005:** `lastStateReadMillis()` deve refletir a última leitura concluída
+  com sucesso, inclusive quando seu estado impede valor numérico válido.
 
-### 5.2 Implementação ACS712-30A
+### 5.2 Configuração
 
-- **CUR-006:** `ACS712C30ACurrentSensor` deve implementar `ICurrentSensor` e
-  receber sua configuração por estrutura própria, sem depender de macros de
-  build para valores de operação.
-- **CUR-007:** a configuração deve oferecer, com os defaults indicados: pino
-  analógico de entrada (sem default válido); sensibilidade do sensor
-  `66,0 mV/A`; resistor série do divisor `10 kΩ`; resistor de terra do divisor
-  `20 kΩ`; fator de calibração `1,0`; polaridade `+1,0`; faixa morta `0,10 A`;
-  amostras de calibração de zero `2000`; amostras de leitura `500`; intervalo
-  entre amostras `200 µs`; intervalo entre leituras `500 ms`; tempo de
-  acomodação antes da calibração `2000 ms`.
-- **CUR-008:** `setup()` deve configurar o conversor analógico com resolução de
-  **12 bits** e a atenuação que cobre a faixa completa de entrada do pino, e em
-  seguida executar a calibração de zero descrita em 6.3.
-- **CUR-009:** todas as leituras de tensão devem usar a conversão calibrada em
-  milivolts oferecida pela plataforma, nunca a contagem bruta do conversor.
-- **CUR-010:** a implementação deve expor, fora da interface,
-  `void requestZeroCalibration()` e `float getZeroMillivolts() const`.
-- **CUR-011:** `requestZeroCalibration()` não pode executar a calibração de
-  imediato; deve apenas agendá-la para o próximo `handle()`.
-- **CUR-012:** o adapter não pode acessar porta serial, display ou qualquer
-  periférico de saída diretamente; todo diagnóstico usa `ILogger`, conforme a
-  seção 8.
+- **CUR-006:** `CurrentSensorConfig` é um único contrato para ambos os perfis e
+  deve contemplar, no mínimo:
 
-### 5.3 Capability
+```text
+id
+adcPin
+adcResolutionBits
+adcAttenuation
+adcMaximumMv
+supplyNominalMv
+supplyValidMinimumMv
+supplyValidMaximumMv
+qualification
+outputToAdcRatio
+nominalZeroAdcMv
+sensitivityAdcMvPerA
+polarity
+zeroCalibrationMode
+startupWarmupMs
+recalibrationSettleMs
+zeroCalibrationSamples
+maximumZeroDeviationMv
+calibratedMinimumA
+calibratedMaximumA
+physicalMinimumA
+physicalMaximumA
+deadbandA
+minimumReportableA
+samplesPerReading
+sampleIntervalUs
+lowPassAlpha
+readingIntervalMs
+maximumAbsoluteErrorA
+maximumRelativeErrorPercent
+supplyMonitorAdcPin
+supplyMonitorToVccRatio
+```
 
-- **CUR-013:** `CurrentSensorCapability` deve derivar de `ICapability` e ser
-  construída com referência a `ICurrentSensor` e ponteiro para
-  `ICapabilityEventSink`.
-- **CUR-014:** `ICapabilityType.h` deve definir
-  `CURRENT_SENSOR_TYPE` com o valor literal `"Current Sensor (A)"`.
-- **CUR-015:** a identidade deve ser resolvida por
-  `resolveIdentity(cfg.capability_name, CURRENT_SENSOR_TYPE, name)`, como nas
-  demais capabilities que aceitam nome configurável; falha de resolução impede o
-  registro.
-- **CUR-016:** `setup()` deve delegar ao `setup()` do adapter e não executar
-  aquisição própria.
-- **CUR-017:** `handle()` deve avaliar o adapter no máximo a cada **1000 ms**,
+- **CUR-007:** os defaults comuns são: resolução de 12 bits; atenuação abstrata
+  `FULL_RANGE`; polaridade `+1,0`; modo `STARTUP_AND_ON_REQUEST`; aquecimento
+  inicial `60000 ms`; acomodação de recalibração `2000 ms`; `2000` amostras de
+  zero; `500` amostras por leitura; `lowPassAlpha = 1,0`; intervalo entre
+  leituras `500 ms`; faixa morta e mínimo reportável `0,05 A`; faixa calibrada
+  por magnitude de `0,50 A` a `15,00 A`; faixa física de `−30,00 A` a
+  `+30,00 A`; erro absoluto `0,10 A`; erro relativo `5,0%`.
+- **CUR-008:** `adcPin` e `id` não possuem default válido.
+  `maximumZeroDeviationMv` é obrigatório por perfil, `adcMaximumMv` é
+  obrigatório por target e `sampleIntervalUs` é obrigatório por
+  perfil/target. Os três permanecem `TBD` nesta versão e não podem receber
+  defaults universais silenciosos.
+- **CUR-009:** `FULL_RANGE` é abstração do contrato. O adapter do target deve
+  convertê-la para a atenuação específica da plataforma, sem presumir faixa
+  útil idêntica em todos os ESP32.
+- **CUR-010:** `adcMaximumMv` representa o limite efetivamente utilizável pelo
+  ADC no target e na atenuação selecionada; não equivale automaticamente à
+  alimentação nominal de 3,3 V.
+- **CUR-011:** `lowPassAlpha = 1,0` desabilita filtragem exponencial adicional;
+  inicialmente, a redução de ruído decorre somente da média composta.
+
+### 5.3 Aquisição e calibração
+
+- **CUR-012:** o adapter deve usar a conversão calibrada em milivolts oferecida
+  pela plataforma, nunca a contagem bruta do ADC.
+- **CUR-013:** a calibração inicial começa somente após `startupWarmupMs` com o
+  sensor continuamente energizado, alimentação estável e corrente zero.
+- **CUR-014:** cada recalibração posterior exige sensor continuamente
+  energizado, alimentação estável, garantia externa de corrente zero e
+  acomodação por `recalibrationSettleMs`.
+- **CUR-015:** o zero medido deve ser mantido como estado de calibração separado
+  de `nominalZeroAdcMv` e usado até nova calibração ou reinício.
+- **CUR-016:** `requestZeroCalibration()` apenas agenda a recalibração para o
+  próximo `handle()`; solicitação durante calibração em curso é descartada com
+  WARN.
+- **CUR-017:** uma amostra composta é a média aritmética das leituras calibradas
+  em mV, espaçadas por `sampleIntervalUs`. A calibração usa
+  `zeroCalibrationSamples`; a medição usa `samplesPerReading`.
+- **CUR-018:** concluída a média, o filtro passa-baixa configurado por
+  `lowPassAlpha` é aplicado antes da qualificação e publicação.
+
+### 5.4 Cálculo elétrico
+
+- **CUR-019:** o cálculo é independente da tensão de alimentação:
+
+```text
+I = polaridade ×
+    (tensãoADC − zeroADC) /
+    sensibilidadeEfetivaADC
+```
+
+- **CUR-020:** `zeroADC` e `sensitivityAdcMvPerA` referem-se sempre ao sinal
+  após o divisor, quando existente.
+- **CUR-021:** sensibilidades iniciais são valores de perfil configuráveis, não
+  constantes universais do ACS712-30A, e devem poder ser substituídas pelo valor
+  obtido na calibração física de cada unidade.
+- **CUR-022:** se `|I| < deadbandA`, o valor produzido é exatamente zero.
+- **CUR-023:** correntes negativas com magnitude superior a `0,10 A` devem
+  preservar o sinal; aviso de corrente reversa é permitido, mas não obrigatório.
+
+### 5.5 Faixa e estados
+
+- **CUR-024:** para `0,50 A ≤ |I| ≤ 15,00 A`, a medição pode ser `VALID`
+  quando as demais condições de validade forem satisfeitas.
+- **CUR-025:** para `15,00 A < |I| ≤ 30,00 A`, o estado é
+  `OUT_OF_CALIBRATED_RANGE` e `currentA` não possui valor publicável como
+  medição válida.
+- **CUR-026:** para `|I| > 30,00 A` ou saturação do ADC, o estado é
+  `OVERCURRENT_OR_SATURATION` e `currentA` não possui valor publicável como
+  medição válida.
+- **CUR-027:** entre `0,05 A` e `0,50 A` em magnitude, o resultado pode ser
+  apresentado apenas como estimativa, sem garantia de exatidão. A representação
+  desse resultado permanece pendente na seção 13.
+- **CUR-028:** a resolução apresentada deve ser `0,01 A` ou melhor; resolução
+  não implica exatidão.
+- **CUR-029:** com corrente constante, a variação pico a pico das leituras
+  filtradas durante 30 segundos não pode ultrapassar `0,05 A`.
+- **CUR-030:** após alteração da corrente, a leitura deve entrar na faixa de
+  tolerância aplicável em até `1000 ms`.
+
+### 5.6 Monitoramento da alimentação
+
+- **CUR-031:** `SUPPLY_OUT_OF_RANGE` somente pode ser produzido a partir de
+  medição independente da alimentação do ACS712.
+- **CUR-032:** com `supplyMonitorAdcPin` ausente, o estado é `NOT_MONITORED`; a
+  aplicação pode publicar valor numericamente válido, mas não pode afirmar que
+  a alimentação foi verificada.
+- **CUR-033:** com monitoramento presente, a tensão é obtida da leitura
+  calibrada do ADC e de `supplyMonitorToVccRatio`. Valor fora do intervalo
+  configurado produz `SUPPLY_OUT_OF_RANGE` e invalida `currentA`,
+  independentemente do estado elétrico do sinal.
+- **CUR-034:** `IN_RANGE` somente pode ser produzido quando a medição
+  independente comprovar valor dentro dos limites inclusivos do perfil.
+
+### 5.7 Capability e API pública
+
+- **CUR-035:** `CurrentSensorCapability` deve derivar de `ICapability`, acionar
+  o adapter em cada ciclo e avaliar a publicação no máximo a cada `1000 ms`,
   usando o provedor de tempo do runtime.
-- **CUR-018:** o estado publicado deve ser o valor em ampères formatado com
-  **três casas decimais** e sinal explícito, no padrão `"+0.000"` e `"-1.250"`.
-- **CUR-019:** a publicação deve ocorrer por `updateState` quando o valor
-  avaliado diferir do último valor publicado, e também na primeira avaliação
-  após o registro.
-- **CUR-020:** não existe tolerância de variação: o critério de publicação é a
-  mudança do valor, conforme o precedente `GlpMeterKgCapability`.
-- **CUR-021:** a capability deve expor `float getAmperes() const` com o último
-  valor publicado.
+- **CUR-036:** `CURRENT_SENSOR_TYPE` possui o literal `"Current Sensor (A)"`.
+- **CUR-037:** a identidade deve ser resolvida a partir de
+  `CurrentSensorConfig.id` e `CURRENT_SENSOR_TYPE`; falha de identidade,
+  conflito, falta de slot, configuração inválida ou falha de construção impede
+  qualquer registro parcial.
+- **CUR-038:** a API pública é:
 
-### 5.4 API pública
-
-- **CUR-022:** `ISensorFactory` deve receber
-  `createCurrentSensor(const CurrentSensorCreationConfig &cfg)`, devolvendo
-  `std::unique_ptr<ICurrentSensor>`, sem alterar assinatura existente.
-- **CUR-023:** `SensorFactory` deve construir `ACS712C30ACurrentSensor`,
-  propagar a configuração recebida e injetar o `ILogger` do runtime.
-- **CUR-024:** `CurrentSensorConfig` deve derivar da configuração de capability
-  vigente para sensores e transportar ponteiro para `ICurrentSensor`.
-- **CUR-025:** `CapabilitiesBuilder` e `SmartSysApp` devem oferecer registro da
-  capability em forma aditiva, preservando o limite de oito capabilities e a
-  exigência de configuração anterior a `SmartSysApp::setup()`.
-- **CUR-026:** nenhuma assinatura, default ou comportamento público existente
-  pode ser alterado por esta especificação.
-
-## 6. Cálculos normativos
-
-Esta seção é contrato. Os valores default são os declarados em CUR-007.
-
-### 6.1 Amostra composta
-
-Uma amostra composta é a média aritmética de `N` leituras consecutivas de
-tensão, espaçadas pelo intervalo entre amostras:
-
-```
-V̄ = ( Σ vᵢ ) / N          vᵢ em mV,  i = 1..N
+```cpp
+CurrentSensorCapability *
+SmartSysApp::addCurrentSensor(CurrentSensorConfig config);
 ```
 
-`N` vale `amostrasDeZero` (default `2000`) na calibração de zero e
-`amostrasDeLeitura` (default `500`) na medição. O intervalo entre leituras
-consecutivas é `intervaloEntreAmostras` (default `200 µs`).
+O ponteiro retornado é não proprietário, pertence à aplicação, permanece
+estável durante a vida da aplicação e não pode ser liberado pelo consumidor.
+`nullptr` indica falha; a causa detalhada deve ser registrada separadamente por
+`ILogger`.
 
-### 6.2 Sensibilidade efetiva
+- **CUR-039:** `SmartSysApp` possui adapter e capability, copia ou mantém a
+  configuração de forma segura e libera os recursos em seu encerramento.
+- **CUR-040:** a aplicação deve impedir ou rejeitar identificadores e pinos
+  conflitantes. O alcance de consumidores considerado conflito de pino
+  permanece pendente na seção 13.
+- **CUR-041:** o factory pode permanecer somente como detalhe interno e seam de
+  injeção; a aplicação consumidora não precisa acessá-lo para registrar o sensor.
+- **CUR-042:** a capability deve expor acesso não proprietário à última
+  `CurrentMeasurement`, ao zero calibrado e à solicitação de recalibração.
+- **CUR-043:** a publicação ocorre na primeira avaliação concluída e quando
+  qualquer campo do envelope mudar. Leitura inválida nunca é publicada como
+  corrente numérica válida.
+- **CUR-044:** o envelope deve ser publicado como unidade indivisível. Sua
+  representação no canal textual de `ICapability::updateState` permanece
+  pendente na seção 13.
+- **CUR-045:** o limite de oito capabilities, a configuração anterior a
+  `SmartSysApp::setup()` e todas as assinaturas, defaults e semânticas públicas
+  preexistentes permanecem preservados.
 
-A saída do sensor passa por um divisor resistivo com `R1` em série entre o
-sensor e a entrada analógica, e `R2` entre a entrada analógica e o terra:
+## 6. Perfis elétricos iniciais
 
+### 6.1 `ACS712_30A_5V`
+
+| Campo | Valor |
+|---|---|
+| Alimentação nominal | `5000 mV` |
+| Faixa válida de alimentação | `4900–5100 mV`, inclusiva |
+| Divisor na saída | `10 kΩ / 20 kΩ` |
+| `outputToAdcRatio` | `0,666667` |
+| `nominalZeroAdcMv` | `1666,7 mV` |
+| `sensitivityAdcMvPerA` inicial | `43,05 mV/A` |
+| `qualification` | `MANUFACTURER_SUPPORTED` |
+| `maximumZeroDeviationMv` | `TBD` |
+| `adcMaximumMv` | `TBD` por target |
+| `sampleIntervalUs` | `TBD` por perfil/target |
+
+`MANUFACTURER_SUPPORTED` qualifica somente a alimentação do ACS712. Módulo,
+divisor, ADC, calibração e firmware continuam sujeitos à validação do projeto.
+
+### 6.2 `ACS712_30A_3V3`
+
+| Campo | Valor |
+|---|---|
+| Alimentação nominal | `3300 mV` |
+| Faixa inicial de validação | `3200–3400 mV`, inclusiva |
+| Divisor na saída | inexistente |
+| `outputToAdcRatio` | `1,0` |
+| `nominalZeroAdcMv` | `1650,0 mV` |
+| `sensitivityAdcMvPerA` inicial | `43,56 mV/A` |
+| `qualification` | `PROJECT_VALIDATED` |
+| `maximumZeroDeviationMv` | `TBD` |
+| `adcMaximumMv` | `TBD` por target |
+| `sampleIntervalUs` | `TBD` por perfil/target |
+
+A sensibilidade teórica inicial decorre de:
+
+```text
+66 mV/A × 3,3 V / 5,0 V = 43,56 mV/A
 ```
-razão = R2 / ( R1 + R2 )
-S     = Ssensor × razão
-```
 
-Com os defaults:
-
-```
-razão = 20 kΩ / ( 10 kΩ + 20 kΩ ) = 0,6667
-S     = 66,0 mV/A × 0,6667 ≈ 44,00 mV/A
-```
-
-`S` é a sensibilidade que efetivamente chega ao conversor e deve ser sempre
-derivada dos parâmetros configurados. É proibido embutir `44 mV/A`, ou qualquer
-outro resultado, como constante independente de `Ssensor`, `R1` e `R2`.
-
-### 6.3 Calibração de zero
-
-Executada em `setup()` e a cada recalibração agendada:
-
-1. registrar o início da calibração;
-2. aguardar `tempoDeAcomodação` (default `2000 ms`);
-3. medir uma amostra composta com `N = amostrasDeZero`;
-4. armazenar o resultado como `V_zero`, em mV;
-5. registrar o fim da calibração e o valor de `V_zero`.
-
-A calibração pressupõe **ausência de corrente** no condutor medido durante a
-medição. Garantir essa condição é responsabilidade do operador; a
-especificação não contrata detecção automática dessa condição. `V_zero` é o
-offset de referência usado em todas as leituras seguintes até a próxima
-recalibração.
-
-### 6.4 Corrente
-
-Para cada leitura, com `V̄` obtido conforme 6.1 usando `amostrasDeLeitura`:
-
-```
-I = ( ( V̄ − V_zero ) / S ) × fatorCalibração × polaridade
-```
-
-- `fatorCalibração` (default `1,0`) corrige o resultado contra referência
-  externa de medição;
-- `polaridade` assume `+1,0` ou `−1,0` (default `+1,0`) e corrige o sentido
-  conforme a montagem, sem alterar o módulo.
-
-### 6.5 Faixa morta
-
-Aplicada ao resultado de 6.4:
-
-```
-se |I| < faixaMorta   então   I = 0,000 A
-```
-
-Com `faixaMorta` default de `0,10 A`. O sensor de efeito Hall possui incerteza
-e deriva térmica da mesma ordem de grandeza em repouso; sem essa supressão, o
-repouso publicaria oscilação de ruído indefinidamente.
-
-### 6.6 Cadência e estabilidade
-
-- O adapter produz nova leitura no máximo a cada `intervaloEntreLeituras`
-  (default `500 ms`), sempre dentro de `handle()`.
-- Concluída a leitura, o valor passa a ser a **leitura estável** devolvida por
-  `getAmperes()` e `lastStateReadMillis()` é atualizado.
-- Entre leituras, `getAmperes()` devolve a última leitura estável, sem executar
-  aquisição.
+Este é o perfil principal das placas já fabricadas com fonte Hi-Link de 3,3 V.
+Sua aceitação exige validação de exatidão, linearidade, estabilidade térmica,
+zero, saturação e repetibilidade. O perfil de 5 V permanece alternativa de
+bancada ou de futuras revisões de hardware.
 
 ## 7. Fluxo esperado
 
-1. A aplicação constrói o adapter pela fábrica de sensores, informando pino e
-   parâmetros elétricos desejados.
-2. A aplicação registra `CurrentSensorCapability` pela API pública, antes de
-   `SmartSysApp::setup()`.
-3. `SmartSysApp::setup()` aciona `setup()` da capability, que aciona `setup()`
-   do adapter: conversor configurado e zero calibrado.
-4. Cada `SmartSysApp::handle()` aciona `handle()` da capability e do adapter.
-5. O adapter mede a cada `intervaloEntreLeituras` e mantém a leitura estável.
-6. A capability avalia a cada `1000 ms` e publica quando o valor muda.
-7. Uma recalibração solicitada por `requestZeroCalibration()` executa no
-   próximo `handle()` do adapter; durante a acomodação e a medição, a leitura
-   estável anterior permanece disponível.
+1. A aplicação preenche `CurrentSensorConfig` com um perfil e os valores
+   específicos do target ainda sem default universal.
+2. Antes de `SmartSysApp::setup()`, chama `app.addCurrentSensor(config)`.
+3. A aplicação valida identidade, slots, configuração e conflitos, constrói e
+   passa a possuir adapter e capability.
+4. `setup()` configura o ADC e inicia o aquecimento de 60 segundos.
+5. Após aquecimento com corrente zero e alimentação estável, o adapter calibra o
+   zero e passa a produzir medições.
+6. Cada `SmartSysApp::handle()` aciona a capability e o adapter; a capability
+   publica o envelope em cadência de até `1000 ms`.
+7. Recalibração solicitada pela capability começa no próximo `handle()`, após
+   verificar suas pré-condições e cumprir acomodação de 2 segundos.
 
 ## 8. Diagnóstico
 
-Todo registro de diagnóstico usa `iotsmartsys::core::ILogger`, injetado no
-adapter pela fábrica, com a tag do componente:
+Todo diagnóstico usa `iotsmartsys::core::ILogger`, com tag do componente:
 
-- **INFO:** início da calibração de zero; fim da calibração com o `V_zero`
-  resultante em mV;
-- **DEBUG:** leitura concluída, com `V̄`, a diferença `V̄ − V_zero` e a corrente
-  resultante;
-- **WARN:** recalibração solicitada enquanto outra está em curso;
-- **ERROR:** configuração inválida detectada em `setup()`.
+- **INFO:** perfil selecionado; início e fim de calibração; zero resultante;
+- **DEBUG:** tensão média, zero, diferença, corrente, estados e alimentação
+  medida quando disponível;
+- **WARN:** recalibração concorrente; corrente reversa quando adotado; faixa não
+  calibrada; alimentação não monitorada;
+- **ERROR:** configuração inválida; zero fora do limite configurado; alimentação
+  fora da faixa; sobrecorrente ou saturação; falha de registro e sua causa.
 
-Nenhum componente desta especificação escreve diretamente em porta serial ou em
-periférico de exibição.
+Nenhum componente escreve diretamente em porta serial, display ou periférico de
+saída.
 
 ## 9. Falhas e condições de borda
 
-- **Configuração inválida** — pino não definido, `Ssensor ≤ 0`, `R1 ≤ 0`,
-  `R2 ≤ 0`, `amostrasDeZero = 0` ou `amostrasDeLeitura = 0`: `setup()` registra
-  ERROR, o adapter permanece inerte, `getAmperes()` devolve `0,0 A`,
-  `lastStateReadMillis()` permanece inalterado e nenhuma leitura falsa é
-  publicada.
-- **Recalibração concorrente** — uma nova solicitação recebida enquanto outra
-  calibração está em curso é descartada com WARN; não há enfileiramento.
-- **Corrente acima da faixa do sensor** — o valor é reportado como medido; a
-  especificação não contrata saturação artificial nem sinalização de
-  sobrefaixa.
-- **Reinício do runtime** — o zero é recalibrado do princípio, pois não há
-  persistência de calibração.
-- **Ausência de corrente com ruído residual** — a faixa morta de 6.5 garante
-  valor exatamente `0,000 A`, sem publicações sucessivas de ruído.
+- **Configuração inválida:** campo obrigatório ausente, limite incoerente,
+  amostras iguais a zero, razão ou sensibilidade não positiva, polaridade fora
+  de `+1,0` ou `−1,0`, ou `lowPassAlpha` fora de `(0,1]` impede registro
+  parcial e produz diagnóstico.
+- **Zero inválido:** diferença entre zero calibrado e nominal acima de
+  `maximumZeroDeviationMv` impede medições válidas.
+- **Recalibração sem pré-condição:** ausência de garantia de corrente zero,
+  perda de alimentação contínua ou alimentação instável impede a recalibração;
+  o zero anterior permanece.
+- **Alimentação não monitorada:** produz `NOT_MONITORED`, nunca `IN_RANGE` ou
+  `SUPPLY_OUT_OF_RANGE`.
+- **Alimentação fora da faixa:** produz `SUPPLY_OUT_OF_RANGE` e remove o valor
+  numérico válido.
+- **Faixa não calibrada e saturação:** produzem os estados da seção 5.5, sem
+  corrente numérica válida.
+- **Reinício:** descarta o zero anterior e reinicia aquecimento e calibração.
+- **Falha de capacidade, identidade ou conflito:** retorna `nullptr`, registra
+  a causa e não consome slot nem deixa adapter ou capability parcial.
 
 ## 10. Critérios de aceite e validações
 
-- **CUR-AC-001:** com os defaults de CUR-007, a sensibilidade efetiva calculada
-  conforme 6.2 é `44,00 mV/A`, com tolerância de `± 0,01 mV/A`. Meio:
-  inspeção do cálculo com os parâmetros default.
-- **CUR-AC-002:** alterando `R1`, `R2` ou `Ssensor`, o valor de `S` acompanha a
-  fórmula de 6.2, demonstrando que nenhuma sensibilidade fixa foi embutida.
-  Meio: inspeção com dois conjuntos distintos de parâmetros.
-- **CUR-AC-003:** após a calibração de zero, sem corrente aplicada, o estado
-  publicado é exatamente `+0.000`. Meio: hardware, com o condutor sem corrente.
-- **CUR-AC-004:** com corrente contínua conhecida aplicada, o valor reportado
-  corresponde à referência externa de medição dentro da tolerância acordada na
-  execução da validação física. Meio: hardware, contra referência externa.
-- **CUR-AC-005:** com `polaridade = −1,0` e a mesma corrente de CUR-AC-004, o
-  valor reportado apresenta sinal invertido e mesmo módulo. Meio: hardware.
-- **CUR-AC-006:** com corrente estável, a capability não republica o mesmo
-  valor; alterada a corrente, publica na avaliação seguinte, respeitando o
-  intervalo de `1000 ms`. Meio: hardware, observando as publicações.
-- **CUR-AC-007:** corrente cujo módulo é inferior a `faixaMorta` produz
-  `+0.000`, e corrente imediatamente superior produz valor não nulo. Meio:
-  hardware, com corrente ajustável.
-- **CUR-AC-008:** `requestZeroCalibration()` retorna sem executar a calibração,
-  e a calibração ocorre no `handle()` seguinte, observável pelos registros INFO
-  de 8. Meio: hardware, pelos logs.
-- **CUR-AC-009:** com configuração inválida, `setup()` registra ERROR, nenhuma
-  leitura é publicada e `getAmperes()` permanece `0,0 A`. Meio: hardware ou
-  execução instrumentada, pelos logs.
-- **CUR-AC-010:** `handle()` do adapter e da capability retorna sem bloquear o
-  ciclo cooperativo do `SmartSysApp`, preservando o atendimento das demais
-  capabilities registradas. Meio: hardware, observando o runtime com outra
-  capability ativa.
-- **CUR-AC-011:** o build canônico `pio run -e esp32_dev` alcança estado
-  terminal com sucesso. Meio: build canônico.
-- **CUR-AC-012:** nenhuma assinatura pública preexistente foi alterada. Meio:
-  inspeção do delta contra `PUBLIC-API-COMPATIBILITY`.
+- **CUR-AC-001:** cada perfil materializa exatamente seus valores elétricos
+  iniciais, sem tratar `43,05` ou `43,56 mV/A` como constante universal.
+  Meio: inspeção da configuração e do cálculo.
+- **CUR-AC-002:** alterar `zeroADC`, `sensitivityAdcMvPerA` ou polaridade
+  altera o resultado segundo CUR-019, sem dependência direta da alimentação.
+  Meio: inspeção com dois conjuntos distintos.
+- **CUR-AC-003:** após 60 segundos de aquecimento e calibração sem corrente, a
+  indicação de zero permanece entre `−0,05 A` e `+0,05 A`. Meio: validação
+  física por perfil.
 
-A validação física de CUR-AC-003 a CUR-AC-010 exige hardware e permissão
-operacional explícita do Arquiteto. Enquanto não executada, permanece
-`Not Executed` e não pode ser convertida em evidência aprovada.
+### CUR-DC-004 — Exatidão da corrente fotovoltaica
+
+O módulo deve medir a corrente contínua entre o painel fotovoltaico e a entrada
+do conversor buck utilizando o ACS712-30A.
+
+Na faixa `0,50 A ≤ |I_ref| ≤ 15,00 A`, o erro absoluto deve satisfazer:
+
+```text
+E_max = max(0,10 A; 0,05 × |I_ref|)
+|I_medido − I_ref| ≤ E_max
+```
+
+Valores abaixo de `0,05 A` em magnitude são zero. Valores entre `0,05 A` e
+`0,50 A` podem ser estimativas sem garantia de exatidão. A resolução é
+`0,01 A` ou melhor. Com corrente constante, a variação pico a pico durante 30
+segundos não ultrapassa `0,05 A`; após alteração, a leitura entra na tolerância
+em até 1 segundo. Faixa, saturação, sinal negativo e validade numérica seguem as
+seções 5.5 e 5.6.
+
+#### Procedimento por perfil
+
+1. Alimentar ESP32 e ACS712 dentro da faixa do perfil, verificando a alimentação
+   por instrumento independente.
+2. Manter corrente zero por pelo menos 60 segundos e executar a calibração.
+3. Aplicar `0,00 A`, `0,50 A`, `1,00 A`, `2,50 A`, `5,00 A`, `10,00 A`,
+   `13,50 A`, `15,00 A`, `−0,50 A` e `−5,00 A`.
+4. Em cada ponto, registrar ao menos 30 leituras filtradas consecutivas durante
+   pelo menos 30 segundos.
+5. Comparar média e sinal com multímetro ou shunt de referência cujo erro
+   máximo seja `±1%`; verificar erro máximo, resolução e variação pico a pico.
+6. Aplicar uma alteração controlada e verificar entrada na tolerância em até
+   `1000 ms`.
+7. Injetar sinais equivalentes às faixas acima de 15 A e à saturação do ADC,
+   sem exigir produção física de 30 A, verificando estados e ausência de valor
+   numérico válido.
+8. Repetir `0,00 A` após o maior valor físico para verificar deslocamento do
+   zero.
+
+O critério é aprovado somente quando, nos dois perfis, todos os pontos
+aplicáveis respeitam erro, sinal, estabilidade e tempo; o zero retorna à faixa;
+a alimentação observada permanece dentro do perfil; e nenhum valor inválido ou
+saturado é apresentado como medição válida. Enquanto qualquer `TBD` da seção
+13 permanecer aberto, o procedimento não constitui gate terminal executável.
+
+- **CUR-AC-005:** com polaridade `−1,0`, os pontos assinados invertem o sinal e
+  preservam módulo e tolerância de CUR-DC-004. Meio: validação física.
+- **CUR-AC-006:** com corrente constante, envelopes idênticos não são
+  republicados; alterado valor ou estado, o novo envelope é publicado na
+  avaliação seguinte, respeitando `1000 ms`. Meio: hardware.
+- **CUR-AC-007:** `|I| < 0,05 A` produz zero exato; `|I| = 0,05 A` não é
+  suprimido automaticamente. Meio: hardware com corrente ajustável.
+- **CUR-AC-008:** solicitação de recalibração retorna sem calibrar e somente
+  começa no `handle()` seguinte quando todas as pré-condições forem satisfeitas.
+  Meio: hardware e logs.
+- **CUR-AC-009:** cada classe de configuração inválida ou zero inválido impede
+  medição e registro parcial conforme a seção 9. Meio: execução instrumentada.
+- **CUR-AC-010:** `handle()` do adapter e da capability preserva o ciclo
+  cooperativo e o atendimento de outra capability ativa. Meio: hardware.
+- **CUR-AC-011:** `pio run -e esp32_dev` alcança estado terminal com sucesso.
+  Meio: build canônico.
+- **CUR-AC-012:** APIs públicas preexistentes permanecem compatíveis; o novo
+  ponteiro é estável, não proprietário, retorna `nullptr` em falha e a
+  aplicação libera seus objetos. Meio: inspeção e execução instrumentada.
+- **CUR-AC-013:** com monitor independente presente, tensões dentro e fora dos
+  limites produzem `IN_RANGE` e `SUPPLY_OUT_OF_RANGE`; sem monitor, somente
+  `NOT_MONITORED` é possível. Meio: hardware ou injeção instrumentada.
+- **CUR-AC-014:** sinais equivalentes a `15 A < |I| ≤ 30 A`, `|I| > 30 A`
+  e saturação produzem os estados correspondentes, com `currentA` ausente.
+  Meio: injeção instrumentada.
+
+A execução física ou instrumentada de CUR-AC-003, CUR-DC-004,
+CUR-AC-005 a CUR-AC-010 e CUR-AC-012 a CUR-AC-014 exige hardware ou bancada e
+permissão operacional explícita. Enquanto não executada, permanece
+`Not Executed`.
 
 ## 11. Testes
 
-**Nenhum artefato de teste integra o recorte desta versão.** Esta
-especificação não exige criar, ampliar, reestruturar ou executar suítes
-automatizadas, e nenhuma execução de teste é condição de aceite.
-
-As evidências previstas são o build canônico (CUR-AC-011), a inspeção do delta
-(CUR-AC-001, CUR-AC-002, CUR-AC-012) e a validação física sob ordem explícita
-(CUR-AC-003 a CUR-AC-010).
+Nenhum artefato de teste automatizado integra o recorte desta versão. As
+evidências contratadas são inspeção, build canônico e validação física ou
+instrumentada sob autorização explícita. Criar harness persistente ou alterar
+suítes exige nova decisão de escopo.
 
 ## 12. Conhecimento afetado
 
-- `docs/rfc/KNOWLEDGE-MAP.md`: nova fonte normativa e cobertura de capabilities;
-- `docs/rfc/EKM-CHANGELOG.md`: transação de autoria desta especificação.
+- `docs/rfc/KNOWLEDGE-MAP.md`: versão, perfis e lacunas bloqueantes;
+- `docs/rfc/EKM-CHANGELOG.md`: autoria da versão 0.2;
+- relatório de implementabilidade 0.1: histórico imutável cujo bloqueador de
+  tolerância é respondido por CUR-DC-004.
 
 ## 13. Relações, decisões e lacunas
 
 ### Relações normativas
 
-- `docs/specs/PUBLIC-API-COMPATIBILITY.md` — preservada. Esta especificação é
-  extensão aditiva e não altera assinatura, default ou comportamento público
-  existente.
-- `docs/specs/CORE-RUNTIME-LIFECYCLE.md` — preservada. `setup()` e `handle()`
-  cooperativos, limite de oito capabilities e configuração anterior a
-  `SmartSysApp::setup()` permanecem inalterados.
+- `docs/specs/PUBLIC-API-COMPATIBILITY.md` — preservada por API aditiva,
+  ownership da aplicação, ponteiro não proprietário e falha sem efeito parcial.
+- `docs/specs/CORE-RUNTIME-LIFECYCLE.md` — preservada por configuração antes
+  de `setup()`, oito slots e processamento cooperativo.
 
-Nenhuma fonte vigente governa medição de corrente. A relação é **Nova**
-[`New`], sem emenda, correção, substituição ou aposentadoria de contrato
-anterior.
+A relação permanece **Nova** [`New`]. O perfil de 3,3 V é contrato próprio
+desta fonte e não amplia o suporte geral de plataforma.
 
 ### Decisões do Arquiteto
 
-- **CUR-DEC-001:** o recorte cobre exclusivamente corrente contínua. Corrente
-  alternada e valor eficaz ficam fora de escopo e dependem de especificação
-  futura.
-- **CUR-DEC-002:** a calibração de zero não é persistida. O zero é calibrado na
-  inicialização e sob solicitação explícita.
-- **CUR-DEC-003:** o critério de publicação segue o precedente
-  `GlpMeterKgCapability`: avaliação a cada `1000 ms` e publicação por mudança do
-  valor, sem tolerância de variação.
-- **CUR-DEC-004:** a identidade da capability é resolvida por `resolveIdentity`
-  com `CURRENT_SENSOR_TYPE`.
-- **CUR-DEC-005:** fábrica de sensores, configuração de capability, builder e
-  `SmartSysApp` integram o recorte, em forma aditiva.
-- **CUR-DEC-006:** a implementação recebe o nome `ACS712C30ACurrentSensor`.
-- **CUR-DEC-007:** nenhuma criação ou execução de teste integra o recorte.
-- **CUR-DEC-008:** não há exigência de canal ou faixa específica de pino
-  analógico. A escolha do pino é parâmetro de configuração da aplicação, e esta
-  especificação não decide com base em ocupação de GPIO por outro hardware.
-- **CUR-DEC-009:** `CURRENT_SENSOR_TYPE` tem o valor literal
-  `"Current Sensor (A)"`.
+- **CUR-DEC-001:** medição exclusiva de corrente contínua fotovoltaica entre
+  painel e entrada do buck.
+- **CUR-DEC-002:** zero não persistido, aquecimento inicial de 60 segundos e
+  recalibração posterior com acomodação de 2 segundos e pré-condições.
+- **CUR-DEC-003:** perfis `ACS712_30A_5V` e `ACS712_30A_3V3`, qualificados
+  respectivamente como `MANUFACTURER_SUPPORTED` e `PROJECT_VALIDATED`.
+- **CUR-DEC-004:** sensibilidades iniciais configuráveis de `43,05 mV/A` e
+  `43,56 mV/A`, substituíveis por calibração individual.
+- **CUR-DEC-005:** API única `app.addCurrentSensor(CurrentSensorConfig)`, com
+  ownership pela aplicação e factory somente interno.
+- **CUR-DEC-006:** estados de medição e alimentação separados em envelope
+  indivisível; alimentação não monitorada não invalida sozinha a leitura.
+- **CUR-DEC-007:** faixa calibrada `0,50–15,00 A` em magnitude, erro
+  `max(0,10 A; 5%)`, faixa morta `0,05 A`, estabilidade `0,05 A` pico a pico e
+  resposta de até 1 segundo.
+- **CUR-DEC-008:** sobrefaixa e saturação não publicam corrente numérica válida;
+  validação acima de 15 A pode usar injeção instrumental.
+- **CUR-DEC-009:** nenhum artefato de teste automatizado integra a versão.
+- **CUR-DEC-010:** `FULL_RANGE` é abstração por target; `adcMaximumMv` não é
+  presumido a partir da tensão nominal.
+- **CUR-DEC-011:** o perfil 3,3 V é principal nas placas existentes; 5 V é
+  alternativa de bancada ou hardware futuro.
+- **CUR-DEC-012:** `maximumZeroDeviationMv`, `adcMaximumMv` e frequência de
+  amostragem podem permanecer `TBD` no Draft, mas bloqueiam implementabilidade.
 
-### Lacunas
+### Lacunas bloqueantes
 
-Nenhuma lacuna bloqueante registrada nesta versão.
+- **CUR-GAP-001:** definir `maximumZeroDeviationMv` para cada perfil.
+- **CUR-GAP-002:** definir `adcMaximumMv` para cada target suportado.
+- **CUR-GAP-003:** definir `sampleIntervalUs` por perfil/target.
+- **CUR-GAP-004:** definir a representação no envelope para estimativas entre
+  `0,05 A` e `0,50 A`; os três estados confirmados não distinguem estimativa de
+  medição `VALID` com exatidão garantida.
+- **CUR-GAP-005:** delimitar quais consumidores e reservas de GPIO participam
+  da rejeição de pinos conflitantes, sem alterar silenciosamente comportamento
+  público preexistente.
+- **CUR-GAP-006:** definir a representação textual estável do envelope no
+  `value` de `ICapability`, cuja API vigente publica texto.
 
 ## 14. Estado da especificação
 
-Versão 0.1 registrada em `Draft`, com as decisões `CUR-DEC-001` a
-`CUR-DEC-009` incorporadas. A versão segue para Análise de Implementabilidade.
+Versão 0.2 registrada em `Draft`, com implementação `Not Started` e revisão de
+implementabilidade `Pending Review`.
 
-Nenhuma implementação foi iniciada e nenhuma validação foi executada.
+CUR-DC-004 substitui o critério anterior de exatidão e resolve a ausência de
+tolerância registrada na análise 0.1. A versão não é elegível à implementação enquanto
+CUR-GAP-001 a CUR-GAP-006 permanecerem abertos.
