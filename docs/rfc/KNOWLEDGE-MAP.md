@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 26/08/2026 (autoria da versão 0.3 da leitura de corrente)
+**Última atualização:** 26/08/2026 (autoria da versão 0.4 da leitura de corrente)
 
 ## 1. Governança
 
@@ -25,7 +25,7 @@
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
-| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.3 — Pending Review | Not Started |
+| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.4 — Pending Review | Not Started |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -36,7 +36,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.3` em `Draft`, sem implementação e com análise de implementabilidade pendente |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.4` em `Draft`, sem implementação e com análise de implementabilidade pendente |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -143,6 +143,18 @@ relatório de implementabilidade 0.2. `IOTSSC-CURRENT-SENSOR@0.3` incorpora os
 limites do ESP32 clássico, os estados `NOT_READY` e `ESTIMATED`, o alcance local
 dos conflitos e o JSON textual normalizado. O encerramento da lacuna não
 antecipa o resultado da nova análise formal da versão 0.3.
+
+### EKM-GAP-0013 — Estados incompletos da medição de corrente 0.3
+
+**Estado:** Closed — decisões incorporadas na versão 0.4
+
+O relatório de implementabilidade 0.3 identificou ausência de `supplyStatus`
+antes da primeira amostra do monitor e ausência de estado e política após
+calibração de zero inválida. `IOTSSC-CURRENT-SENSOR@0.4` incorpora `UNKNOWN`,
+`CALIBRATING` e `ZERO_CALIBRATION_FAILED`, impede uso do zero anterior depois
+da falha e mantém o valor escalar vazio nesses estados. A versão também revoga
+o JSON dentro de `ICapability::value` e move os estados para campos opcionais do
+evento. O encerramento não antecipa o resultado da nova análise formal.
 
 ## 5. Baseline inicial
 
@@ -253,4 +265,9 @@ antecipa o resultado da nova análise formal da versão 0.3.
 - `EKM-CHG-0036`: autoria da versão 0.3 de
   `IOTSSC-CURRENT-SENSOR`, que incorpora as decisões do Arquiteto sobre limites
   do ESP32 clássico, aquisição cooperativa, estimativas, conflitos locais de
-  GPIO e JSON textual, encerra `EKM-GAP-0012` e mantém `Pending Review`.
+  GPIO e JSON textual, encerra `EKM-GAP-0012` e foi classificada como `Not Ready
+  — Specification Defect` pelo relatório de implementabilidade 0.3.
+- `EKM-CHG-0037`: autoria da versão 0.4 de
+  `IOTSSC-CURRENT-SENSOR`, que preserva `value` escalar, adiciona estados
+  opcionais ao evento de mudança, resolve as bordas de calibração e alimentação,
+  encerra `EKM-GAP-0013` e mantém `Pending Review`.

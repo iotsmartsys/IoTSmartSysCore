@@ -2167,7 +2167,7 @@ contratos e autorizou a versão 0.3 em `EKM-CHG-0036`.
 
 ## EKM-CHG-0036 — Autoria da especificação de corrente fotovoltaica 0.3
 
-**Estado:** Closed
+**Estado:** Superseded — versão 0.3 substituída pelo Draft 0.4
 
 **Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.3`
 
@@ -2218,7 +2218,76 @@ vigente, limite de oito slots, configuração prévia e aquisição cooperativa.
 
 ### Resultado
 
-`IOTSSC-CURRENT-SENSOR@0.3` permanece `Draft`, `Not Started` e `Pending Review`.
+`IOTSSC-CURRENT-SENSOR@0.3` permaneceu `Draft`, `Not Started` e `Pending Review`.
 A especificação foi encaminhada para nova análise formal de implementabilidade;
 nenhuma implementação está autorizada antes de classificação `Ready` aplicável
 à versão 0.3 e ordem explícita posterior do Arquiteto.
+
+A análise formal
+`docs/reports/2026-08-27T011809Z-0.3-0c86c4a9-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect`: faltavam o estado
+da alimentação antes da primeira amostra válida e a transição observável após
+calibração de zero inválida. O Arquiteto decidiu esses contratos, revogou o JSON
+dentro de `value` e autorizou a versão 0.4 em `EKM-CHG-0037`.
+
+## EKM-CHG-0037 — Autoria da especificação de corrente fotovoltaica 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.4`
+
+### Objetivo
+
+Incorporar as decisões normativas do Arquiteto que respondem ao relatório de
+implementabilidade 0.3 e preservam `ICapability::value` como contrato escalar,
+mantendo as versões e relatórios anteriores como histórico imutável e sem
+alterar código de produção ou testes.
+
+### Decisões incorporadas
+
+- `UNKNOWN` representa alimentação monitorável ainda sem amostra válida e
+  mantém o valor escalar vazio;
+- `CALIBRATING` representa acomodação e amostragem de zero;
+  `ZERO_CALIBRATION_FAILED` representa zero rejeitado, mantém o valor vazio e
+  impede uso do zero anterior até calibração válida ou reinício;
+- `ICapability::value` e `CapabilityStateChanged::value` permanecem
+  `std::string` escalares: corrente disponível usa três casas decimais e estados
+  sem valor usam string vazia; nenhuma string JSON é armazenada em `value`;
+- `CapabilityStateChanged` recebe `measurementStatus` e `supplyStatus`
+  opcionais sem invalidar campos, assinaturas ou construtores existentes;
+- serializadores e sink acrescentam os estados somente quando presentes;
+  capabilities existentes não recebem estados sintéticos nem mudam seus
+  eventos;
+- detecção de mudança da capability de corrente usa conjuntamente `value` e os
+  dois estados;
+- o anúncio geral permanece em seu formato atual, sem os estados operacionais.
+
+### Reconciliação
+
+`EKM-GAP-0013` registra e encerra os dois bloqueadores da análise 0.3. A decisão
+de JSON interno da versão anterior foi expressamente revogada. A relação
+normativa passa a `Corrects` em relação à versão 0.3. `PUBLIC-API-COMPATIBILITY`
+é preservada pelos campos opcionais e pela manutenção integral dos contratos
+preexistentes; `CORE-RUNTIME-LIFECYCLE` permanece preservada pela aquisição
+cooperativa e pelos oito slots vigentes.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências e limites
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.4;
+- evento e serializadores vigentes confrontados para preservar campos,
+  construtores, `capability_name`, `value` e anúncio;
+- nenhum código, teste, build, upload ou validação física iniciado, por se
+  tratar de atuação exclusivamente documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.4` permanece `Draft`, `Not Started` e `Pending Review`.
+A especificação foi encaminhada para nova análise formal de implementabilidade;
+nenhuma implementação está autorizada antes de classificação `Ready` aplicável
+à versão 0.4 e ordem explícita posterior do Arquiteto.
