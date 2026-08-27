@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 
@@ -14,6 +15,10 @@ namespace iotsmartsys::core
         CurrentSensorCapability(const std::string &capabilityName,
                                 ICurrentSensor &sensor,
                                 ICapabilityEventSink *eventSink);
+        CurrentSensorCapability(const std::string &capabilityName,
+                                ICurrentSensor &sensor,
+                                ICapabilityEventSink *eventSink,
+                                std::uint32_t evaluationIntervalMs);
 
         void setup() override;
         void handle() override;
@@ -27,6 +32,7 @@ namespace iotsmartsys::core
         void publishIfChanged(const CurrentMeasurement &measurement);
 
         ICurrentSensor &_sensor;
+        std::uint32_t _evaluationIntervalMs{1000};
         bool _published{false};
         std::uint64_t _lastEvaluationMs{0};
         std::string _lastMeasurementStatus;

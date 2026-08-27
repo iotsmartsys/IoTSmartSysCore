@@ -8,8 +8,17 @@ namespace iotsmartsys::core
     CurrentSensorCapability::CurrentSensorCapability(const std::string &capabilityName,
                                                      ICurrentSensor &sensor,
                                                      ICapabilityEventSink *eventSink)
+        : CurrentSensorCapability(capabilityName, sensor, eventSink, 1000)
+    {
+    }
+
+    CurrentSensorCapability::CurrentSensorCapability(const std::string &capabilityName,
+                                                     ICurrentSensor &sensor,
+                                                     ICapabilityEventSink *eventSink,
+                                                     std::uint32_t evaluationIntervalMs)
         : ICapability(eventSink, capabilityName.c_str(), CURRENT_SENSOR_TYPE, ""),
-          _sensor(sensor)
+          _sensor(sensor),
+          _evaluationIntervalMs(evaluationIntervalMs)
     {
     }
 
@@ -23,14 +32,14 @@ namespace iotsmartsys::core
 
     void CurrentSensorCapability::handle()
     {
+        _sensor.handle();
+
         const std::uint64_t now = timeProvider.nowMs();
-        if (!_published)
+        if (_published && now - _lastEvaluationMs < _evaluationIntervalMs)
         {
-            _lastEvaluationMs = now;
-            publishIfChanged(_sensor.currentMeasurement());
+            return;
         }
 
-        _sensor.handle();
         _lastEvaluationMs = now;
         publishIfChanged(_sensor.currentMeasurement());
     }

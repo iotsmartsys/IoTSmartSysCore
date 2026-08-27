@@ -91,6 +91,8 @@ namespace iotsmartsys::core
         int supplyMonitorAdcPin{-1};
         float supplyMonitorToVccRatio{1.0f};
 
+        std::uint32_t capabilityEvaluationIntervalMs{1000};
+
         static CurrentSensorConfig ACS712_30A_5V(const std::string &id, int adcPin)
         {
             CurrentSensorConfig config;

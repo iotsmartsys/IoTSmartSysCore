@@ -266,7 +266,8 @@ namespace iotsmartsys::app
         if (cfg.polarity != 1.0f && cfg.polarity != -1.0f)
             return reject("polarity must be +1 or -1");
         if (cfg.zeroCalibrationSamples == 0 || cfg.samplesPerReading == 0 ||
-            cfg.sampleIntervalUs == 0 || cfg.readingIntervalMs == 0)
+            cfg.sampleIntervalUs == 0 || cfg.readingIntervalMs == 0 ||
+            cfg.capabilityEvaluationIntervalMs == 0)
             return reject("sampling parameters must be positive");
         if (!(cfg.lowPassAlpha > 0.0f && cfg.lowPassAlpha <= 1.0f))
             return reject("lowPassAlpha must be in (0,1]");
@@ -361,7 +362,7 @@ namespace iotsmartsys::app
             return fail("arena has insufficient space for capability");
         }
         auto *capability = new (capabilityMemory) iotsmartsys::core::CurrentSensorCapability(
-            name, *sensor, &_eventSink);
+            name, *sensor, &_eventSink, cfg.capabilityEvaluationIntervalMs);
         auto capabilityDtor = [](void *p)
         {
             static_cast<iotsmartsys::core::CurrentSensorCapability *>(p)->~CurrentSensorCapability();

@@ -2932,3 +2932,48 @@ registra a cobertura, o challenge, a reconciliação anterior e quatro restriç�
 não bloqueantes. A especificação permanece `Draft`, com implementação
 `Not Started` e entrega `Not Applicable`; esta análise não autoriza
 implementação, conclusão ou integração.
+
+## EKM-CHG-0051 — Implementação da cadência configurável da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Implementar `capabilityEvaluationIntervalMs` e CUR-055 a CUR-058 após a análise
+formal `Ready` e a ordem explícita do Arquiteto, preservando a aquisição
+cooperativa e as APIs públicas preexistentes.
+
+### Implementação
+
+- `CurrentSensorConfig` recebeu ao final do aggregate o intervalo de avaliação,
+  com default de `1000 ms`, preservando inicializações posicionais existentes;
+- o builder rejeita intervalo zero e transfere a configuração para a capability;
+- o construtor público de três argumentos permanece válido com default de
+  `1000 ms`, acompanhado por sobrecarga aditiva;
+- `ICurrentSensor::handle()` continua executando em todo ciclo, enquanto a
+  avaliação ocorre imediatamente na primeira oportunidade e depois somente
+  quando o intervalo decorre;
+- o timestamp é atualizado em cada avaliação elegível, mesmo quando o envelope
+  normalizado não muda e nenhum evento é publicado.
+
+### Evidências e limites
+
+- `pio run -e esp32_dev`: `SUCCESS` (código 0, 26,661 s);
+- `pio run -e example_current_sensor_mcb_r1`: `SUCCESS` (código 0, 11,302 s);
+- `git diff --check`: aprovado;
+- CUR-AC-018, upload, monitor e hardware permanecem `Not Executed`;
+- nenhum teste automatizado foi criado ou executado, conforme o recorte da
+  validação instrumentada estabelecido pela especificação.
+
+O relatório
+`docs/reports/2026-08-27T173207Z-0.6-0b22fd5d-implementation-report.md`
+registra decisões locais, evidências, rastreabilidade e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.6` permanece `Draft`, com implementação `Implemented`,
+entrega `Not Applicable` e análise de implementabilidade `Ready`. O resultado
+foi encaminhado à revisão técnica, sem declaração de validação, conclusão ou
+integração.

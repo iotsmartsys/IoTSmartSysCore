@@ -8,7 +8,7 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
@@ -860,16 +860,16 @@ permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.6 registrada em `Draft`, com implementação `Not Started`, entrega
+Versão 0.6 registrada em `Draft`, com implementação `Implemented`, entrega
 `Not Applicable` e revisão de implementabilidade `Ready`, conforme o relatório
 `docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`.
 
 A correção 0.6 acrescenta `capabilityEvaluationIntervalMs`, CUR-055 a CUR-058,
 CUR-AC-018 e CUR-DEC-023. A mudança resolve a ausência de contrato para a
 cadência de avaliação, sem expor o timestamp interno nem reduzir a frequência
-do processamento cooperativo do adapter. Nenhum código de produção está
-autorizado antes de análise formal `Ready` aplicável a esta versão e nova ordem
-explícita do Arquiteto.
+do processamento cooperativo do adapter. A implementação foi produzida após
+análise formal `Ready` e ordem explícita do Arquiteto; permanece encaminhada à
+revisão técnica, sem declaração de validação física, conclusão ou integração.
 
 A versão 0.5 permanece histórica em `Draft`, com implementação `Implemented` e
 revisão de implementabilidade `Ready` conforme o relatório
