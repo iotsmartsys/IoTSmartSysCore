@@ -4,6 +4,7 @@
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
 #include "Platform/Arduino/Sensors/ACS712C30ACurrentSensor.h"
+#include "Platform/Arduino/Sensors/ResistiveDividerVoltageSensor.h"
 #include "Config/BuildConfig.h"
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
@@ -213,6 +214,52 @@ namespace iotsmartsys::platform::arduino
         if (!mem || !currentSensorTargetSupported())
             return nullptr;
         return new (mem) ACS712C30ACurrentSensor(config);
+    }
+
+    bool ArduinoHardwareAdapterFactory::voltageSensorTargetSupported() const
+    {
+        return currentSensorTargetSupported();
+    }
+
+    bool ArduinoHardwareAdapterFactory::voltageSensorPinHasAdc(int pin) const
+    {
+        return currentSensorPinHasAdc(pin);
+    }
+
+    bool ArduinoHardwareAdapterFactory::voltageSensorPinReserved(int pin) const
+    {
+        return currentSensorPinReserved(pin);
+    }
+
+    std::size_t ArduinoHardwareAdapterFactory::voltageSensorAdapterSize() const
+    {
+        return voltageSensorTargetSupported() ? sizeof(ResistiveDividerVoltageSensor) : 0;
+    }
+
+    std::size_t ArduinoHardwareAdapterFactory::voltageSensorAdapterAlign() const
+    {
+        return voltageSensorTargetSupported() ? alignof(ResistiveDividerVoltageSensor) : 0;
+    }
+
+    static void destroyVoltageSensorAdapter(void *p)
+    {
+        if (!p)
+            return;
+        static_cast<ResistiveDividerVoltageSensor *>(p)->~ResistiveDividerVoltageSensor();
+    }
+
+    ArduinoHardwareAdapterFactory::AdapterDestructor ArduinoHardwareAdapterFactory::voltageSensorAdapterDestructor() const
+    {
+        return voltageSensorTargetSupported() ? &destroyVoltageSensorAdapter : nullptr;
+    }
+
+    iotsmartsys::core::IVoltageSensor *ArduinoHardwareAdapterFactory::createVoltageSensor(
+        void *mem,
+        const iotsmartsys::core::VoltageSensorConfig &config)
+    {
+        if (!mem || !voltageSensorTargetSupported())
+            return nullptr;
+        return new (mem) ResistiveDividerVoltageSensor(config);
     }
 
     /* IColorSensor */

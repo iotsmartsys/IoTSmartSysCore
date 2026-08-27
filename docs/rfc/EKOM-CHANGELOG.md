@@ -3,6 +3,49 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0003 — Implementação da medição de tensão 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-VOLTAGE-SENSOR@0.1`
+
+**Objetivo:** implementar a capability, o Hardware Adapter de divisor
+resistivo, a API pública, a arbitragem bilateral de ADC e o exemplo executável
+contratados pela versão 0.1.
+
+### Decisões locais
+
+- contratos e implementação seguem a mesma separação do sensor de corrente;
+- a razão do divisor é calculada somente no adapter a partir de R1/R2;
+- a reserva privada de ADC do builder passou a ser comum a corrente e tensão;
+- o exemplo consulta somente a medição estável da capability; a razão exibida
+  no boot vem do diagnóstico do adapter.
+
+### Lacunas
+
+- nenhuma lacuna normativa ou pré-requisito arquitetural foi identificado;
+- validações instrumentadas, upload, monitor e hardware permanecem
+  `Not Executed`.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- `docs/reports/2026-08-27T221102Z-0.1-323fe0bf-implementation-report.md`;
+- `pio run -e esp32_dev`: `SUCCESS`, código 0;
+- `pio run -e example_voltage_sensor_mcb_r1`: `SUCCESS`, código 0;
+- `pio run -e example_current_sensor_mcb_r1`: `SUCCESS`, código 0;
+- ELF do novo exemplo contém exatamente um `setup()` e um `loop()`;
+- nenhum teste foi criado, alterado ou executado.
+
+### Resultado
+
+`IOTSSC-VOLTAGE-SENSOR@0.1` possui implementação integral no recorte e estado
+mecânico Implementada [`Implemented`]. A entrega segue para revisão técnica;
+validação física, conclusão e integração não são declaradas.
+
 ## EKOM-CHG-0001 — Migração da governança para EKOM 4.6
 
 **Estado:** Fechada [`Closed`]

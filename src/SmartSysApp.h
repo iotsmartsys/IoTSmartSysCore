@@ -112,6 +112,8 @@ namespace iotsmartsys
                 iotsmartsys::core::GarageControlCapability *addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg);
                 iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
                     iotsmartsys::core::CurrentSensorConfig config);
+                iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
+                    iotsmartsys::core::VoltageSensorConfig config);
 
         private:
                 static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);

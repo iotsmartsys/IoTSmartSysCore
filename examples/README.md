@@ -8,6 +8,7 @@ Os exemplos executáveis são aplicações Arduino reais selecionadas por enviro
 | [`environment_dht`](executable/environment_dht/README.md) | `example_environment_dht_mcb_r1` | DHT11 no GPIO 23 da MCB R1 |
 | [`screen_console`](executable/screen_console/README.md) | `example_screen_console_esp32_dev` | Ideaspark ESP32 1.9 inch TFT LCD, ST7789 170 × 320 |
 | [`current_sensor`](executable/current_sensor/README.md) | `example_current_sensor_mcb_r1` | ACS712-30A no GPIO 34 (J4) da MCB R1 |
+| [`voltage_sensor`](executable/voltage_sensor/README.md) | `example_voltage_sensor_mcb_r1` | divisor resistivo no GPIO 34 (J4) da MCB R1 |
 
 Fluxo comum:
 

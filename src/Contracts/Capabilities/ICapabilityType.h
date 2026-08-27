@@ -88,6 +88,7 @@ namespace iotsmartsys::core
 
 #define TEMPERATURE_SENSOR_TYPE "Temperature Sensor"
 #define CURRENT_SENSOR_TYPE "Current Sensor (A)"
+#define VOLTAGE_SENSOR_TYPE "Voltage Sensor (V)"
 
 #define BUTTON_PRESSED "pressed"
 #define BUTTON_NO_PRESSED "undetected"
