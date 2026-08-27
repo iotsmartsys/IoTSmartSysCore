@@ -2977,3 +2977,53 @@ registra decisões locais, evidências, rastreabilidade e limitações da atuaç
 entrega `Not Applicable` e análise de implementabilidade `Ready`. O resultado
 foi encaminhado à revisão técnica, sem declaração de validação, conclusão ou
 integração.
+
+## EKM-CHG-0052 — Validação final da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Registrar a validação física e a decisão final do Arquiteto, confrontar a
+composição versionada e promover a versão 0.6 para integração à referência de
+produção.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter executado todas as validações em
+hardware e considerado o funcionamento satisfatório. A confirmação cobre os
+meios físicos e instrumentados de CUR-AC-003, CUR-DC-004, CUR-AC-005 a
+CUR-AC-010, CUR-AC-012 a CUR-AC-014, CUR-AC-017 e CUR-AC-018, nos dois perfis
+contratados. A suficiência dessas evidências e a decisão de encerramento são do
+Arquiteto; esta transação não alega reexecução dos ensaios.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, atuando como par do Arquiteto e sem alegação de
+independência, confrontou especificação, implementação e evidências sem
+identificar defeito bloqueante. Em worktree limpa,
+`pio run -e example_current_sensor_mcb_r1` alcançou `SUCCESS` com código 0 em
+36,879 s. `pio run -e esp32_dev` alcançou `SUCCESS` com código 0 em 23,972 s
+depois de materializado o `src/main.cpp` local esperado pela baseline.
+
+Duas tentativas anteriores do build padrão terminaram `FAILED` no link pela
+ausência de `setup()` e `loop()`: `src/main.cpp` é deliberadamente ignorado e
+não acompanha uma worktree Git limpa. A falha foi preservada como característica
+da baseline; não foi causada pelo recorte de corrente. Uma invocação paralela
+também produziu aviso de limpeza do diretório temporário. `git diff --check` foi
+aprovado para a composição versionada.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `Implemented` → Validada [`Validated`];
+- estado da entrega: `Not Applicable` → Pronta para integração
+  [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-27T181748Z-0.6-fedc95ec-final-validation-report.md`
+registra a evidência, a confrontação e seus limites. A integração à `main`
+permanece autorizada na mesma ordem do Arquiteto e será registrada após chegar
+a estado terminal.

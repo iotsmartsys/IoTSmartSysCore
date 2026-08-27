@@ -6,11 +6,11 @@
 
 **Versão:** 0.6
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não aplicável [`Not Applicable`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -860,16 +860,39 @@ permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.6 registrada em `Draft`, com implementação `Implemented`, entrega
-`Not Applicable` e revisão de implementabilidade `Ready`, conforme o relatório
+Versão 0.6 registrada em `Active`, com implementação `Validated`, entrega
+`Ready for Integration` e revisão de implementabilidade `Ready`, conforme o relatório
 `docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`.
 
 A correção 0.6 acrescenta `capabilityEvaluationIntervalMs`, CUR-055 a CUR-058,
 CUR-AC-018 e CUR-DEC-023. A mudança resolve a ausência de contrato para a
 cadência de avaliação, sem expor o timestamp interno nem reduzir a frequência
 do processamento cooperativo do adapter. A implementação foi produzida após
-análise formal `Ready` e ordem explícita do Arquiteto; permanece encaminhada à
-revisão técnica, sem declaração de validação física, conclusão ou integração.
+análise formal `Ready` e ordem explícita do Arquiteto e, naquele estágio, foi
+encaminhada à revisão técnica sem antecipar validação ou integração.
+
+### Validação final da versão 0.6
+
+O Arquiteto confirmou em ordem direta ter executado todas as validações em
+hardware e considerado o funcionamento satisfatório. A confirmação cobre os
+meios físicos e instrumentados de CUR-AC-003, CUR-DC-004, CUR-AC-005 a
+CUR-AC-010, CUR-AC-012 a CUR-AC-014, CUR-AC-017 e CUR-AC-018, nos dois perfis
+contratados. Esta fonte registra a decisão e a suficiência atribuída pelo
+Arquiteto sem alegar reexecução dos ensaios ou disponibilidade de registros
+brutos nesta atuação.
+
+A confrontação consultiva final não encontrou defeito bloqueante no recorte e
+não é apresentada como revisão independente, pois o Consultor participou de
+etapas anteriores. Em worktree limpa, o exemplo alcançou `SUCCESS`; o build
+padrão alcançou `SUCCESS` após materializar o `src/main.cpp` local, que é
+deliberadamente ignorado pelo repositório. As tentativas sem esse entrypoint
+falharam no link por ausência de `setup()` e `loop()`, condição conhecida da
+baseline e não causada pela leitura de corrente.
+
+Por decisão explícita do Arquiteto, a versão 0.6 passa a Vigente [`Active`], a
+implementação passa a Validada [`Validated`] e a entrega passa a Pronta para
+integração [`Ready for Integration`]. O relatório consultivo é
+`docs/reports/2026-08-27T181748Z-0.6-fedc95ec-final-validation-report.md`.
 
 A versão 0.5 permanece histórica em `Draft`, com implementação `Implemented` e
 revisão de implementabilidade `Ready` conforme o relatório
