@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.4
+**Versão:** 0.5
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -14,7 +14,7 @@
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
-**Relação normativa:** Corrige a versão 0.3 [`Corrects`]
+**Relação normativa:** Corrige a versão 0.4 [`Corrects`]
 
 ## 1. Objetivo e contexto
 
@@ -49,7 +49,8 @@ próprio antes de serem considerados suportados.
 - ownership do adapter e da capability pela aplicação;
 - diagnóstico por `iotsmartsys::core::ILogger`;
 - validação física separada para cada perfil;
-- target ESP32 clássico e limites utilizáveis do ADC nos dois extremos.
+- target ESP32 clássico e limites utilizáveis do ADC nos dois extremos;
+- exemplo executável `current_sensor` no catálogo de `IOTSSC-HW-EXAMPLES`.
 
 ## 3. Fora de escopo
 
@@ -80,6 +81,7 @@ próprio antes de serem considerados suportados.
 | `MqttSink` | `src/Core/Sinks/` | Serialização condicional dos estados quando presentes |
 | `CURRENT_SENSOR_TYPE` | `src/Contracts/Capabilities/ICapabilityType.h` | Tipo público da capability |
 | Registro público | `src/App/Builders/` e `src/SmartSysApp.*` | Construção, ownership, identidade, slots e registro |
+| Exemplo `current_sensor` | `examples/executable/current_sensor/`, `src/ExecutableExampleRunner.cpp` e `configs/executable_examples.ini` | Consumo demonstrado da API pública em hardware, sem lógica de medição própria |
 
 Somente o adapter conhece aquisição, calibração, conversão elétrica, filtragem,
 alimentação e limites. A capability controla a cadência e não recalcula corrente.
@@ -414,6 +416,53 @@ estável durante a vida da aplicação e não pode ser liberado pelo consumidor.
   o limite de oito capabilities e a configuração anterior a
   `SmartSysApp::setup()`.
 
+### 5.8 Exemplo executável
+
+O exemplo é consumidor da API pública e não constitui componente do runtime.
+Ele herda integralmente o contrato de `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md`
+e não altera nenhum requisito das seções anteriores.
+
+- **CUR-046:** o catálogo executável deve conter o exemplo `current_sensor`,
+  composto por `examples/executable/current_sensor/example.hpp`, seu `README.md`,
+  um seletor mutuamente exclusivo em `src/ExecutableExampleRunner.cpp` e o
+  environment `example_current_sensor_mcb_r1` em
+  `configs/executable_examples.ini`. O build padrão e os exemplos preexistentes
+  permanecem inalterados.
+- **CUR-047:** o exemplo deve consumir exclusivamente
+  `SmartSysApp::addCurrentSensor()`, os perfis públicos de `CurrentSensorConfig`
+  e os acessos não proprietários de CUR-042. Não pode reimplementar aquisição,
+  zero, conversão elétrica, filtragem, qualificação ou cadência, nem acessar o
+  adapter diretamente.
+- **CUR-048:** o pino do sinal de corrente deve ser o símbolo oficial
+  `ITS_MCB01_J4_EXT_ADC` do pinout da MCB R1, que resolve um GPIO de ADC1 do
+  ESP32 clássico. Literais numéricos de GPIO e macros próprias de pino são
+  proibidos no exemplo e no environment; a ausência do símbolo deve produzir
+  erro de build compreensível.
+- **CUR-049:** o perfil elétrico deve ser selecionado em build time por
+  exatamente um entre `EXAMPLE_CURRENT_SENSOR_PROFILE_3V3` e
+  `EXAMPLE_CURRENT_SENSOR_PROFILE_5V`. Nenhum ou ambos selecionados produz erro
+  de build. O environment versionado seleciona o perfil de 3,3 V.
+- **CUR-050:** o exemplo não configura `supplyMonitorAdcPin`. A alimentação
+  permanece `NOT_MONITORED` e o README deve declarar explicitamente que, nessa
+  condição, a exatidão contratada não é afirmada, conforme CUR-027 e CUR-032.
+- **CUR-051:** o boot deve registrar o identificador do exemplo, a placa, o
+  símbolo e o GPIO resolvido do sinal, o perfil elétrico selecionado, o
+  identificador da capability e o aquecimento configurado, sem expor segredos.
+- **CUR-052:** `loop()` deve chamar `SmartSysApp::handle()` a cada iteração e,
+  em cadência não inferior a `EXAMPLE_CURRENT_LOG_INTERVAL_MS`, apresentar a
+  última `CurrentMeasurement` obtida por `currentMeasurement()`, com o valor em
+  três casas decimais quando presente, a ausência de valor quando aplicável e os
+  tokens de `measurementStatus` e `supplyStatus`. A apresentação não pode
+  executar aquisição, bloquear o ciclo cooperativo nem alterar a cadência da
+  capability.
+- **CUR-053:** o exemplo deve tratar `nullptr` de `addCurrentSensor()` como
+  falha observável, registrá-la e não desreferenciar o ponteiro em nenhum ciclo
+  posterior.
+- **CUR-054:** o exemplo deve demonstrar `requestZeroCalibration()` por
+  estímulo local do operador no monitor serial, documentando as pré-condições de
+  corrente zero garantida externamente e alimentação estável. Nenhum comando
+  remoto de calibração é adicionado por esta versão.
+
 ## 6. Perfis elétricos iniciais
 
 ### 6.0 Target `ESP32_CLASSIC_ADC_11DB`
@@ -641,8 +690,24 @@ saturado é apresentado como medição válida.
   os estados correspondentes, com `currentA` ausente e `value = ""`. Meio:
   injeção instrumentada.
 
+- **CUR-AC-015:** `pio run -e example_current_sensor_mcb_r1` alcança estado
+  terminal com sucesso, o firmware do exemplo vincula exatamente um `setup()` e
+  um `loop()`, e a inspeção não encontra literais numéricos de GPIO, macros
+  próprias de pino nem redefinição de símbolos do pinout da MCB R1. Meio: build
+  canônico do exemplo e inspeção.
+- **CUR-AC-016:** o `README.md` do exemplo contém objetivo, APIs e capability
+  demonstradas, placa e periféricos, tabela de pinos, ligação, configurações
+  obrigatórias, comandos de build, upload e monitor, sequência do teste manual,
+  resultado esperado e riscos elétricos, e declara `NOT_MONITORED` sem exatidão
+  contratada. Meio: inspeção.
+- **CUR-AC-017:** gravado na MCB R1, o exemplo registra o identificador e o
+  perfil no boot, apresenta `NOT_READY` durante o aquecimento, `CALIBRATING`
+  durante a calibração e, depois, `ESTIMATED` ou `VALID` com `NOT_MONITORED`, e
+  o estímulo local produz nova calibração conforme CUR-AC-008. Meio: validação
+  física.
+
 A execução física ou instrumentada de CUR-AC-003, CUR-DC-004,
-CUR-AC-005 a CUR-AC-010 e CUR-AC-012 a CUR-AC-014 exige hardware ou bancada e
+CUR-AC-005 a CUR-AC-010, CUR-AC-012 a CUR-AC-014 e CUR-AC-017 exige hardware ou bancada e
 permissão operacional explícita. Enquanto não executada, permanece
 `Not Executed`.
 
@@ -656,7 +721,8 @@ suítes exige nova decisão de escopo.
 ## 12. Conhecimento afetado
 
 - `docs/rfc/KNOWLEDGE-MAP.md`: versão e reconciliação das lacunas anteriores;
-- `docs/rfc/EKM-CHANGELOG.md`: autoria da versão 0.4;
+- `docs/rfc/EKM-CHANGELOG.md`: autoria e implementação das versões 0.4 e 0.5;
+- `examples/README.md`: catálogo executável e novo environment;
 - relatórios de implementabilidade 0.1, 0.2 e 0.3: históricos imutáveis cujos
   bloqueadores foram incorporados às versões posteriores.
 
@@ -668,9 +734,15 @@ suítes exige nova decisão de escopo.
   ownership da aplicação, ponteiro não proprietário e falha sem efeito parcial.
 - `docs/specs/CORE-RUNTIME-LIFECYCLE.md` — preservada por configuração antes
   de `setup()`, oito slots e processamento cooperativo.
+- `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` — o exemplo `current_sensor`
+  adere ao contrato vigente do catálogo, ao pinout normativo da MCB R1 e à
+  seleção por environment, sem alterar sua infraestrutura nem seus requisitos.
 
-A versão 0.4 **Corrige** [`Corrects`] a versão 0.3 ao incorporar as decisões que
-encerram seus bloqueadores e revogar o JSON dentro de `value`. A fonte permanece
+A versão 0.5 **Corrige** [`Corrects`] a versão 0.4 ao contratar o exemplo
+executável omitido na autoria anterior, sem alterar comportamento, API pública,
+estados, faixas ou critérios já implementados. A versão 0.4 **Corrigiu**
+[`Corrects`] a versão 0.3 ao incorporar as decisões que encerram seus
+bloqueadores e revogar o JSON dentro de `value`. A fonte permanece
 uma extensão aditiva em relação às APIs preexistentes. O perfil de 3,3 V é
 contrato próprio desta fonte e não amplia o suporte geral de plataforma.
 
@@ -722,6 +794,15 @@ contrato próprio desta fonte e não amplia o suporte geral de plataforma.
   os emite somente quando presentes e o anúncio permanece inalterado.
 - **CUR-DEC-018:** detecção de mudança da capability de corrente considera
   conjuntamente `value`, `measurementStatus` e `supplyStatus`.
+- **CUR-DEC-019:** o consumo da capability passa a ser demonstrado pelo exemplo
+  executável `current_sensor` na MCB R1, usando o símbolo oficial
+  `ITS_MCB01_J4_EXT_ADC` do conector J4 como entrada do sinal.
+- **CUR-DEC-020:** o environment versionado do exemplo usa o perfil de 3,3 V;
+  o perfil de 5 V permanece selecionável em build time para bancada.
+- **CUR-DEC-021:** o exemplo não monitora a alimentação; `NOT_MONITORED` é o
+  estado esperado e a exatidão contratada não é afirmada nessa condição.
+- **CUR-DEC-022:** a recalibração é demonstrada apenas por estímulo local no
+  monitor serial, preservando a exclusão de comandos remotos de calibração.
 
 As decisões `CUR-DEC-012` a `CUR-DEC-016` encerram no contrato da versão 0.3 as
 lacunas `CUR-GAP-001` a `CUR-GAP-006` registradas na versão 0.2. Não há lacuna
@@ -733,11 +814,17 @@ permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.4 registrada em `Draft`, com implementação `Implemented` e revisão de
+Versão 0.5 registrada em `Draft`, com implementação `Implemented` e revisão de
 implementabilidade `Ready` conforme o relatório
-`docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`.
+`docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`.
 
-Esta revisão material incorpora as decisões do Arquiteto que respondem ao
-relatório de implementabilidade 0.3. A implementação foi produzida após análise
-formal `Ready` e ordem explícita do Arquiteto; permanece encaminhada à revisão
-técnica, sem declaração de conclusão ou integração.
+A correção 0.5 contrata o exemplo executável omitido na autoria da versão 0.4 e
+preserva integralmente o contrato funcional já implementado. A implementação do
+exemplo foi produzida após análise formal `Ready` e ordem explícita do
+Arquiteto; permanece encaminhada à revisão técnica, sem declaração de conclusão
+ou integração. A validação física de CUR-AC-003, CUR-DC-004, CUR-AC-005 a
+CUR-AC-010, CUR-AC-012 a CUR-AC-014 e CUR-AC-017 permanece `Not Executed`.
+
+A revisão de implementabilidade `Ready` da versão 0.4 permanece histórica no
+relatório
+`docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`.

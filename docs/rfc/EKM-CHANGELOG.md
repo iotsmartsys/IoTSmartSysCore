@@ -2786,3 +2786,90 @@ registra decisões locais, evidências e limitações da atuação.
 `IOTSSC-CURRENT-SENSOR@0.4` permanece `Draft`, passa a `Implemented` e conserva
 a entrega `Not Applicable`. A análise aplicável é `Ready`; o resultado foi
 encaminhado à revisão técnica, sem declaração de conclusão ou integração.
+
+## EKM-CHG-0047 — Autoria e análise da correção 0.5 da corrente fotovoltaica
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.5`
+
+### Objetivo
+
+Corrigir a omissão da autoria 0.4, que contratou a capability de corrente sem
+contratar seu exemplo executável, preservando integralmente comportamento,
+contratos públicos, estados, faixas e critérios já implementados.
+
+### Decisões incorporadas
+
+- `CUR-DEC-019`: o consumo da capability passa a ser demonstrado pelo exemplo
+  `current_sensor` na MCB R1, com o símbolo oficial `ITS_MCB01_J4_EXT_ADC`;
+- `CUR-DEC-020`: o environment versionado usa o perfil de 3,3 V e mantém o
+  perfil de 5 V selecionável em build time;
+- `CUR-DEC-021`: o exemplo não monitora a alimentação, permanecendo em
+  `NOT_MONITORED` sem afirmar exatidão contratada;
+- `CUR-DEC-022`: a recalibração é demonstrada somente por estímulo local no
+  monitor serial.
+
+A correção acrescenta `CUR-046` a `CUR-054`, `CUR-AC-015` a `CUR-AC-017` e a
+relação normativa com `IOTSSC-HW-EXAMPLES`, cujo contrato de catálogo, pinout e
+seleção por environment é herdado sem alteração.
+
+### Análise de implementabilidade
+
+O relatório
+`docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`
+classificou a versão 0.5 como `Ready`, sem bloqueadores, reconciliando as
+restrições não bloqueantes do relatório 0.4 e confirmando que `HWEX-023` não é
+acionado porque o pinout declara símbolo inequívoco de entrada analógica.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+## EKM-CHG-0048 — Implementação do exemplo executável de corrente fotovoltaica
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.5`
+
+### Objetivo
+
+Implementar `CUR-046` a `CUR-054` após a classificação `Ready` da versão 0.5 e
+ordem explícita do Arquiteto, sem alterar a capability, o runtime, os exemplos
+preexistentes ou o build padrão.
+
+### Implementação
+
+- criado `examples/executable/current_sensor/` com aplicação Arduino única e
+  README completo, consumindo apenas a API pública e os acessos não
+  proprietários da capability;
+- o sinal usa exclusivamente `ITS_MCB01_J4_EXT_ADC`; o perfil elétrico, o
+  identificador da capability e a cadência de apresentação vêm do environment;
+- `src/ExecutableExampleRunner.cpp` recebeu o seletor exclusivo
+  `IOTSMARTSYS_EXAMPLE_CURRENT_SENSOR`;
+- `configs/executable_examples.ini` recebeu `example_current_sensor_mcb_r1` com
+  o perfil de 3,3 V;
+- `examples/README.md` incorporou o exemplo ao catálogo.
+
+### Evidências e limites
+
+- `pio run -e example_current_sensor_mcb_r1`: `SUCCESS` (código 0, 25,969 s);
+- `pio run -e esp32_dev`: `SUCCESS` (código 0, 26,792 s);
+- `pio run -e example_basic_light_mcb_r1`: `SUCCESS` (código 0, 25,768 s);
+- exatamente um `setup()` e um `loop()` no firmware do exemplo;
+- `pio project config --json-output` e `git diff --check`: aprovados;
+- upload, monitor, hardware e validação física não foram executados e
+  permanecem `Not Executed`; nenhum teste automatizado foi criado ou executado.
+
+O relatório
+`docs/reports/2026-08-27T131541Z-0.5-892dccb7-implementation-report.md`
+registra decisões locais, evidências e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.5` permanece `Draft`, com implementação `Implemented` e
+entrega `Not Applicable`. O resultado foi encaminhado à revisão técnica, sem
+declaração de conclusão ou integração.

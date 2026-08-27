@@ -27,7 +27,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
-| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.4 — Ready | Implemented — revisão técnica e validação física/instrumentada pendentes |
+| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.5 — Ready | Implemented, incluindo o exemplo executável `current_sensor` (`EKM-CHG-0048`) — revisão técnica e validação física/instrumentada pendentes |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -38,7 +38,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.4` em `Draft`/`Ready`, implementada e pendente de revisão e validação física/instrumentada |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.5` em `Draft`/`Ready`, implementada com exemplo executável e pendente de revisão e validação física/instrumentada |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -47,7 +47,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela ST7789 opt-in e exemplo Ideaspark validados em hardware (`EKM-CHG-0042`) |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado em `EKM-CHG-0040` e validado em hardware em `EKM-CHG-0042` |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado em `EKM-CHG-0040` e validado em hardware em `EKM-CHG-0042`; `current_sensor` implementado em `EKM-CHG-0048` e pendente de validação física |
 
 ## 4. Lacunas
 
@@ -310,3 +310,13 @@ evento. O encerramento não antecipa o resultado da nova análise formal.
   capability e evento aditivo, registro público atômico e build canônico
   aprovado; validações físicas e instrumentadas permanecem `Not Executed` e o
   resultado segue para revisão técnica.
+- `EKM-CHG-0047`: autoria da versão 0.5 de `IOTSSC-CURRENT-SENSOR`, que corrige
+  a omissão do exemplo executável na versão 0.4, acrescenta `CUR-046` a
+  `CUR-054`, `CUR-AC-015` a `CUR-AC-017` e a relação normativa com
+  `IOTSSC-HW-EXAMPLES`, sem alterar comportamento ou contrato já implementado;
+  classificada como `Ready`.
+- `EKM-CHG-0048`: implementação do exemplo executável `current_sensor` na MCB R1
+  com o símbolo oficial `ITS_MCB01_J4_EXT_ADC`, perfil de 3,3 V no environment
+  versionado, seletor exclusivo no runner e catálogo atualizado; builds do
+  exemplo, do padrão e do catálogo preexistente aprovados, com validação física
+  `Not Executed`.
