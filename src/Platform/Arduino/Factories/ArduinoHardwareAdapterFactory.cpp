@@ -3,6 +3,7 @@
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
 #include "Platform/Arduino/Adapters/InputHardwareAdapter.h"
+#include "Platform/Arduino/Sensors/ACS712C30ACurrentSensor.h"
 #include "Config/BuildConfig.h"
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
@@ -148,6 +149,70 @@ namespace iotsmartsys::platform::arduino
         (void)recipentType;
         return nullptr;
 #endif
+    }
+
+    bool ArduinoHardwareAdapterFactory::currentSensorTargetSupported() const
+    {
+#if defined(CONFIG_IDF_TARGET_ESP32)
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    bool ArduinoHardwareAdapterFactory::currentSensorPinHasAdc(int pin) const
+    {
+#if defined(CONFIG_IDF_TARGET_ESP32)
+        return pin >= 0 && pin < NUM_DIGITAL_PINS &&
+               digitalPinToAnalogChannel(static_cast<std::uint8_t>(pin)) >= 0;
+#else
+        (void)pin;
+        return false;
+#endif
+    }
+
+    bool ArduinoHardwareAdapterFactory::currentSensorPinReserved(int pin) const
+    {
+#if defined(CONFIG_IDF_TARGET_ESP32)
+        // The supported runtime keeps Wi-Fi active. On classic ESP32 the ADC2
+        // controller is shared with Wi-Fi, so current sensing is constrained
+        // to the ADC1 GPIOs 32..39.
+        return currentSensorPinHasAdc(pin) && (pin < 32 || pin > 39);
+#else
+        (void)pin;
+        return true;
+#endif
+    }
+
+    std::size_t ArduinoHardwareAdapterFactory::currentSensorAdapterSize() const
+    {
+        return currentSensorTargetSupported() ? sizeof(ACS712C30ACurrentSensor) : 0;
+    }
+
+    std::size_t ArduinoHardwareAdapterFactory::currentSensorAdapterAlign() const
+    {
+        return currentSensorTargetSupported() ? alignof(ACS712C30ACurrentSensor) : 0;
+    }
+
+    static void destroyCurrentSensorAdapter(void *p)
+    {
+        if (!p)
+            return;
+        static_cast<ACS712C30ACurrentSensor *>(p)->~ACS712C30ACurrentSensor();
+    }
+
+    ArduinoHardwareAdapterFactory::AdapterDestructor ArduinoHardwareAdapterFactory::currentSensorAdapterDestructor() const
+    {
+        return currentSensorTargetSupported() ? &destroyCurrentSensorAdapter : nullptr;
+    }
+
+    iotsmartsys::core::ICurrentSensor *ArduinoHardwareAdapterFactory::createCurrentSensor(
+        void *mem,
+        const iotsmartsys::core::CurrentSensorConfig &config)
+    {
+        if (!mem || !currentSensorTargetSupported())
+            return nullptr;
+        return new (mem) ACS712C30ACurrentSensor(config);
     }
 
     /* IColorSensor */

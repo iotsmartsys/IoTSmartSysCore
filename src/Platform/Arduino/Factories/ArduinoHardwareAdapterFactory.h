@@ -34,6 +34,17 @@ namespace iotsmartsys::platform::arduino
         iotsmartsys::core::IWaterLevelSensor *createWaterLevelSensor(void *mem, std::uint8_t trigPin, std::uint8_t echoPin, float minLevelCm, float maxLevelCm, iotsmartsys::core::WaterLevelRecipentType recipentType) override;
         AdapterDestructor waterLevelSensorAdapterDestructor() const override;
 
+        /* ACS712-30A current sensor */
+        bool currentSensorTargetSupported() const override;
+        bool currentSensorPinHasAdc(int pin) const override;
+        bool currentSensorPinReserved(int pin) const override;
+        std::size_t currentSensorAdapterSize() const override;
+        std::size_t currentSensorAdapterAlign() const override;
+        iotsmartsys::core::ICurrentSensor *createCurrentSensor(
+            void *mem,
+            const iotsmartsys::core::CurrentSensorConfig &config) override;
+        AdapterDestructor currentSensorAdapterDestructor() const override;
+
         /* IColorSensor */
         // std::size_t colorSensorAdapterSize() const override;
         // std::size_t colorSensorAdapterAlign() const override;

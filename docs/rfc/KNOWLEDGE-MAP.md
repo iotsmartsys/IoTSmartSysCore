@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 26/08/2026 (validação final do console de tela 0.3)
+**Última atualização:** 27/08/2026 (validação final da leitura de corrente 0.6)
 
 ## 1. Governança
 
@@ -27,6 +27,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
+| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Ready for Integration` por decisão do Arquiteto (`EKM-CHG-0052`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -37,7 +38,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Ready for Integration` (`EKM-CHG-0052`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -46,7 +47,7 @@
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela ST7789 opt-in e exemplo Ideaspark validados em hardware (`EKM-CHG-0042`) |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
 | Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 estão nominalmente em quarentena por `test_ignore` conforme `BCS-DEC-007`; são preservadas, mas não compiladas, carregadas, executadas nem aceitas como evidência até nova decisão de maturidade |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` implementado em `EKM-CHG-0040` e validado em hardware em `EKM-CHG-0042` |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` validado em hardware em `EKM-CHG-0042`; `current_sensor` validado em hardware em `EKM-CHG-0052` |
 
 ## 4. Lacunas
 
@@ -131,6 +132,32 @@ com retorno `void`, mas não alteram a identidade registrada. Os ponteiros
 devolvidos por `SmartSysApp::add*Capability()` permanecem como estão. BCS-002,
 BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 
+### EKM-GAP-0012 — Contrato incompleto da medição de corrente 0.2
+
+**Estado:** Closed — decisões incorporadas na versão 0.3
+
+`IOTSSC-CURRENT-SENSOR@0.2` dependia da definição de
+`maximumZeroDeviationMv`, `adcMaximumMv` e `sampleIntervalUs` por perfil/target,
+da representação das estimativas abaixo de `0,50 A`, do alcance da rejeição de
+conflitos de GPIO e da representação textual do envelope de medição. As seis
+lacunas foram registradas como `CUR-GAP-001` a `CUR-GAP-006` e confirmadas pelo
+relatório de implementabilidade 0.2. `IOTSSC-CURRENT-SENSOR@0.3` incorpora os
+limites do ESP32 clássico, os estados `NOT_READY` e `ESTIMATED`, o alcance local
+dos conflitos e o JSON textual normalizado. O encerramento da lacuna não
+antecipa o resultado da nova análise formal da versão 0.3.
+
+### EKM-GAP-0013 — Estados incompletos da medição de corrente 0.3
+
+**Estado:** Closed — decisões incorporadas na versão 0.4
+
+O relatório de implementabilidade 0.3 identificou ausência de `supplyStatus`
+antes da primeira amostra do monitor e ausência de estado e política após
+calibração de zero inválida. `IOTSSC-CURRENT-SENSOR@0.4` incorpora `UNKNOWN`,
+`CALIBRATING` e `ZERO_CALIBRATION_FAILED`, impede uso do zero anterior depois
+da falha e mantém o valor escalar vazio nesses estados. A versão também revoga
+o JSON dentro de `ICapability::value` e move os estados para campos opcionais do
+evento. O encerramento não antecipa o resultado da nova análise formal.
+
 ## 5. Baseline inicial
 
 - Branch: `main`.
@@ -187,10 +214,10 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   Clarification`; `EKM-GAP-0011` registra a decisão ausente sobre mutação da
   identidade pública depois do registro.
 - `EKM-CHG-0024`: decisão parcial do Arquiteto marca `rename()` e
-  `applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
+`applyRenamedName()` como obsoletos, sem encerrar `EKM-GAP-0011` nem promover
   a revisão da versão 0.6.
 - `EKM-CHG-0025`: o Arquiteto completa `BCS-DEC-006`; a análise integral fecha
-  `EKM-GAP-0011` e promove a revisão da versão 0.6 para `Implementable`,
+`EKM-GAP-0011` e promove a revisão da versão 0.6 para `Implementable`,
   preservando implementação `Not Started`.
 - `EKM-CHG-0026`: implementação integral da versão 0.6 em código e testes; a
   implementação permanece `In Progress` porque nenhum critério comportamental
@@ -228,6 +255,10 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
 - `EKM-CHG-0033`: retrospectiva do experimento multiagente e classificação de
   adequação dos perfis executores pela métrica experimental EKOM 2.1; registro
   preparado pelo Consultor e pendente de confirmação final do Arquiteto.
+- `EKM-CHG-0034`: autoria da especificação `IOTSSC-CURRENT-SENSOR@0.1`, que
+  contrata a medição de corrente contínua em Hardware Adapter e Capability como
+  extensão aditiva; permanece em `Draft`, com implementação `Not Started` e
+  análise de implementabilidade pendente.
 - `EKM-CHG-0035`: autoria da especificação `IOTSSC-SCREEN-CONSOLE@0.1`, que
   incorpora um console de tela como ferramenta de diagnóstico no padrão do
   logging, opt-in por build, e aposenta o componente inerte
@@ -260,3 +291,46 @@ BCS-022, BCS-AC-002 e BCS-AC-021 incorporam a decisão, encerrando a lacuna.
   Arquiteto, a confrontação consultiva final e a promoção de
   `IOTSSC-SCREEN-CONSOLE@0.3` para `Active`/`Validated`; a integração à `main`
   conclui a entrega como `Done`.
+- `EKM-CHG-0043`: autoria da versão 0.2 de
+  `IOTSSC-CURRENT-SENSOR`, que incorpora os perfis elétricos de 5 V e 3,3 V,
+  `CUR-DC-004`, o envelope de estados e a API com ownership da aplicação;
+  permaneceu em `Draft` e foi classificada como `Not Ready — Specification
+  Defect` pelo relatório de implementabilidade 0.2.
+- `EKM-CHG-0044`: autoria da versão 0.3 de
+  `IOTSSC-CURRENT-SENSOR`, que incorpora as decisões do Arquiteto sobre limites
+  do ESP32 clássico, aquisição cooperativa, estimativas, conflitos locais de
+  GPIO e JSON textual, encerra `EKM-GAP-0012` e foi classificada como `Not Ready
+  — Specification Defect` pelo relatório de implementabilidade 0.3.
+- `EKM-CHG-0045`: autoria da versão 0.4 de
+  `IOTSSC-CURRENT-SENSOR`, que preserva `value` escalar, adiciona estados
+  opcionais ao evento de mudança, resolve as bordas de calibração e alimentação,
+  encerra `EKM-GAP-0013` e mantém `Pending Review`.
+- `EKM-CHG-0046`: implementação integral de `IOTSSC-CURRENT-SENSOR@0.4` após
+  análise `Ready`, com adapter cooperativo ACS712-30A, perfis 5 V/3,3 V,
+  capability e evento aditivo, registro público atômico e build canônico
+  aprovado; validações físicas e instrumentadas permanecem `Not Executed` e o
+  resultado segue para revisão técnica.
+- `EKM-CHG-0047`: autoria da versão 0.5 de `IOTSSC-CURRENT-SENSOR`, que corrige
+  a omissão do exemplo executável na versão 0.4, acrescenta `CUR-046` a
+  `CUR-054`, `CUR-AC-015` a `CUR-AC-017` e a relação normativa com
+  `IOTSSC-HW-EXAMPLES`, sem alterar comportamento ou contrato já implementado;
+  classificada como `Ready`.
+- `EKM-CHG-0048`: implementação do exemplo executável `current_sensor` na MCB R1
+  com o símbolo oficial `ITS_MCB01_J4_EXT_ADC`, perfil de 3,3 V no environment
+  versionado, seletor exclusivo no runner e catálogo atualizado; builds do
+  exemplo, do padrão e do catálogo preexistente aprovados, com validação física
+  `Not Executed`.
+- `EKM-CHG-0049`: autoria da versão 0.6 de `IOTSSC-CURRENT-SENSOR`, que torna
+  `capabilityEvaluationIntervalMs` configuração pública estritamente positiva,
+  mantém o timestamp de avaliação privado e preserva o `handle()` cooperativo do
+  adapter em todo ciclo; permanece `Draft`/`Not Started`/`Pending Review`.
+- `EKM-CHG-0050`: análise integral da versão 0.6 classificada como `Ready`, sem
+  bloqueadores; compatibilidade do aggregate e do construtor, transferência pelo
+  builder e validação instrumentada permanecem restrições não bloqueantes.
+- `EKM-CHG-0051`: implementação da cadência configurável da versão 0.6, com
+  default compatível de `1000 ms`, transferência pelo builder, aquisição em todo
+  ciclo e avaliação temporal sem dupla publicação inicial; builds do runtime e
+  do exemplo aprovados, com validação instrumentada `Not Executed`.
+- `EKM-CHG-0052`: confirmação pelo Arquiteto de todas as validações físicas e
+  instrumentadas da versão 0.6, confrontação consultiva sem bloqueador e
+  promoção para `Active`/`Validated`/`Ready for Integration`.

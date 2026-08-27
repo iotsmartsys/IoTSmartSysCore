@@ -2031,6 +2031,68 @@ de pair, não independente.
 - a classificação aguarda confirmação explícita do Arquiteto antes de commit e
   push.
 
+## EKM-CHG-0034 — Autoria da especificação de leitura de corrente contínua
+
+**Estado:** Superseded — versão 0.1 substituída pelo Draft 0.2
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.1`
+
+### Objetivo
+
+Registrar como fonte normativa a funcionalidade de medição de corrente
+contínua, separada em Hardware Adapter (`ICurrentSensor`, implementado por
+`ACS712C30ACurrentSensor`) e Capability (`CurrentSensorCapability`), seguindo o
+precedente `IGlpMeter` / `HX711WeightMeter` / `GlpMeterKgCapability`.
+
+### Baseline
+
+- Branch `spec/current-sensing-capability`, derivada de `main`.
+- Alterações preexistentes e não relacionadas na árvore de trabalho preservadas
+  fora do delta desta transação.
+
+### Fontes criadas ou alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md` (criada);
+- `docs/rfc/KNOWLEDGE-MAP.md` (fonte normativa e cobertura);
+- `docs/rfc/EKM-CHANGELOG.md` (esta transação).
+
+### Decisões incorporadas
+
+`CUR-DEC-001` a `CUR-DEC-009`: recorte exclusivo de corrente contínua; sem
+persistência da calibração de zero; critério de publicação pelo precedente
+`GlpMeterKgCapability`; identidade por `resolveIdentity`; fábrica, builder e
+`SmartSysApp` no recorte em forma aditiva; nome `ACS712C30ACurrentSensor`;
+nenhum artefato de teste no recorte; nenhuma exigência de canal ou faixa
+específica de pino analógico; `CURRENT_SENSOR_TYPE` igual a
+`"Current Sensor (A)"`.
+
+### Restrições
+
+Transação exclusivamente documental. Nenhum código, build, workflow, teste,
+environment ou comportamento de runtime foi alterado. Os cálculos elétricos
+estão descritos de forma autossuficiente na seção 6 da especificação, sem
+depender de leitura de código.
+
+### Validações requeridas
+
+- `git diff --check`: aprovado;
+- delta restrito à especificação criada, ao mapa de conhecimento e a este
+  changelog;
+- relações normativas confrontadas com `PUBLIC-API-COMPATIBILITY` e
+  `CORE-RUNTIME-LIFECYCLE`, ambas preservadas.
+
+### Resultado
+
+A especificação `IOTSSC-CURRENT-SENSOR` foi registrada na versão 0.1 em
+`Draft`, com implementação `Not Started` e revisão de implementabilidade
+`Pending Review`. Nenhuma implementação foi autorizada ou iniciada.
+
+A análise formal
+`docs/reports/2026-08-26T223239Z-0.1-af120342-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect` por ausência de
+tolerância objetiva em CUR-AC-004. O Arquiteto respondeu ao bloqueador e
+autorizou a versão 0.2 em `EKM-CHG-0043`.
+
 ## EKM-CHG-0035 — Autoria da especificação do console de tela
 
 **Estado:** Closed — ciclo da versão 0.3 validado em `EKM-CHG-0042`
@@ -2468,3 +2530,500 @@ integrada.
 Com a integração em estado terminal, a entrega é promovida de Pronta para
 integração [`Ready for Integration`] para Concluída [`Done`] e esta transação é
 encerrada.
+
+## EKM-CHG-0043 — Autoria da especificação de corrente fotovoltaica 0.2
+
+**Estado:** Superseded — versão 0.2 substituída pelo Draft 0.3
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.2`
+
+### Objetivo
+
+Incorporar a decisão do Arquiteto que substitui CUR-AC-004 por CUR-DC-004,
+delimita a medição entre painel fotovoltaico e entrada do buck e contrata dois
+perfis configuráveis do ACS712-30A, com estados explícitos de medição e
+alimentação.
+
+### Baseline
+
+- Branch `spec/current-sensing-capability`, derivada de `main`.
+- Árvore limpa no início da atuação.
+- Relatório de análise 0.1 preservado como histórico imutável.
+
+### Decisões incorporadas
+
+- perfis `ACS712_30A_5V` (`MANUFACTURER_SUPPORTED`) e
+  `ACS712_30A_3V3` (`PROJECT_VALIDATED`), com sensibilidades iniciais de
+  `43,05 mV/A` e `43,56 mV/A`;
+- cálculo referido ao ADC, aquecimento inicial de 60 segundos, recalibração com
+  2 segundos de acomodação e zero separado da configuração nominal;
+- faixa calibrada de `0,50–15,00 A` em magnitude, erro
+  `max(0,10 A; 5%)`, faixa morta de `0,05 A`, estabilidade e resposta;
+- envelope indivisível com estados de medição e alimentação, incluindo
+  `NOT_MONITORED`, sobrefaixa e saturação sem valor numérico válido;
+- API aditiva `app.addCurrentSensor(CurrentSensorConfig)`, com adapter e
+  capability pertencentes à aplicação e ponteiro retornado não proprietário,
+  conforme o padrão vigente;
+- validação separada por perfil, incluindo `15,00 A`, `−0,50 A`, `−5,00 A` e
+  injeção instrumental acima de 15 A;
+- nenhum artefato de teste automatizado integra o recorte.
+
+### Lacunas
+
+`EKM-GAP-0012` consolida `CUR-GAP-001` a `CUR-GAP-006`: valores de
+`maximumZeroDeviationMv`, `adcMaximumMv` e `sampleIntervalUs`; representação da
+faixa estimada; alcance de conflitos de GPIO; e representação textual do
+envelope. Todas são bloqueantes antes de nova análise de implementabilidade.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.2;
+- baseline de ownership e falha confrontada com
+  `PUBLIC-API-COMPATIBILITY`;
+- ciclo, oito slots e configuração prévia confrontados com
+  `CORE-RUNTIME-LIFECYCLE`;
+- nenhum build, teste, upload ou validação física iniciado, por se tratar de
+  atuação documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.2` permaneceu `Draft`, `Not Started` e
+`Pending Review`. CUR-DC-004 responde ao bloqueador da análise 0.1, mas a versão
+não é elegível à implementação enquanto `EKM-GAP-0012` permanecer aberto.
+
+A análise formal
+`docs/reports/2026-08-27T005456Z-0.2-f5d3f2a4-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect` e confirmou os
+seis bloqueadores consolidados em `EKM-GAP-0012`. O Arquiteto decidiu seus
+contratos e autorizou a versão 0.3 em `EKM-CHG-0044`.
+
+## EKM-CHG-0044 — Autoria da especificação de corrente fotovoltaica 0.3
+
+**Estado:** Superseded — versão 0.3 substituída pelo Draft 0.4
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.3`
+
+### Objetivo
+
+Incorporar as decisões normativas do Arquiteto que respondem integralmente ao
+relatório de implementabilidade 0.2, preservando a versão 0.2 e seu relatório
+como histórico e sem alterar código de produção ou testes.
+
+### Decisões incorporadas
+
+- target inicial ESP32 clássico, com `FULL_RANGE` resolvida como `ADC_11db`,
+  faixa utilizável de `150–3100 mV`, `sampleIntervalUs = 1000` e
+  `maximumZeroDeviationMv = 100`, aplicáveis aos dois perfis elétricos;
+- `adcMinimumMv` adicionado ao contrato e ausência de herança silenciosa desses
+  limites por ESP32-C3, ESP32-C6, ESP32-S3 ou outro SoC;
+- aquisição e calibração incrementais, com no máximo uma leitura ADC por
+  oportunidade elegível de `handle()`, sem espera ativa ou lote bloqueante;
+- estados públicos `NOT_READY` e `ESTIMATED`, separando presença de valor
+  numérico de garantia contratada de exatidão;
+- rejeição de conflitos limitada aos sensores de corrente da mesma instância,
+  às capacidades e reservas do target e ao identificador já usado por qualquer
+  capability, sem registro central transversal de GPIO;
+- envelope textual UTF-8 em JSON compacto normalizado, com ordem fixa, três
+  casas decimais, tokens estáveis, `null` e comparação byte a byte.
+
+### Reconciliação
+
+`EKM-GAP-0012` foi encerrada: `CUR-DEC-012` a `CUR-DEC-016` substituem os seis
+parâmetros ou contratos pendentes da versão 0.2. A relação normativa passa a
+`Corrects` em relação à versão 0.2. Os relatórios de análise 0.1 e 0.2
+permanecem imutáveis. `PUBLIC-API-COMPATIBILITY` e
+`CORE-RUNTIME-LIFECYCLE` continuam preservadas pela extensão aditiva, ownership
+vigente, limite de oito slots, configuração prévia e aquisição cooperativa.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências e limites
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.3;
+- integridade e rastreabilidade documentais confrontadas com a baseline;
+- nenhum código, teste, build, upload ou validação física iniciado, por se
+  tratar de atuação exclusivamente documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.3` permaneceu `Draft`, `Not Started` e `Pending Review`.
+A especificação foi encaminhada para nova análise formal de implementabilidade;
+nenhuma implementação está autorizada antes de classificação `Ready` aplicável
+à versão 0.3 e ordem explícita posterior do Arquiteto.
+
+A análise formal
+`docs/reports/2026-08-27T011809Z-0.3-0c86c4a9-implementability-analysis.md`
+classificou a versão como `Not Ready — Specification Defect`: faltavam o estado
+da alimentação antes da primeira amostra válida e a transição observável após
+calibração de zero inválida. O Arquiteto decidiu esses contratos, revogou o JSON
+dentro de `value` e autorizou a versão 0.4 em `EKM-CHG-0045`.
+
+## EKM-CHG-0045 — Autoria da especificação de corrente fotovoltaica 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.4`
+
+### Objetivo
+
+Incorporar as decisões normativas do Arquiteto que respondem ao relatório de
+implementabilidade 0.3 e preservam `ICapability::value` como contrato escalar,
+mantendo as versões e relatórios anteriores como histórico imutável e sem
+alterar código de produção ou testes.
+
+### Decisões incorporadas
+
+- `UNKNOWN` representa alimentação monitorável ainda sem amostra válida e
+  mantém o valor escalar vazio;
+- `CALIBRATING` representa acomodação e amostragem de zero;
+  `ZERO_CALIBRATION_FAILED` representa zero rejeitado, mantém o valor vazio e
+  impede uso do zero anterior até calibração válida ou reinício;
+- `ICapability::value` e `CapabilityStateChanged::value` permanecem
+  `std::string` escalares: corrente disponível usa três casas decimais e estados
+  sem valor usam string vazia; nenhuma string JSON é armazenada em `value`;
+- `CapabilityStateChanged` recebe `measurementStatus` e `supplyStatus`
+  opcionais sem invalidar campos, assinaturas ou construtores existentes;
+- serializadores e sink acrescentam os estados somente quando presentes;
+  capabilities existentes não recebem estados sintéticos nem mudam seus
+  eventos;
+- detecção de mudança da capability de corrente usa conjuntamente `value` e os
+  dois estados;
+- o anúncio geral permanece em seu formato atual, sem os estados operacionais.
+
+### Reconciliação
+
+`EKM-GAP-0013` registra e encerra os dois bloqueadores da análise 0.3. A decisão
+de JSON interno da versão anterior foi expressamente revogada. A relação
+normativa passa a `Corrects` em relação à versão 0.3. `PUBLIC-API-COMPATIBILITY`
+é preservada pelos campos opcionais e pela manutenção integral dos contratos
+preexistentes; `CORE-RUNTIME-LIFECYCLE` permanece preservada pela aquisição
+cooperativa e pelos oito slots vigentes.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Evidências e limites
+
+- decisões explícitas do Arquiteto incorporadas ao Draft 0.4;
+- evento e serializadores vigentes confrontados para preservar campos,
+  construtores, `capability_name`, `value` e anúncio;
+- nenhum código, teste, build, upload ou validação física iniciado, por se
+  tratar de atuação exclusivamente documental.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.4` permanece `Draft`, `Not Started` e `Pending Review`.
+A especificação foi encaminhada para nova análise formal de implementabilidade;
+nenhuma implementação está autorizada antes de classificação `Ready` aplicável
+à versão 0.4 e ordem explícita posterior do Arquiteto.
+
+O relatório formal
+`docs/reports/2026-08-27T015112Z-0.4-5f4b0c45-implementability-analysis.md`
+classificou a versão 0.4 como `Ready`, descartou os dois bloqueadores da versão
+0.3 e tornou a revisão elegível à ordem explícita de implementação registrada
+em `EKM-CHG-0046`.
+
+## EKM-CHG-0046 — Implementação da leitura de corrente fotovoltaica 0.4
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.4`
+
+### Objetivo
+
+Implementar integralmente a versão 0.4 classificada como `Ready`, preservando o
+runtime Arduino/ESP32, o valor escalar e os consumidores existentes, sem criar
+testes automatizados nem executar operações físicas não autorizadas.
+
+### Implementação
+
+- adicionados os tipos públicos, dois perfis elétricos, `ICurrentSensor`, o
+  adapter `ACS712C30ACurrentSensor` e `CurrentSensorCapability`;
+- implementadas máquinas cooperativas de aquecimento, calibração, recalibração
+  e leitura, com ADC calibrado em mV, média, filtro, faixas, saturação, estados
+  assinados e monitor opcional da alimentação;
+- `CapabilityStateChanged` e `MqttSink` passaram a emitir os dois estados apenas
+  quando presentes, mantendo construtores, `value`, payload legado e anúncio;
+- `CapabilitiesBuilder` e `SmartSysApp::addCurrentSensor()` implementam
+  validação completa, conflitos locais, ownership, identidade e rollback sem
+  registro parcial; a destruição da aplicação libera os objetos da arena;
+- o target rejeita SoCs não contratados e reserva ADC2 por conflito com o Wi-Fi
+  do runtime, usando ADC1 e `ADC_11db` no ESP32 clássico;
+- corrigida a configuração efetiva de C++17: `build_unflags` deixou de remover
+  o mesmo `-std=gnu++17` declarado em `build_flags`.
+
+### Evidências e limites
+
+- `git diff --check`: aprovado;
+- primeiro `pio run -e esp32_dev`: `FAILED` (código 1), revelando remoção
+  indevida de C++17; causa corrigida no recorte;
+- build intermediário: `SUCCESS` (código 0, 25,683 s);
+- build final `pio run -e esp32_dev`: `SUCCESS` (código 0, 11,552 s), RAM
+  `81244/327680` e flash `1829269/2031616` bytes;
+- nenhum teste automatizado foi criado ou executado, conforme o recorte;
+- validações físicas e instrumentadas, upload, monitor, release e deploy não
+  foram executados e permanecem `Not Executed` quando aplicáveis.
+
+O relatório
+`docs/reports/2026-08-27T021250Z-0.4-968b321a-implementation-report.md`
+registra decisões locais, evidências e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.4` permanece `Draft`, passa a `Implemented` e conserva
+a entrega `Not Applicable`. A análise aplicável é `Ready`; o resultado foi
+encaminhado à revisão técnica, sem declaração de conclusão ou integração.
+
+## EKM-CHG-0047 — Autoria e análise da correção 0.5 da corrente fotovoltaica
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.5`
+
+### Objetivo
+
+Corrigir a omissão da autoria 0.4, que contratou a capability de corrente sem
+contratar seu exemplo executável, preservando integralmente comportamento,
+contratos públicos, estados, faixas e critérios já implementados.
+
+### Decisões incorporadas
+
+- `CUR-DEC-019`: o consumo da capability passa a ser demonstrado pelo exemplo
+  `current_sensor` na MCB R1, com o símbolo oficial `ITS_MCB01_J4_EXT_ADC`;
+- `CUR-DEC-020`: o environment versionado usa o perfil de 3,3 V e mantém o
+  perfil de 5 V selecionável em build time;
+- `CUR-DEC-021`: o exemplo não monitora a alimentação, permanecendo em
+  `NOT_MONITORED` sem afirmar exatidão contratada;
+- `CUR-DEC-022`: a recalibração é demonstrada somente por estímulo local no
+  monitor serial.
+
+A correção acrescenta `CUR-046` a `CUR-054`, `CUR-AC-015` a `CUR-AC-017` e a
+relação normativa com `IOTSSC-HW-EXAMPLES`, cujo contrato de catálogo, pinout e
+seleção por environment é herdado sem alteração.
+
+### Análise de implementabilidade
+
+O relatório
+`docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`
+classificou a versão 0.5 como `Ready`, sem bloqueadores, reconciliando as
+restrições não bloqueantes do relatório 0.4 e confirmando que `HWEX-023` não é
+acionado porque o pinout declara símbolo inequívoco de entrada analógica.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+## EKM-CHG-0048 — Implementação do exemplo executável de corrente fotovoltaica
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.5`
+
+### Objetivo
+
+Implementar `CUR-046` a `CUR-054` após a classificação `Ready` da versão 0.5 e
+ordem explícita do Arquiteto, sem alterar a capability, o runtime, os exemplos
+preexistentes ou o build padrão.
+
+### Implementação
+
+- criado `examples/executable/current_sensor/` com aplicação Arduino única e
+  README completo, consumindo apenas a API pública e os acessos não
+  proprietários da capability;
+- o sinal usa exclusivamente `ITS_MCB01_J4_EXT_ADC`; o perfil elétrico, o
+  identificador da capability e a cadência de apresentação vêm do environment;
+- `src/ExecutableExampleRunner.cpp` recebeu o seletor exclusivo
+  `IOTSMARTSYS_EXAMPLE_CURRENT_SENSOR`;
+- `configs/executable_examples.ini` recebeu `example_current_sensor_mcb_r1` com
+  o perfil de 3,3 V;
+- `examples/README.md` incorporou o exemplo ao catálogo.
+
+### Evidências e limites
+
+- `pio run -e example_current_sensor_mcb_r1`: `SUCCESS` (código 0, 25,969 s);
+- `pio run -e esp32_dev`: `SUCCESS` (código 0, 26,792 s);
+- `pio run -e example_basic_light_mcb_r1`: `SUCCESS` (código 0, 25,768 s);
+- exatamente um `setup()` e um `loop()` no firmware do exemplo;
+- `pio project config --json-output` e `git diff --check`: aprovados;
+- upload, monitor, hardware e validação física não foram executados e
+  permanecem `Not Executed`; nenhum teste automatizado foi criado ou executado.
+
+O relatório
+`docs/reports/2026-08-27T131541Z-0.5-892dccb7-implementation-report.md`
+registra decisões locais, evidências e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.5` permanece `Draft`, com implementação `Implemented` e
+entrega `Not Applicable`. O resultado foi encaminhado à revisão técnica, sem
+declaração de conclusão ou integração.
+
+## EKM-CHG-0049 — Autoria da cadência configurável da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Corrigir a ausência de contrato para o intervalo de avaliação da capability de
+corrente, preservando a aquisição cooperativa do adapter e a compatibilidade das
+APIs preexistentes.
+
+### Decisões incorporadas
+
+- `CurrentSensorConfig` recebe `capabilityEvaluationIntervalMs`, estritamente
+  positivo e com default de `1000 ms`;
+- o timestamp da última avaliação permanece estado privado da capability e não
+  integra a configuração pública;
+- a primeira avaliação é imediata e as posteriores respeitam o intervalo
+  configurado, atualizando o timestamp mesmo sem publicação;
+- `ICurrentSensor::handle()` continua sendo acionado em todo ciclo,
+  independentemente da elegibilidade da avaliação.
+- o construtor público preexistente da capability permanece válido com default
+  de `1000 ms`, enquanto o registro por `CurrentSensorConfig` transfere o valor
+  configurado por caminho aditivo.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.6` permanece `Draft`, com implementação `Not Started`,
+entrega `Not Applicable` e revisão de implementabilidade `Pending Review`. A
+versão 0.5 e suas evidências permanecem históricas. Nenhum código de produção,
+teste ou configuração de build foi alterado nesta transação.
+
+## EKM-CHG-0050 — Análise de implementabilidade da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Confrontar integralmente a versão 0.6, sua cadência configurável, a baseline
+Arduino/ESP32, a compatibilidade pública e os achados anteriores.
+
+### Resultado
+
+Classificação **Pronta** [`Ready`], sem bloqueadores. O relatório
+`docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`
+registra a cobertura, o challenge, a reconciliação anterior e quatro restrições
+não bloqueantes. A especificação permanece `Draft`, com implementação
+`Not Started` e entrega `Not Applicable`; esta análise não autoriza
+implementação, conclusão ou integração.
+
+## EKM-CHG-0051 — Implementação da cadência configurável da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Implementar `capabilityEvaluationIntervalMs` e CUR-055 a CUR-058 após a análise
+formal `Ready` e a ordem explícita do Arquiteto, preservando a aquisição
+cooperativa e as APIs públicas preexistentes.
+
+### Implementação
+
+- `CurrentSensorConfig` recebeu ao final do aggregate o intervalo de avaliação,
+  com default de `1000 ms`, preservando inicializações posicionais existentes;
+- o builder rejeita intervalo zero e transfere a configuração para a capability;
+- o construtor público de três argumentos permanece válido com default de
+  `1000 ms`, acompanhado por sobrecarga aditiva;
+- `ICurrentSensor::handle()` continua executando em todo ciclo, enquanto a
+  avaliação ocorre imediatamente na primeira oportunidade e depois somente
+  quando o intervalo decorre;
+- o timestamp é atualizado em cada avaliação elegível, mesmo quando o envelope
+  normalizado não muda e nenhum evento é publicado.
+
+### Evidências e limites
+
+- `pio run -e esp32_dev`: `SUCCESS` (código 0, 26,661 s);
+- `pio run -e example_current_sensor_mcb_r1`: `SUCCESS` (código 0, 11,302 s);
+- `git diff --check`: aprovado;
+- CUR-AC-018, upload, monitor e hardware permanecem `Not Executed`;
+- nenhum teste automatizado foi criado ou executado, conforme o recorte da
+  validação instrumentada estabelecido pela especificação.
+
+O relatório
+`docs/reports/2026-08-27T173207Z-0.6-0b22fd5d-implementation-report.md`
+registra decisões locais, evidências, rastreabilidade e limitações da atuação.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.6` permanece `Draft`, com implementação `Implemented`,
+entrega `Not Applicable` e análise de implementabilidade `Ready`. O resultado
+foi encaminhado à revisão técnica, sem declaração de validação, conclusão ou
+integração.
+
+## EKM-CHG-0052 — Validação final da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Registrar a validação física e a decisão final do Arquiteto, confrontar a
+composição versionada e promover a versão 0.6 para integração à referência de
+produção.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter executado todas as validações em
+hardware e considerado o funcionamento satisfatório. A confirmação cobre os
+meios físicos e instrumentados de CUR-AC-003, CUR-DC-004, CUR-AC-005 a
+CUR-AC-010, CUR-AC-012 a CUR-AC-014, CUR-AC-017 e CUR-AC-018, nos dois perfis
+contratados. A suficiência dessas evidências e a decisão de encerramento são do
+Arquiteto; esta transação não alega reexecução dos ensaios.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, atuando como par do Arquiteto e sem alegação de
+independência, confrontou especificação, implementação e evidências sem
+identificar defeito bloqueante. Em worktree limpa,
+`pio run -e example_current_sensor_mcb_r1` alcançou `SUCCESS` com código 0 em
+36,879 s. `pio run -e esp32_dev` alcançou `SUCCESS` com código 0 em 23,972 s
+depois de materializado o `src/main.cpp` local esperado pela baseline.
+
+Duas tentativas anteriores do build padrão terminaram `FAILED` no link pela
+ausência de `setup()` e `loop()`: `src/main.cpp` é deliberadamente ignorado e
+não acompanha uma worktree Git limpa. A falha foi preservada como característica
+da baseline; não foi causada pelo recorte de corrente. Uma invocação paralela
+também produziu aviso de limpeza do diretório temporário. `git diff --check` foi
+aprovado para a composição versionada.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `Implemented` → Validada [`Validated`];
+- estado da entrega: `Not Applicable` → Pronta para integração
+  [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-27T181748Z-0.6-fedc95ec-final-validation-report.md`
+registra a evidência, a confrontação e seus limites. A integração à `main`
+permanece autorizada na mesma ordem do Arquiteto e será registrada após chegar
+a estado terminal.

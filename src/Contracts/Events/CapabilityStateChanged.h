@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 namespace iotsmartsys::core
@@ -11,6 +12,8 @@ namespace iotsmartsys::core
         std::string device_id;
         std::string value;
         std::string type;
+        std::optional<std::string> measurementStatus;
+        std::optional<std::string> supplyStatus;
 
         CapabilityStateChanged() {}
         CapabilityStateChanged(const char *capability_name, const char *value, const char *type)
@@ -27,7 +30,17 @@ namespace iotsmartsys::core
 
         std::string toJson()
         {
-            std::string payload = "{ \"device_id\":\"" + device_id + "\",\"capability_name\":\"" + capability_name + "\",\"value\":\"" + value + "\",\"type\":\"" + type + "\"}";
+            std::string payload = "{ \"device_id\":\"" + device_id + "\",\"capability_name\":\"" + capability_name + "\",\"value\":\"" + value + "\",\"type\":\"" + type + "\"";
+
+            if (measurementStatus)
+            {
+                payload += ",\"measurementStatus\":\"" + *measurementStatus + "\"";
+            }
+            if (supplyStatus)
+            {
+                payload += ",\"supplyStatus\":\"" + *supplyStatus + "\"";
+            }
+            payload += "}";
 
             return payload;
         }

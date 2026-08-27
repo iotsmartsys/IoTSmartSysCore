@@ -7,6 +7,7 @@
 #include "Contracts/Sensors/IWaterLevelSensor.h"
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
 #include "Contracts/Sensors/IColorSensor.h"
+#include "Contracts/Sensors/ICurrentSensor.h"
 
 namespace iotsmartsys::core
 {
@@ -40,6 +41,16 @@ namespace iotsmartsys::core
         virtual std::size_t waterLevelSensorAdapterAlign() const = 0;
         virtual IWaterLevelSensor *createWaterLevelSensor(void *mem, std::uint8_t trigPin, std::uint8_t echoPin, float minLevelCm, float maxLevelCm, core::WaterLevelRecipentType recipentType) = 0;
         virtual AdapterDestructor waterLevelSensorAdapterDestructor() const = 0;
+
+        // Current sensor extension. Defaults preserve existing factory
+        // implementations that do not support the contracted ESP32 target.
+        virtual bool currentSensorTargetSupported() const { return false; }
+        virtual bool currentSensorPinHasAdc(int) const { return false; }
+        virtual bool currentSensorPinReserved(int) const { return true; }
+        virtual std::size_t currentSensorAdapterSize() const { return 0; }
+        virtual std::size_t currentSensorAdapterAlign() const { return 0; }
+        virtual ICurrentSensor *createCurrentSensor(void *, const CurrentSensorConfig &) { return nullptr; }
+        virtual AdapterDestructor currentSensorAdapterDestructor() const { return nullptr; }
 
         // IColorSensor
         // virtual std::size_t colorSensorAdapterSize() const = 0;

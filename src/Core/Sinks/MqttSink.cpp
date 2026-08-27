@@ -18,7 +18,16 @@ namespace iotsmartsys::core
         }
 
         std::string topic = currentSettings.mqtt.notify_topic;
-        std::string payload = "{ \"device_id\":\"" + std::string(currentSettings.clientId) + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"}";
+        std::string payload = "{ \"device_id\":\"" + std::string(currentSettings.clientId) + "\",\"capability_name\":\"" + ev.capability_name + "\",\"value\":\"" + ev.value + "\",\"type\":\"" + ev.type + "\"";
+        if (ev.measurementStatus)
+        {
+            payload += ",\"measurementStatus\":\"" + *ev.measurementStatus + "\"";
+        }
+        if (ev.supplyStatus)
+        {
+            payload += ",\"supplyStatus\":\"" + *ev.supplyStatus + "\"";
+        }
+        payload += "}";
 
         mqttClient.publish(topic.c_str(),
                            payload.c_str(),

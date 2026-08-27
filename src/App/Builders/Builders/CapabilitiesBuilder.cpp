@@ -3,6 +3,7 @@
 #include "Platform/Arduino/Interpreters/ValveHardwareCommandInterpreter.h"
 
 #include <cstring>
+#include <cmath>
 
 namespace iotsmartsys::app
 {
@@ -38,6 +39,8 @@ namespace iotsmartsys::app
         _count = 0;
         _adaptersCount = 0;
         _arenaOffset = 0;
+        _currentSensorPinCount = 0;
+        _currentSensorIdCount = 0;
     }
 
     void CapabilitiesBuilder::reset()
@@ -143,6 +146,21 @@ namespace iotsmartsys::app
             return false;
         }
 
+        for (size_t i = 0; i < _currentSensorIdCount; ++i)
+        {
+            if (_currentSensorIds[i] == outName)
+            {
+                if (logger)
+                {
+                    logger->error("CAP_BUILDER",
+                                  "Rejected capability name '%s': it is already used by a current sensor; nothing was registered.",
+                                  outName.c_str());
+                }
+                outName.clear();
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -180,6 +198,201 @@ namespace iotsmartsys::app
         _adapterDestructors[_adaptersCount] = destructor;
         _adaptersCount++;
         return true;
+    }
+
+    bool CapabilitiesBuilder::capabilityIdentityInUse(const std::string &name) const
+    {
+        for (size_t i = 0; i < _count; ++i)
+        {
+            if (_caps[i] && _caps[i]->capability_name == name)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool CapabilitiesBuilder::currentSensorPinInUse(int pin) const
+    {
+        for (size_t i = 0; i < _currentSensorPinCount; ++i)
+        {
+            if (_currentSensorPins[i] == pin)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool CapabilitiesBuilder::validateCurrentSensorConfig(const iotsmartsys::core::CurrentSensorConfig &cfg) const
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto reject = [logger, &cfg](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "Current sensor '%s' rejected: %s; nothing was registered.",
+                              cfg.id.c_str(),
+                              reason);
+            }
+            return false;
+        };
+
+        if (!_factory.currentSensorTargetSupported())
+            return reject("target is not ESP32 classic");
+        if (cfg.id.empty())
+            return reject("id is required");
+        if (cfg.id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
+            cfg.id.find('\0') != std::string::npos)
+            return reject("id is not a valid public capability identity");
+        if (cfg.adcResolutionBits != 12 ||
+            cfg.adcAttenuation != iotsmartsys::core::CurrentSensorAdcAttenuation::FULL_RANGE)
+            return reject("unsupported ADC profile");
+        if (cfg.adcMinimumMv < 0.0f || cfg.adcMaximumMv <= cfg.adcMinimumMv)
+            return reject("invalid ADC limits");
+        if (cfg.supplyNominalMv <= 0.0f ||
+            cfg.supplyValidMinimumMv <= 0.0f ||
+            cfg.supplyValidMaximumMv < cfg.supplyValidMinimumMv ||
+            cfg.supplyNominalMv < cfg.supplyValidMinimumMv ||
+            cfg.supplyNominalMv > cfg.supplyValidMaximumMv)
+            return reject("invalid supply profile");
+        if (cfg.outputToAdcRatio <= 0.0f || cfg.supplyMonitorToVccRatio <= 0.0f)
+            return reject("invalid voltage ratio");
+        if (cfg.nominalZeroAdcMv <= cfg.adcMinimumMv ||
+            cfg.nominalZeroAdcMv >= cfg.adcMaximumMv ||
+            cfg.sensitivityAdcMvPerA <= 0.0f || cfg.maximumZeroDeviationMv < 0.0f)
+            return reject("invalid zero or sensitivity");
+        if (cfg.polarity != 1.0f && cfg.polarity != -1.0f)
+            return reject("polarity must be +1 or -1");
+        if (cfg.zeroCalibrationSamples == 0 || cfg.samplesPerReading == 0 ||
+            cfg.sampleIntervalUs == 0 || cfg.readingIntervalMs == 0 ||
+            cfg.capabilityEvaluationIntervalMs == 0)
+            return reject("sampling parameters must be positive");
+        if (!(cfg.lowPassAlpha > 0.0f && cfg.lowPassAlpha <= 1.0f))
+            return reject("lowPassAlpha must be in (0,1]");
+        if (cfg.deadbandA < 0.0f || cfg.minimumReportableA < 0.0f ||
+            cfg.calibratedMinimumA < 0.0f ||
+            cfg.calibratedMaximumA < cfg.calibratedMinimumA ||
+            cfg.physicalMinimumA >= 0.0f || cfg.physicalMaximumA <= 0.0f ||
+            cfg.calibratedMaximumA > std::fabs(cfg.physicalMinimumA) ||
+            cfg.calibratedMaximumA > cfg.physicalMaximumA)
+            return reject("invalid current ranges");
+        if (cfg.maximumAbsoluteErrorA < 0.0f || cfg.maximumRelativeErrorPercent < 0.0f)
+            return reject("invalid accuracy limits");
+        if (!_factory.currentSensorPinHasAdc(cfg.adcPin))
+            return reject("adcPin has no ADC capability");
+        if (_factory.currentSensorPinReserved(cfg.adcPin))
+            return reject("adcPin is reserved by the target runtime");
+        if (cfg.supplyMonitorAdcPin >= 0)
+        {
+            if (cfg.supplyMonitorAdcPin == cfg.adcPin)
+                return reject("adcPin and supplyMonitorAdcPin must differ");
+            if (!_factory.currentSensorPinHasAdc(cfg.supplyMonitorAdcPin))
+                return reject("supplyMonitorAdcPin has no ADC capability");
+            if (_factory.currentSensorPinReserved(cfg.supplyMonitorAdcPin))
+                return reject("supplyMonitorAdcPin is reserved by the target runtime");
+        }
+        if (currentSensorPinInUse(cfg.adcPin) ||
+            (cfg.supplyMonitorAdcPin >= 0 && currentSensorPinInUse(cfg.supplyMonitorAdcPin)))
+            return reject("ADC GPIO is already used by another current sensor");
+        if (capabilityIdentityInUse(cfg.id))
+            return reject("capability id is already registered");
+        return true;
+    }
+
+    iotsmartsys::core::CurrentSensorCapability *CapabilitiesBuilder::addCurrentSensor(
+        const iotsmartsys::core::CurrentSensorConfig &cfg)
+    {
+        if (!validateCurrentSensorConfig(cfg))
+        {
+            return nullptr;
+        }
+
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto fail = [logger, &cfg](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "Current sensor '%s' registration failed: %s; nothing was registered.",
+                              cfg.id.c_str(),
+                              reason);
+            }
+            return static_cast<iotsmartsys::core::CurrentSensorCapability *>(nullptr);
+        };
+        if (_count >= _capsMax)
+            return fail("capability slots exhausted");
+        if (_adaptersCount >= _adaptersMax)
+            return fail("adapter slots exhausted");
+
+        std::string name;
+        if (!resolveIdentity(cfg.id.c_str(), CURRENT_SENSOR_TYPE, name))
+        {
+            return nullptr;
+        }
+
+        const size_t originalArenaOffset = _arenaOffset;
+        const size_t adapterSize = _factory.currentSensorAdapterSize();
+        const size_t adapterAlign = _factory.currentSensorAdapterAlign();
+        auto adapterDtor = _factory.currentSensorAdapterDestructor();
+        if (adapterSize == 0 || adapterAlign == 0 || !adapterDtor)
+        {
+            return fail("current sensor factory is unavailable");
+        }
+
+        void *adapterMemory = allocateAligned(adapterSize, adapterAlign);
+        if (!adapterMemory)
+        {
+            return fail("arena has insufficient space for adapter");
+        }
+        auto *sensor = _factory.createCurrentSensor(adapterMemory, cfg);
+        if (!sensor)
+        {
+            _arenaOffset = originalArenaOffset;
+            return fail("adapter construction failed");
+        }
+
+        void *capabilityMemory = allocateAligned(sizeof(iotsmartsys::core::CurrentSensorCapability),
+                                                 alignof(iotsmartsys::core::CurrentSensorCapability));
+        if (!capabilityMemory)
+        {
+            adapterDtor(sensor);
+            _arenaOffset = originalArenaOffset;
+            return fail("arena has insufficient space for capability");
+        }
+        auto *capability = new (capabilityMemory) iotsmartsys::core::CurrentSensorCapability(
+            name, *sensor, &_eventSink, cfg.capabilityEvaluationIntervalMs);
+        auto capabilityDtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::CurrentSensorCapability *>(p)->~CurrentSensorCapability();
+        };
+
+        if (!registerAdapter(sensor, adapterDtor))
+        {
+            capabilityDtor(capability);
+            adapterDtor(sensor);
+            _arenaOffset = originalArenaOffset;
+            return fail("adapter slot registration failed");
+        }
+        if (!registerCapability(capability, capabilityDtor))
+        {
+            _adaptersCount--;
+            _adapters[_adaptersCount] = nullptr;
+            _adapterDestructors[_adaptersCount] = nullptr;
+            capabilityDtor(capability);
+            adapterDtor(sensor);
+            _arenaOffset = originalArenaOffset;
+            return fail("capability slot registration failed");
+        }
+
+        _currentSensorPins[_currentSensorPinCount++] = cfg.adcPin;
+        if (cfg.supplyMonitorAdcPin >= 0)
+        {
+            _currentSensorPins[_currentSensorPinCount++] = cfg.supplyMonitorAdcPin;
+        }
+        _currentSensorIds[_currentSensorIdCount++] = cfg.id;
+        return capability;
     }
 
     iotsmartsys::core::ICommandHardwareAdapter *CapabilitiesBuilder::createOutputAdapter(std::uint8_t gpio, bool highIsOn)
