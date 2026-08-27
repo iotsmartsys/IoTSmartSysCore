@@ -2,7 +2,7 @@
 
 **Status:** Active
 
-**Última atualização:** 26/08/2026 (implementação da leitura de corrente 0.4)
+**Última atualização:** 27/08/2026 (autoria da leitura de corrente 0.6)
 
 ## 1. Governança
 
@@ -27,7 +27,7 @@
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
-| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.5 — Ready | Implemented, incluindo o exemplo executável `current_sensor` (`EKM-CHG-0048`) — revisão técnica e validação física/instrumentada pendentes |
+| Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Draft 0.6 — Pending Review | Not Started; 0.5 permanece histórica como Implemented/Ready (`EKM-CHG-0049`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -38,7 +38,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.5` em `Draft`/`Ready`, implementada com exemplo executável e pendente de revisão e validação física/instrumentada |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Draft`/`Pending Review`, com cadência configurável ainda `Not Started` |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -320,3 +320,7 @@ evento. O encerramento não antecipa o resultado da nova análise formal.
   versionado, seletor exclusivo no runner e catálogo atualizado; builds do
   exemplo, do padrão e do catálogo preexistente aprovados, com validação física
   `Not Executed`.
+- `EKM-CHG-0049`: autoria da versão 0.6 de `IOTSSC-CURRENT-SENSOR`, que torna
+  `capabilityEvaluationIntervalMs` configuração pública estritamente positiva,
+  mantém o timestamp de avaliação privado e preserva o `handle()` cooperativo do
+  adapter em todo ciclo; permanece `Draft`/`Not Started`/`Pending Review`.

@@ -4,17 +4,17 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.5
+**Versão:** 0.6
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Não iniciada [`Not Started`]
 
 **Estado da entrega:** Não aplicável [`Not Applicable`]
 
-**Revisão de implementabilidade:** Pronta [`Ready`]
+**Revisão de implementabilidade:** Revisão pendente [`Pending Review`]
 
-**Relação normativa:** Corrige a versão 0.4 [`Corrects`]
+**Relação normativa:** Corrige a versão 0.5 [`Corrects`]
 
 ## 1. Objetivo e contexto
 
@@ -44,6 +44,7 @@ próprio antes de serem considerados suportados.
 - amostragem, média, filtro configurável, faixa morta e cadência;
 - qualificação da medição, da faixa e da alimentação;
 - capability, valor escalar e estados opcionais no evento de mudança;
+- intervalo configurável de avaliação e publicação da capability;
 - extensão aditiva de `CapabilityStateChanged` e do sink de eventos;
 - API pública aditiva `SmartSysApp::addCurrentSensor()`;
 - ownership do adapter e da capability pela aplicação;
@@ -195,6 +196,7 @@ samplesPerReading
 sampleIntervalUs
 lowPassAlpha
 readingIntervalMs
+capabilityEvaluationIntervalMs
 maximumAbsoluteErrorA
 maximumRelativeErrorPercent
 supplyMonitorAdcPin
@@ -206,7 +208,8 @@ supplyMonitorToVccRatio
   inicial `60000 ms`; acomodação de recalibração `2000 ms`; `2000` amostras de
   zero; `500` amostras por leitura; `sampleIntervalUs = 1000`;
   `lowPassAlpha = 1,0`; intervalo entre
-  leituras `500 ms`; faixa morta e mínimo reportável `0,05 A`; faixa calibrada
+  leituras `500 ms`; intervalo de avaliação da capability `1000 ms`; faixa
+  morta e mínimo reportável `0,05 A`; faixa calibrada
   por magnitude de `0,50 A` a `15,00 A`; faixa física de `−30,00 A` a
   `+30,00 A`; erro absoluto `0,10 A`; erro relativo `5,0%`.
 - **CUR-008:** `adcPin` e `id` não possuem default válido. No target ESP32
@@ -317,8 +320,8 @@ I = polaridade ×
 ### 5.7 Capability e API pública
 
 - **CUR-035:** `CurrentSensorCapability` deve derivar de `ICapability`, acionar
-  o adapter em cada ciclo e avaliar a publicação no máximo a cada `1000 ms`,
-  usando o provedor de tempo do runtime.
+  o adapter em cada ciclo de `handle()` e avaliar a publicação conforme a
+  cadência configurada em CUR-055, usando o provedor de tempo do runtime.
 - **CUR-036:** `CURRENT_SENSOR_TYPE` possui o literal `"Current Sensor (A)"`.
 - **CUR-037:** a identidade deve ser resolvida a partir de
   `CurrentSensorConfig.id` e `CURRENT_SENSOR_TYPE`; falha de identidade,
@@ -463,6 +466,32 @@ e não altera nenhum requisito das seções anteriores.
   corrente zero garantida externamente e alimentação estável. Nenhum comando
   remoto de calibração é adicionado por esta versão.
 
+### 5.9 Cadência da capability
+
+- **CUR-055:** `CurrentSensorConfig` deve expor
+  `capabilityEvaluationIntervalMs` como intervalo mínimo configurável entre
+  avaliações consecutivas de publicação. O valor deve ser maior que zero e seu
+  default é `1000 ms`; valor igual a zero constitui configuração inválida e
+  impede registro parcial.
+- **CUR-056:** a primeira avaliação da capability deve ocorrer imediatamente.
+  Depois dela, `publishIfChanged()` somente pode ser avaliado quando tiver
+  transcorrido pelo menos `capabilityEvaluationIntervalMs` desde a avaliação
+  anterior. O timestamp da avaliação deve ser atualizado mesmo quando o
+  envelope normalizado não mudar e nenhum evento for emitido.
+- **CUR-057:** o timestamp da última avaliação, denominado internamente
+  `_lastEvaluationMs` ou equivalente, é estado privado da capability e não
+  integra `CurrentSensorConfig`. A verificação da cadência deve tolerar o
+  rollover do provedor de tempo. `ICurrentSensor::handle()` continua sendo
+  acionado em todo ciclo, inclusive quando a avaliação ainda não estiver
+  elegível, para não degradar amostragem, calibração nem demais estados
+  cooperativos.
+- **CUR-058:** o caminho `SmartSysApp::addCurrentSensor(config)` deve transferir
+  `config.capabilityEvaluationIntervalMs` para a capability. O construtor
+  público preexistente de `CurrentSensorCapability` permanece válido e, quando
+  usado diretamente sem o novo valor, materializa o default de `1000 ms`;
+  overload aditivo é permitido para transportar a configuração sem quebrar
+  consumidores existentes.
+
 ## 6. Perfis elétricos iniciais
 
 ### 6.0 Target `ESP32_CLASSIC_ADC_11DB`
@@ -540,8 +569,10 @@ bancada ou de futuras revisões de hardware.
 5. Após aquecimento com corrente zero e alimentação estável, o adapter calibra o
    zero incrementalmente, com uma leitura ADC por oportunidade elegível, e
    passa a produzir medições pelo mesmo mecanismo cooperativo.
-6. Cada `SmartSysApp::handle()` aciona a capability e o adapter; a capability
-   publica o valor escalar e os estados opcionais em cadência de até `1000 ms`.
+6. Cada `SmartSysApp::handle()` aciona a capability e o adapter. O adapter é
+   processado em todo ciclo; a capability avalia imediatamente na primeira vez
+   e depois respeita `capabilityEvaluationIntervalMs` antes de comparar e
+   publicar o valor escalar e os estados opcionais.
 7. Recalibração solicitada pela capability começa no próximo `handle()` após
    verificar suas pré-condições, publica `CALIBRATING` durante a acomodação de 2
    segundos e a amostragem, e termina em medição normal ou
@@ -566,8 +597,9 @@ saída.
 
 - **Configuração inválida:** campo obrigatório ausente, limite ADC incoerente,
   amostras iguais a zero, razão ou sensibilidade não positiva, polaridade fora
-  de `+1,0` ou `−1,0`, ou `lowPassAlpha` fora de `(0,1]` impede registro
-  parcial e produz diagnóstico.
+  de `+1,0` ou `−1,0`, `lowPassAlpha` fora de `(0,1]` ou
+  `capabilityEvaluationIntervalMs` igual a zero impede registro parcial e
+  produz diagnóstico.
 - **Target ou GPIO inválido:** target não contratado, GPIO sem ADC, reservado,
   repetido no mesmo sensor ou reutilizado por outro sensor de corrente da mesma
   aplicação impede registro; identificador já usado por qualquer capability
@@ -705,11 +737,18 @@ saturado é apresentado como medição válida.
   durante a calibração e, depois, `ESTIMATED` ou `VALID` com `NOT_MONITORED`, e
   o estímulo local produz nova calibração conforme CUR-AC-008. Meio: validação
   física.
+- **CUR-AC-018:** com `capabilityEvaluationIntervalMs = 250`, a primeira
+  avaliação ocorre imediatamente, avaliações posteriores não ocorrem antes de
+  `250 ms`, mudança de estado é publicada na primeira avaliação elegível e o
+  adapter continua recebendo cada chamada de `handle()` durante o intervalo.
+  Configuração igual a zero é rejeitada sem registro parcial; o construtor
+  preexistente permanece válido e usa `1000 ms`. Meio: inspeção e execução
+  instrumentada.
 
 A execução física ou instrumentada de CUR-AC-003, CUR-DC-004,
-CUR-AC-005 a CUR-AC-010, CUR-AC-012 a CUR-AC-014 e CUR-AC-017 exige hardware ou bancada e
-permissão operacional explícita. Enquanto não executada, permanece
-`Not Executed`.
+CUR-AC-005 a CUR-AC-010, CUR-AC-012 a CUR-AC-014, CUR-AC-017 e CUR-AC-018 exige
+hardware, bancada ou instrumentação e permissão operacional explícita. Enquanto
+não executada, permanece `Not Executed`.
 
 ## 11. Testes
 
@@ -721,7 +760,7 @@ suítes exige nova decisão de escopo.
 ## 12. Conhecimento afetado
 
 - `docs/rfc/KNOWLEDGE-MAP.md`: versão e reconciliação das lacunas anteriores;
-- `docs/rfc/EKM-CHANGELOG.md`: autoria e implementação das versões 0.4 e 0.5;
+- `docs/rfc/EKM-CHANGELOG.md`: autoria e implementação das versões 0.4 a 0.6;
 - `examples/README.md`: catálogo executável e novo environment;
 - relatórios de implementabilidade 0.1, 0.2 e 0.3: históricos imutáveis cujos
   bloqueadores foram incorporados às versões posteriores.
@@ -738,7 +777,10 @@ suítes exige nova decisão de escopo.
   adere ao contrato vigente do catálogo, ao pinout normativo da MCB R1 e à
   seleção por environment, sem alterar sua infraestrutura nem seus requisitos.
 
-A versão 0.5 **Corrige** [`Corrects`] a versão 0.4 ao contratar o exemplo
+A versão 0.6 **Corrige** [`Corrects`] a versão 0.5 ao explicitar a cadência
+configurável de avaliação da capability, separar seu intervalo público do
+timestamp privado e preservar o processamento cooperativo do adapter em todos
+os ciclos. A versão 0.5 **Corrigiu** [`Corrects`] a versão 0.4 ao contratar o exemplo
 executável omitido na autoria anterior, sem alterar comportamento, API pública,
 estados, faixas ou critérios já implementados. A versão 0.4 **Corrigiu**
 [`Corrects`] a versão 0.3 ao incorporar as decisões que encerram seus
@@ -803,6 +845,10 @@ contrato próprio desta fonte e não amplia o suporte geral de plataforma.
   estado esperado e a exatidão contratada não é afirmada nessa condição.
 - **CUR-DEC-022:** a recalibração é demonstrada apenas por estímulo local no
   monitor serial, preservando a exclusão de comandos remotos de calibração.
+- **CUR-DEC-023:** `capabilityEvaluationIntervalMs` é configuração pública
+  estritamente positiva, com default de `1000 ms`; o timestamp da última
+  avaliação permanece privado, a primeira avaliação é imediata e a cadência de
+  publicação nunca limita o `handle()` cooperativo do adapter.
 
 As decisões `CUR-DEC-012` a `CUR-DEC-016` encerram no contrato da versão 0.3 as
 lacunas `CUR-GAP-001` a `CUR-GAP-006` registradas na versão 0.2. Não há lacuna
@@ -814,8 +860,18 @@ permanece reservada à nova análise formal.
 
 ## 14. Estado da especificação
 
-Versão 0.5 registrada em `Draft`, com implementação `Implemented` e revisão de
-implementabilidade `Ready` conforme o relatório
+Versão 0.6 registrada em `Draft`, com implementação `Not Started`, entrega
+`Not Applicable` e revisão de implementabilidade `Pending Review`.
+
+A correção 0.6 acrescenta `capabilityEvaluationIntervalMs`, CUR-055 a CUR-058,
+CUR-AC-018 e CUR-DEC-023. A mudança resolve a ausência de contrato para a
+cadência de avaliação, sem expor o timestamp interno nem reduzir a frequência
+do processamento cooperativo do adapter. Nenhum código de produção está
+autorizado antes de análise formal `Ready` aplicável a esta versão e nova ordem
+explícita do Arquiteto.
+
+A versão 0.5 permanece histórica em `Draft`, com implementação `Implemented` e
+revisão de implementabilidade `Ready` conforme o relatório
 `docs/reports/2026-08-27T131108Z-0.5-ae82abb8-implementability-analysis.md`.
 
 A correção 0.5 contrata o exemplo executável omitido na autoria da versão 0.4 e

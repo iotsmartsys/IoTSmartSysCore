@@ -2873,3 +2873,42 @@ registra decisões locais, evidências e limitações da atuação.
 `IOTSSC-CURRENT-SENSOR@0.5` permanece `Draft`, com implementação `Implemented` e
 entrega `Not Applicable`. O resultado foi encaminhado à revisão técnica, sem
 declaração de conclusão ou integração.
+
+## EKM-CHG-0049 — Autoria da cadência configurável da corrente fotovoltaica 0.6
+
+**Estado:** Closed
+
+**Especificação relacionada:** `IOTSSC-CURRENT-SENSOR@0.6`
+
+### Objetivo
+
+Corrigir a ausência de contrato para o intervalo de avaliação da capability de
+corrente, preservando a aquisição cooperativa do adapter e a compatibilidade das
+APIs preexistentes.
+
+### Decisões incorporadas
+
+- `CurrentSensorConfig` recebe `capabilityEvaluationIntervalMs`, estritamente
+  positivo e com default de `1000 ms`;
+- o timestamp da última avaliação permanece estado privado da capability e não
+  integra a configuração pública;
+- a primeira avaliação é imediata e as posteriores respeitam o intervalo
+  configurado, atualizando o timestamp mesmo sem publicação;
+- `ICurrentSensor::handle()` continua sendo acionado em todo ciclo,
+  independentemente da elegibilidade da avaliação.
+- o construtor público preexistente da capability permanece válido com default
+  de `1000 ms`, enquanto o registro por `CurrentSensorConfig` transfere o valor
+  configurado por caminho aditivo.
+
+### Fontes alteradas
+
+- `docs/specs/CURRENT-SENSING-CAPABILITY.md`;
+- `docs/rfc/KNOWLEDGE-MAP.md`;
+- `docs/rfc/EKM-CHANGELOG.md`.
+
+### Resultado
+
+`IOTSSC-CURRENT-SENSOR@0.6` permanece `Draft`, com implementação `Not Started`,
+entrega `Not Applicable` e revisão de implementabilidade `Pending Review`. A
+versão 0.5 e suas evidências permanecem históricas. Nenhum código de produção,
+teste ou configuração de build foi alterado nesta transação.
