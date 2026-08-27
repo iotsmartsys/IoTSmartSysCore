@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -861,7 +861,7 @@ permanece reservada à nova análise formal.
 ## 14. Estado da especificação
 
 Versão 0.6 registrada em `Active`, com implementação `Validated`, entrega
-`Ready for Integration` e revisão de implementabilidade `Ready`, conforme o relatório
+`Done` e revisão de implementabilidade `Ready`, conforme o relatório
 `docs/reports/2026-08-27T172407Z-0.6-841c79da-implementability-analysis.md`.
 
 A correção 0.6 acrescenta `capabilityEvaluationIntervalMs`, CUR-055 a CUR-058,
@@ -893,6 +893,11 @@ Por decisão explícita do Arquiteto, a versão 0.6 passa a Vigente [`Active`], 
 implementação passa a Validada [`Validated`] e a entrega passa a Pronta para
 integração [`Ready for Integration`]. O relatório consultivo é
 `docs/reports/2026-08-27T181748Z-0.6-fedc95ec-final-validation-report.md`.
+
+O recorte validado foi posteriormente integrado e sincronizado em `main`, sem
+incorporar os ajustes locais de bancada que selecionam GPIO33 e o perfil de
+5 V no exemplo. Com a integração em estado terminal, a entrega passa de Pronta
+para integração [`Ready for Integration`] para Concluída [`Done`].
 
 A versão 0.5 permanece histórica em `Draft`, com implementação `Implemented` e
 revisão de implementabilidade `Ready` conforme o relatório

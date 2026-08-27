@@ -3025,5 +3025,17 @@ aprovado para a composição versionada.
 O relatório
 `docs/reports/2026-08-27T181748Z-0.6-fedc95ec-final-validation-report.md`
 registra a evidência, a confrontação e seus limites. A integração à `main`
-permanece autorizada na mesma ordem do Arquiteto e será registrada após chegar
-a estado terminal.
+foi autorizada na mesma ordem do Arquiteto.
+
+### Integração e encerramento
+
+O recorte validado foi integrado e sincronizado em `main`. A composição partiu
+da referência de produção e transportou os commits da leitura de corrente até a
+validação final. Os ajustes locais de bancada que selecionam GPIO33 e o perfil
+de 5 V no exemplo não pertenciam à composição versionada e não foram
+incorporados.
+
+Com a integração em estado terminal, a entrega é promovida de Pronta para
+integração [`Ready for Integration`] para Concluída [`Done`]. A especificação
+permanece `Active`, sua implementação permanece `Validated` e a transação é
+encerrada.
