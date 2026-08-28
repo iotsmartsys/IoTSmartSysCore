@@ -15,6 +15,7 @@ jobs:
         environment:
           - example_basic_light_mcb_r1
           - example_environment_dht_mcb_r1
+          - example_environment_ntc_mcb_r1
     steps:
       - uses: actions/checkout@v4
       - name: Install PlatformIO CLI

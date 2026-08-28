@@ -34,7 +34,7 @@
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
-| Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Draft 0.1 — Pending Review | Not Started; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0005`) |
+| Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Draft 0.1 — Ready | Implemented; revisão técnica e validações instrumentada/física pendentes; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0006`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.

@@ -3,6 +3,52 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0006 — Implementação do sensor de temperatura NTC 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1`
+
+**Objetivo:** implementar integralmente o adapter NTC, configuração, perfis,
+factory, diagnóstico e exemplo executável autorizados pela versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-08-28T025914Z-0.1-0f251e18-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a mesma versão;
+- branch de especificação e árvore inicialmente limpas.
+
+### Resultado
+
+- criado `NtcTemperatureSensor`, com configuração parametrizável, presets
+  100 kΩ B3950 e MF52-103 10 kΩ/B3950, 16 amostras fracionárias, equação Beta,
+  diagnóstico e sentinel exato `-1000.0f`;
+- estendido somente o `SensorFactory` concreto, preservando
+  `ITemperatureSensor`, `TemperatureSensorCapability`, `ISensorFactory` e
+  `TemperatureSensorModel`;
+- criado `environment_ntc` com o GPIO oficial J4 da MCB R1, catálogo,
+  environment, runner exclusivo e matriz de CI reconciliados;
+- estado mecânico da implementação promovido a `Implemented`; estado normativo
+  permanece `Draft` e entrega permanece `Not Ready`.
+
+### Evidências
+
+- `pio run -e esp32_dev -e example_environment_ntc_mcb_r1 -e
+  example_environment_dht_mcb_r1 -e example_voltage_sensor_mcb_r1`: quatro
+  environments `SUCCESS`, código 0;
+- inspeção do ELF do novo exemplo: exatamente um `setup()` e um `loop()`;
+- configuração do PlatformIO resolvida, delta sem artefatos de teste e
+  `git diff --check` aprovado;
+- relatório:
+  `docs/reports/2026-08-28T030901Z-0.1-a28aa929-implementation-report.md`.
+
+### Limites
+
+Upload, monitor serial, validação instrumentada e validação física permanecem
+`Not Executed`. A transação não declara validação, conclusão normativa nem
+integração.
+
 ## EKOM-CHG-0005 — Autoria do sensor de temperatura NTC 0.1
 
 **Estado:** Fechada [`Closed`]

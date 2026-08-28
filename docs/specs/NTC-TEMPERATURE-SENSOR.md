@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -346,6 +346,6 @@ até sua execução registrada.
 
 ## 17. Encaminhamento
 
-A versão 0.1 permanece em `Draft`, com implementação `Not Started` e análise de
-implementabilidade `Pending Review`. A implementação depende de relatório
-formal `Ready` para esta versão e de ordem explícita posterior do Arquiteto.
+A versão 0.1 permanece em `Draft`, com implementação `Implemented` e análise de
+implementabilidade `Ready`. A entrega segue para revisão técnica; validações
+instrumentada e física, promoção normativa e integração permanecem pendentes.
