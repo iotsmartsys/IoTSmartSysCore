@@ -6,11 +6,11 @@
 
 **Versão:** 0.1
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -317,9 +317,11 @@ preserva a quarentena vigente das suítes e não dispensa as evidências abaixo:
 - validação instrumentada das equações, fração e sentinels;
 - validação física do MF52-103 e, quando disponível, do NTC 100 kΩ B3950.
 
-Build não comprova comportamento físico. Upload, monitor, instrumentação e
-hardware exigem autorização operacional própria e permanecem `Not Executed`
-até sua execução registrada.
+Build não comprova comportamento físico. Durante a implementação, upload,
+monitor, instrumentação e hardware permaneceram `Not Executed`. Posteriormente,
+o Arquiteto declarou ter executado os testes em hardware, validado o código e
+considerado a evidência suficiente para encerrar e integrar a versão 0.1; os
+registros brutos não foram recebidos pelo Consultor nesta atuação.
 
 ## 15. Decisões confirmadas
 
@@ -342,10 +344,31 @@ até sua execução registrada.
 - `docs/specs/CORE-RUNTIME-LIFECYCLE.md`;
 - `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md`;
 - `docs/rfc/KNOWLEDGE-MAP.md`;
-- `EKOM-CHG-0005`.
+- `EKOM-CHG-0005`;
+- `EKOM-CHG-0006`;
+- `EKOM-CHG-0007`.
 
 ## 17. Encaminhamento
 
-A versão 0.1 permanece em `Draft`, com implementação `Implemented` e análise de
-implementabilidade `Ready`. A entrega segue para revisão técnica; validações
-instrumentada e física, promoção normativa e integração permanecem pendentes.
+A versão 0.1 está Vigente [`Active`], com implementação Validada
+[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
+análise de implementabilidade `Ready`.
+
+### Validação final da versão 0.1
+
+O Arquiteto confirmou em ordem direta ter executado os testes em hardware,
+validado o código e considerado o resultado suficiente para encerrar a
+especificação e integrá-la à `main`. Essa decisão atribui suficiência ao
+conjunto NTC-AC-001 a NTC-AC-010 sem alegação de reexecução pelo Consultor nem
+disponibilidade dos registros brutos nesta atuação.
+
+A confrontação consultiva não identificou conflito arquitetural ou normativo
+bloqueante. Como o Consultor participou das etapas anteriores, o resultado não
+é apresentado como revisão independente. O relatório consultivo é
+`docs/reports/2026-08-28T151931Z-0.1-d95b28d5-final-validation-report.md`.
+
+Por decisão explícita do Arquiteto, o estado normativo passa de `Draft` para
+Vigente [`Active`], a implementação de Implementada [`Implemented`] para
+Validada [`Validated`] e a entrega para Pronta para integração
+[`Ready for Integration`]. A entrega somente passa a Concluída [`Done`] depois
+da integração e sincronização efetivas com `main`.
