@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -438,8 +438,8 @@ posterior conforme risco e recorte.
 ## 10. Estado da especificação
 
 A versão 0.1 está Vigente [`Active`], com implementação Validada
-[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
-análise de implementabilidade `Ready`.
+[`Validated`], entrega Concluída [`Done`] e análise de implementabilidade
+`Ready`.
 
 ### Validação final da versão 0.1
 
@@ -459,3 +459,9 @@ Vigente [`Active`], a implementação de Implementada [`Implemented`] para
 Validada [`Validated`] e a entrega para Pronta para integração
 [`Ready for Integration`]. A entrega somente passa a Concluída [`Done`] depois
 da integração e sincronização efetivas com `main`.
+
+O recorte validado foi posteriormente integrado e sincronizado em `main` por
+ordem explícita do Arquiteto. Com a integração em estado terminal, a entrega
+passa de Pronta para integração [`Ready for Integration`] para Concluída
+[`Done`]; o estado normativo permanece `Active` e a implementação permanece
+`Validated`.
