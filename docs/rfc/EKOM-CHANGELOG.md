@@ -3,6 +3,54 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0005 — Autoria do sensor de temperatura NTC 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1`
+
+**Objetivo:** registrar o contrato do `NtcTemperatureSensor`, sua configuração
+parametrizável, os perfis iniciais, o tratamento de leitura inválida e o exemplo
+executável, preservando `ITemperatureSensor` e `TemperatureSensorCapability`.
+
+### Decisões relacionadas
+
+- o divisor usa resistor série ao positivo e NTC ao GND;
+- cada leitura usa média fracionária de exatamente 16 amostras ADC;
+- a conversão usa a equação Beta e parâmetros elétricos configuráveis;
+- os perfis iniciais são 100 kΩ B3950 e MF52-103 10 kΩ empiricamente tratado
+  como B3950;
+- toda leitura inválida retorna exatamente `-1000.0f`;
+- a capability e a interface vigentes permanecem inalteradas;
+- nenhum teste automatizado integra a versão; o exemplo integra o recorte.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria;
+- a classificação de implementabilidade permanece reservada à análise formal.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida de `TemperatureSensorCapability`,
+  `ITemperatureSensor`, `DHTSensor`, `DS18B20TemperatureSensor`,
+  `SensorFactory`, `ResistiveDividerVoltageSensor` e `environment_dht`;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para
+  registro normativo;
+- integridade textual aprovada; a guarda estrutural EKOM 4.6 foi executada e
+  permaneceu reprovada somente por mapas experimentais, relatórios e seções
+  históricas preexistentes fora deste recorte, sem apontar o novo documento.
+
+### Resultado
+
+`IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem bloqueio
+arquitetural conhecido antes da análise formal. Nenhum código, teste, build ou
+configuração funcional foi alterado.
+
 ## EKOM-CHG-0004 — Validação final da medição de tensão 0.1
 
 **Estado:** Fechada [`Closed`]
