@@ -754,4 +754,17 @@ namespace iotsmartsys
         return builder_.addCurrentSensor(config);
     }
 
+    iotsmartsys::core::VoltageSensorCapability *SmartSysApp::addVoltageSensor(
+        iotsmartsys::core::VoltageSensorConfig config)
+    {
+        if (setupStarted_)
+        {
+            logger_.error("App",
+                          "Voltage sensor '%s' rejected: capabilities must be registered before setup().",
+                          config.id.c_str());
+            return nullptr;
+        }
+        return builder_.addVoltageSensor(config);
+    }
+
 } // namespace iotsmartsys

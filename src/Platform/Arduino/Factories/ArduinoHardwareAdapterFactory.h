@@ -45,6 +45,17 @@ namespace iotsmartsys::platform::arduino
             const iotsmartsys::core::CurrentSensorConfig &config) override;
         AdapterDestructor currentSensorAdapterDestructor() const override;
 
+        /* Resistive-divider voltage sensor */
+        bool voltageSensorTargetSupported() const override;
+        bool voltageSensorPinHasAdc(int pin) const override;
+        bool voltageSensorPinReserved(int pin) const override;
+        std::size_t voltageSensorAdapterSize() const override;
+        std::size_t voltageSensorAdapterAlign() const override;
+        iotsmartsys::core::IVoltageSensor *createVoltageSensor(
+            void *mem,
+            const iotsmartsys::core::VoltageSensorConfig &config) override;
+        AdapterDestructor voltageSensorAdapterDestructor() const override;
+
         /* IColorSensor */
         // std::size_t colorSensorAdapterSize() const override;
         // std::size_t colorSensorAdapterAlign() const override;

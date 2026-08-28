@@ -8,6 +8,7 @@
 #include "Contracts/Sensors/WaterLevelRecipentType.h"
 #include "Contracts/Sensors/IColorSensor.h"
 #include "Contracts/Sensors/ICurrentSensor.h"
+#include "Contracts/Sensors/IVoltageSensor.h"
 
 namespace iotsmartsys::core
 {
@@ -51,6 +52,16 @@ namespace iotsmartsys::core
         virtual std::size_t currentSensorAdapterAlign() const { return 0; }
         virtual ICurrentSensor *createCurrentSensor(void *, const CurrentSensorConfig &) { return nullptr; }
         virtual AdapterDestructor currentSensorAdapterDestructor() const { return nullptr; }
+
+        // Voltage sensor extension. Defaults preserve factories without this
+        // adapter and keep target-specific ADC validation in the platform.
+        virtual bool voltageSensorTargetSupported() const { return false; }
+        virtual bool voltageSensorPinHasAdc(int) const { return false; }
+        virtual bool voltageSensorPinReserved(int) const { return true; }
+        virtual std::size_t voltageSensorAdapterSize() const { return 0; }
+        virtual std::size_t voltageSensorAdapterAlign() const { return 0; }
+        virtual IVoltageSensor *createVoltageSensor(void *, const VoltageSensorConfig &) { return nullptr; }
+        virtual AdapterDestructor voltageSensorAdapterDestructor() const { return nullptr; }
 
         // IColorSensor
         // virtual std::size_t colorSensorAdapterSize() const = 0;

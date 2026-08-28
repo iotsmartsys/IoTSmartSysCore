@@ -33,6 +33,7 @@
 #include "Contracts/Capabilities/LuminosityCapability.h"
 #include "Contracts/Capabilities/GarageControlCapability.h"
 #include "Contracts/Capabilities/CurrentSensorCapability.h"
+#include "Contracts/Capabilities/VoltageSensorCapability.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
@@ -90,6 +91,8 @@ namespace iotsmartsys::app
         iotsmartsys::core::GarageControlCapability *addGarageControlCapability(const GarageControlConfig &cfg);
         iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
             const iotsmartsys::core::CurrentSensorConfig &cfg);
+        iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
+            const iotsmartsys::core::VoltageSensorConfig &cfg);
 
     private:
         iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;
@@ -136,7 +139,8 @@ namespace iotsmartsys::app
         // identity consumes no slot and leaves no partial artefact behind.
         bool resolveIdentity(const char *configuredName, const char *type, std::string &outName);
         bool validateCurrentSensorConfig(const iotsmartsys::core::CurrentSensorConfig &cfg) const;
-        bool currentSensorPinInUse(int pin) const;
+        bool validateVoltageSensorConfig(const iotsmartsys::core::VoltageSensorConfig &cfg) const;
+        bool analogSensorPinInUse(int pin) const;
         bool capabilityIdentityInUse(const std::string &name) const;
     private:
         iotsmartsys::core::IHardwareAdapterFactory &_factory;
@@ -155,8 +159,8 @@ namespace iotsmartsys::app
         size_t _arenaBytes{0};
         size_t _arenaOffset{0};
 
-        int _currentSensorPins[16] = {};
-        size_t _currentSensorPinCount{0};
+        int _analogSensorPins[16] = {};
+        size_t _analogSensorPinCount{0};
         std::string _currentSensorIds[8];
         size_t _currentSensorIdCount{0};
     };
