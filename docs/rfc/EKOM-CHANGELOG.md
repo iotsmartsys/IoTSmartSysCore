@@ -3,6 +3,134 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0007 — Validação final do sensor de temperatura NTC 0.1
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1`
+
+**Objetivo:** registrar a validação do código em hardware declarada pelo
+Arquiteto, encerrar a especificação e integrar o recorte validado à `main`.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter executado os testes em hardware,
+validado o código e considerado o resultado suficiente. Na mesma ordem,
+determinou o encerramento da especificação, o merge e o push para `main`.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, sem alegação de independência por ter participado
+das etapas anteriores, confrontou especificação, implementação, relatórios e
+composição Git sem identificar conflito arquitetural ou normativo bloqueante.
+Os ensaios físicos não foram reexecutados e seus registros brutos não foram
+recebidos pelo Consultor.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `Implemented` → Validada [`Validated`];
+- estado da entrega: → Pronta para integração [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-28T151931Z-0.1-d95b28d5-final-validation-report.md`
+preserva a decisão, a confrontação e seus limites. A transação permanece em
+andamento até a integração e sincronização efetivas com `main`.
+
+## EKOM-CHG-0006 — Implementação do sensor de temperatura NTC 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1`
+
+**Objetivo:** implementar integralmente o adapter NTC, configuração, perfis,
+factory, diagnóstico e exemplo executável autorizados pela versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-08-28T025914Z-0.1-0f251e18-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a mesma versão;
+- branch de especificação e árvore inicialmente limpas.
+
+### Resultado
+
+- criado `NtcTemperatureSensor`, com configuração parametrizável, presets
+  100 kΩ B3950 e MF52-103 10 kΩ/B3950, 16 amostras fracionárias, equação Beta,
+  diagnóstico e sentinel exato `-1000.0f`;
+- estendido somente o `SensorFactory` concreto, preservando
+  `ITemperatureSensor`, `TemperatureSensorCapability`, `ISensorFactory` e
+  `TemperatureSensorModel`;
+- criado `environment_ntc` com o GPIO oficial J4 da MCB R1, catálogo,
+  environment, runner exclusivo e matriz de CI reconciliados;
+- estado mecânico da implementação promovido a `Implemented`; estado normativo
+  permanece `Draft` e entrega permanece `Not Ready`.
+
+### Evidências
+
+- `pio run -e esp32_dev -e example_environment_ntc_mcb_r1 -e
+  example_environment_dht_mcb_r1 -e example_voltage_sensor_mcb_r1`: quatro
+  environments `SUCCESS`, código 0;
+- inspeção do ELF do novo exemplo: exatamente um `setup()` e um `loop()`;
+- configuração do PlatformIO resolvida, delta sem artefatos de teste e
+  `git diff --check` aprovado;
+- relatório:
+  `docs/reports/2026-08-28T030901Z-0.1-a28aa929-implementation-report.md`.
+
+### Limites
+
+Upload, monitor serial, validação instrumentada e validação física permanecem
+`Not Executed`. A transação não declara validação, conclusão normativa nem
+integração.
+
+## EKOM-CHG-0005 — Autoria do sensor de temperatura NTC 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1`
+
+**Objetivo:** registrar o contrato do `NtcTemperatureSensor`, sua configuração
+parametrizável, os perfis iniciais, o tratamento de leitura inválida e o exemplo
+executável, preservando `ITemperatureSensor` e `TemperatureSensorCapability`.
+
+### Decisões relacionadas
+
+- o divisor usa resistor série ao positivo e NTC ao GND;
+- cada leitura usa média fracionária de exatamente 16 amostras ADC;
+- a conversão usa a equação Beta e parâmetros elétricos configuráveis;
+- os perfis iniciais são 100 kΩ B3950 e MF52-103 10 kΩ empiricamente tratado
+  como B3950;
+- toda leitura inválida retorna exatamente `-1000.0f`;
+- a capability e a interface vigentes permanecem inalteradas;
+- nenhum teste automatizado integra a versão; o exemplo integra o recorte.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria;
+- a classificação de implementabilidade permanece reservada à análise formal.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida de `TemperatureSensorCapability`,
+  `ITemperatureSensor`, `DHTSensor`, `DS18B20TemperatureSensor`,
+  `SensorFactory`, `ResistiveDividerVoltageSensor` e `environment_dht`;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para
+  registro normativo;
+- integridade textual aprovada; a guarda estrutural EKOM 4.6 foi executada e
+  permaneceu reprovada somente por mapas experimentais, relatórios e seções
+  históricas preexistentes fora deste recorte, sem apontar o novo documento.
+
+### Resultado
+
+`IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem bloqueio
+arquitetural conhecido antes da análise formal. Nenhum código, teste, build ou
+configuração funcional foi alterado.
+
 ## EKOM-CHG-0004 — Validação final da medição de tensão 0.1
 
 **Estado:** Fechada [`Closed`]

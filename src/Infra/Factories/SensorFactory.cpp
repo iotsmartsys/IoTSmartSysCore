@@ -2,6 +2,7 @@
 
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/DS18B20TemperatureSensor.h"
+#include "Platform/Arduino/Sensors/NtcTemperatureSensor.h"
 #include "Platform/Arduino/Sensors/Bh1750LuminositySensor.h"
 #include "Platform/Arduino/Sensors/ArduinoUltrassonicWaterLevelSensor.h"
 #include "Platform/Arduino/Sensors/ArduinoGlpSensor.h"
@@ -53,6 +54,28 @@ namespace iotsmartsys::infra::factories
     std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> SensorFactory::createDHTSensor(const int gpio, long readIntervalMs)
     {
         return std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor>(new iotsmartsys::platform::arduino::DHTSensor(gpio, readIntervalMs));
+    }
+#endif
+
+#if IOTSMARTSYS_SENSORS_ENABLED
+    std::unique_ptr<iotsmartsys::platform::arduino::NtcTemperatureSensor>
+    SensorFactory::createNtcTemperatureSensor(
+        const iotsmartsys::platform::arduino::NtcTemperatureSensorConfig &config)
+    {
+        using iotsmartsys::platform::arduino::NtcTemperatureSensor;
+        if (!config.isValid())
+        {
+            _logger.error("SENSOR_FACTORY", "NTC sensor rejected: invalid configuration.");
+            return nullptr;
+        }
+        if (!NtcTemperatureSensor::isSupportedAdcPin(config.adcPin))
+        {
+            _logger.error("SENSOR_FACTORY",
+                          "NTC sensor rejected: GPIO %d is not a supported ESP32 ADC1 pin.",
+                          config.adcPin);
+            return nullptr;
+        }
+        return std::unique_ptr<NtcTemperatureSensor>(new NtcTemperatureSensor(config));
     }
 #endif
 

@@ -6,6 +6,7 @@
 
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/DHTSensor.h"
+#include "Platform/Arduino/Sensors/NtcTemperatureSensor.h"
 #include "Platform/Arduino/Sensors/SensorUltrassonicHCSR04.h"
 #endif
 
@@ -34,6 +35,12 @@ namespace iotsmartsys::infra::factories
         /// @param gpio The GPIO pin to which the sensor is connected.
         /// @return A unique pointer to the created DHT sensor.
         std::unique_ptr<iotsmartsys::platform::arduino::DHTSensor> createDHTSensor(const int gpio, const long readIntervalMs = 60000);
+#endif
+
+#if IOTSMARTSYS_SENSORS_ENABLED
+        std::unique_ptr<iotsmartsys::platform::arduino::NtcTemperatureSensor>
+        createNtcTemperatureSensor(
+            const iotsmartsys::platform::arduino::NtcTemperatureSensorConfig &config);
 #endif
 
         /// @brief Creates a luminosity sensor.
