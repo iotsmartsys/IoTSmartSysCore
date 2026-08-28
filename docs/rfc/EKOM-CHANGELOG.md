@@ -3,6 +3,40 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0004 — Validação final da medição de tensão 0.1
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-VOLTAGE-SENSOR@0.1`
+
+**Objetivo:** registrar a revisão e a validação em hardware declaradas pelo
+Arquiteto, encerrar a especificação e integrar o recorte validado à `main`.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta ter revisado o código, executado a
+validação em hardware e considerado o resultado suficiente. Na mesma ordem,
+determinou o encerramento da especificação, o merge e o push para `main`.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, sem alegação de independência por ter participado
+das etapas anteriores, confrontou especificação, implementação, relatórios e
+composição Git sem identificar conflito arquitetural ou normativo bloqueante.
+Os ensaios físicos não foram reexecutados e seus registros brutos não foram
+recebidos pelo Consultor.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `Implemented` → Validada [`Validated`];
+- estado da entrega: → Pronta para integração [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-28T005022Z-0.1-776c305a-final-validation-report.md`
+preserva a decisão, a confrontação e seus limites. A transação permanece em
+andamento até a integração e sincronização efetivas com `main`.
+
 ## EKOM-CHG-0003 — Implementação da medição de tensão 0.1
 
 **Estado:** Fechada [`Closed`]

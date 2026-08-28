@@ -6,9 +6,13 @@
 
 **Versão:** 0.1
 
-**Estado do workflow:** `Draft`
+**Estado normativo:** Vigente [`Active`]
 
-**Análise de implementabilidade:** Pendente
+**Estado da implementação:** Validada [`Validated`]
+
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -430,3 +434,28 @@ durável separável da funcionalidade.
 
 **Relatórios esperados:** análise, implementação e revisão; validação física
 posterior conforme risco e recorte.
+
+## 10. Estado da especificação
+
+A versão 0.1 está Vigente [`Active`], com implementação Validada
+[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
+análise de implementabilidade `Ready`.
+
+### Validação final da versão 0.1
+
+O Arquiteto confirmou em ordem direta ter revisado o código, executado a
+validação em hardware e considerado a evidência suficiente para encerrar a
+especificação e integrá-la à `main`. Essa decisão aceita o conjunto dos
+critérios VLT-AC-001 a VLT-AC-007 sem alegação de reexecução pelo Consultor nem
+disponibilidade de registros brutos nesta atuação.
+
+A confrontação consultiva não identificou conflito arquitetural ou normativo
+bloqueante. Como o Consultor participou das etapas anteriores, o resultado não
+é apresentado como revisão independente. O relatório consultivo é
+`docs/reports/2026-08-28T005022Z-0.1-776c305a-final-validation-report.md`.
+
+Por decisão explícita do Arquiteto, o estado normativo passa de `Draft` para
+Vigente [`Active`], a implementação de Implementada [`Implemented`] para
+Validada [`Validated`] e a entrega para Pronta para integração
+[`Ready for Integration`]. A entrega somente passa a Concluída [`Done`] depois
+da integração e sincronização efetivas com `main`.
