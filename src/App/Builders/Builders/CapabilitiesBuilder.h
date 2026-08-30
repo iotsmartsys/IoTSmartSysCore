@@ -15,6 +15,7 @@
 #include "Contracts/Capabilities/SwitchPlugCapability.h"
 #include "Contracts/Capabilities/ClapSensorCapability.h"
 #include "Contracts/Capabilities/SwitchCapability.h"
+#include "Contracts/Capabilities/FanCapability.h"
 #include "Contracts/Capabilities/PushButtonCapability.h"
 #include "Contracts/Capabilities/TouchButtonCapability.h"
 #include "Contracts/Capabilities/ValveCapability.h"
@@ -73,6 +74,7 @@ namespace iotsmartsys::app
         iotsmartsys::core::SwitchPlugCapability *addSwitchPlug(const SwitchConfig &cfg);
         iotsmartsys::core::ClapSensorCapability *addClapSensor(const ClapSensorConfig &cfg);
         iotsmartsys::core::SwitchCapability *addSwitch(const SwitchConfig &cfg);
+        iotsmartsys::core::FanCapability *addFan(const FanConfig &cfg);
         iotsmartsys::core::PushButtonCapability *addPushButton(const PushButtonConfig &cfg);
         iotsmartsys::core::ValveCapability *addValve(const ValveConfig &cfg);
         iotsmartsys::core::LEDCapability *addLED(const LightConfig &cfg);

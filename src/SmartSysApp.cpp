@@ -687,6 +687,12 @@ namespace iotsmartsys
         return builder_.addSwitch(cfg);
     }
 
+    /// @brief Adds a new fan capability to the application.
+    iotsmartsys::core::FanCapability *SmartSysApp::addFanCapability(iotsmartsys::app::FanConfig cfg)
+    {
+        return builder_.addFan(cfg);
+    }
+
     /// @brief Adds a new switch plug capability to the application.
     iotsmartsys::core::SwitchPlugCapability *SmartSysApp::addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg)
     {

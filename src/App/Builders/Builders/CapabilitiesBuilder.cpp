@@ -638,6 +638,84 @@ namespace iotsmartsys::app
             *hardwareAdapter, &_eventSink);
     }
 
+    // --------------------------- addFan ---------------------------
+    iotsmartsys::core::FanCapability *CapabilitiesBuilder::addFan(const FanConfig &cfg)
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto fail = [logger](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "Fan capability registration failed: %s; nothing was registered.",
+                              reason);
+            }
+            return static_cast<iotsmartsys::core::FanCapability *>(nullptr);
+        };
+
+        std::string name;
+        if (!resolveIdentity(cfg.capability_name, FAN_ACTUATOR_TYPE, name))
+            return nullptr;
+        if (capabilityIdentityInUse(name))
+            return fail("capability identity is already registered");
+        if (_adaptersCount >= _adaptersMax)
+            return fail("adapter slots exhausted");
+
+        const size_t originalArenaOffset = _arenaOffset;
+        const size_t adapterSize = _factory.outputAdapterSize();
+        const size_t adapterAlign = _factory.outputAdapterAlign();
+        auto adapterDtor = _factory.outputAdapterDestructor();
+        if (adapterSize == 0 || adapterAlign == 0 || !adapterDtor)
+            return fail("output adapter factory is unavailable");
+
+        void *adapterMemory = allocateAligned(adapterSize, adapterAlign);
+        if (!adapterMemory)
+            return fail("arena has insufficient space for adapter");
+
+        auto *hardwareAdapter = _factory.createOutput(adapterMemory, cfg.GPIO, cfg.highIsOn);
+        if (!hardwareAdapter)
+        {
+            _arenaOffset = originalArenaOffset;
+            return fail("output adapter construction failed");
+        }
+
+        void *capabilityMemory = allocateAligned(sizeof(iotsmartsys::core::FanCapability),
+                                                 alignof(iotsmartsys::core::FanCapability));
+        if (!capabilityMemory)
+        {
+            adapterDtor(hardwareAdapter);
+            _arenaOffset = originalArenaOffset;
+            return fail("arena has insufficient space for capability");
+        }
+
+        auto *capability = new (capabilityMemory) iotsmartsys::core::FanCapability(
+            name, *hardwareAdapter, &_eventSink);
+        auto capabilityDtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::FanCapability *>(p)->~FanCapability();
+        };
+
+        if (!registerAdapter(hardwareAdapter, adapterDtor))
+        {
+            capabilityDtor(capability);
+            adapterDtor(hardwareAdapter);
+            _arenaOffset = originalArenaOffset;
+            return fail("adapter slot registration failed");
+        }
+        if (!registerCapability(capability, capabilityDtor))
+        {
+            _adaptersCount--;
+            _adapters[_adaptersCount] = nullptr;
+            _adapterDestructors[_adaptersCount] = nullptr;
+            capabilityDtor(capability);
+            adapterDtor(hardwareAdapter);
+            _arenaOffset = originalArenaOffset;
+            return fail("capability slot registration failed");
+        }
+
+        return capability;
+    }
+
     // --------------------------- addPushButton ---------------------------
     iotsmartsys::core::PushButtonCapability *CapabilitiesBuilder::addPushButton(const PushButtonConfig &cfg)
     {

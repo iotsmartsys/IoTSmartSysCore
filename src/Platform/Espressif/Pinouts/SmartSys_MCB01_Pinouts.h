@@ -25,6 +25,7 @@
 
 /// LED pin definition for SmartSys MCB01 board
 #define LED_BUILTIN SAFE_GPIO19 
+#define ITS_MCB01_LED_PIN SAFE_GPIO19 
 
 // I2C default pins for SmartSys MCB01 board
 // #define SDA SAFE_GPIO21

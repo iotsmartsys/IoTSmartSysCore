@@ -3,6 +3,152 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0010 — Validação final da FanCapability 0.1
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** registrar a revisão e a validação em hardware declaradas pelo
+Arquiteto, encerrar a especificação e integrar o recorte validado à `main`.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta que a implementação foi revisada e
+validada em hardware e determinou o encerramento da especificação, o merge e o
+push para `main`. A decisão considera suficiente o conjunto FAN-AC-001 a
+FAN-AC-005.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, sem alegação de independência por ter participado
+das etapas anteriores, confrontou especificação, implementação, relatórios e
+composição Git sem identificar conflito arquitetural ou normativo bloqueante.
+Os ensaios físicos não foram reexecutados e seus registros brutos não foram
+recebidos pelo Consultor.
+
+O build canônico reprovado durante a Implementação permanece registrado com
+seu resultado original e não é convertido em sucesso. A alteração preexistente
+e aditiva de `ITS_MCB01_LED_PIN` presente na branch não altera requisitos nem
+aceite de `IOTSSC-FAN-CAPABILITY@0.1`.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `In Progress` → Validada [`Validated`];
+- estado da entrega: → Pronta para integração [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-30T033210Z-0.1-39da00a3-final-validation-report.md`
+preserva a decisão, a confrontação e seus limites. A transação permanece em
+andamento até a integração e sincronização efetivas com `main`.
+
+## EKOM-CHG-0009 — Implementação da FanCapability 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** implementar a capability binária de ventilador, sua configuração
+própria, a API pública e o exemplo executável contratados pela versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-08-30T020625Z-0.1-879c8930-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a mesma versão;
+- branch de especificação e árvore inicialmente limpas.
+
+### Resultado material
+
+- criados `FanCapability`, `FanConfig` e `FAN_ACTUATOR_TYPE`, preservando o
+  comportamento comum de `BinaryCommandCapability`;
+- adicionados o registro atômico no builder e a API pública
+  `SmartSysApp::addFanCapability()`;
+- criado o exemplo `fan` para a MCB R1, com environment, runner, catálogo,
+  documentação e matriz de build;
+- o environment `example_fan_mcb_r1` foi construído com sucesso;
+- a implementação permanece mecanicamente `In Progress`, pois o build
+  canônico `esp32_dev` não foi aprovado.
+
+### Limitação do gate canônico
+
+O build `pio run -e esp32_dev` falhou em referências preexistentes de
+`src/main.cpp`: `ITS_MCB01_K1_PIN`, `TemperatureSensorModel::DS18B20`,
+`ITS_MCB01_J4_EXT_ADC` e `ITS_MCB01_J4_EXT_IO33`. Esse arquivo não foi alterado
+pela implementação e sua correção não integra o recorte autorizado. A falha
+impede promover o estado mecânico para `Implemented`.
+
+### Evidências e limites
+
+- `pio run -e example_fan_mcb_r1`: `SUCCESS`, RAM 81188/327680 bytes e flash
+  1829117/2031616 bytes;
+- ELF do exemplo: exatamente um `setup()` e um `loop()`, nova API e type
+  `Fan Actuator` presentes;
+- `git diff --check` aprovado e nenhum artefato em `test/` alterado;
+- relatório:
+  `docs/reports/2026-08-30T021453Z-0.1-5343b05b-implementation-report.md`;
+- testes, upload, monitor, execução instrumentada e validação física não foram
+  executados; nenhum artefato de teste foi criado.
+
+### Encerramento
+
+A revisão e a validação em hardware foram posteriormente confirmadas pelo
+Arquiteto em `EKOM-CHG-0010`. A limitação do build canônico permanece
+preservada como evidência histórica, sem impedir a decisão humana de promover a
+implementação para `Validated`.
+
+## EKOM-CHG-0008 — Autoria da FanCapability 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** registrar o contrato da `FanCapability`, de sua configuração
+própria, da API pública e do exemplo executável, preservando o comportamento
+binário de `SwitchCapability` e usando o type `Fan Actuator`.
+
+### Decisões relacionadas
+
+- `FanCapability` deriva de `BinaryCommandCapability` e usa os estados
+  `off`/`on` e as operações públicas do precedente de switch;
+- o type público é exatamente `Fan Actuator`;
+- `FanConfig` é distinta de `SwitchConfig` e preserva o contrato vigente de
+  `HardwareConfig`;
+- a fachada recebe `FanConfig` por `SmartSysApp::addFanCapability()`;
+- a persistência binária aplica-se automaticamente pela derivação comum;
+- o exemplo `fan` usa `ITS_MCB01_RELAY_PIN` na MCB R1 e segue o catálogo
+  executável vigente;
+- nenhum artefato de teste integra a versão por decisão explícita do
+  Arquiteto.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria;
+- a classificação de implementabilidade permanece reservada à análise formal.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida de `SwitchCapability`, `SwitchConfig`,
+  `BinaryCommandCapability`, builder, fachada, pinout, exemplo de tensão,
+  contratos públicos, lifecycle, persistência, mapa e dossiê;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para
+  registro normativo;
+- integridade textual aprovada; a guarda estrutural EKOM 4.6 foi executada e
+  permaneceu reprovada somente por mapas experimentais, relatórios e seções
+  históricas preexistentes fora deste recorte, sem apontar o novo documento.
+
+### Resultado
+
+`IOTSSC-FAN-CAPABILITY@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem bloqueio
+arquitetural conhecido antes da análise formal. Nenhum código, teste, build ou
+configuração funcional foi alterado.
+
 ## EKOM-CHG-0007 — Validação final do sensor de temperatura NTC 0.1
 
 **Estado:** Fechada [`Closed`]
