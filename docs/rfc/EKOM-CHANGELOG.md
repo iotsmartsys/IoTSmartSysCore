@@ -5,7 +5,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0010 — Validação final da FanCapability 0.1
 
-**Estado:** Em andamento [`In Progress`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
 
@@ -42,6 +42,14 @@ O relatório
 `docs/reports/2026-08-30T033210Z-0.1-39da00a3-final-validation-report.md`
 preserva a decisão, a confrontação e seus limites. A transação permanece em
 andamento até a integração e sincronização efetivas com `main`.
+
+### Integração e encerramento
+
+O recorte validado foi integrado à `main` a partir da branch
+`spec/fan-capability`, sem conflito. A entrega passa de Pronta para integração
+[`Ready for Integration`] para Concluída [`Done`]. A especificação permanece
+Vigente [`Active`], sua implementação permanece Validada [`Validated`] e esta
+transação é encerrada por objetivo cumprido.
 
 ## EKOM-CHG-0009 — Implementação da FanCapability 0.1
 

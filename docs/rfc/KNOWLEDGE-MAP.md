@@ -35,7 +35,7 @@
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
-| Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; revisão e validação em hardware confirmadas pelo Arquiteto; `Ready for Integration` (`EKOM-CHG-0010`) |
+| Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
@@ -46,7 +46,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Ready for Integration` (`EKOM-CHG-0010`) |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -249,7 +249,8 @@ conclusão ou reabertura e aceita ou quita débito técnico.
   exemplo MCB R1; preserva como reprovado o build canônico afetado por erros
   preexistentes fora do recorte.
 - `EKOM-CHG-0010`: registra revisão e validação em hardware pelo Arquiteto,
-  promove a versão 0.1 para `Active`/`Validated` e autoriza sua integração.
+  promove a versão 0.1 para `Active`/`Validated`, integra o recorte à `main` e
+  conclui a entrega como `Done`.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.

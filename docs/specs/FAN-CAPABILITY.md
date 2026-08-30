@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -354,10 +354,10 @@ revisão; validação física posterior conforme risco e autorização.
 ## 10. Estado da especificação
 
 A versão 0.1 está Vigente [`Active`], com implementação Validada
-[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
-revisão de implementabilidade Pronta [`Ready`]. O Arquiteto confirmou a revisão
-da implementação e a validação em hardware e considerou o conjunto de
-evidências suficiente para encerrar a especificação e autorizar sua integração.
-O build canônico `esp32_dev` registrado pela Implementação permanece como
-evidência reprovada por erros preexistentes em `src/main.cpp`; a decisão humana
-de suficiência não o reclassifica como sucesso.
+[`Validated`], entrega Concluída [`Done`] e revisão de implementabilidade
+Pronta [`Ready`]. O Arquiteto confirmou a revisão da implementação e a
+validação em hardware, considerou o conjunto de evidências suficiente para
+encerrar a especificação e determinou sua integração à `main`, concluída sem
+conflito. O build canônico `esp32_dev` registrado pela Implementação permanece
+como evidência reprovada por erros preexistentes em `src/main.cpp`; a decisão
+humana de suficiência não o reclassifica como sucesso.
