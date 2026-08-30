@@ -3,9 +3,49 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
-## EKOM-CHG-0009 — Implementação da FanCapability 0.1
+## EKOM-CHG-0010 — Validação final da FanCapability 0.1
 
 **Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** registrar a revisão e a validação em hardware declaradas pelo
+Arquiteto, encerrar a especificação e integrar o recorte validado à `main`.
+
+### Evidência humana recebida
+
+O Arquiteto confirmou em ordem direta que a implementação foi revisada e
+validada em hardware e determinou o encerramento da especificação, o merge e o
+push para `main`. A decisão considera suficiente o conjunto FAN-AC-001 a
+FAN-AC-005.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, sem alegação de independência por ter participado
+das etapas anteriores, confrontou especificação, implementação, relatórios e
+composição Git sem identificar conflito arquitetural ou normativo bloqueante.
+Os ensaios físicos não foram reexecutados e seus registros brutos não foram
+recebidos pelo Consultor.
+
+O build canônico reprovado durante a Implementação permanece registrado com
+seu resultado original e não é convertido em sucesso. A alteração preexistente
+e aditiva de `ITS_MCB01_LED_PIN` presente na branch não altera requisitos nem
+aceite de `IOTSSC-FAN-CAPABILITY@0.1`.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `In Progress` → Validada [`Validated`];
+- estado da entrega: → Pronta para integração [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-08-30T033210Z-0.1-39da00a3-final-validation-report.md`
+preserva a decisão, a confrontação e seus limites. A transação permanece em
+andamento até a integração e sincronização efetivas com `main`.
+
+## EKOM-CHG-0009 — Implementação da FanCapability 0.1
+
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
 
@@ -50,6 +90,13 @@ impede promover o estado mecânico para `Implemented`.
   `docs/reports/2026-08-30T021453Z-0.1-5343b05b-implementation-report.md`;
 - testes, upload, monitor, execução instrumentada e validação física não foram
   executados; nenhum artefato de teste foi criado.
+
+### Encerramento
+
+A revisão e a validação em hardware foram posteriormente confirmadas pelo
+Arquiteto em `EKOM-CHG-0010`. A limitação do build canônico permanece
+preservada como evidência histórica, sem impedir a decisão humana de promover a
+implementação para `Validated`.
 
 ## EKOM-CHG-0008 — Autoria da FanCapability 0.1
 

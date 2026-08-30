@@ -6,15 +6,15 @@
 
 **Versão:** 0.1
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
-**Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
+**Bloqueio arquitetural:** Nenhum
 
 **Relações normativas e de dependência:**
 
@@ -336,7 +336,8 @@ fachada existentes e exemplo binário na saída oficial de relé da MCB R1.
 **Decisões pendentes:** nenhuma conhecida no contrato registrado.
 
 **Relações:** `IOTSSC-BINARY-COMMAND-STATE@0.6`, `IOTSSC-PUBLIC-API`,
-`IOTSSC-RUNTIME`, `IOTSSC-HW-EXAMPLES` e `EKOM-CHG-0008`.
+`IOTSSC-RUNTIME`, `IOTSSC-HW-EXAMPLES`, `EKOM-CHG-0008`,
+`EKOM-CHG-0009` e `EKOM-CHG-0010`.
 
 **ADRs relacionadas:** nenhuma; não foi identificada mudança arquitetural
 durável separável da funcionalidade.
@@ -352,10 +353,11 @@ revisão; validação física posterior conforme risco e autorização.
 
 ## 10. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação Em andamento
-[`In Progress`], entrega Não pronta [`Not Ready`] e revisão de
-implementabilidade Pronta [`Ready`]. A API, a capability, a configuração e o
-exemplo foram implementados, e o environment `example_fan_mcb_r1` foi
-construído com sucesso. O build canônico `esp32_dev` permanece reprovado por
-erros preexistentes em `src/main.cpp`, fora do recorte desta especificação;
-por isso, o estado mecânico não é promovido a `Implemented`.
+A versão 0.1 está Vigente [`Active`], com implementação Validada
+[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
+revisão de implementabilidade Pronta [`Ready`]. O Arquiteto confirmou a revisão
+da implementação e a validação em hardware e considerou o conjunto de
+evidências suficiente para encerrar a especificação e autorizar sua integração.
+O build canônico `esp32_dev` registrado pela Implementação permanece como
+evidência reprovada por erros preexistentes em `src/main.cpp`; a decisão humana
+de suficiência não o reclassifica como sucesso.
