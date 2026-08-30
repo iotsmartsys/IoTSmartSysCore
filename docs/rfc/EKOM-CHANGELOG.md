@@ -3,6 +3,57 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0008 — Autoria da FanCapability 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** registrar o contrato da `FanCapability`, de sua configuração
+própria, da API pública e do exemplo executável, preservando o comportamento
+binário de `SwitchCapability` e usando o type `Fan Actuator`.
+
+### Decisões relacionadas
+
+- `FanCapability` deriva de `BinaryCommandCapability` e usa os estados
+  `off`/`on` e as operações públicas do precedente de switch;
+- o type público é exatamente `Fan Actuator`;
+- `FanConfig` é distinta de `SwitchConfig` e preserva o contrato vigente de
+  `HardwareConfig`;
+- a fachada recebe `FanConfig` por `SmartSysApp::addFanCapability()`;
+- a persistência binária aplica-se automaticamente pela derivação comum;
+- o exemplo `fan` usa `ITS_MCB01_RELAY_PIN` na MCB R1 e segue o catálogo
+  executável vigente;
+- nenhum artefato de teste integra a versão por decisão explícita do
+  Arquiteto.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria;
+- a classificação de implementabilidade permanece reservada à análise formal.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida de `SwitchCapability`, `SwitchConfig`,
+  `BinaryCommandCapability`, builder, fachada, pinout, exemplo de tensão,
+  contratos públicos, lifecycle, persistência, mapa e dossiê;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para
+  registro normativo;
+- integridade textual aprovada; a guarda estrutural EKOM 4.6 foi executada e
+  permaneceu reprovada somente por mapas experimentais, relatórios e seções
+  históricas preexistentes fora deste recorte, sem apontar o novo documento.
+
+### Resultado
+
+`IOTSSC-FAN-CAPABILITY@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem bloqueio
+arquitetural conhecido antes da análise formal. Nenhum código, teste, build ou
+configuração funcional foi alterado.
+
 ## EKOM-CHG-0007 — Validação final do sensor de temperatura NTC 0.1
 
 **Estado:** Fechada [`Closed`]
