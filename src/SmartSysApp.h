@@ -101,6 +101,7 @@ namespace iotsmartsys
                 iotsmartsys::core::PushButtonCapability *addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg);
                 iotsmartsys::core::TouchButtonCapability *addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig cfg);
                 iotsmartsys::core::SwitchCapability *addSwitchCapability(iotsmartsys::app::SwitchConfig cfg);
+                iotsmartsys::core::FanCapability *addFanCapability(iotsmartsys::app::FanConfig cfg);
                 iotsmartsys::core::SwitchPlugCapability *addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg);
                 iotsmartsys::core::ValveCapability *addValveCapability(iotsmartsys::app::ValveConfig cfg);
                 iotsmartsys::core::OperationalColorSensorCapability *addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig cfg);

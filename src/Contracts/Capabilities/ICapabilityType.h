@@ -72,6 +72,7 @@ namespace iotsmartsys::core
 #define PROXIMITY_SENSOR_TYPE "Proximity Sensor"
 #define LED_ACTUATOR_TYPE "LED Actuator"
 #define LIGHT_ACTUATOR_TYPE "Light Actuator"
+#define FAN_ACTUATOR_TYPE "Fan Actuator"
 #define LIGHT_SENSOR_TYPE "Light Sensor"
 #define OPERATIONAL_COLOR_SENSOR_NORMAL "Normal"
 #define OPERATIONAL_COLOR_SENSOR_OK "Ok"

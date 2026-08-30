@@ -46,6 +46,13 @@ namespace iotsmartsys::app
     public:
         using HardwareConfig::HardwareConfig;
     };
+
+    class FanConfig : public HardwareConfig
+    {
+    public:
+        using HardwareConfig::HardwareConfig;
+    };
+
     class ValveConfig : public HardwareConfig
     {
     public:

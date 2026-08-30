@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -352,8 +352,10 @@ revisão; validação física posterior conforme risco e autorização.
 
 ## 10. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação Não iniciada
-[`Not Started`], entrega Não pronta [`Not Ready`] e revisão de
-implementabilidade Pendente [`Pending Review`]. A passagem à Implementação
-depende de análise formal `Ready` da versão corrente e de ordem explícita do
-Arquiteto.
+A versão 0.1 está em Rascunho [`Draft`], com implementação Em andamento
+[`In Progress`], entrega Não pronta [`Not Ready`] e revisão de
+implementabilidade Pronta [`Ready`]. A API, a capability, a configuração e o
+exemplo foram implementados, e o environment `example_fan_mcb_r1` foi
+construído com sucesso. O build canônico `esp32_dev` permanece reprovado por
+erros preexistentes em `src/main.cpp`, fora do recorte desta especificação;
+por isso, o estado mecânico não é promovido a `Implemented`.

@@ -3,6 +3,54 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0009 — Implementação da FanCapability 0.1
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-FAN-CAPABILITY@0.1`
+
+**Objetivo:** implementar a capability binária de ventilador, sua configuração
+própria, a API pública e o exemplo executável contratados pela versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-08-30T020625Z-0.1-879c8930-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a mesma versão;
+- branch de especificação e árvore inicialmente limpas.
+
+### Resultado material
+
+- criados `FanCapability`, `FanConfig` e `FAN_ACTUATOR_TYPE`, preservando o
+  comportamento comum de `BinaryCommandCapability`;
+- adicionados o registro atômico no builder e a API pública
+  `SmartSysApp::addFanCapability()`;
+- criado o exemplo `fan` para a MCB R1, com environment, runner, catálogo,
+  documentação e matriz de build;
+- o environment `example_fan_mcb_r1` foi construído com sucesso;
+- a implementação permanece mecanicamente `In Progress`, pois o build
+  canônico `esp32_dev` não foi aprovado.
+
+### Limitação do gate canônico
+
+O build `pio run -e esp32_dev` falhou em referências preexistentes de
+`src/main.cpp`: `ITS_MCB01_K1_PIN`, `TemperatureSensorModel::DS18B20`,
+`ITS_MCB01_J4_EXT_ADC` e `ITS_MCB01_J4_EXT_IO33`. Esse arquivo não foi alterado
+pela implementação e sua correção não integra o recorte autorizado. A falha
+impede promover o estado mecânico para `Implemented`.
+
+### Evidências e limites
+
+- `pio run -e example_fan_mcb_r1`: `SUCCESS`, RAM 81188/327680 bytes e flash
+  1829117/2031616 bytes;
+- ELF do exemplo: exatamente um `setup()` e um `loop()`, nova API e type
+  `Fan Actuator` presentes;
+- `git diff --check` aprovado e nenhum artefato em `test/` alterado;
+- relatório:
+  `docs/reports/2026-08-30T021453Z-0.1-5343b05b-implementation-report.md`;
+- testes, upload, monitor, execução instrumentada e validação física não foram
+  executados; nenhum artefato de teste foi criado.
+
 ## EKOM-CHG-0008 — Autoria da FanCapability 0.1
 
 **Estado:** Fechada [`Closed`]
