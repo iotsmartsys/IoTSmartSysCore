@@ -40,7 +40,13 @@
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
-### 2.1 Cobertura de adoção
+### 2.1 Implementações pequenas sem especificação
+
+| Elemento | Fonte vigente | Alcance |
+|---|---|---|
+| Validação ADC1 do adapter NTC | `src/Platform/Arduino/Sensors/NtcTemperatureSensor.cpp` | ESP32 clássico: GPIO32–39; ESP32-C3: GPIO0–4; ambos confirmados pelo mapeamento analógico do Arduino |
+
+### 2.2 Cobertura de adoção
 
 | Domínio | Cobertura | Entradas principais | Observação |
 |---|---|---|---|

@@ -79,6 +79,9 @@ namespace iotsmartsys::platform::arduino
 #if defined(CONFIG_IDF_TARGET_ESP32)
         return pin >= 32 && pin <= 39 && pin < NUM_DIGITAL_PINS &&
                digitalPinToAnalogChannel(static_cast<std::uint8_t>(pin)) >= 0;
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+        return pin >= 0 && pin <= 4 && pin < NUM_DIGITAL_PINS &&
+               digitalPinToAnalogChannel(static_cast<std::uint8_t>(pin)) >= 0;
 #else
         (void)pin;
         return false;
