@@ -3,6 +3,60 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0011 — Autoria da PowerEnergyCapability 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.1`
+
+**Objetivo:** registrar o contrato da `PowerEnergyCapability`, que compõe um
+`IVoltageSensor` e um `ICurrentSensor` para publicar potência por magnitude e
+energia acumulada em Wh, sem controlar o lifecycle dos sensores.
+
+### Decisões relacionadas
+
+- a capability recebe referências não proprietárias aos dois sensores e não
+  chama nem verifica seus métodos `setup()` e `handle()`;
+- a aplicação consumidora responde pela atualização e pela duração das
+  referências, estejam os sensores ou não associados às capabilities próprias;
+- potência é `abs(V × I)` e energia volátil usa integração trapezoidal pelo
+  tempo real entre avaliações utilizáveis consecutivas;
+- o intervalo de leitura é configurável na instanciação e possui default de
+  1000 ms;
+- potência ocupa o valor escalar e energia ocupa campo opcional próprio no
+  evento;
+- nenhum artefato de teste integra a versão por decisão explícita do Arquiteto.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria; a compatibilidade
+  do ownership externo com o builder vigente deve ser confrontada pela análise
+  formal de implementabilidade.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida de `CurrentSensorCapability`, `VoltageSensorCapability`,
+  interfaces, medições, evento, builder, API pública, lifecycle, mapa e
+  especificações relacionadas;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para o
+  registro, incluindo a proibição de implementar testes;
+- integridade textual aprovada sobre o delta documental; a guarda estrutural
+  foi executada e permaneceu reprovada somente por mapas experimentais,
+  relatórios históricos e seções da especificação de console preexistentes e
+  fora deste recorte.
+
+### Resultado
+
+`IOTSSC-POWER-ENERGY-CAPABILITY@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem bloqueio
+arquitetural conhecido antes da análise formal. O mapa registra explicitamente
+o lifecycle externo dos sensores. Nenhum código, teste, build ou configuração
+funcional foi alterado.
+
 ## EKOM-CHG-0010 — Validação final da FanCapability 0.1
 
 **Estado:** Fechada [`Closed`]
