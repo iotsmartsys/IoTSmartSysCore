@@ -3,6 +3,55 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0013 — Autoria da PowerEnergyCapability 0.2
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.2`
+
+**Objetivo:** corrigir a versão 0.1 ao contratar o exemplo executável
+`power_energy`, omitido no recorte anterior, preservando o contrato funcional
+da capability e tornando observável o lifecycle externo dos sensores.
+
+### Decisões relacionadas
+
+- o exemplo é destinado à MCB R1 e registra somente a
+  `PowerEnergyCapability`;
+- o ACS712-30A usa `ITS_MCB01_J4_EXT_ADC`/GPIO 34, e o divisor de tensão usa
+  `ITS_MCB01_J4_EXT_IO33`/GPIO 33, expressamente autorizado pelo Arquiteto como
+  segunda entrada analógica ADC1 do exemplo;
+- os adapters são externamente possuídos pelo exemplo, recebem `setup()` antes
+  de `SmartSysApp::setup()` e recebem `handle()` antes de
+  `SmartSysApp::handle()` em cada ciclo;
+- o ACS712 usa o perfil público de 3,3 V sem monitor de alimentação; por isso,
+  potência e energia numéricas são apresentadas como `ESTIMATED`, sem afirmação
+  de exatidão contratada;
+- `resetEnergy()` é demonstrado somente pelo comando serial local `r`;
+- nenhuma API pública será alterada para facilitar o exemplo;
+- nenhum artefato de teste integra a versão e nenhum teste foi criado,
+  alterado ou executado nesta autoria.
+
+### Relações e evidências
+
+- relação `Corrects` sobre `IOTSSC-POWER-ENERGY-CAPABILITY@0.1`;
+- preservação de `IOTSSC-HW-EXAMPLES`, inclusive seleção por environment,
+  símbolos oficiais de pinout, aplicação Arduino única e documentação de
+  validação manual;
+- investigação dirigida do precedente `current_sensor`, do exemplo
+  `voltage_sensor`, dos adapters públicos, do runner, dos environments e do
+  pinout da MCB R1;
+- rascunho conversacional confirmado e ordem explícita do Arquiteto para
+  registrar a versão 0.2.
+
+### Resultado
+
+`IOTSSC-POWER-ENERGY-CAPABILITY@0.2` foi registrada em `Draft`, com análise de
+implementabilidade `Pending Review`, implementação `Not Started` e entrega
+`Not Ready`. O código implementado da versão 0.1 permanece como baseline
+histórica, mas seu relatório `Ready` não autoriza o novo recorte. Nenhum código,
+teste, build ou configuração funcional foi alterado; a versão 0.2 segue para
+nova análise formal.
+
 ## EKOM-CHG-0012 — Implementação da PowerEnergyCapability 0.1
 
 **Estado:** Fechada [`Closed`]

@@ -4,15 +4,15 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Não iniciada [`Not Started`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pronta [`Ready`]
+**Revisão de implementabilidade:** Pendente [`Pending Review`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -20,10 +20,12 @@
 
 - Nova [`New`] — `PowerEnergyCapability`, `PowerEnergyConfig`, tipos de
   medição, API pública e campo opcional de energia no evento;
+- Corrige [`Corrects`] a versão 0.1 ao contratar o exemplo executável omitido;
 - Depende de `IOTSSC-CURRENT-SENSOR@0.6` e
   `IOTSSC-VOLTAGE-SENSOR@0.1` somente quanto aos contratos públicos de
   `ICurrentSensor`, `IVoltageSensor` e suas últimas medições;
-- Preserva `IOTSSC-PUBLIC-API` e `IOTSSC-RUNTIME` por extensão aditiva.
+- Preserva `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME` e
+  `IOTSSC-HW-EXAMPLES` por extensão aditiva e consumo do catálogo vigente.
 
 ## 1. Objetivo e contexto
 
@@ -50,6 +52,8 @@ por meio de `VoltageSensorCapability` e `CurrentSensorCapability`.
 - registro aditivo pelo builder e por `SmartSysApp`;
 - ownership da capability pela aplicação e ownership externo dos sensores;
 - diagnóstico por `ILogger` para falhas do registro público.
+- exemplo executável `power_energy` na MCB R1, com sensores externamente
+  possuídos e conduzidos pelo próprio exemplo.
 
 ## 3. Fora de escopo
 
@@ -62,10 +66,13 @@ por meio de `VoltageSensorCapability` e `CurrentSensorCapability`.
 - persistência, restauração ou sincronização externa da energia acumulada;
 - tarifa, custo, demanda, janela histórica ou agregações por período;
 - comando remoto para zerar energia;
-- novo Hardware Adapter, factory de sensor, GPIO, arbitragem de pino ou exemplo
-  executável em hardware;
+- novo Hardware Adapter, factory de sensor ou política geral de arbitragem de
+  pinos;
+- exemplo em placa diferente da MCB R1 ou demonstração dos sensores associados
+  simultaneamente às capabilities próprias;
 - alteração dos valores ou estados publicados pelas capabilities de corrente e
   tensão existentes;
+- alteração de API pública para facilitar o exemplo;
 - alteração do limite de oito capabilities ou do lifecycle cooperativo;
 - criação, ampliação, reestruturação ou correção de artefatos de teste.
 
@@ -242,6 +249,75 @@ void resetEnergy();
   `measurementStatus` ou `energyWh`; o timestamp de avaliação deve avançar
   mesmo sem evento.
 
+### 5.7 Exemplo executável
+
+O exemplo é consumidor da API pública e demonstra explicitamente o cenário em
+que os sensores não estão associados a `CurrentSensorCapability` ou
+`VoltageSensorCapability`. Ele herda integralmente
+`IOTSSC-HW-EXAMPLES` e não altera o comportamento da capability.
+
+- **PWR-032:** o catálogo executável deve conter o exemplo `power_energy`,
+  composto por `examples/executable/power_energy/example.hpp`, seu `README.md`,
+  um seletor mutuamente exclusivo em `src/ExecutableExampleRunner.cpp` e o
+  environment `example_power_energy_mcb_r1` em
+  `configs/executable_examples.ini`. O catálogo em `examples/README.md` deve
+  identificá-lo. O build padrão e os exemplos preexistentes permanecem
+  inalterados.
+- **PWR-033:** o exemplo deve usar `SmartSysApp::addPowerEnergyCapability()`,
+  `PowerEnergyConfig`, `PowerEnergyCapability::powerEnergyMeasurement()` e
+  `PowerEnergyCapability::resetEnergy()`. Os sensores devem ser instâncias
+  externas de `ACS712C30ACurrentSensor` e
+  `ResistiveDividerVoltageSensor`, recebidas pela capability como
+  `ICurrentSensor&` e `IVoltageSensor&`. Nenhuma API pública deve ser criada ou
+  alterada para facilitar o exemplo.
+- **PWR-034:** o exemplo deve possuir os dois sensores durante toda a vida da
+  capability, chamar uma vez `setup()` em cada sensor antes de
+  `SmartSysApp::setup()` e, em toda iteração de `loop()`, chamar uma vez
+  `handle()` em cada sensor antes de `SmartSysApp::handle()`. A
+  `PowerEnergyCapability` continua proibida de propagar ou verificar essas
+  chamadas.
+- **PWR-035:** somente a `PowerEnergyCapability` deve ser registrada na
+  `SmartSysApp` do exemplo. O exemplo não deve registrar
+  `CurrentSensorCapability` nem `VoltageSensorCapability`, reimplementar
+  aquisição, calibração, conversão, qualificação, cálculo de potência,
+  integração ou cadência interna.
+- **PWR-036:** o sinal do ACS712 deve usar
+  `ITS_MCB01_J4_EXT_ADC`, que resolve GPIO 34, e o nó ADC do divisor de tensão
+  deve usar `ITS_MCB01_J4_EXT_IO33`, autorizado pelo Arquiteto como segunda
+  entrada analógica e correspondente a GPIO 33/ADC1. Literais numéricos e
+  macros próprias de pino são proibidos no código e no environment; a ausência
+  de qualquer símbolo deve causar erro de build compreensível.
+- **PWR-037:** o sensor de corrente deve usar o perfil público
+  `CurrentSensorConfig::ACS712_30A_3V3()`, sem `supplyMonitorAdcPin`. O sensor
+  de tensão deve usar divisor de `330 kΩ/10 kΩ`, limiar ADC inferior de
+  `144 mV` e os demais defaults públicos de `VoltageSensorConfig`. A capability
+  deve usar `readingIntervalMs = 1000 ms`.
+- **PWR-038:** o boot deve registrar o identificador do exemplo, a placa, os
+  símbolos e GPIOs resolvidos, o perfil elétrico de corrente, os resistores e o
+  limiar do divisor, as identidades dos sensores e da capability e o intervalo
+  de leitura, sem expor segredos.
+- **PWR-039:** em cadência de apresentação não inferior a
+  `EXAMPLE_POWER_ENERGY_LOG_INTERVAL_MS`, definido pelo environment, o exemplo
+  deve apresentar a última
+  `PowerEnergyMeasurement`, mostrando potência com duas casas decimais quando
+  presente, energia com três casas decimais e o token de
+  `measurementStatus`. A apresentação não pode bloquear o ciclo cooperativo ou
+  alterar a cadência da capability.
+- **PWR-040:** `nullptr` retornado por `addPowerEnergyCapability()` deve ser
+  tratado como falha observável, registrado e nunca desreferenciado.
+- **PWR-041:** o comando local `r` ou `R` recebido pelo monitor serial deve
+  demonstrar `resetEnergy()`, registrar a operação e não adicionar comando
+  remoto de reset.
+- **PWR-042:** como a alimentação do ACS712 não é monitorada, uma medição
+  numérica de corrente com tensão válida deve resultar em potência e energia
+  com estado composto `ESTIMATED`. O exemplo e seu README não podem apresentar
+  `VALID` nem afirmar exatidão contratada nessa condição.
+- **PWR-043:** o `README.md` deve documentar objetivo, APIs e capability,
+  ownership e lifecycle externos dos sensores, MCB R1, periféricos, tabela de
+  pinos, esquema de ligação, configurações, comandos de build, upload e
+  monitor, sequência manual, resultado esperado, reset local, limitações e
+  riscos elétricos.
+
 ## 6. Fluxo e condições de borda
 
 ```text
@@ -253,6 +329,22 @@ registro antes de SmartSysApp::setup()
 → próxima entrada utilizável consecutiva: integração trapezoidal em Wh
 → entrada indisponível ou inválida: sem potência, sem energia nova e sem ponte
 → resetEnergy(): energia zero e nova baseline na próxima entrada utilizável
+```
+
+No exemplo `power_energy`, o lifecycle externo é concretizado assim:
+
+```text
+setup Arduino
+→ setup do sensor de corrente
+→ setup do sensor de tensão
+→ registro da PowerEnergyCapability
+→ SmartSysApp::setup()
+
+cada loop Arduino
+→ handle do sensor de corrente
+→ handle do sensor de tensão
+→ SmartSysApp::handle()
+→ apresentação eventual do último snapshot composto
 ```
 
 Condições de borda:
@@ -332,24 +424,63 @@ Condições de borda:
 - `pio run -e esp32_dev` alcança estado terminal com sucesso;
 - **meio:** inspeção, execução instrumentada e build canônico.
 
+### PWR-AC-007 — Build e consumo público do exemplo
+
+**Cobre:** PWR-032 a PWR-037 e PWR-040.
+
+- `pio run -e example_power_energy_mcb_r1` alcança estado terminal com sucesso
+  e vincula exatamente um `setup()` e um `loop()`;
+- a inspeção confirma exatamente uma capability registrada, sensores externos
+  vivos, ordem de lifecycle contratada e consumo da API pública sem nova API;
+- código e environment usam `ITS_MCB01_J4_EXT_ADC` e
+  `ITS_MCB01_J4_EXT_IO33`, sem literal ou macro própria de GPIO;
+- ausência de símbolo obrigatório ou falha de registro é observável conforme o
+  contrato;
+- **meio:** build canônico do exemplo e inspeção.
+
+### PWR-AC-008 — Documentação e apresentação
+
+**Cobre:** PWR-038 a PWR-043.
+
+- o `README.md` contém todos os elementos de PWR-043 e explicita que os
+  adapters são possuídos e acionados pelo exemplo;
+- boot e apresentação contêm os campos contratados, sem segredo e sem lógica
+  de aquisição ou cálculo duplicada;
+- o comando serial `r` registra o reset local e a leitura seguinte mostra
+  energia reiniciada a `0.000 Wh` até nova integração elegível;
+- **meio:** inspeção do firmware e da documentação e captura de monitor serial.
+
+### PWR-AC-009 — Validação física do exemplo
+
+**Cobre:** PWR-034, PWR-036, PWR-037, PWR-039, PWR-041 e PWR-042.
+
+- gravado na MCB R1 com a montagem documentada, o exemplo permanece
+  `NOT_READY` durante aquecimento e calibração do ACS712;
+- após tensão e corrente numéricas, apresenta potência não negativa, energia
+  não decrescente e estado `ESTIMATED`, pois a alimentação não é monitorada;
+- variar a carga altera a potência observada, e `r` reinicia a energia sem
+  interromper o lifecycle dos sensores;
+- ausência ou invalidade de uma entrada produz o estado e a ausência de
+  potência contratados, sem acumular o intervalo;
+- **meio:** validação em hardware com instrumento independente.
+
 ### 7.1 Testes e permissões
 
 Por decisão explícita do Arquiteto, nenhum artefato de teste automatizado deve
 ser criado, ampliado, reestruturado ou corrigido nesta versão. Os meios
 instrumentados descritos nos critérios são evidências de execução, não
-autorização para registrar harness ou suíte persistente. Execução instrumentada
-ou em hardware exige ordem operacional própria; enquanto ausente, permanece
-`Not Executed`.
+autorização para registrar harness ou suíte persistente. Execução instrumentada,
+captura de monitor, upload ou validação em hardware exige ordem operacional
+própria; enquanto ausente, permanece `Not Executed`.
 
 ## 8. Conhecimento afetado
 
-- adicionar esta especificação ao índice e à cobertura de capabilities em
-  `docs/rfc/KNOWLEDGE-MAP.md`;
-- registrar no mapa que `PowerEnergyCapability` somente consome snapshots, não
-  controla nem verifica o lifecycle dos sensores e mantém referências não
-  proprietárias sob responsabilidade da aplicação;
-- registrar a autoria em `docs/rfc/EKOM-CHANGELOG.md`;
-- encaminhar a versão 0.1 para análise formal de implementabilidade.
+- atualizar esta especificação para 0.2 no índice e na cobertura de
+  capabilities em `docs/rfc/KNOWLEDGE-MAP.md`;
+- registrar no mapa o exemplo `power_energy`, sua pendência de implementação e
+  a demonstração do lifecycle externo dos sensores;
+- registrar a autoria da versão 0.2 em `docs/rfc/EKOM-CHANGELOG.md`;
+- encaminhar a versão 0.2 para nova análise formal de implementabilidade.
 
 ## 9. Relações, decisões e pendências
 
@@ -363,31 +494,43 @@ opcionais aditivos de medição.
 acumulada; potência somente por magnitude positiva; sensores podem já estar ou
 não associados às capabilities próprias; lifecycle permanece externo e não é
 obrigado nem verificado; essa fronteira integra o mapa de conhecimento; nenhum
-artefato de teste deve ser implementado.
+artefato de teste deve ser implementado. Na versão 0.2, o exemplo usa
+`ITS_MCB01_J4_EXT_ADC` para corrente e o símbolo oficial
+`ITS_MCB01_J4_EXT_IO33`, expressamente autorizado como segunda entrada
+analógica, para tensão.
 
 **Decisões funcionais desta versão:** energia volátil; integração trapezoidal;
 intervalos inválidos não são recuperados; potência é o valor escalar; energia é
-campo opcional do evento; default de 1000 ms; type `Power Energy (W/Wh)`.
+campo opcional do evento; default de 1000 ms; type `Power Energy (W/Wh)`; o
+exemplo demonstra adapters externos e reset local, sem capabilities próprias.
 
 **Autoridades confrontadas:** `AGENTS.md`, `docs/rfc/EKOM-GUIDELINES.md`,
 `docs/rfc/KNOWLEDGE-MAP.md`, `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME`,
-`IOTSSC-CURRENT-SENSOR@0.6` e `IOTSSC-VOLTAGE-SENSOR@0.1`.
+`IOTSSC-CURRENT-SENSOR@0.6`, `IOTSSC-VOLTAGE-SENSOR@0.1` e
+`IOTSSC-HW-EXAMPLES@1.1`.
 
-**Relação de autoridade:** a versão é uma extensão aditiva [`New`]. Não altera
-aquisição, estados ou lifecycle normativos dos sensores existentes; governa
-somente sua composição, a nova API e o campo opcional `energyWh`.
+**Relação de autoridade:** a fonte permanece uma extensão aditiva [`New`] em
+relação às APIs preexistentes. A versão 0.2 **Corrige** [`Corrects`] a versão
+0.1 ao contratar o exemplo executável omitido, sem alterar cálculo, estados,
+publicação ou lifecycle da capability. Preserva `IOTSSC-HW-EXAMPLES`: o exemplo
+usa seu catálogo e sua exceção explícita para demonstrar os adapters de baixo
+nível, sem alterar API pública para facilitá-lo.
 
-**ADRs relacionadas:** nenhuma conhecida. A análise formal deve classificar a
-restrição de ownership externo antes de recomendar prontidão.
+**ADRs relacionadas:** nenhuma conhecida. A análise formal da versão 0.1
+classificou como plausível o ownership externo; a versão 0.2 deve reconfrontar
+sua concretização pelo exemplo e a seleção dos dois ADCs.
 
 **Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito na
-autoria. A implementabilidade permanece pendente.
+autoria. A implementação da versão 0.1 permanece como baseline histórica; o
+exemplo da versão 0.2 e suas evidências ainda não existem. A implementabilidade
+da versão corrente permanece pendente.
 
 ## 10. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação Implementada
-[`Implemented`], entrega Não pronta [`Not Ready`] e revisão de
-implementabilidade Pronta [`Ready`]. O código integral do recorte e o build
-canônico `esp32_dev` foram concluídos com sucesso. Validações instrumentadas,
-revisão, conclusão normativa e integração permanecem pendentes; nenhum teste
-foi criado, alterado ou executado.
+A versão 0.2 está em Rascunho [`Draft`], com implementação Não iniciada
+[`Not Started`], entrega Não pronta [`Not Ready`] e revisão de
+implementabilidade Pendente [`Pending Review`]. O código e o build canônico da
+versão 0.1 permanecem como evidência histórica, mas não cobrem o exemplo agora
+contratado nem autorizam sua implementação. A versão 0.2 segue para nova
+análise formal. Nenhum artefato de teste integra o recorte e nenhum teste foi
+criado, alterado ou executado nesta autoria.
