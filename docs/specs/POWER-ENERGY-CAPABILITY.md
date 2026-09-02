@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -525,21 +525,22 @@ demonstrar os adapters de baixo nível, sem alterar API pública para facilitá-
 
 **ADRs relacionadas:** nenhuma conhecida. A análise formal da versão 0.1
 classificou como plausível o ownership externo. O bloqueador de consistência
-interna identificado na análise 0.2 foi incorporado nesta versão; a versão 0.3
-deve receber nova análise formal.
+interna identificado na análise 0.2 foi incorporado nesta versão; a análise
+formal da versão 0.3 classificou o recorte como Pronto [`Ready`].
 
 **Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito na
-autoria. A implementação da versão 0.1 permanece como baseline histórica; o
-exemplo contratado e suas evidências ainda não existem. O bloqueador da análise
-0.2 foi incorporado pela delimitação do fora de escopo; a implementabilidade da
-versão corrente permanece pendente.
+autoria. A implementação da versão 0.1 permanece como baseline histórica. O
+exemplo contratado existe e seu build próprio foi aprovado; validação física e
+captura serial permanecem não executadas. O build canônico `esp32_dev` continua
+falho por incompatibilidade preexistente de `src/main.cpp` com o perfil
+genérico, mantendo a implementação Em andamento [`In Progress`].
 
 ## 10. Estado da especificação
 
-A versão 0.3 está em Rascunho [`Draft`], com implementação Não iniciada
-[`Not Started`], entrega Não pronta [`Not Ready`] e revisão de
-implementabilidade Pendente [`Pending Review`]. O código e o build canônico da
-versão 0.1 permanecem como evidência histórica, mas não cobrem o exemplo agora
-contratado nem autorizam sua implementação. A versão 0.3 segue para nova
-análise formal. Nenhum artefato de teste integra o recorte e nenhum teste foi
-criado, alterado ou executado nesta autoria.
+A versão 0.3 está em Rascunho [`Draft`], com implementação Em andamento
+[`In Progress`], entrega Não pronta [`Not Ready`] e revisão de
+implementabilidade Pronta [`Ready`]. O exemplo contratado foi implementado e
+seu environment constrói com sucesso, mas o build canônico `esp32_dev`
+permanece falho por incompatibilidades preexistentes de `src/main.cpp` com o
+perfil genérico. Nenhum artefato de teste integra o recorte e nenhum teste foi
+criado, alterado ou executado nesta implementação.

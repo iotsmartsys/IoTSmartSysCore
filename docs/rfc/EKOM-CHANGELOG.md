@@ -3,6 +3,54 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0015 — Implementação da PowerEnergyCapability 0.3
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`
+
+**Objetivo:** implementar e validar por build o exemplo executável
+`power_energy`, completando o recorte funcional contratado pela versão 0.3.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-09-02T195142Z-0.3-22e4fb59-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a versão corrente;
+- branch de especificação e árvore inicialmente limpas;
+- nenhum artefato de teste integra a versão.
+
+### Estado operacional
+
+A implementação permanece Em andamento [`In Progress`]. Testes, upload,
+monitor serial e validação física não estão autorizados nesta atuação.
+
+### Resultado material
+
+- criado o exemplo `power_energy` com ownership externo dos adapters públicos,
+  lifecycle explícito e registro exclusivo da `PowerEnergyCapability`;
+- configurados ACS712-30A no símbolo `ITS_MCB01_J4_EXT_ADC` e divisor
+  330 kΩ/10 kΩ no símbolo `ITS_MCB01_J4_EXT_IO33`;
+- adicionados apresentação de potência, energia e estado, reset serial local,
+  environment, seletor exclusivo, catálogo e documentação de bancada;
+- nenhuma API pública ou implementação interna da capability foi alterada.
+
+### Evidências e limitação
+
+- `pio run -e example_power_energy_mcb_r1`: `SUCCESS`, código 0, 17,743 s,
+  seguido de verificação final incremental em 7,661 s, com RAM
+  68.916/327.680 bytes e flash 1.156.681/2.031.616 bytes;
+- a primeira execução desse build falhou por uma qualificação local de
+  namespace; a correção foi aplicada e a repetição alcançou sucesso;
+- o ELF contém exatamente um `setup()` e um `loop()`, os dois adapters, a API
+  pública, `powerEnergyMeasurement()` e `resetEnergy()`;
+- `pio run -e esp32_dev`: `FAILED`, código 1, 13,514 s, por símbolos MCB R1 e
+  enum de temperatura preexistentes e incompatíveis em `src/main.cpp`, arquivo
+  fora do delta desta implementação;
+- como o build canônico obrigatório não foi aprovado, a versão não avança para
+  `Implemented` e a transação permanece aberta;
+- nenhum teste foi criado, alterado ou executado.
+
 ## EKOM-CHG-0014 — Correção da PowerEnergyCapability 0.3
 
 **Estado:** Fechada [`Closed`]
