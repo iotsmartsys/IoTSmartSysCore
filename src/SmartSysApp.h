@@ -115,6 +115,10 @@ namespace iotsmartsys
                     iotsmartsys::core::CurrentSensorConfig config);
                 iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
                     iotsmartsys::core::VoltageSensorConfig config);
+                iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
+                    iotsmartsys::core::PowerEnergyConfig config,
+                    iotsmartsys::core::IVoltageSensor &voltageSensor,
+                    iotsmartsys::core::ICurrentSensor &currentSensor);
 
         private:
                 static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);

@@ -3,6 +3,56 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0012 — Implementação da PowerEnergyCapability 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.1`
+
+**Objetivo:** implementar a composição de potência e energia, sua API pública,
+registro, publicação aditiva e ownership externo dos sensores contratados pela
+versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-09-02T022248Z-0.1-ab1fccfc-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a mesma versão;
+- branch de especificação e árvore inicialmente limpas;
+- nenhum artefato de teste integra a versão.
+
+### Resultado material
+
+- criados contratos, estados, configuração e implementação da
+  `PowerEnergyCapability`;
+- implementados magnitude da potência, integração trapezoidal, energia volátil,
+  reset, precedência de estados, finitude, cadência e publicação por mudança;
+- adicionado o campo opcional `energyWh` nas serializações de evento e MQTT,
+  preservando payloads preexistentes quando ausente;
+- adicionados registro atômico no builder e fachada pública com ownership
+  externo dos sensores;
+- estado mecânico promovido a Implementada [`Implemented`].
+
+### Evidências e limites
+
+- relatório:
+  `docs/reports/2026-09-02T023107Z-0.1-e3e419d7-implementation-report.md`;
+- `pio run -e esp32_dev`: `SUCCESS`, código 0, 22,593 s, RAM 26.504/327.680
+  bytes e flash 375.773/2.031.616 bytes;
+- inspeção dos objetos confirma classe, métodos próprios, builder e fachada;
+- `git diff --check` aprovado;
+- guarda estrutural do delta aprovada; a varredura integral permanece reprovada
+  somente por documentos preexistentes fora do recorte;
+- nenhum teste foi criado, alterado ou executado;
+- execuções instrumentadas, upload, monitor e hardware permanecem
+  `Not Executed`.
+
+### Resultado
+
+A implementação integral e o build canônico estão concluídos. A especificação
+permanece `Draft`, a entrega permanece `Not Ready` e o recorte segue para
+Revisão; validação, conclusão e integração não são declaradas.
+
 ## EKOM-CHG-0011 — Autoria da PowerEnergyCapability 0.1
 
 **Estado:** Fechada [`Closed`]

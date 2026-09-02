@@ -35,6 +35,7 @@
 #include "Contracts/Capabilities/GarageControlCapability.h"
 #include "Contracts/Capabilities/CurrentSensorCapability.h"
 #include "Contracts/Capabilities/VoltageSensorCapability.h"
+#include "Contracts/Capabilities/PowerEnergyCapability.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
@@ -95,6 +96,10 @@ namespace iotsmartsys::app
             const iotsmartsys::core::CurrentSensorConfig &cfg);
         iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
             const iotsmartsys::core::VoltageSensorConfig &cfg);
+        iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
+            const iotsmartsys::core::PowerEnergyConfig &cfg,
+            iotsmartsys::core::IVoltageSensor &voltageSensor,
+            iotsmartsys::core::ICurrentSensor &currentSensor);
 
     private:
         iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;

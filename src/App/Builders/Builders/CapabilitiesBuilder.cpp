@@ -536,6 +536,48 @@ namespace iotsmartsys::app
         return capability;
     }
 
+    iotsmartsys::core::PowerEnergyCapability *CapabilitiesBuilder::addPowerEnergyCapability(
+        const iotsmartsys::core::PowerEnergyConfig &cfg,
+        iotsmartsys::core::IVoltageSensor &voltageSensor,
+        iotsmartsys::core::ICurrentSensor &currentSensor)
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto reject = [logger, &cfg](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "Power energy capability '%s' rejected: %s; nothing was registered.",
+                              cfg.id.c_str(),
+                              reason);
+            }
+            return static_cast<iotsmartsys::core::PowerEnergyCapability *>(nullptr);
+        };
+
+        if (cfg.id.empty())
+            return reject("id is required");
+        if (cfg.id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
+            cfg.id.find('\0') != std::string::npos)
+            return reject("id is not a valid public capability identity");
+        if (cfg.readingIntervalMs == 0)
+            return reject("readingIntervalMs must be positive");
+        if (_count >= _capsMax)
+            return reject("capability slots exhausted");
+        if (capabilityIdentityInUse(cfg.id))
+            return reject("capability id is already registered");
+
+        std::string name;
+        if (!resolveIdentity(cfg.id.c_str(), POWER_ENERGY_TYPE, name))
+            return reject("capability identity could not be resolved");
+
+        auto *capability = createCapability<iotsmartsys::core::PowerEnergyCapability>(
+            name, voltageSensor, currentSensor, &_eventSink, cfg.readingIntervalMs);
+        if (!capability)
+            return reject("arena allocation or capability registration failed");
+
+        return capability;
+    }
+
     iotsmartsys::core::ICommandHardwareAdapter *CapabilitiesBuilder::createOutputAdapter(std::uint8_t gpio, bool highIsOn)
     {
         if (_adaptersCount >= _adaptersMax)

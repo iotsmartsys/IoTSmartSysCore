@@ -773,4 +773,19 @@ namespace iotsmartsys
         return builder_.addVoltageSensor(config);
     }
 
+    iotsmartsys::core::PowerEnergyCapability *SmartSysApp::addPowerEnergyCapability(
+        iotsmartsys::core::PowerEnergyConfig config,
+        iotsmartsys::core::IVoltageSensor &voltageSensor,
+        iotsmartsys::core::ICurrentSensor &currentSensor)
+    {
+        if (setupStarted_)
+        {
+            logger_.error("App",
+                          "Power energy capability '%s' rejected: capabilities must be registered before setup().",
+                          config.id.c_str());
+            return nullptr;
+        }
+        return builder_.addPowerEnergyCapability(config, voltageSensor, currentSensor);
+    }
+
 } // namespace iotsmartsys

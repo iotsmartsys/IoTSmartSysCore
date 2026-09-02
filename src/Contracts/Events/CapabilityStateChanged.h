@@ -14,6 +14,7 @@ namespace iotsmartsys::core
         std::string type;
         std::optional<std::string> measurementStatus;
         std::optional<std::string> supplyStatus;
+        std::optional<std::string> energyWh;
 
         CapabilityStateChanged() {}
         CapabilityStateChanged(const char *capability_name, const char *value, const char *type)
@@ -39,6 +40,10 @@ namespace iotsmartsys::core
             if (supplyStatus)
             {
                 payload += ",\"supplyStatus\":\"" + *supplyStatus + "\"";
+            }
+            if (energyWh)
+            {
+                payload += ",\"energyWh\":\"" + *energyWh + "\"";
             }
             payload += "}";
 

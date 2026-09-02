@@ -27,6 +27,10 @@ namespace iotsmartsys::core
         {
             payload += ",\"supplyStatus\":\"" + *ev.supplyStatus + "\"";
         }
+        if (ev.energyWh)
+        {
+            payload += ",\"energyWh\":\"" + *ev.energyWh + "\"";
+        }
         payload += "}";
 
         mqttClient.publish(topic.c_str(),

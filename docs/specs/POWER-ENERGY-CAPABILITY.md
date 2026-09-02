@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
-**Estado da entrega:** Não iniciada [`Not Started`]
+**Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
@@ -385,7 +385,9 @@ autoria. A implementabilidade permanece pendente.
 
 ## 10. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação e entrega não
-iniciadas. O contrato foi confirmado e registrado por ordem explícita do
-Arquiteto e segue para Análise de Implementabilidade. Nenhuma classificação
-`Ready`, autorização de implementação ou conclusão é declarada nesta atuação.
+A versão 0.1 está em Rascunho [`Draft`], com implementação Implementada
+[`Implemented`], entrega Não pronta [`Not Ready`] e revisão de
+implementabilidade Pronta [`Ready`]. O código integral do recorte e o build
+canônico `esp32_dev` foram concluídos com sucesso. Validações instrumentadas,
+revisão, conclusão normativa e integração permanecem pendentes; nenhum teste
+foi criado, alterado ou executado.
