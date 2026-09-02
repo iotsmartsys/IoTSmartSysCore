@@ -3,9 +3,48 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0016 — Validação final da PowerEnergyCapability 0.3
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`
+
+**Objetivo:** registrar a validação declarada pelo Arquiteto, encerrar a
+especificação e integrar o recorte validado à `main`.
+
+### Evidência humana recebida
+
+O Arquiteto declarou em ordem direta que validou a implementação e determinou
+o encerramento da especificação, sua promoção para `main`, commit e push. A
+decisão considera suficiente o conjunto PWR-AC-001 a PWR-AC-009, sem exigir
+reexecução pelo Consultor.
+
+### Confrontação consultiva
+
+O Consultor de Arquitetura, sem alegação de independência por ter participado
+das etapas anteriores, confrontou especificação, implementação, relatórios e
+composição Git sem identificar conflito arquitetural ou normativo bloqueante.
+
+O build próprio do exemplo permanece aprovado. O build canônico reprovado
+durante a Implementação permanece registrado com seu resultado original e não
+é convertido em sucesso. A ordem não informou registros brutos nem caracterizou
+se a validação recebida incluiu execução física; esta atuação não infere essa
+evidência.
+
+### Promoções
+
+- estado normativo: `Draft` → Vigente [`Active`];
+- estado da implementação: `In Progress` → Validada [`Validated`];
+- estado da entrega: → Pronta para integração [`Ready for Integration`].
+
+O relatório
+`docs/reports/2026-09-02T203647Z-0.3-46cc009f-final-validation-report.md`
+preserva a decisão, a confrontação e seus limites. A transação permanece em
+andamento até a integração e sincronização efetivas com `main`.
+
 ## EKOM-CHG-0015 — Implementação da PowerEnergyCapability 0.3
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`
 
@@ -50,6 +89,13 @@ monitor serial e validação física não estão autorizados nesta atuação.
 - como o build canônico obrigatório não foi aprovado, a versão não avança para
   `Implemented` e a transação permanece aberta;
 - nenhum teste foi criado, alterado ou executado.
+
+### Encerramento
+
+A validação e a suficiência das evidências foram posteriormente confirmadas
+pelo Arquiteto em `EKOM-CHG-0016`. A limitação do build canônico permanece
+preservada como evidência histórica, sem impedir a decisão humana de promover a
+implementação para `Validated`.
 
 ## EKOM-CHG-0014 — Correção da PowerEnergyCapability 0.3
 

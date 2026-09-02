@@ -6,15 +6,15 @@
 
 **Versão:** 0.3
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
-**Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
+**Bloqueio arquitetural:** Nenhum
 
 **Relações normativas e de dependência:**
 
@@ -528,19 +528,19 @@ classificou como plausível o ownership externo. O bloqueador de consistência
 interna identificado na análise 0.2 foi incorporado nesta versão; a análise
 formal da versão 0.3 classificou o recorte como Pronto [`Ready`].
 
-**Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito na
-autoria. A implementação da versão 0.1 permanece como baseline histórica. O
-exemplo contratado existe e seu build próprio foi aprovado; validação física e
-captura serial permanecem não executadas. O build canônico `esp32_dev` continua
-falho por incompatibilidade preexistente de `src/main.cpp` com o perfil
-genérico, mantendo a implementação Em andamento [`In Progress`].
+**Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito.
+A implementação da versão 0.1 permanece como baseline histórica. O exemplo
+contratado existe, seu build próprio foi aprovado e o Arquiteto declarou a
+implementação validada e suficiente para encerramento. O build canônico
+`esp32_dev` continua registrado como falho por incompatibilidade preexistente
+de `src/main.cpp` com o perfil genérico, sem ser reclassificado como sucesso.
 
 ## 10. Estado da especificação
 
-A versão 0.3 está em Rascunho [`Draft`], com implementação Em andamento
-[`In Progress`], entrega Não pronta [`Not Ready`] e revisão de
-implementabilidade Pronta [`Ready`]. O exemplo contratado foi implementado e
-seu environment constrói com sucesso, mas o build canônico `esp32_dev`
-permanece falho por incompatibilidades preexistentes de `src/main.cpp` com o
-perfil genérico. Nenhum artefato de teste integra o recorte e nenhum teste foi
-criado, alterado ou executado nesta implementação.
+A versão 0.3 está Vigente [`Active`], com implementação Validada
+[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
+revisão de implementabilidade Pronta [`Ready`]. O Arquiteto declarou a
+implementação validada, considerou o conjunto de evidências suficiente para
+encerrar a especificação e determinou sua integração à `main`. A falha
+histórica do build canônico `esp32_dev` permanece preservada sem
+reclassificação. Nenhum artefato de teste integra o recorte.
