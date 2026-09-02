@@ -3,6 +3,42 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0014 — Correção da PowerEnergyCapability 0.3
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`
+
+**Objetivo:** incorporar o bloqueador da análise formal 0.2 e eliminar a
+contradição entre o fora de escopo e a configuração dos adapters pelo exemplo
+`power_energy`.
+
+### Decisão do Arquiteto
+
+- a exclusão de aquisição, configuração, calibração e validação física de
+  tensão ou corrente aplica-se somente à implementação interna da
+  `PowerEnergyCapability`;
+- o exemplo permanece autorizado a instanciar, configurar e conduzir os
+  adapters preexistentes estritamente para demonstrar a composição contratada;
+- os demais requisitos, critérios, GPIOs, lifecycle externo e a proibição de
+  artefatos de teste permanecem inalterados.
+
+### Reconciliação
+
+O bloqueador “Configuração dos sensores simultaneamente exigida e excluída”,
+registrado em
+`docs/reports/analysis/2026-09-02T193655Z-0.2-2fd4ef7f-implementability-analysis.md`,
+foi incorporado mediante delimitação explícita do fora de escopo. A relação é
+`Corrects` sobre a versão 0.2 e não cria capacidade arquitetural, API ou
+comportamento adicional.
+
+### Resultado
+
+`IOTSSC-POWER-ENERGY-CAPABILITY@0.3` permanece em `Draft`, com implementação
+`Not Started`, entrega `Not Ready` e análise `Pending Review`. Nenhum código,
+teste, build ou configuração funcional foi alterado; a versão segue para nova
+análise formal.
+
 ## EKOM-CHG-0013 — Autoria da PowerEnergyCapability 0.2
 
 **Estado:** Fechada [`Closed`]

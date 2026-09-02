@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.2
+**Versão:** 0.3
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -20,7 +20,8 @@
 
 - Nova [`New`] — `PowerEnergyCapability`, `PowerEnergyConfig`, tipos de
   medição, API pública e campo opcional de energia no evento;
-- Corrige [`Corrects`] a versão 0.1 ao contratar o exemplo executável omitido;
+- Corrige [`Corrects`] a versão 0.2 ao delimitar a exclusão de configuração dos
+  sensores à implementação interna da capability;
 - Depende de `IOTSSC-CURRENT-SENSOR@0.6` e
   `IOTSSC-VOLTAGE-SENSOR@0.1` somente quanto aos contratos públicos de
   `ICurrentSensor`, `IVoltageSensor` e suas últimas medições;
@@ -57,8 +58,10 @@ por meio de `VoltageSensorCapability` e `CurrentSensorCapability`.
 
 ## 3. Fora de escopo
 
-- aquisição, configuração, calibração ou validação física de tensão ou
-  corrente;
+- aquisição, configuração, calibração ou validação física de tensão ou corrente
+  realizadas internamente pela `PowerEnergyCapability`; o exemplo pode
+  instanciar, configurar e conduzir os adapters preexistentes estritamente para
+  demonstrar a composição contratada;
 - chamada ou verificação de `setup()` e `handle()` dos sensores recebidos;
 - detecção de leitura desatualizada ou imposição de cadência aos sensores;
 - potência assinada, direção do fluxo, potência aparente ou reativa, fator de
@@ -475,12 +478,12 @@ própria; enquanto ausente, permanece `Not Executed`.
 
 ## 8. Conhecimento afetado
 
-- atualizar esta especificação para 0.2 no índice e na cobertura de
+- atualizar esta especificação para 0.3 no índice e na cobertura de
   capabilities em `docs/rfc/KNOWLEDGE-MAP.md`;
 - registrar no mapa o exemplo `power_energy`, sua pendência de implementação e
   a demonstração do lifecycle externo dos sensores;
-- registrar a autoria da versão 0.2 em `docs/rfc/EKOM-CHANGELOG.md`;
-- encaminhar a versão 0.2 para nova análise formal de implementabilidade.
+- registrar a autoria da versão 0.3 em `docs/rfc/EKOM-CHANGELOG.md`;
+- encaminhar a versão 0.3 para nova análise formal de implementabilidade.
 
 ## 9. Relações, decisões e pendências
 
@@ -497,7 +500,9 @@ obrigado nem verificado; essa fronteira integra o mapa de conhecimento; nenhum
 artefato de teste deve ser implementado. Na versão 0.2, o exemplo usa
 `ITS_MCB01_J4_EXT_ADC` para corrente e o símbolo oficial
 `ITS_MCB01_J4_EXT_IO33`, expressamente autorizado como segunda entrada
-analógica, para tensão.
+analógica, para tensão. Na versão 0.3, o Arquiteto determinou que a exclusão de
+configuração dos sensores se aplica somente à implementação interna da
+`PowerEnergyCapability`, não à configuração dos adapters pelo exemplo.
 
 **Decisões funcionais desta versão:** energia volátil; integração trapezoidal;
 intervalos inválidos não são recuperados; potência é o valor escalar; energia é
@@ -510,27 +515,31 @@ exemplo demonstra adapters externos e reset local, sem capabilities próprias.
 `IOTSSC-HW-EXAMPLES@1.1`.
 
 **Relação de autoridade:** a fonte permanece uma extensão aditiva [`New`] em
-relação às APIs preexistentes. A versão 0.2 **Corrige** [`Corrects`] a versão
-0.1 ao contratar o exemplo executável omitido, sem alterar cálculo, estados,
-publicação ou lifecycle da capability. Preserva `IOTSSC-HW-EXAMPLES`: o exemplo
-usa seu catálogo e sua exceção explícita para demonstrar os adapters de baixo
-nível, sem alterar API pública para facilitá-lo.
+relação às APIs preexistentes. A versão 0.3 **Corrige** [`Corrects`] a versão
+0.2 ao delimitar à implementação interna da capability a exclusão de
+configuração dos sensores. A versão 0.2 corrigiu a versão 0.1 ao contratar o
+exemplo executável omitido. Nenhuma dessas correções altera cálculo, estados,
+publicação ou lifecycle da capability. A fonte preserva
+`IOTSSC-HW-EXAMPLES`: o exemplo usa seu catálogo e sua exceção explícita para
+demonstrar os adapters de baixo nível, sem alterar API pública para facilitá-lo.
 
 **ADRs relacionadas:** nenhuma conhecida. A análise formal da versão 0.1
-classificou como plausível o ownership externo; a versão 0.2 deve reconfrontar
-sua concretização pelo exemplo e a seleção dos dois ADCs.
+classificou como plausível o ownership externo. O bloqueador de consistência
+interna identificado na análise 0.2 foi incorporado nesta versão; a versão 0.3
+deve receber nova análise formal.
 
 **Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito na
 autoria. A implementação da versão 0.1 permanece como baseline histórica; o
-exemplo da versão 0.2 e suas evidências ainda não existem. A implementabilidade
-da versão corrente permanece pendente.
+exemplo contratado e suas evidências ainda não existem. O bloqueador da análise
+0.2 foi incorporado pela delimitação do fora de escopo; a implementabilidade da
+versão corrente permanece pendente.
 
 ## 10. Estado da especificação
 
-A versão 0.2 está em Rascunho [`Draft`], com implementação Não iniciada
+A versão 0.3 está em Rascunho [`Draft`], com implementação Não iniciada
 [`Not Started`], entrega Não pronta [`Not Ready`] e revisão de
 implementabilidade Pendente [`Pending Review`]. O código e o build canônico da
 versão 0.1 permanecem como evidência histórica, mas não cobrem o exemplo agora
-contratado nem autorizam sua implementação. A versão 0.2 segue para nova
+contratado nem autorizam sua implementação. A versão 0.3 segue para nova
 análise formal. Nenhum artefato de teste integra o recorte e nenhum teste foi
 criado, alterado ou executado nesta autoria.

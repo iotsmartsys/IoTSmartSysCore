@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 01/09/2026 (autoria da PowerEnergyCapability 0.2)
+**Última atualização:** 02/09/2026 (autoria da PowerEnergyCapability 0.3)
 
 ## 1. Governança
 
@@ -34,7 +34,7 @@
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
-| Potência e energia por composição de sensores | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Draft 0.2 — Pending Review | Not Started na 0.2; código da 0.1 implementado; exemplo `power_energy` contratado com lifecycle externo e dois ADCs da MCB R1 (`EKOM-CHG-0013`) |
+| Potência e energia por composição de sensores | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Draft 0.3 — Pending Review | Not Started na 0.3; código da 0.1 implementado; exemplo externo autorizado a configurar adapters preexistentes (`EKOM-CHG-0014`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
@@ -47,7 +47,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); composição de potência e energia `IOTSSC-POWER-ENERGY-CAPABILITY@0.2` em `Draft`/`Pending Review`/`Not Started`, com código da 0.1 implementado e exemplo ainda pendente (`EKOM-CHG-0013`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); composição de potência e energia `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` em `Draft`/`Pending Review`/`Not Started`, com código da 0.1 implementado e bloqueador de escopo da 0.2 incorporado (`EKOM-CHG-0014`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -66,10 +66,12 @@ chama nem verifica `setup()` ou `handle()` desses sensores. A aplicação
 consumidora responde pelo lifecycle, pela atualização e pela duração das duas
 referências, independentemente de os sensores também serem acionados por
 `VoltageSensorCapability` ou `CurrentSensorCapability`. A autoridade deste
-contrato é `IOTSSC-POWER-ENERGY-CAPABILITY@0.2`. O exemplo contratado
+contrato é `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`. O exemplo contratado
 `power_energy` demonstra o cenário sem capabilities próprias: possui e aciona
 diretamente os dois adapters, usa GPIO 34 para corrente e GPIO 33 para tensão e
-registra somente a `PowerEnergyCapability` na aplicação.
+registra somente a `PowerEnergyCapability` na aplicação. A exclusão de
+configuração de sensores se aplica à lógica interna da capability, não à
+configuração desses adapters preexistentes pelo exemplo.
 
 ## 3. Árvore de conhecimento
 
@@ -279,6 +281,9 @@ conclusão ou reabertura e aceita ou quita débito técnico.
 - `EKOM-CHG-0013`: corrige a especificação para 0.2 ao contratar o exemplo
   executável `power_energy`, com lifecycle externo explícito, corrente no GPIO
   34, tensão no GPIO 33 e reset local; a nova versão aguarda análise formal.
+- `EKOM-CHG-0014`: corrige a especificação para 0.3 ao delimitar à lógica
+  interna da capability a exclusão de configuração dos sensores, incorporando
+  o bloqueador formal da versão 0.2 e encaminhando a nova versão para análise.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.
