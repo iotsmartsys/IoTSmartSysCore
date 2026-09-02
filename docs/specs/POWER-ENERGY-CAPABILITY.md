@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -538,9 +538,9 @@ de `src/main.cpp` com o perfil genérico, sem ser reclassificado como sucesso.
 ## 10. Estado da especificação
 
 A versão 0.3 está Vigente [`Active`], com implementação Validada
-[`Validated`], entrega Pronta para integração [`Ready for Integration`] e
-revisão de implementabilidade Pronta [`Ready`]. O Arquiteto declarou a
-implementação validada, considerou o conjunto de evidências suficiente para
-encerrar a especificação e determinou sua integração à `main`. A falha
-histórica do build canônico `esp32_dev` permanece preservada sem
-reclassificação. Nenhum artefato de teste integra o recorte.
+[`Validated`], entrega Concluída [`Done`] e revisão de implementabilidade
+Pronta [`Ready`]. O Arquiteto declarou a implementação validada, considerou o
+conjunto de evidências suficiente para encerrar a especificação e determinou
+sua integração à `main`, concluída sem conflito. A falha histórica do build
+canônico `esp32_dev` permanece preservada sem reclassificação. Nenhum artefato
+de teste integra o recorte.

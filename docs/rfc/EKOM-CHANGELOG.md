@@ -5,7 +5,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0016 — Validação final da PowerEnergyCapability 0.3
 
-**Estado:** Em andamento [`In Progress`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`
 
@@ -41,6 +41,14 @@ O relatório
 `docs/reports/2026-09-02T203647Z-0.3-46cc009f-final-validation-report.md`
 preserva a decisão, a confrontação e seus limites. A transação permanece em
 andamento até a integração e sincronização efetivas com `main`.
+
+### Integração e encerramento
+
+O recorte validado foi integrado à `main` a partir da branch
+`spec/power-energy-capability` por fast-forward, sem conflito. A entrega passa
+de Pronta para integração [`Ready for Integration`] para Concluída [`Done`]. A
+especificação permanece Vigente [`Active`], sua implementação permanece
+Validada [`Validated`] e esta transação é encerrada por objetivo cumprido.
 
 ## EKOM-CHG-0015 — Implementação da PowerEnergyCapability 0.3
 
