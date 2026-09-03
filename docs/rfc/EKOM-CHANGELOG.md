@@ -3,6 +3,35 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0019 — Correção da dependência INA3221 0.2
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.2`
+
+**Objetivo:** corrigir a versão 0.1, que confundiu a tag Git upstream `1.0.3`
+com uma versão publicada do pacote no registro PlatformIO.
+
+### Decisão do Arquiteto
+
+- usar `adafruit/Adafruit INA3221 Library@^1.0.1`, a versão mais recente
+  publicada no registro empregado pelo projeto;
+- não trocar de biblioteca nem adotar URL Git como origem da dependência.
+
+### Alteração normativa
+
+- versão da especificação promovida de 0.1 para 0.2;
+- INA-044 e INA-AC-006 passam a exigir resolução de `^1.0.1`;
+- fonte técnica passa a distinguir o pacote PlatformIO da tag upstream;
+- requisitos funcionais, API, ownership, exemplo e limites elétricos permanecem
+  inalterados.
+
+### Resultado
+
+A versão 0.2 permanece `Draft`/`In Progress`, retorna mecanicamente a
+`Pending Review` e segue para nova análise de implementabilidade. A
+implementação da versão 0.1 permanece como baseline parcial.
+
 ## EKOM-CHG-0018 — Implementação dos sensores INA3221 0.1
 
 **Estado:** Aberta [`Open`]

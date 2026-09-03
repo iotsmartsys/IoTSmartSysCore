@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -12,9 +12,10 @@
 
 **Estado da entrega:** Não iniciada [`Not Started`]
 
-**Revisão de implementabilidade:** Pronta [`Ready`]
+**Revisão de implementabilidade:** Pendente [`Pending Review`]
 
-**Relação normativa:** Nova extensão [`New`]; altera de forma aditiva
+**Relação normativa:** Corrige [`Corrects`] `IOTSSC-INA3221-SENSORS@0.1`;
+permanece uma extensão [`New`] que altera de forma aditiva
 [`Amends`] `IOTSSC-CURRENT-SENSOR@0.6`, `IOTSSC-VOLTAGE-SENSOR@0.1`,
 `IOTSSC-PUBLIC-API` e `IOTSSC-HW-EXAMPLES@1.1`
 
@@ -72,7 +73,7 @@ dois adapters e permanece contido na integração INA3221.
 - falhas de configuração e inicialização observáveis por estado e log;
 - overloads públicos para registrar sensores externos nas capabilities;
 - ownership e lifecycle explícitos do dispositivo, adapters e capabilities;
-- dependência pública `adafruit/Adafruit INA3221 Library@^1.0.3`;
+- dependência pública `adafruit/Adafruit INA3221 Library@^1.0.1`;
 - exemplo único e combinado na MCB R1, usando tensão e corrente do canal 0;
 - documentação e validação física proporcional ao risco elétrico.
 
@@ -101,12 +102,14 @@ dois adapters e permanece contido na integração INA3221.
 
 ## 5. Fontes técnicas e limites do componente
 
-A implementação deve usar a versão compatível `^1.0.3` da biblioteca oficial:
+A implementação deve usar o pacote PlatformIO publicado da biblioteca oficial,
+com versão compatível `^1.0.1`:
 
 ```text
+https://registry.platformio.org/libraries/adafruit/Adafruit%20INA3221%20Library
 https://github.com/adafruit/Adafruit_INA3221
-tag 1.0.3
-commit 43558800d999eecb35de7b15b94488afa945825e
+tag 1.0.1
+commit a07362b656bd3032c1f7509c46f8f7763ad2a449
 ```
 
 O contrato considera as seguintes características documentadas:
@@ -376,7 +379,7 @@ SmartSysApp::addVoltageSensor(
 ### 7.6 Dependência e build
 
 - **INA-044:** `library.json` deve declarar
-  `adafruit/Adafruit INA3221 Library` com versão compatível `^1.0.3`; a
+  `adafruit/Adafruit INA3221 Library` com versão compatível `^1.0.1`; a
   dependência transitiva `Adafruit BusIO` permanece resolvida pelo manifesto da
   biblioteca.
 - **INA-045:** o environment do exemplo deve declarar ou herdar explicitamente
@@ -477,7 +480,7 @@ construção estática do dispositivo e dos dois adapters
 | INA-AC-003 — Adapter de corrente | INA-023 a INA-035 | Shunt `0,100 Ω` é configurado; sinal e polaridade são preservados; deadband, estimativa, faixa válida e excesso produzem estados contratados; calibração permanece não aplicável. | Execução instrumentada e inspeção. |
 | INA-AC-004 — Lifecycle cooperativo | INA-009 a INA-016 e INA-040 | Cada oportunidade executa no máximo uma leitura própria, sem espera; snapshots e timestamps só mudam na conclusão; rollover não paralisa leitura. | Inspeção e execução instrumentada. |
 | INA-AC-005 — API e ownership | INA-036 a INA-043 | APIs antigas permanecem compiláveis; overloads registram capabilities externas antes de setup; falhas retornam `nullptr` sem efeito parcial; destruir a aplicação não destrói adapters. | Inspeção, execução instrumentada e build canônico. |
-| INA-AC-006 — Dependência | INA-044 a INA-047 | Um consumidor limpo resolve `^1.0.3`; exemplo não depende de biblioteca global; target mínimo preserva exclusão dos sensores. | Inspeção e builds proporcionais. |
+| INA-AC-006 — Dependência | INA-044 a INA-047 | Um consumidor limpo resolve `^1.0.1`; exemplo não depende de biblioteca global; target mínimo preserva exclusão dos sensores. | Inspeção e builds proporcionais. |
 | INA-AC-007 — Exemplo combinado | INA-048 a INA-056 | O environment compila exatamente um `setup()`/`loop()`, cria um dispositivo, dois adapters e duas capabilities, usa `Wire`, `ESP32_SDA`, `ESP32_SCL`, endereço `0x40`, canal 0 e shunt R100. | Build do exemplo e inspeção. |
 | INA-AC-008 — Documentação e segurança | INA-057 a INA-060 | README contém montagem, lifecycle, comandos, resultados e distingue limite de conversão de limite térmico; ensaio inicial não excede 0,5 A. | Inspeção e validação física autorizada. |
 | INA-AC-009 — Hardware | INA-049 a INA-060 | Na MCB R1, tensão e corrente do canal 0 acompanham instrumentos independentes, preservam sinal e estados e não bloqueiam conectividade ou aplicação. | Upload, monitor e validação física com ordem operacional própria. |
@@ -510,7 +513,7 @@ resultados permanecem `Not Executed`.
 - registrar a fronteira de ownership do dispositivo e dos adapters externos;
 - registrar o exemplo combinado como pendente de implementação;
 - registrar a autoria em `docs/rfc/EKOM-CHANGELOG.md`;
-- encaminhar a versão 0.1 para Análise de Implementabilidade.
+- encaminhar a versão 0.2 para Análise de Implementabilidade.
 
 ## 12. Decisões, fatos e pendências
 
@@ -532,14 +535,17 @@ SCL 22; endereço `0x40`; canal 0; shunt com marcação `R100`, interpretado com
 ownership externo; preservação das APIs existentes; média de 16 amostras;
 conversão contínua de barramento e shunt; calibração de zero não aplicável;
 alimentação não monitorada; limite de conversão derivado do shunt; ensaio
-inicial limitado a 0,5 A; dependência `^1.0.3`.
+inicial limitado a 0,5 A; dependência PlatformIO `^1.0.1`, confirmada pelo
+Arquiteto após a versão 0.1 confundir a tag Git mais recente com a versão
+publicada no registro.
 
 **Restrições conhecidas:** a biblioteca Adafruit não oferece um resultado de
 erro separado em todas as leituras de registrador; portanto esta versão não
 afirma detecção garantida de toda desconexão posterior ao setup. `R100` informa
 resistência, não potência ou limite térmico.
 
-**Decisões pendentes:** nenhuma conhecida no contrato registrado. Detalhes
+**Decisões pendentes:** nenhuma conhecida no contrato registrado. A versão 0.2
+resolve a origem e a versão da dependência. Detalhes
 locais de organização de headers, nomes auxiliares e validação interna que
 preservem esta API pertencem à Implementação.
 
@@ -547,8 +553,8 @@ preservem esta API pertencem à Implementação.
 
 ## 13. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação Em andamento
-[`In Progress`] e Análise de Implementabilidade Pronta [`Ready`]. A ordem
-explícita do Arquiteto autoriza sua Implementação e os builds canônicos
-proporcionais; testes, upload, monitor e validação em hardware permanecem não
-autorizados.
+A versão 0.2 está em Rascunho [`Draft`], com implementação Em andamento
+[`In Progress`] e Análise de Implementabilidade Pendente [`Pending Review`]. A
+implementação produzida sob a versão 0.1 permanece como baseline, mas a correção
+normativa deve ser reconfrontada antes de retomar sua conclusão. Testes, upload,
+monitor e validação em hardware permanecem não autorizados.

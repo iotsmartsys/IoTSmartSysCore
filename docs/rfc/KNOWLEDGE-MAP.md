@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 02/09/2026 (implementação dos sensores INA3221 0.1 em andamento)
+**Última atualização:** 02/09/2026 (correção da dependência INA3221 0.2)
 
 ## 1. Governança
 
@@ -34,7 +34,7 @@
 | Console de tela como ferramenta | `docs/specs/SCREEN-CONSOLE-TOOLING.md` | Active 0.3 — revisão de implementabilidade `Implementable` | Validated; `Done` após validação física, decisão explícita do Arquiteto e integração à `main` (`EKM-CHG-0042`) |
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
-| Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Draft 0.1 — Ready | In Progress; código e exemplo compilam com a tag Git 1.0.3, mas o registro PlatformIO oferece somente 1.0.1 (`EKOM-CHG-0018`) |
+| Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Draft 0.2 — Pending Review | In Progress; dependência corrigida para o pacote PlatformIO `^1.0.1` (`EKOM-CHG-0019`) |
 | Potência e energia por composição de sensores | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.3 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0016`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
@@ -48,7 +48,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Draft`/`Ready`/`In Progress` (`EKOM-CHG-0018`); composição de potência e energia `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0016`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Draft 0.2`/`Pending Review`/`In Progress` (`EKOM-CHG-0019`); composição de potência e energia `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0016`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -83,7 +83,7 @@ somente as capabilities registradas pelos overloads que recebem
 `IVoltageSensor&` e `ICurrentSensor&`. As capabilities conduzem `setup()` e
 `handle()` dos adapters, enquanto o setup idempotente impede reinicialização do
 mesmo endereço. A autoridade deste contrato é
-`IOTSSC-INA3221-SENSORS@0.1`.
+`IOTSSC-INA3221-SENSORS@0.2`.
 
 ## 3. Árvore de conhecimento
 
@@ -313,6 +313,9 @@ conclusão ou reabertura e aceita ou quita débito técnico.
 - `EKOM-CHG-0018`: implementa o recorte INA3221 e confirma sua compilação com
   a tag Git 1.0.3; a ausência dessa versão no registro PlatformIO mantém a
   implementação e o build canônico do exemplo `In Progress`.
+- `EKOM-CHG-0019`: corrige a dependência normativa para o pacote PlatformIO
+  `adafruit/Adafruit INA3221 Library@^1.0.1`, sem alterar o comportamento dos
+  sensores; a versão 0.2 segue para análise.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.
