@@ -21,6 +21,11 @@
 //  Platform implementations
 // -----------------------------------------------------------------------------
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
+#if IOTSMARTSYS_SENSORS_ENABLED
+#include "Platform/Arduino/Sensors/INA3221CurrentSensor.h"
+#include "Platform/Arduino/Sensors/INA3221Device.h"
+#include "Platform/Arduino/Sensors/INA3221VoltageSensor.h"
+#endif
 
 // MQTT client implementation (required before declaring mqttClient)
 #include "Platform/Espressif/Mqtt/EspIdfMqttClient.h"
@@ -113,8 +118,16 @@ namespace iotsmartsys
                 iotsmartsys::core::GarageControlCapability *addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg);
                 iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
                     iotsmartsys::core::CurrentSensorConfig config);
+                iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
+                    const std::string &id,
+                    iotsmartsys::core::ICurrentSensor &sensor,
+                    std::uint32_t evaluationIntervalMs = 1000);
                 iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
                     iotsmartsys::core::VoltageSensorConfig config);
+                iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
+                    const std::string &id,
+                    iotsmartsys::core::IVoltageSensor &sensor,
+                    std::uint32_t evaluationIntervalMs = 1000);
                 iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
                     iotsmartsys::core::PowerEnergyConfig config,
                     iotsmartsys::core::IVoltageSensor &voltageSensor,

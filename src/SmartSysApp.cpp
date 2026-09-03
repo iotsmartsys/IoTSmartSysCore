@@ -760,6 +760,21 @@ namespace iotsmartsys
         return builder_.addCurrentSensor(config);
     }
 
+    iotsmartsys::core::CurrentSensorCapability *SmartSysApp::addCurrentSensor(
+        const std::string &id,
+        iotsmartsys::core::ICurrentSensor &sensor,
+        std::uint32_t evaluationIntervalMs)
+    {
+        if (setupStarted_)
+        {
+            logger_.error("App",
+                          "External current sensor '%s' rejected: capabilities must be registered before setup().",
+                          id.c_str());
+            return nullptr;
+        }
+        return builder_.addCurrentSensor(id, sensor, evaluationIntervalMs);
+    }
+
     iotsmartsys::core::VoltageSensorCapability *SmartSysApp::addVoltageSensor(
         iotsmartsys::core::VoltageSensorConfig config)
     {
@@ -771,6 +786,21 @@ namespace iotsmartsys
             return nullptr;
         }
         return builder_.addVoltageSensor(config);
+    }
+
+    iotsmartsys::core::VoltageSensorCapability *SmartSysApp::addVoltageSensor(
+        const std::string &id,
+        iotsmartsys::core::IVoltageSensor &sensor,
+        std::uint32_t evaluationIntervalMs)
+    {
+        if (setupStarted_)
+        {
+            logger_.error("App",
+                          "External voltage sensor '%s' rejected: capabilities must be registered before setup().",
+                          id.c_str());
+            return nullptr;
+        }
+        return builder_.addVoltageSensor(id, sensor, evaluationIntervalMs);
     }
 
     iotsmartsys::core::PowerEnergyCapability *SmartSysApp::addPowerEnergyCapability(

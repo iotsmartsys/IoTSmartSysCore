@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Não iniciada [`Not Started`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Relação normativa:** Nova extensão [`New`]; altera de forma aditiva
 [`Amends`] `IOTSSC-CURRENT-SENSOR@0.6`, `IOTSSC-VOLTAGE-SENSOR@0.1`,
@@ -547,7 +547,8 @@ preservem esta API pertencem à Implementação.
 
 ## 13. Estado da especificação
 
-A versão 0.1 está em Rascunho [`Draft`], com implementação Não iniciada
-[`Not Started`] e Análise de Implementabilidade Pendente [`Pending Review`].
-O registro desta especificação não autoriza implementação, testes, upload,
-monitor ou validação em hardware.
+A versão 0.1 está em Rascunho [`Draft`], com implementação Em andamento
+[`In Progress`] e Análise de Implementabilidade Pronta [`Ready`]. A ordem
+explícita do Arquiteto autoriza sua Implementação e os builds canônicos
+proporcionais; testes, upload, monitor e validação em hardware permanecem não
+autorizados.

@@ -11,6 +11,7 @@ Os exemplos executáveis são aplicações Arduino reais selecionadas por enviro
 | [`current_sensor`](executable/current_sensor/README.md) | `example_current_sensor_mcb_r1` | ACS712-30A no GPIO 34 (J4) da MCB R1 |
 | [`voltage_sensor`](executable/voltage_sensor/README.md) | `example_voltage_sensor_mcb_r1` | divisor resistivo no GPIO 34 (J4) da MCB R1 |
 | [`power_energy`](executable/power_energy/README.md) | `example_power_energy_mcb_r1` | ACS712-30A no GPIO 34 e divisor resistivo no GPIO 33 da MCB R1 |
+| [`ina3221_voltage_current`](executable/ina3221_voltage_current/README.md) | `example_ina3221_voltage_current_mcb_r1` | tensão e corrente do canal 0 do INA3221, via I²C GPIO 21/22, na MCB R1 |
 | [`fan`](executable/fan/README.md) | `example_fan_mcb_r1` | ventilador binário pela saída de relé GPIO 26 da MCB R1 |
 
 Fluxo comum:

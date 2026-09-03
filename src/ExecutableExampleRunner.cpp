@@ -4,7 +4,7 @@
      defined(IOTSMARTSYS_EXAMPLE_ENVIRONMENT_NTC) + \
      defined(IOTSMARTSYS_EXAMPLE_SCREEN_CONSOLE) + defined(IOTSMARTSYS_EXAMPLE_CURRENT_SENSOR) + \
      defined(IOTSMARTSYS_EXAMPLE_VOLTAGE_SENSOR) + defined(IOTSMARTSYS_EXAMPLE_POWER_ENERGY) + \
-     defined(IOTSMARTSYS_EXAMPLE_FAN)) != 1
+     defined(IOTSMARTSYS_EXAMPLE_INA3221_VOLTAGE_CURRENT) + defined(IOTSMARTSYS_EXAMPLE_FAN)) != 1
 #error "Example environment must select exactly one IOTSMARTSYS_EXAMPLE_* application"
 #endif
 
@@ -22,6 +22,8 @@
 #include "../examples/executable/voltage_sensor/example.hpp"
 #elif defined(IOTSMARTSYS_EXAMPLE_POWER_ENERGY)
 #include "../examples/executable/power_energy/example.hpp"
+#elif defined(IOTSMARTSYS_EXAMPLE_INA3221_VOLTAGE_CURRENT)
+#include "../examples/executable/ina3221_voltage_current/example.hpp"
 #elif defined(IOTSMARTSYS_EXAMPLE_FAN)
 #include "../examples/executable/fan/example.hpp"
 #endif

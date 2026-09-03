@@ -3,6 +3,54 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0018 — Implementação dos sensores INA3221 0.1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.1`
+
+**Objetivo:** implementar e validar por build o dispositivo compartilhado, os
+adapters de tensão e corrente, os overloads públicos e o exemplo executável
+combinado contratados pela versão 0.1.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-09-03T015101Z-0.1-79dd19a7-implementability-analysis.md`;
+- ordem explícita do Arquiteto para implementar a versão corrente;
+- branch de especificação e árvore inicialmente limpas;
+- nenhum artefato automatizado de teste integra a versão.
+
+### Estado operacional
+
+A implementação está Em andamento [`In Progress`]. Testes, upload, monitor
+serial e validação física não estão autorizados nesta atuação.
+
+### Resultado material
+
+- implementados dispositivo compartilhado, adapters INA3221 de tensão e
+  corrente e overloads públicos sob ownership externo;
+- criado o exemplo combinado, com MCB R1, `Wire`, GPIOs 21/22, endereço `0x40`,
+  canal 0, shunt R100, catálogo, environment e documentação elétrica;
+- preservados os modelos e APIs existentes; nenhum teste foi criado ou alterado.
+
+### Evidências e limitação
+
+- o build diagnóstico do exemplo com a tag Git oficial `1.0.3` foi aprovado,
+  com RAM 68.908/327.680 bytes e flash 1.182.157/2.031.616 bytes;
+- o build canônico do exemplo falhou, código 1, porque o registro PlatformIO
+  oferece somente a versão `1.0.1` e não resolve o requisito `^1.0.3`;
+- `esp32_dev` compilou os novos objetos e falhou depois, código 1, por símbolos
+  MCB R1 e enum de temperatura preexistentes em `src/main.cpp`;
+- a escolha entre tag Git, versão publicada `1.0.1` ou espera por publicação é
+  normativa e permanece pendente do Arquiteto;
+- testes, execução instrumentada, upload, monitor e hardware permanecem
+  `Not Executed`; a transação continua aberta e `In Progress`.
+
+### Relatório
+
+`docs/reports/2026-09-03T020435Z-0.1-0e936b93-implementation-report.md`.
+
 ## EKOM-CHG-0017 — Autoria dos sensores INA3221 0.1
 
 **Estado:** Fechada [`Closed`]

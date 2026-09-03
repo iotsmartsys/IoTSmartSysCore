@@ -397,6 +397,40 @@ namespace iotsmartsys::app
         return capability;
     }
 
+    iotsmartsys::core::CurrentSensorCapability *CapabilitiesBuilder::addCurrentSensor(
+        const std::string &id,
+        iotsmartsys::core::ICurrentSensor &sensor,
+        std::uint32_t evaluationIntervalMs)
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto reject = [logger, &id](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "External current sensor '%s' rejected: %s; nothing was registered.",
+                              id.c_str(), reason);
+            }
+            return static_cast<iotsmartsys::core::CurrentSensorCapability *>(nullptr);
+        };
+
+        if (id.empty())
+            return reject("id is required");
+        if (id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
+            id.find('\0') != std::string::npos)
+            return reject("id is not a valid public capability identity");
+        if (evaluationIntervalMs == 0)
+            return reject("evaluation interval must be positive");
+        if (_count >= _capsMax)
+            return reject("capability slots exhausted");
+        if (capabilityIdentityInUse(id))
+            return reject("capability id is already registered");
+
+        auto *capability = createCapability<iotsmartsys::core::CurrentSensorCapability>(
+            id, sensor, &_eventSink, evaluationIntervalMs);
+        return capability ? capability : reject("arena or capability registration failed");
+    }
+
     bool CapabilitiesBuilder::validateVoltageSensorConfig(
         const iotsmartsys::core::VoltageSensorConfig &cfg) const
     {
@@ -534,6 +568,40 @@ namespace iotsmartsys::app
 
         _analogSensorPins[_analogSensorPinCount++] = cfg.adcPin;
         return capability;
+    }
+
+    iotsmartsys::core::VoltageSensorCapability *CapabilitiesBuilder::addVoltageSensor(
+        const std::string &id,
+        iotsmartsys::core::IVoltageSensor &sensor,
+        std::uint32_t evaluationIntervalMs)
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto reject = [logger, &id](const char *reason)
+        {
+            if (logger)
+            {
+                logger->error("CAP_BUILDER",
+                              "External voltage sensor '%s' rejected: %s; nothing was registered.",
+                              id.c_str(), reason);
+            }
+            return static_cast<iotsmartsys::core::VoltageSensorCapability *>(nullptr);
+        };
+
+        if (id.empty())
+            return reject("id is required");
+        if (id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
+            id.find('\0') != std::string::npos)
+            return reject("id is not a valid public capability identity");
+        if (evaluationIntervalMs == 0)
+            return reject("evaluation interval must be positive");
+        if (_count >= _capsMax)
+            return reject("capability slots exhausted");
+        if (capabilityIdentityInUse(id))
+            return reject("capability id is already registered");
+
+        auto *capability = createCapability<iotsmartsys::core::VoltageSensorCapability>(
+            id, sensor, &_eventSink, evaluationIntervalMs);
+        return capability ? capability : reject("arena or capability registration failed");
     }
 
     iotsmartsys::core::PowerEnergyCapability *CapabilitiesBuilder::addPowerEnergyCapability(

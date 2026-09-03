@@ -94,8 +94,16 @@ namespace iotsmartsys::app
         iotsmartsys::core::GarageControlCapability *addGarageControlCapability(const GarageControlConfig &cfg);
         iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
             const iotsmartsys::core::CurrentSensorConfig &cfg);
+        iotsmartsys::core::CurrentSensorCapability *addCurrentSensor(
+            const std::string &id,
+            iotsmartsys::core::ICurrentSensor &sensor,
+            std::uint32_t evaluationIntervalMs = 1000);
         iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
             const iotsmartsys::core::VoltageSensorConfig &cfg);
+        iotsmartsys::core::VoltageSensorCapability *addVoltageSensor(
+            const std::string &id,
+            iotsmartsys::core::IVoltageSensor &sensor,
+            std::uint32_t evaluationIntervalMs = 1000);
         iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
             const iotsmartsys::core::PowerEnergyConfig &cfg,
             iotsmartsys::core::IVoltageSensor &voltageSensor,

@@ -62,6 +62,10 @@
         {
             "name": "adafruit/Adafruit NeoPixel",
             "version": "^1.15.1"
+        },
+        {
+            "name": "adafruit/Adafruit INA3221 Library",
+            "version": "^1.0.3"
         }
     ],
     "examples": [
