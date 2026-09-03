@@ -3,6 +3,63 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0017 — Autoria dos sensores INA3221 0.1
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.1`
+
+**Objetivo:** registrar o contrato dos adapters INA3221 de tensão e corrente,
+do dispositivo I²C compartilhado, dos overloads públicos sob ownership externo
+e do exemplo executável combinado.
+
+### Decisões relacionadas
+
+- `INA3221Device` possui uma única instância da biblioteca Adafruit e possui
+  setup idempotente para compartilhamento pelos dois adapters;
+- `INA3221VoltageSensor` implementa `IVoltageSensor` e
+  `INA3221CurrentSensor` implementa `ICurrentSensor` sem alterar os modelos
+  preexistentes;
+- `SmartSysApp` recebe overloads aditivos que registram adapters externos por
+  referência e possui somente as respectivas capabilities;
+- o exemplo único `ina3221_voltage_current` usa MCB R1, `Wire`, SDA 21, SCL 22,
+  endereço `0x40`, canal 0 e shunt R100 de `0,100 Ω`;
+- o limite de conversão derivado do shunt não afirma capacidade térmica, e o
+  ensaio inicial documentado fica limitado a `0,5 A`;
+- nenhum artefato automatizado de teste integra a versão 0.1.
+
+### Lacunas
+
+- nenhuma lacuna normativa conhecida foi aberta na autoria;
+- a biblioteca não expõe falha separada em toda leitura de registrador, de modo
+  que a versão não garante detecção de toda desconexão posterior ao setup;
+- a classificação de implementabilidade permanece reservada à análise formal.
+
+### Débitos técnicos relacionados
+
+- nenhum débito técnico foi aceito nesta transação.
+
+### Relatórios e evidências materiais
+
+- investigação dirigida das interfaces, capabilities, builders, factories,
+  exemplos, dependências, mapa, dossiê e especificações relacionadas;
+- confronto com a biblioteca Adafruit INA3221 1.0.3 e com o datasheet TI
+  `SBOS576C`;
+- rascunho conversacional reconciliado e ordem explícita do Arquiteto para
+  registro normativo;
+- `git diff --check`: aprovado sobre o delta documental;
+- guarda estrutural EKOM executada e reprovada somente por passivos
+  preexistentes fora do recorte: mapa do experimento NVS sem as seções do mapa
+  principal, relatórios legados sem metadados exigidos pelo validador atual e
+  seções históricas de análise incorporadas a `SCREEN-CONSOLE-TOOLING.md`.
+
+### Resultado
+
+`IOTSSC-INA3221-SENSORS@0.1` foi registrada em `Draft`, com análise de
+implementabilidade pendente, implementação não iniciada e sem pré-requisito
+arquitetural conhecido antes da análise formal. Nenhum código, teste,
+dependência, build ou configuração funcional foi alterado.
+
 ## EKOM-CHG-0016 — Validação final da PowerEnergyCapability 0.3
 
 **Estado:** Fechada [`Closed`]
