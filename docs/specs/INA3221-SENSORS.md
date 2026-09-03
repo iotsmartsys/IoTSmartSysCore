@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Implementada [`Implemented`]
 
-**Estado da entrega:** Não iniciada [`Not Started`]
+**Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Relação normativa:** Corrige [`Corrects`] `IOTSSC-INA3221-SENSORS@0.1`;
 permanece uma extensão [`New`] que altera de forma aditiva
@@ -553,8 +553,9 @@ preservem esta API pertencem à Implementação.
 
 ## 13. Estado da especificação
 
-A versão 0.2 está em Rascunho [`Draft`], com implementação Em andamento
-[`In Progress`] e Análise de Implementabilidade Pendente [`Pending Review`]. A
-implementação produzida sob a versão 0.1 permanece como baseline, mas a correção
-normativa deve ser reconfrontada antes de retomar sua conclusão. Testes, upload,
-monitor e validação em hardware permanecem não autorizados.
+A versão 0.2 está em Rascunho [`Draft`], com implementação Implementada
+[`Implemented`], Análise de Implementabilidade Pronta [`Ready`] e entrega Não
+pronta [`Not Ready`]. A dependência dos manifestos foi corrigida e os builds
+canônicos proporcionais foram aprovados. A versão segue para Revisão; testes,
+upload, monitor e validação em hardware permanecem não autorizados e não
+executados.

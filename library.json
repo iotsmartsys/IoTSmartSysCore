@@ -65,7 +65,7 @@
         },
         {
             "name": "adafruit/Adafruit INA3221 Library",
-            "version": "^1.0.3"
+            "version": "^1.0.1"
         }
     ],
     "examples": [

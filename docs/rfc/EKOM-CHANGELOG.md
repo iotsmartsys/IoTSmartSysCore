@@ -3,6 +3,50 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0020 — Implementação da correção INA3221 0.2
+
+**Estado:** Fechada [`Closed`]
+
+**Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.2`
+
+**Objetivo:** aplicar aos manifestos a dependência PlatformIO `^1.0.1` decidida
+pelo Arquiteto e repetir os builds normativos.
+
+### Entrada
+
+- análise formal `Ready` registrada em
+  `docs/reports/analysis/2026-09-03T021853Z-0.2-2f1e37a3-implementability-analysis.md`;
+- ordem explícita do Arquiteto para ajustar a dependência para `^1.0.1`;
+- branch de especificação e árvore inicialmente limpas;
+- nenhum teste ou operação de hardware integra a autorização.
+
+### Estado operacional
+
+A correção foi concluída e a implementação da versão 0.2 está Implementada
+[`Implemented`], seguindo para Revisão. A entrega permanece Não pronta
+[`Not Ready`].
+
+### Resultado material
+
+- `library.json` e o environment do exemplo passam a declarar
+  `adafruit/Adafruit INA3221 Library@^1.0.1`;
+- o registro PlatformIO resolveu e instalou `Adafruit INA3221 Library 1.0.1`;
+- nenhuma API, implementação dos adapters, exemplo, teste ou configuração
+  elétrica foi alterada.
+
+### Evidências
+
+- `pio run -e example_ina3221_voltage_current_mcb_r1`: `SUCCESS`, código 0,
+  RAM 68.908/327.680 bytes e flash 1.182.157/2.031.616 bytes;
+- `pio run -e esp32_dev`: `SUCCESS`, código 0, RAM 26.504/327.680 bytes e
+  flash 375.773/2.031.616 bytes;
+- `git diff --check` e validação sintática de `library.json`: aprovados;
+- testes, upload, monitor serial e validação em hardware: `Not Executed`.
+
+### Relatório
+
+`docs/reports/2026-09-03T022216Z-0.2-7b98f201-implementation-correction-report.md`.
+
 ## EKOM-CHG-0019 — Correção da dependência INA3221 0.2
 
 **Estado:** Fechada [`Closed`]
@@ -34,7 +78,7 @@ implementação da versão 0.1 permanece como baseline parcial.
 
 ## EKOM-CHG-0018 — Implementação dos sensores INA3221 0.1
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.1`
 
@@ -79,6 +123,12 @@ serial e validação física não estão autorizados nesta atuação.
 ### Relatório
 
 `docs/reports/2026-09-03T020435Z-0.1-0e936b93-implementation-report.md`.
+
+### Encerramento
+
+A pendência de resolução da dependência foi substituída e resolvida pela versão
+0.2 na transação `EKOM-CHG-0020`. O resultado da implementação vigente é
+registrado por essa transação posterior.
 
 ## EKOM-CHG-0017 — Autoria dos sensores INA3221 0.1
 
