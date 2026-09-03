@@ -6,11 +6,11 @@
 
 **Versão:** 0.2
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -553,9 +553,14 @@ preservem esta API pertencem à Implementação.
 
 ## 13. Estado da especificação
 
-A versão 0.2 está em Rascunho [`Draft`], com implementação Implementada
-[`Implemented`], Análise de Implementabilidade Pronta [`Ready`] e entrega Não
-pronta [`Not Ready`]. A dependência dos manifestos foi corrigida e os builds
-canônicos proporcionais foram aprovados. A versão segue para Revisão; testes,
-upload, monitor e validação em hardware permanecem não autorizados e não
-executados.
+A versão 0.2 está Vigente [`Active`], com implementação Validada [`Validated`],
+Análise de Implementabilidade Pronta [`Ready`] e entrega Pronta para integração
+[`Ready for Integration`]. A revisão classificou o recorte como aderente. O
+Arquiteto declarou ter concluído as validações em hardware, validou o código,
+considerou as evidências suficientes para encerrar a especificação e determinou
+sua promoção para `main`.
+
+O build do exemplo foi reconfirmado com sucesso. A repetição do build
+`esp32_dev` falhou em referências preexistentes de `src/main.cpp`, fora do
+delta INA3221; essa falha permanece registrada e não é reclassificada como
+sucesso. Nenhum artefato automatizado de teste integra esta versão.

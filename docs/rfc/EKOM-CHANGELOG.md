@@ -3,6 +3,54 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
+
+**Estado:** Em andamento [`In Progress`]
+
+**Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.2`
+
+**Objetivo:** registrar a revisão do quarto estágio, incorporar a validação em
+hardware declarada pelo Arquiteto, encerrar a especificação e promover o recorte
+validado para `main`.
+
+### Revisão
+
+- os 60 requisitos e os 9 critérios de aceite foram confrontados;
+- o resultado foi classificado como Aderente [`Conformant`], sem defeito
+  material de implementação ou de especificação identificado;
+- a revisão não é apresentada como independente, pois o mesmo agente participou
+  das etapas anteriores;
+- o relatório é
+  `docs/reports/2026-09-03T144552Z-0.2-88d15fcf-review-report.md`.
+
+### Evidência e decisão do Arquiteto
+
+O Arquiteto declarou ter executado as validações em hardware, validou o código,
+considerou a evidência suficiente para encerrar a especificação e ordenou a
+promoção do código para `main`. Registros brutos e valores de bancada não foram
+fornecidos nesta atuação e não são inferidos.
+
+Por essa decisão, a versão passa a `Active`, a implementação a `Validated` e a
+entrega a `Ready for Integration`. O relatório consultivo é
+`docs/reports/2026-09-03T144552Z-0.2-18759811-final-validation-report.md`.
+
+### Evidências técnicas reconciliadas
+
+- `pio run -e example_ina3221_voltage_current_mcb_r1`: `SUCCESS`, código 0,
+  usando `Adafruit INA3221 Library 1.0.1`, RAM 68.908/327.680 bytes e flash
+  1.182.157/2.031.616 bytes;
+- inspeção do ELF: exatamente um `setup()` e um `loop()`, componentes INA3221 e
+  overloads públicos presentes;
+- `pio run -e esp32_dev`: `FAILED`, código 1, em referências preexistentes de
+  `src/main.cpp` a símbolos MCB R1 e `TemperatureSensorModel::DS18B20`; esse
+  arquivo não integra o delta INA3221;
+- nenhuma alteração existe em `test/`, coerente com a exclusão normativa.
+
+### Estado operacional
+
+A validação e o encerramento foram determinados pelo Arquiteto. A transação
+permanece em andamento até a integração e a sincronização efetivas com `main`.
+
 ## EKOM-CHG-0020 — Implementação da correção INA3221 0.2
 
 **Estado:** Fechada [`Closed`]
