@@ -5,7 +5,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
-**Estado:** Em andamento [`In Progress`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-INA3221-SENSORS@0.2`
 
@@ -49,7 +49,15 @@ entrega a `Ready for Integration`. O relatório consultivo é
 ### Estado operacional
 
 A validação e o encerramento foram determinados pelo Arquiteto. A transação
-permanece em andamento até a integração e a sincronização efetivas com `main`.
+foi concluída após a integração e a sincronização efetivas com `main`.
+
+### Integração e encerramento
+
+O recorte validado foi integrado à `main` a partir da branch
+`spec/ina3221-sensors` por fast-forward, sem conflito. A entrega passa de Pronta
+para integração [`Ready for Integration`] para Concluída [`Done`]. A
+especificação permanece Vigente [`Active`], sua implementação permanece
+Validada [`Validated`] e a transação é encerrada por objetivo cumprido.
 
 ## EKOM-CHG-0020 — Implementação da correção INA3221 0.2
 

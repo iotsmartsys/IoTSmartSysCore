@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -554,11 +554,11 @@ preservem esta API pertencem à Implementação.
 ## 13. Estado da especificação
 
 A versão 0.2 está Vigente [`Active`], com implementação Validada [`Validated`],
-Análise de Implementabilidade Pronta [`Ready`] e entrega Pronta para integração
-[`Ready for Integration`]. A revisão classificou o recorte como aderente. O
-Arquiteto declarou ter concluído as validações em hardware, validou o código,
-considerou as evidências suficientes para encerrar a especificação e determinou
-sua promoção para `main`.
+Análise de Implementabilidade Pronta [`Ready`] e entrega Concluída [`Done`]. A
+revisão classificou o recorte como aderente. O Arquiteto declarou ter concluído
+as validações em hardware, validou o código, considerou as evidências
+suficientes para encerrar a especificação e determinou sua promoção para
+`main`, concluída por fast-forward sem conflito.
 
 O build do exemplo foi reconfirmado com sucesso. A repetição do build
 `esp32_dev` falhou em referências preexistentes de `src/main.cpp`, fora do
