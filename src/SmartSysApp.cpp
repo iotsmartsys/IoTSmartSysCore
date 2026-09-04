@@ -826,4 +826,12 @@ namespace iotsmartsys
         return builder_.addPowerEnergyCapability(config, voltageSensor, currentSensor);
     }
 
+    iotsmartsys::core::PowerEnergyCapability *SmartSysApp::addPowerEnergyCapability(
+        iotsmartsys::core::PowerEnergyConfig config,
+        iotsmartsys::core::IPowerSensor &powerSensor)
+    {
+        if (!canRegisterCapability(config.id.c_str())) return nullptr;
+        return builder_.addPowerEnergyCapability(config, powerSensor);
+    }
+
 } // namespace iotsmartsys

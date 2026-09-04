@@ -9,7 +9,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.4`
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Objetivo:** desacoplar `PowerEnergyCapability` da origem da potência por meio
 de `IPowerSensor`, preservar o consumo anterior por composite e acrescentar um
@@ -68,6 +68,27 @@ A especificação permanece `Draft`, sua implementação permanece `Not Started`
 e a entrega `Not Ready`. A classificação conclui o estágio técnico e torna a
 versão elegível à ordem explícita do Arquiteto; não inicia implementação,
 build, criação ou execução de testes nem operação de hardware.
+
+### Implementação 0.4
+
+Com análise `Ready` aplicável à versão corrente, o Arquiteto ordenou
+explicitamente sua implementação integral. O estado passa mecanicamente para
+Em andamento [`In Progress`] antes da primeira alteração de código. Criação dos
+testes contratados e builds proporcionais integram a atuação; execução de casos,
+upload, monitor e hardware permanecem não autorizados.
+
+Foram entregues `IPowerSensor`, `PowerMeasurement`, `CompositePowerSensor`,
+`INA3221PowerSensor`, os dois overloads públicos e o rollback conjunto do
+builder. A suíte dedicada contém 13 casos rastreáveis a lifecycle, coerência,
+composição, INA3221, integração, rollover, ownership e rollback. Os builds
+`esp32_dev`, `example_power_energy_mcb_r1` e `ESP32_MCB01` terminaram com
+`SUCCESS`; compilação e execução dos testes, upload, monitor e hardware ficaram
+`Not Executed`. O relatório material é
+`docs/reports/2026-09-04T185533Z-0.4-f0b4b13-implementation-report.md`.
+
+A implementação passa mecanicamente a Implementada [`Implemented`]. A
+transação permanece aberta e a entrega `Not Ready` para revisão técnica,
+validação, aprovação, conclusão e integração pelo Arquiteto.
 
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 

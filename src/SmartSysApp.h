@@ -24,6 +24,7 @@
 #if IOTSMARTSYS_SENSORS_ENABLED
 #include "Platform/Arduino/Sensors/INA3221CurrentSensor.h"
 #include "Platform/Arduino/Sensors/INA3221Device.h"
+#include "Platform/Arduino/Sensors/INA3221PowerSensor.h"
 #include "Platform/Arduino/Sensors/INA3221VoltageSensor.h"
 #endif
 
@@ -132,6 +133,9 @@ namespace iotsmartsys
                     iotsmartsys::core::PowerEnergyConfig config,
                     iotsmartsys::core::IVoltageSensor &voltageSensor,
                     iotsmartsys::core::ICurrentSensor &currentSensor);
+                iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
+                    iotsmartsys::core::PowerEnergyConfig config,
+                    iotsmartsys::core::IPowerSensor &powerSensor);
 
         private:
                 static void onMqttMessageThunk(void *ctx, const core::TransportMessageView &msg);

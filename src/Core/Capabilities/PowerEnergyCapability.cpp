@@ -7,19 +7,18 @@
 namespace iotsmartsys::core
 {
     PowerEnergyCapability::PowerEnergyCapability(const std::string &capabilityName,
-                                                 IVoltageSensor &voltageSensor,
-                                                 ICurrentSensor &currentSensor,
+                                                 IPowerSensor &powerSensor,
                                                  ICapabilityEventSink *eventSink,
                                                  std::uint32_t readingIntervalMs)
         : ICapability(eventSink, capabilityName.c_str(), POWER_ENERGY_TYPE, ""),
-          _voltageSensor(voltageSensor),
-          _currentSensor(currentSensor),
+          _powerSensor(powerSensor),
           _readingIntervalMs(readingIntervalMs)
     {
     }
 
     void PowerEnergyCapability::setup()
     {
+        _powerSensor.setup();
         ICapability::setup();
         value.clear();
         _measurement.powerW.reset();
@@ -37,8 +36,9 @@ namespace iotsmartsys::core
 
     void PowerEnergyCapability::handle()
     {
-        const std::uint64_t nowMs = timeProvider.nowMs();
-        if (_evaluated && nowMs - _lastEvaluationMs < _readingIntervalMs)
+        _powerSensor.handle();
+        const std::uint32_t nowMs = static_cast<std::uint32_t>(timeProvider.nowMs());
+        if (_evaluated && static_cast<std::uint32_t>(nowMs - _lastEvaluationMs) < _readingIntervalMs)
         {
             return;
         }
@@ -46,9 +46,8 @@ namespace iotsmartsys::core
         _evaluated = true;
         _lastEvaluationMs = nowMs;
 
-        const VoltageMeasurement &voltage = _voltageSensor.voltageMeasurement();
-        const CurrentMeasurement &current = _currentSensor.currentMeasurement();
-        evaluate(nowMs, voltage, current);
+        const PowerMeasurement &power = _powerSensor.powerMeasurement();
+        evaluate(nowMs, power);
         publishIfChanged();
     }
 
@@ -65,53 +64,25 @@ namespace iotsmartsys::core
         _previousPowerW = 0.0;
     }
 
-    PowerEnergyMeasurementStatus PowerEnergyCapability::classifyInputs(
-        const VoltageMeasurement &voltage,
-        const CurrentMeasurement &current)
+    PowerEnergyMeasurementStatus PowerEnergyCapability::classify(const PowerMeasurement &power)
     {
-        const bool voltageInvalid =
-            voltage.measurementStatus == VoltageMeasurementStatus::BELOW_MINIMUM ||
-            voltage.measurementStatus == VoltageMeasurementStatus::ADC_SATURATION;
-        const bool currentInvalid =
-            current.measurementStatus == CurrentMeasurementStatus::ZERO_CALIBRATION_FAILED ||
-            current.measurementStatus == CurrentMeasurementStatus::OUT_OF_CALIBRATED_RANGE ||
-            current.measurementStatus == CurrentMeasurementStatus::OVERCURRENT_OR_SATURATION ||
-            current.supplyStatus == CurrentSupplyStatus::SUPPLY_OUT_OF_RANGE;
-
-        if (voltageInvalid || currentInvalid)
-        {
+        const bool requiresValue = power.measurementStatus == PowerMeasurementStatus::VALID ||
+                                   power.measurementStatus == PowerMeasurementStatus::ESTIMATED;
+        const bool coherentValue = power.powerW && std::isfinite(*power.powerW) && *power.powerW >= 0.0;
+        if ((requiresValue && !coherentValue) || (!requiresValue && power.powerW))
             return PowerEnergyMeasurementStatus::INPUT_INVALID;
-        }
 
-        if (voltage.measurementStatus == VoltageMeasurementStatus::NOT_READY ||
-            current.measurementStatus == CurrentMeasurementStatus::NOT_READY ||
-            current.measurementStatus == CurrentMeasurementStatus::CALIBRATING ||
-            current.supplyStatus == CurrentSupplyStatus::UNKNOWN)
+        switch (power.measurementStatus)
         {
+        case PowerMeasurementStatus::NOT_READY:
             return PowerEnergyMeasurementStatus::NOT_READY;
-        }
-
-        if (voltage.measurementStatus != VoltageMeasurementStatus::VALID ||
-            (current.measurementStatus != CurrentMeasurementStatus::VALID &&
-             current.measurementStatus != CurrentMeasurementStatus::ESTIMATED) ||
-            !voltage.voltageV || !current.currentA ||
-            !std::isfinite(*voltage.voltageV) || !std::isfinite(*current.currentA))
-        {
+        case PowerMeasurementStatus::VALID:
+            return PowerEnergyMeasurementStatus::VALID;
+        case PowerMeasurementStatus::ESTIMATED:
+            return PowerEnergyMeasurementStatus::ESTIMATED;
+        case PowerMeasurementStatus::INPUT_INVALID:
             return PowerEnergyMeasurementStatus::INPUT_INVALID;
         }
-
-        if (current.measurementStatus == CurrentMeasurementStatus::ESTIMATED ||
-            current.supplyStatus == CurrentSupplyStatus::NOT_MONITORED)
-        {
-            return PowerEnergyMeasurementStatus::ESTIMATED;
-        }
-
-        if (current.measurementStatus == CurrentMeasurementStatus::VALID &&
-            current.supplyStatus == CurrentSupplyStatus::IN_RANGE)
-        {
-            return PowerEnergyMeasurementStatus::VALID;
-        }
-
         return PowerEnergyMeasurementStatus::INPUT_INVALID;
     }
 
@@ -139,11 +110,9 @@ namespace iotsmartsys::core
         return result;
     }
 
-    void PowerEnergyCapability::evaluate(std::uint64_t nowMs,
-                                         const VoltageMeasurement &voltage,
-                                         const CurrentMeasurement &current)
+    void PowerEnergyCapability::evaluate(std::uint32_t nowMs, const PowerMeasurement &power)
     {
-        const PowerEnergyMeasurementStatus status = classifyInputs(voltage, current);
+        const PowerEnergyMeasurementStatus status = classify(power);
         if (status == PowerEnergyMeasurementStatus::NOT_READY ||
             status == PowerEnergyMeasurementStatus::INPUT_INVALID)
         {
@@ -151,8 +120,7 @@ namespace iotsmartsys::core
             return;
         }
 
-        const double powerW = std::fabs(static_cast<double>(*voltage.voltageV) *
-                                        static_cast<double>(*current.currentA));
+        const double powerW = *power.powerW;
         if (!std::isfinite(powerW))
         {
             invalidate(PowerEnergyMeasurementStatus::INPUT_INVALID);
@@ -162,7 +130,7 @@ namespace iotsmartsys::core
         double nextEnergyWh = _measurement.energyWh;
         if (_hasIntegrationBaseline)
         {
-            const std::uint64_t elapsedMs = nowMs - _integrationBaselineMs;
+            const std::uint32_t elapsedMs = static_cast<std::uint32_t>(nowMs - _integrationBaselineMs);
             const double deltaEnergyWh = ((_previousPowerW + powerW) / 2.0) *
                                          static_cast<double>(elapsedMs) / 3600000.0;
             const double candidateEnergyWh = nextEnergyWh + deltaEnergyWh;

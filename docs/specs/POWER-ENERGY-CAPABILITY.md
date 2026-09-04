@@ -8,7 +8,7 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
@@ -477,10 +477,12 @@ decisões funcionais antecipadas.
 
 ## 10. Estado da especificação
 
-A versão 0.4 está em Rascunho [`Draft`], com implementação Não iniciada
-[`Not Started`], entrega Não pronta [`Not Ready`] e Análise de
+A versão 0.4 está em Rascunho [`Draft`], com implementação Implementada
+[`Implemented`], entrega Não pronta [`Not Ready`] e Análise de
 Implementabilidade Pronta [`Ready`]. A análise formal confrontou 49 requisitos,
 7 critérios e zero débitos relacionados, sem bloqueadores. A classificação
-torna a versão elegível a uma ordem explícita de implementação, mas não a
-autoriza por si só. Nenhuma implementação, build, teste ou operação de hardware
-foi realizada.
+foi seguida por ordem explícita do Arquiteto para implementar integralmente a
+versão. Os três builds contratados foram aprovados e os testes automatizados
+foram criados. Compilação e execução dos casos, upload, monitor e hardware não
+foram autorizados e constam como `Not Executed`. Revisão técnica, validação,
+aprovação, conclusão e integração permanecem pendentes.

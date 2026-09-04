@@ -37,6 +37,8 @@
 #include "Contracts/Capabilities/CurrentSensorCapability.h"
 #include "Contracts/Capabilities/VoltageSensorCapability.h"
 #include "Contracts/Capabilities/PowerEnergyCapability.h"
+#include "Contracts/Sensors/IPowerSensor.h"
+#include "Core/Sensors/CompositePowerSensor.h"
 #include "Contracts/Providers/IDeviceIdentityProvider.h"
 
 namespace iotsmartsys::app
@@ -110,6 +112,9 @@ namespace iotsmartsys::app
             const iotsmartsys::core::PowerEnergyConfig &cfg,
             iotsmartsys::core::IVoltageSensor &voltageSensor,
             iotsmartsys::core::ICurrentSensor &currentSensor);
+        iotsmartsys::core::PowerEnergyCapability *addPowerEnergyCapability(
+            const iotsmartsys::core::PowerEnergyConfig &cfg,
+            iotsmartsys::core::IPowerSensor &powerSensor);
 
     private:
         iotsmartsys::core::IDeviceIdentityProvider &_deviceIdentityProvider;

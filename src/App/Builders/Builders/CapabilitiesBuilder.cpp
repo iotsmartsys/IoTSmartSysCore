@@ -638,6 +638,8 @@ namespace iotsmartsys::app
             return reject("readingIntervalMs must be positive");
         if (_count >= _capsMax)
             return reject("capability slots exhausted");
+        if (_adaptersCount >= _adaptersMax)
+            return reject("adapter slots exhausted");
         if (capabilityIdentityInUse(cfg.id))
             return reject("capability id is already registered");
 
@@ -645,12 +647,86 @@ namespace iotsmartsys::app
         if (!resolveIdentity(cfg.id.c_str(), POWER_ENERGY_TYPE, name))
             return reject("capability identity could not be resolved");
 
-        auto *capability = createCapability<iotsmartsys::core::PowerEnergyCapability>(
-            name, voltageSensor, currentSensor, &_eventSink, cfg.readingIntervalMs);
-        if (!capability)
-            return reject("arena allocation or capability registration failed");
+        const size_t originalArenaOffset = _arenaOffset;
+        void *sensorMemory = allocateAligned(sizeof(iotsmartsys::core::CompositePowerSensor),
+                                             alignof(iotsmartsys::core::CompositePowerSensor));
+        if (!sensorMemory)
+            return reject("arena has insufficient space for composite sensor");
+        auto *powerSensor = new (sensorMemory) iotsmartsys::core::CompositePowerSensor(
+            voltageSensor, currentSensor, cfg.readingIntervalMs);
+        auto sensorDtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::CompositePowerSensor *>(p)->~CompositePowerSensor();
+        };
+
+        void *capabilityMemory = allocateAligned(sizeof(iotsmartsys::core::PowerEnergyCapability),
+                                                 alignof(iotsmartsys::core::PowerEnergyCapability));
+        if (!capabilityMemory)
+        {
+            sensorDtor(powerSensor);
+            _arenaOffset = originalArenaOffset;
+            return reject("arena has insufficient space for capability");
+        }
+        auto *capability = new (capabilityMemory) iotsmartsys::core::PowerEnergyCapability(
+            name, *powerSensor, &_eventSink, cfg.readingIntervalMs);
+        auto capabilityDtor = [](void *p)
+        {
+            static_cast<iotsmartsys::core::PowerEnergyCapability *>(p)->~PowerEnergyCapability();
+        };
+
+        if (!registerAdapter(powerSensor, sensorDtor))
+        {
+            capabilityDtor(capability);
+            sensorDtor(powerSensor);
+            _arenaOffset = originalArenaOffset;
+            return reject("adapter slot registration failed");
+        }
+        if (!registerCapability(capability, capabilityDtor))
+        {
+            _adaptersCount--;
+            _adapters[_adaptersCount] = nullptr;
+            _adapterDestructors[_adaptersCount] = nullptr;
+            capabilityDtor(capability);
+            sensorDtor(powerSensor);
+            _arenaOffset = originalArenaOffset;
+            return reject("capability slot registration failed");
+        }
 
         return capability;
+    }
+
+    iotsmartsys::core::PowerEnergyCapability *CapabilitiesBuilder::addPowerEnergyCapability(
+        const iotsmartsys::core::PowerEnergyConfig &cfg,
+        iotsmartsys::core::IPowerSensor &powerSensor)
+    {
+        auto *logger = iotsmartsys::core::ServiceProvider::instance().logger();
+        auto reject = [logger, &cfg](const char *reason)
+        {
+            if (logger)
+                logger->error("CAP_BUILDER",
+                              "Power energy capability '%s' rejected: %s; nothing was registered.",
+                              cfg.id.c_str(), reason);
+            return static_cast<iotsmartsys::core::PowerEnergyCapability *>(nullptr);
+        };
+
+        if (cfg.id.empty())
+            return reject("id is required");
+        if (cfg.id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
+            cfg.id.find('\0') != std::string::npos)
+            return reject("id is not a valid public capability identity");
+        if (cfg.readingIntervalMs == 0)
+            return reject("readingIntervalMs must be positive");
+        if (_count >= _capsMax)
+            return reject("capability slots exhausted");
+        if (capabilityIdentityInUse(cfg.id))
+            return reject("capability id is already registered");
+
+        std::string name;
+        if (!resolveIdentity(cfg.id.c_str(), POWER_ENERGY_TYPE, name))
+            return reject("capability identity could not be resolved");
+        auto *capability = createCapability<iotsmartsys::core::PowerEnergyCapability>(
+            name, powerSensor, &_eventSink, cfg.readingIntervalMs);
+        return capability ? capability : reject("arena allocation or capability registration failed");
     }
 
     iotsmartsys::core::ICommandHardwareAdapter *CapabilitiesBuilder::createOutputAdapter(std::uint8_t gpio, bool highIsOn)
