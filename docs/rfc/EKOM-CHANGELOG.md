@@ -117,6 +117,18 @@ também exclui `main.cpp` explicitamente. Os builds `ESP32_MCB01` e `esp32_dev`
 foram repetidos e permaneceram `SUCCESS`. O registro imutável da correção é
 `docs/reports/2026-09-04T025902Z-0.2-c81a0d13-implementation-correction-report.md`.
 
+### Correção das evidências de teste
+
+Na Revisão, a compilação sem upload encontrou uma inicialização incompatível
+com construtor `explicit` no teste novo de lifecycle e a inclusão indevida do
+`src/main.cpp` local nos environments ESP32-S3. A correção tornou explícita a
+construção dos nove doubles, excluiu o arquivo local dos targets de teste e
+declarou nesses targets a dependência INA3221 já exigida pelas fontes.
+
+As duas compilações de teste terminaram `PASSED`, código 0, sem upload e sem
+executar casos. O registro imutável é
+`docs/reports/2026-09-04T034503Z-0.2-950b41ea-implementation-correction-report.md`.
+
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
 **Estado:** Fechada [`Closed`]

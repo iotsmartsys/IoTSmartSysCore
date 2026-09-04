@@ -87,7 +87,15 @@ void tearDown() {}
 void test_nine_capabilities_receive_setup_and_cooperative_handle_in_order()
 {
     TrackingCapability capabilities[] = {
-        {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}};
+        TrackingCapability(0),
+        TrackingCapability(1),
+        TrackingCapability(2),
+        TrackingCapability(3),
+        TrackingCapability(4),
+        TrackingCapability(5),
+        TrackingCapability(6),
+        TrackingCapability(7),
+        TrackingCapability(8)};
     core::ICapability *items[9]{};
     for (int i = 0; i < 9; ++i)
     {
