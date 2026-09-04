@@ -3,6 +3,32 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.1`
+
+**Objetivo:** substituir o limite universal de oito por capacidade estática
+configurável, permitir doze capabilities no perfil `ESP32_MCB01`, preservar o
+default oito, ampliar com migração o snapshot NVS binário e tornar reproduzível
+a composição de nove capabilities da aplicação MCB01.
+
+### Decisão do Arquiteto
+
+- capacidade configurável em build, com default oito e máximo suportado doze;
+- perfil `ESP32_MCB01` configurado com doze;
+- correção completa dos limites auxiliares, arena e persistência;
+- migração segura do formato NVS versão 2 em vez de perda dos estados válidos;
+- adapter de tensão PV único e compartilhado com `pv-power-1`;
+- registro da direção transversal em ADR.
+
+### Estado operacional
+
+A especificação 0.1 e a ADR-0001 foram registradas. A implementação permanece
+Não iniciada [`Not Started`] e a entrega Não pronta [`Not Ready`], pendente da
+Análise de Implementabilidade formal solicitada pelo Arquiteto.
+
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
 **Estado:** Fechada [`Closed`]

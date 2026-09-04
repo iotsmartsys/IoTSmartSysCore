@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 03/09/2026 (validação final INA3221 0.2)
+**Última atualização:** 03/09/2026 (capacidade configurável do runtime 0.1)
 
 ## 1. Governança
 
@@ -28,6 +28,7 @@
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
+| Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Draft 0.1 — análise pendente | Not Started |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
@@ -95,6 +96,7 @@ IoTSmartSysCore
 │   └── relatórios, transações, lacunas e débitos
 ├── Runtime Arduino/ESP32
 │   ├── SmartSysApp e lifecycle cooperativo
+│   ├── capacidade estática configurável por environment
 │   ├── capabilities, builders e hardware adapters
 │   ├── dispositivo INA3221 compartilhado e adapters externos de tensão/corrente
 │   ├── composição de potência/energia com lifecycle externo dos sensores
@@ -114,6 +116,7 @@ IoTSmartSysCore
 ```mermaid
 flowchart LR
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
+    PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
     APP -->|"setup/handle dos sensores compostos"| HW
     APP -->|"possui dispositivo e adapters"| INA["INA3221Device compartilhado"]
@@ -123,6 +126,7 @@ flowchart LR
     POWER -->|"potência e energia"| CORE
     CORE -->|"Transporte"| MQTT["Broker MQTT"]
     CORE -->|"Configuração e persistência"| SETTINGS["Settings API e NVS"]
+    CORE -->|"estados binários até 12"| BCS["Snapshot NVS versionado"]
 ```
 
 ## 5. Lacunas
