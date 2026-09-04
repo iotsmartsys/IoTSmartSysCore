@@ -104,6 +104,19 @@ A implementação segue para Revisão. Testes, upload, monitor serial, hardware,
 MQTT, conclusão normativa e integração permanecem não executados ou não
 declarados pelo Implementador.
 
+### Correção de versionamento do `main.cpp`
+
+Após o commit inicial, o Arquiteto apontou corretamente que `src/main.cpp` é
+local e deve permanecer coberto pelo padrão `*main.cpp` do `.gitignore`. O
+arquivo foi retirado do índice Git e seu conteúdo local MCB foi restaurado.
+
+Para preservar o build reproduzível de `esp32_dev` sem versionar o arquivo
+local, a entrada genérica foi movida para `src/DefaultRuntimeApp.cpp`, compilada
+somente quando `IOTSMARTSYS_DEFAULT_RUNTIME_APP` está ativo; o environment
+também exclui `main.cpp` explicitamente. Os builds `ESP32_MCB01` e `esp32_dev`
+foram repetidos e permaneceram `SUCCESS`. O registro imutável da correção é
+`docs/reports/2026-09-04T025902Z-0.2-c81a0d13-implementation-correction-report.md`.
+
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
 **Estado:** Fechada [`Closed`]

@@ -10,5 +10,4 @@ wifi_credentials.ini
 configs/wifi_credentials.ini
 src/Config/WifiCredentials.generated.h
 *main.cpp
-!src/main.cpp
 *.exclude

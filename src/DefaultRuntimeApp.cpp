@@ -1,8 +1,13 @@
+#if defined(IOTSMARTSYS_DEFAULT_RUNTIME_APP) && !defined(APP_EXAMPLE_RUNNER)
+
 #include <Arduino.h>
 
 #include "SmartSysApp.h"
 
-static iotsmartsys::SmartSysApp app;
+namespace
+{
+    iotsmartsys::SmartSysApp app;
+}
 
 void setup()
 {
@@ -14,3 +19,5 @@ void loop()
 {
     app.handle();
 }
+
+#endif
