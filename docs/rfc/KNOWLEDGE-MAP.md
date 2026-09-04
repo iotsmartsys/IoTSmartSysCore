@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 03/09/2026 (implementação da capacidade configurável do runtime 0.2)
+**Última atualização:** 04/09/2026 (validação da capacidade configurável do runtime 0.2)
 
 ## 1. Governança
 
@@ -28,7 +28,7 @@
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
-| Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Draft 0.2 — Ready | Implemented; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2 e aplicação versionada (`EKOM-CHG-0022`) |
+| Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Ready for Integration` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
 | Estado do controle de garagem | `docs/specs/GARAGE-CONTROL-STATE.md` | Active | Validated |
@@ -57,8 +57,8 @@
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
 | Plataformas | Mapped | `src/Platform/Arduino`, `src/Platform/Espressif`, legado ESP8266 | ESP-IDF é preparação futura; ESP8266 não é suportado; console de tela ST7789 opt-in e exemplo Ideaspark validados em hardware (`EKM-CHG-0042`) |
 | Build e release | Specified | `platformio.ini`, `Makefile`, `.github/workflows/` | Existem desvios abertos |
-| Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 permanecem sob a quarentena nominal de `BCS-DEC-007`; a implementação de capacidade adiciona testes contratados por CAP-AC-001 a CAP-AC-006 e um environment de compilação com capacidade 12, ainda `Not Executed` |
-| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` validado em hardware em `EKM-CHG-0042`; `current_sensor` validado em hardware em `EKM-CHG-0052`; `voltage_sensor` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0004`; `environment_ntc` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0007`; `fan` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0010`; `power_energy` validado e concluído (`EKOM-CHG-0016`); `ina3221_voltage_current` foi validado em hardware (`EKOM-CHG-0021`); `mcb01_solar_controller` compila com nove capabilities e aguarda validação física (`EKOM-CHG-0022`) |
+| Testes | Inventoried | `test/`, `configs/esp32s3-test.ini` | As 18 suítes existentes em 01/08/2026 permanecem sob a quarentena nominal de `BCS-DEC-007`; os testes de capacidade compilam nos perfis 8 e 12 sem upload, mas seus casos permanecem `Not Executed` (`EKOM-CHG-0022`) |
+| Exemplos executáveis | Specified | `src/ExecutableExampleRunner.cpp`, `examples/executable/`, `configs/executable_examples.ini` | `screen_console` validado em hardware em `EKM-CHG-0042`; `current_sensor` validado em hardware em `EKM-CHG-0052`; `voltage_sensor` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0004`; `environment_ntc` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0007`; `fan` validado em hardware por decisão do Arquiteto em `EKOM-CHG-0010`; `power_energy` validado e concluído (`EKOM-CHG-0016`); `ina3221_voltage_current` foi validado em hardware (`EKOM-CHG-0021`); `mcb01_solar_controller` compila com nove capabilities e está `Ready for Integration`, com validação física `Not Executed` aceita pelo Arquiteto (`EKOM-CHG-0022`) |
 
 ### 2.2 Fronteira de composição de potência e energia
 
@@ -326,6 +326,10 @@ conclusão ou reabertura e aceita ou quita débito técnico.
 - `EKOM-CHG-0021`: registra revisão aderente e validação em hardware declarada
   pelo Arquiteto, promove a versão 0.2 para `Active`/`Validated`, integra o
   recorte à `main` e conclui a entrega como `Done`.
+- `EKOM-CHG-0022`: introduz capacidade configurável de 8 a 12 capabilities,
+  snapshot NVS v3 com migração integral de v2 e aplicação MCB01 versionada;
+  revisão aderente com limitações de evidência e decisão do Arquiteto promovem
+  a versão 0.2 para `Active`/`Validated`/`Ready for Integration`.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.

@@ -6,11 +6,11 @@
 
 **Versão:** 0.2
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -268,8 +268,9 @@ persistência, migração, aplicação MCB01 nem permissões operacionais.
 
 ## 13. Estado e encaminhamento
 
-A versão 0.2 foi classificada `Ready` pela Análise de Implementabilidade formal
-e implementada por ordem explícita do Arquiteto. O estado normativo permanece
-Rascunho [`Draft`] e a entrega permanece Não pronta [`Not Ready`] até Revisão e
-evidência posterior suficiente; validação física, conclusão e integração não
-são declaradas pelo Implementador.
+A versão 0.2 está Vigente [`Active`], com implementação Validada [`Validated`],
+Análise de Implementabilidade Pronta [`Ready`] e entrega Pronta para integração
+[`Ready for Integration`]. A revisão classificou o recorte como aderente com
+limitações de evidência. O Arquiteto considerou as evidências suficientes,
+aceitou o risco residual dos testes e da validação física não executados,
+determinou o encerramento da especificação e ordenou sua promoção para `main`.

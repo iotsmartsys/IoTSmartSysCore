@@ -9,7 +9,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
 **Objetivo:** substituir o limite universal de oito por capacidade estática
 configurável, permitir doze capabilities no perfil `ESP32_MCB01`, preservar o
@@ -128,6 +128,26 @@ declarou nesses targets a dependência INA3221 já exigida pelas fontes.
 As duas compilações de teste terminaram `PASSED`, código 0, sem upload e sem
 executar casos. O registro imutável é
 `docs/reports/2026-09-04T034503Z-0.2-950b41ea-implementation-correction-report.md`.
+
+### Revisão e decisão final
+
+A revisão confrontou 32 requisitos e 9 critérios e classificou o recorte como
+Aderente com limitações de evidência [`Conformant with Evidence Limitations`].
+Não restou defeito material conhecido após as correções. A atuação não é
+apresentada como independente. O relatório é
+`docs/reports/2026-09-04T035051Z-0.2-a8f1d608-review-report.md`.
+
+O Arquiteto determinou o encerramento da versão e sua promoção para `main`,
+considerando suficiente a evidência de inspeção, builds e compilação dos testes
+e aceitando expressamente o risco residual dos casos e da validação física não
+executados. A versão passa a `Active`/`Validated`/`Ready for Integration`. O
+registro consultivo é
+`docs/reports/2026-09-04T035051Z-0.2-4e05236d-final-validation-report.md`.
+
+### Estado operacional
+
+A transação permanece aberta até a integração e sincronização efetivas com
+`main`.
 
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
