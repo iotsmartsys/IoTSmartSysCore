@@ -268,39 +268,41 @@ void test_identity_beyond_the_public_limit_is_refused_not_truncated()
 }
 
 // ---------------------------------------------------------------------------
-// BCS-AC-007 — zero and eight active records are accepted; the ninth distinct
+// CAP-AC-006 — twelve active records are accepted; the thirteenth distinct
 // identity is refused without altering the last valid snapshot.
 // ---------------------------------------------------------------------------
-void test_eight_record_limit()
+void test_twelve_record_limit_and_round_trip()
 {
-    EspNvsBinaryCapabilityStateProvider provider;
-    provider.setNvsOps(seam::ops());
-    provider.loadSnapshot();
-    provider.activateWriter();
-
-    char name[32];
-    for (int i = 0; i < 8; ++i)
     {
-        snprintf(name, sizeof(name), "dev_cap_%d", i);
-        persistAndAwait(provider, name, "Switch", (i % 2) == 0);
+        EspNvsBinaryCapabilityStateProvider provider;
+        provider.setNvsOps(seam::ops());
+        provider.loadSnapshot();
+        provider.activateWriter();
+
+        char name[32];
+        for (int i = 0; i < 12; ++i)
+        {
+            snprintf(name, sizeof(name), "dev_cap_%d", i);
+            persistAndAwait(provider, name, "Switch", (i % 2) == 0);
+        }
+
+        TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Overflow),
+                          static_cast<int>(provider.requestSave("dev_cap_13th", "Switch", true)));
     }
 
-    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Overflow),
-                      static_cast<int>(provider.requestSave("dev_cap_9th", "Switch", true)));
+    EspNvsBinaryCapabilityStateProvider reboot;
+    reboot.setNvsOps(seam::ops());
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(reboot.loadSnapshot()));
 
-    // The ninth refusal left every existing record untouched.
     bool value = false;
-    for (int i = 0; i < 8; ++i)
+    char name[32];
+    for (int i = 0; i < 12; ++i)
     {
         snprintf(name, sizeof(name), "dev_cap_%d", i);
-        TEST_ASSERT_TRUE(provider.tryGet(name, "Switch", value));
+        TEST_ASSERT_TRUE(reboot.tryGet(name, "Switch", value));
         TEST_ASSERT_EQUAL((i % 2) == 0, value);
     }
-
-    // Re-saving an already tracked identity still succeeds (no new slot).
-    persistAndAwait(provider, "dev_cap_0", "Switch", false);
-    TEST_ASSERT_TRUE(provider.tryGet("dev_cap_0", "Switch", value));
-    TEST_ASSERT_FALSE(value);
+    TEST_ASSERT_FALSE(reboot.tryGet("dev_cap_13th", "Switch", value));
 }
 
 // ---------------------------------------------------------------------------
@@ -423,7 +425,8 @@ void test_single_byte_corruption_is_rejected_everywhere()
 
     // Header checksum region plus one byte inside each active record region.
     const size_t headerBytes = sizeof(std::uint32_t) * 2;
-    const size_t recordBytes = (pristine.size() - headerBytes) / 8;
+    const size_t recordBytes = (pristine.size() - headerBytes) /
+                               EspNvsBinaryCapabilityStateProvider::MAX_RECORDS;
     const size_t offsets[] = {
         4,                            // checksum field
         headerBytes,                  // first record's name
@@ -467,6 +470,13 @@ namespace
     {
         std::uint32_t version;
         std::uint32_t checksum;
+        MirrorRecord records[12];
+    };
+
+    struct LegacyMirrorSnapshot
+    {
+        std::uint32_t version;
+        std::uint32_t checksum;
         MirrorRecord records[8];
     };
 
@@ -486,10 +496,26 @@ namespace
         return hash;
     }
 
+    std::uint32_t legacyMirrorChecksum(const LegacyMirrorSnapshot &snapshot)
+    {
+        std::uint32_t hash = 2166136261u;
+        auto mix = [&hash](const std::uint8_t *bytes, std::size_t n)
+        {
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                hash ^= bytes[i];
+                hash *= 16777619u;
+            }
+        };
+        mix(reinterpret_cast<const std::uint8_t *>(&snapshot.version), sizeof(snapshot.version));
+        mix(reinterpret_cast<const std::uint8_t *>(snapshot.records), sizeof(snapshot.records));
+        return hash;
+    }
+
     MirrorSnapshot validMirror()
     {
         MirrorSnapshot snapshot{};
-        snapshot.version = 2;
+        snapshot.version = 3;
         strcpy(snapshot.records[0].capability_name, "dev_Switch");
         strcpy(snapshot.records[0].type, "Switch");
         snapshot.records[0].isOn = 1;
@@ -498,7 +524,33 @@ namespace
         return snapshot;
     }
 
+    LegacyMirrorSnapshot validLegacyMirror(std::size_t activeRecords)
+    {
+        LegacyMirrorSnapshot snapshot{};
+        snapshot.version = 2;
+        for (std::size_t i = 0; i < activeRecords; ++i)
+        {
+            snprintf(snapshot.records[i].capability_name,
+                     sizeof(snapshot.records[i].capability_name), "legacy_%u",
+                     static_cast<unsigned>(i));
+            strcpy(snapshot.records[i].type, "Switch");
+            snapshot.records[i].isOn = (i % 2) == 0 ? 1 : 0;
+            snapshot.records[i].used = 1;
+        }
+        snapshot.checksum = legacyMirrorChecksum(snapshot);
+        return snapshot;
+    }
+
     void storeMirror(const MirrorSnapshot &snapshot)
+    {
+        nvs_handle_t h;
+        TEST_ASSERT_EQUAL(ESP_OK, nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h));
+        TEST_ASSERT_EQUAL(ESP_OK, nvs_set_blob(h, NVS_KEY, &snapshot, sizeof(snapshot)));
+        TEST_ASSERT_EQUAL(ESP_OK, nvs_commit(h));
+        nvs_close(h);
+    }
+
+    void storeLegacyMirror(const LegacyMirrorSnapshot &snapshot)
     {
         nvs_handle_t h;
         TEST_ASSERT_EQUAL(ESP_OK, nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h));
@@ -526,7 +578,7 @@ void test_layout_matches_the_storage_contract()
     // change in the provider.
     TEST_ASSERT_EQUAL(64, EspNvsBinaryCapabilityStateProvider::NAME_LEN);
     TEST_ASSERT_EQUAL(32, EspNvsBinaryCapabilityStateProvider::TYPE_LEN);
-    TEST_ASSERT_EQUAL(8, EspNvsBinaryCapabilityStateProvider::MAX_RECORDS);
+    TEST_ASSERT_EQUAL(12, EspNvsBinaryCapabilityStateProvider::MAX_RECORDS);
 
     {
         EspNvsBinaryCapabilityStateProvider provider;
@@ -536,6 +588,93 @@ void test_layout_matches_the_storage_contract()
         persistAndAwait(provider, "dev_Switch", "Switch", true);
     }
     TEST_ASSERT_EQUAL(sizeof(MirrorSnapshot), readStoredBlob().size());
+}
+
+// CAP-AC-005 — valid v2 snapshots migrate only in memory during boot. The
+// first later transition is what persists v3; settings and global NVS remain
+// untouched throughout.
+void test_valid_v2_snapshot_migrates_without_synchronous_write()
+{
+    writeSettingsSentinel("settings-sentinel-value");
+
+    storeLegacyMirror(validLegacyMirror(0));
+    seam::reset();
+    {
+        EspNvsBinaryCapabilityStateProvider emptyLegacy;
+        emptyLegacy.setNvsOps(seam::ops());
+        TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok),
+                          static_cast<int>(emptyLegacy.loadSnapshot()));
+        TEST_ASSERT_EQUAL(1, seam::dataReads);
+        TEST_ASSERT_EQUAL(0, seam::writeCalls);
+        TEST_ASSERT_EQUAL(0, seam::commitCalls);
+    }
+
+    nvs_flash_erase();
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_flash_init());
+    writeSettingsSentinel("settings-sentinel-value");
+    storeLegacyMirror(validLegacyMirror(8));
+    seam::reset();
+
+    {
+        EspNvsBinaryCapabilityStateProvider provider;
+        provider.setNvsOps(seam::ops());
+        TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(provider.loadSnapshot()));
+        TEST_ASSERT_EQUAL(1, seam::dataReads);
+        TEST_ASSERT_EQUAL(0, seam::writeCalls);
+        TEST_ASSERT_EQUAL(0, seam::commitCalls);
+
+        bool value = false;
+        char name[32];
+        for (int i = 0; i < 8; ++i)
+        {
+            snprintf(name, sizeof(name), "legacy_%d", i);
+            TEST_ASSERT_TRUE(provider.tryGet(name, "Switch", value));
+            TEST_ASSERT_EQUAL((i % 2) == 0, value);
+        }
+    }
+
+    // A reboot before any new commit reads the still-v2 blob again.
+    seam::reset();
+    EspNvsBinaryCapabilityStateProvider provider;
+    provider.setNvsOps(seam::ops());
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(provider.loadSnapshot()));
+    TEST_ASSERT_EQUAL(0, seam::writeCalls);
+    TEST_ASSERT_EQUAL(0, seam::commitCalls);
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::Ok), static_cast<int>(provider.activateWriter()));
+    persistAndAwait(provider, "new_after_migration", "Switch", true);
+
+    TEST_ASSERT_EQUAL(sizeof(MirrorSnapshot), readStoredBlob().size());
+    TEST_ASSERT_TRUE(settingsSentinelMatches("settings-sentinel-value"));
+    TEST_ASSERT_EQUAL(0, seam::globalEraseCalls);
+}
+
+void test_invalid_v2_snapshots_are_rejected_integrally()
+{
+    {
+        auto legacy = validLegacyMirror(8);
+        legacy.records[0].used = 2;
+        legacy.checksum = legacyMirrorChecksum(legacy);
+        storeLegacyMirror(legacy);
+
+        EspNvsBinaryCapabilityStateProvider provider;
+        provider.setNvsOps(seam::ops());
+        TEST_ASSERT_EQUAL(static_cast<int>(StateResult::StorageCorrupt),
+                          static_cast<int>(provider.loadSnapshot()));
+        bool value = false;
+        TEST_ASSERT_FALSE(provider.tryGet("legacy_1", "Switch", value));
+    }
+
+    nvs_flash_erase();
+    TEST_ASSERT_EQUAL(ESP_OK, nvs_flash_init());
+    auto legacy = validLegacyMirror(8);
+    legacy.checksum ^= 0x01;
+    storeLegacyMirror(legacy);
+    EspNvsBinaryCapabilityStateProvider provider;
+    provider.setNvsOps(seam::ops());
+    TEST_ASSERT_EQUAL(static_cast<int>(StateResult::StorageCorrupt),
+                      static_cast<int>(provider.loadSnapshot()));
+    bool value = false;
+    TEST_ASSERT_FALSE(provider.tryGet("legacy_0", "Switch", value));
 }
 
 void test_semantically_invalid_snapshots_are_rejected()
@@ -936,13 +1075,15 @@ void setup()
     RUN_TEST(test_first_boot_is_absent);
     RUN_TEST(test_full_length_identities_round_trip_without_truncation);
     RUN_TEST(test_identity_beyond_the_public_limit_is_refused_not_truncated);
-    RUN_TEST(test_eight_record_limit);
+    RUN_TEST(test_twelve_record_limit_and_round_trip);
     RUN_TEST(test_single_data_read_per_boot);
     RUN_TEST(test_settings_namespace_is_never_touched);
     RUN_TEST(test_truncated_blob_is_rejected);
     RUN_TEST(test_unknown_version_is_rejected);
     RUN_TEST(test_single_byte_corruption_is_rejected_everywhere);
     RUN_TEST(test_layout_matches_the_storage_contract);
+    RUN_TEST(test_valid_v2_snapshot_migrates_without_synchronous_write);
+    RUN_TEST(test_invalid_v2_snapshots_are_rejected_integrally);
     RUN_TEST(test_semantically_invalid_snapshots_are_rejected);
     RUN_TEST(test_init_failure_does_not_erase_or_abort);
     RUN_TEST(test_open_and_read_failures_preserve_the_default_flow);

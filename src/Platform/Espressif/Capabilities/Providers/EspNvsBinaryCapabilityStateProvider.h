@@ -19,8 +19,7 @@ namespace iotsmartsys::platform::espressif
 {
     // Espressif/NVS implementation of the binary-capability-state persistence
     // boundary. It uses its own NVS namespace, never touching the settings blob,
-    // and keeps a compact versioned snapshot capped at 8 active records (the
-    // runtime's capability limit).
+    // and keeps a compact versioned snapshot capped at 12 active records.
     //
     // BCS-007: loadSnapshot() performs the single NVS data read for the boot and
     // tryGet() only ever consults the in-memory cache.
@@ -64,7 +63,7 @@ namespace iotsmartsys::platform::espressif
         static const NvsOps &defaultNvsOps();
         void setNvsOps(const NvsOps &ops) { _nvs = ops; }
 
-        static constexpr std::size_t MAX_RECORDS = 8;
+        static constexpr std::size_t MAX_RECORDS = 12;
         // BCS-002/BCS-DEC-005: room for the full public maxima (63/31 bytes)
         // plus their null terminators, so the storage is never more restrictive
         // than the identity the public API accepts.
@@ -74,7 +73,9 @@ namespace iotsmartsys::platform::espressif
     private:
         static constexpr const char *NVS_NAMESPACE = "iotbcs";
         static constexpr const char *NVS_KEY = "state";
-        static constexpr std::uint32_t STORAGE_VERSION = 2;
+        static constexpr std::size_t LEGACY_MAX_RECORDS = 8;
+        static constexpr std::uint32_t STORAGE_VERSION = 3;
+        static constexpr std::uint32_t LEGACY_STORAGE_VERSION = 2;
         static constexpr std::uint32_t WRITER_STACK_BYTES = 3072;
         static constexpr UBaseType_t WRITER_PRIORITY = 2;
 
@@ -91,6 +92,13 @@ namespace iotsmartsys::platform::espressif
             std::uint32_t version;
             std::uint32_t checksum;
             StoredRecord records[MAX_RECORDS];
+        };
+
+        struct LegacyStoredSnapshot
+        {
+            std::uint32_t version;
+            std::uint32_t checksum;
+            StoredRecord records[LEGACY_MAX_RECORDS];
         };
 
         // Snapshot whose commit completed successfully: the one that survives a
@@ -123,12 +131,14 @@ namespace iotsmartsys::platform::espressif
         // BCS-006/BCS-012: structural, semantic and integrity validation of a
         // loaded snapshot. Size and version alone never prove validity.
         static bool validateSnapshot(const StoredSnapshot &snapshot);
+        static bool validateLegacySnapshot(const LegacyStoredSnapshot &snapshot);
         static bool fieldIsTerminated(const char *field, std::size_t capacity);
         // Returns false (no silent truncation) when src does not fit dstSize.
         static bool copyField(char *dst, std::size_t dstSize, const char *src);
         // FNV-1a over the header and every record slot, so any single-byte
         // mutation of an active record's region is detected.
         static std::uint32_t computeChecksum(const StoredSnapshot &snapshot);
+        static std::uint32_t computeLegacyChecksum(const LegacyStoredSnapshot &snapshot);
 
         bool lock() const;
         void unlock() const;

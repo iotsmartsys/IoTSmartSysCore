@@ -8,11 +8,11 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
 **Relação normativa:** Corrige [`Corrects`]
 `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.1`; permanece Nova [`New`] e altera [`Amends`] `IOTSSC-RUNTIME`,
@@ -268,6 +268,8 @@ persistência, migração, aplicação MCB01 nem permissões operacionais.
 
 ## 13. Estado e encaminhamento
 
-A versão 0.2 registra as decisões confirmadas pelo Arquiteto e permanece em
-Rascunho [`Draft`] até a Análise de Implementabilidade formal. Nenhuma
-implementação é autorizada por esta especificação.
+A versão 0.2 foi classificada `Ready` pela Análise de Implementabilidade formal
+e implementada por ordem explícita do Arquiteto. O estado normativo permanece
+Rascunho [`Draft`] e a entrega permanece Não pronta [`Not Ready`] até Revisão e
+evidência posterior suficiente; validação física, conclusão e integração não
+são declaradas pelo Implementador.

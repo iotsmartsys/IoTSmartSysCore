@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #if defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
 #error "ESP8266 is not supported in IoTSmartSysCore. Use an ESP32 target."
 #endif
@@ -59,3 +61,18 @@
 #define IOTSMARTSYS_REDACT_SECRETS 0
 #endif
 #endif
+
+#ifndef IOTSMARTSYS_MAX_CAPABILITIES
+#define IOTSMARTSYS_MAX_CAPABILITIES 8
+#endif
+
+#if IOTSMARTSYS_MAX_CAPABILITIES < 1 || IOTSMARTSYS_MAX_CAPABILITIES > 12
+#error "IOTSMARTSYS_MAX_CAPABILITIES must be between 1 and 12"
+#endif
+
+namespace iotsmartsys::config
+{
+    inline constexpr std::size_t kMaxCapabilities = IOTSMARTSYS_MAX_CAPABILITIES;
+    inline constexpr std::size_t kMaxAdapters = kMaxCapabilities;
+    inline constexpr std::size_t kCapabilityArenaBytes = kMaxCapabilities * 512U;
+}

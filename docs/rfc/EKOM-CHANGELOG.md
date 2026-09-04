@@ -9,6 +9,8 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`
 
+**Estado da implementação:** Implementada [`Implemented`]
+
 **Objetivo:** substituir o limite universal de oito por capacidade estática
 configurável, permitir doze capabilities no perfil `ESP32_MCB01`, preservar o
 default oito, ampliar com migração o snapshot NVS binário e tornar reproduzível
@@ -65,6 +67,42 @@ A guarda global foi novamente executada e permaneceu não aprovada por achados
 preexistentes fora do recorte; nenhum novo documento desta transação apareceu
 na saída. Esse fato é preservado e não impede a implementabilidade sob o
 contrato corrigido.
+
+### Implementação 0.2
+
+Por ordem explícita do Arquiteto e com análise `Ready` aplicável à versão
+corrente, a implementação integral foi concluída:
+
+- `IOTSMARTSYS_MAX_CAPABILITIES` centraliza slots, destrutores, capacidade de
+  adapters, bookkeeping e arena, com default 8, faixa 1–12 e perfil MCB01 12;
+- o registro é fechado no início de `SmartSysApp::setup()` e tentativas tardias
+  são rejeitadas sem alterar o builder;
+- o snapshot NVS v3 possui 12 posições fixas; blobs v2 válidos são validados e
+  migrados em memória sem escrita síncrona, erase global ou acesso a settings;
+- `ESP32_MCB01` seleciona a aplicação versionada com nove capabilities, adapter
+  PV compartilhado e um único dispositivo INA3221;
+- testes vinculados a `CAP-AC-001` a `CAP-AC-006` foram criados ou ajustados,
+  mas não executados, conforme a fronteira de autorização.
+
+### Evidências da implementação 0.2
+
+- relatório:
+  `docs/reports/2026-09-04T024811Z-0.2-045b1ceb-implementation-report.md`;
+- `pio run -e ESP32_MCB01`: `SUCCESS`, código 0, RAM 72.612/327.680 bytes e
+  flash 1.200.785/2.031.616 bytes;
+- `pio run -e esp32_dev`: `SUCCESS`, código 0, RAM 82.476/327.680 bytes e flash
+  1.855.769/2.031.616 bytes;
+- inspeção do ELF MCB01 encontrou `pv-power-1`,
+  `battery-discharging-current`, o diagnóstico de registro e o anúncio
+  condicionado dos nove registros;
+- `git diff --check`: aprovado;
+- guarda EKOM global: código 1 somente pelos mesmos documentos legados e mapa
+  experimental preexistentes já reproduzidos na análise; nenhum arquivo do
+  recorte aparece nos achados.
+
+A implementação segue para Revisão. Testes, upload, monitor serial, hardware,
+MQTT, conclusão normativa e integração permanecem não executados ou não
+declarados pelo Implementador.
 
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 

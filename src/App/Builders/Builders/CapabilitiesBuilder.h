@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "App/Builders/Configs/CapabilityConfig.h"
+#include "Config/BuildConfig.h"
 #include "Contracts/Adapters/IHardwareAdapterFactory.h"
 #include "Contracts/Capabilities/ICapability.h"
 #include "Contracts/Capabilities/LightCapability.h"
@@ -62,6 +63,7 @@ namespace iotsmartsys::app
         CapabilitiesBuilder &operator=(const CapabilitiesBuilder &) = delete;
 
         void reset();
+        void closeRegistration() { _registrationOpen = false; }
 
         size_t count() const { return _count; }
         size_t remainingArenaBytes() const;
@@ -114,7 +116,7 @@ namespace iotsmartsys::app
         template <typename TCap, typename... Args>
         TCap *createCapability(Args &&...args)
         {
-            if (_count >= _capsMax)
+            if (!_registrationOpen || _count >= _capsMax)
                 return nullptr;
 
             const size_t originalArenaOffset = _arenaOffset;
@@ -173,10 +175,11 @@ namespace iotsmartsys::app
         uint8_t *_arena{nullptr};
         size_t _arenaBytes{0};
         size_t _arenaOffset{0};
+        bool _registrationOpen{true};
 
-        int _analogSensorPins[16] = {};
+        int _analogSensorPins[iotsmartsys::config::kMaxCapabilities * 2U] = {};
         size_t _analogSensorPinCount{0};
-        std::string _currentSensorIds[8];
+        std::string _currentSensorIds[iotsmartsys::config::kMaxCapabilities];
         size_t _currentSensorIdCount{0};
     };
 

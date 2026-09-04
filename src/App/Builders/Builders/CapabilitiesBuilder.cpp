@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <cmath>
+#include <iterator>
 
 namespace iotsmartsys::app
 {
@@ -111,7 +112,7 @@ namespace iotsmartsys::app
 
     bool CapabilitiesBuilder::resolveIdentity(const char *configuredName, const char *type, std::string &outName)
     {
-        if (_count >= _capsMax)
+        if (!_registrationOpen || _count >= _capsMax)
         {
             return false;
         }
@@ -300,6 +301,10 @@ namespace iotsmartsys::app
             return reject("ADC GPIO is already used by another current or voltage sensor");
         if (capabilityIdentityInUse(cfg.id))
             return reject("capability id is already registered");
+        const size_t requiredPins = cfg.supplyMonitorAdcPin >= 0 ? 2U : 1U;
+        if (_analogSensorPinCount + requiredPins > std::size(_analogSensorPins) ||
+            _currentSensorIdCount >= std::size(_currentSensorIds))
+            return reject("sensor bookkeeping capacity exhausted");
         return true;
     }
 
@@ -478,6 +483,8 @@ namespace iotsmartsys::app
             return reject("ADC GPIO is already used by another current or voltage sensor");
         if (capabilityIdentityInUse(cfg.id))
             return reject("capability id is already registered");
+        if (_analogSensorPinCount >= std::size(_analogSensorPins))
+            return reject("sensor bookkeeping capacity exhausted");
         return true;
     }
 

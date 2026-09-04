@@ -143,6 +143,7 @@ namespace iotsmartsys
                 void applySettingsToRuntime(const core::settings::Settings &settings);
                 bool hasOperationalMqttConfig() const;
                 void startRuntimeTasks();
+                bool canRegisterCapability(const char *identity);
                 void handleTransportWork();
                 void publishMetricsIfDue();
                 void publishMetrics(const core::settings::Settings &settings);
@@ -175,11 +176,11 @@ namespace iotsmartsys
                 app::DeviceRegistrationManager deviceRegistrationManager_;
                 app::ConnectivityBootstrap connectivityBootstrap_;
 
-                core::ICapability *capSlots_[8] = {};
-                void (*capDtors_[8])(void *) = {};
-                void *adapterSlots_[8] = {};
-                void (*adapterDtors_[8])(void *) = {};
-                alignas(std::max_align_t) uint8_t arena_[4096] = {};
+                core::ICapability *capSlots_[config::kMaxCapabilities] = {};
+                void (*capDtors_[config::kMaxCapabilities])(void *) = {};
+                void *adapterSlots_[config::kMaxAdapters] = {};
+                void (*adapterDtors_[config::kMaxAdapters])(void *) = {};
+                alignas(std::max_align_t) uint8_t arena_[config::kCapabilityArenaBytes] = {};
 
                 app::CapabilitiesBuilder builder_;
 

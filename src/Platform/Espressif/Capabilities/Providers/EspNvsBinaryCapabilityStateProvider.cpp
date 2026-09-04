@@ -131,6 +131,23 @@ namespace iotsmartsys::platform::espressif
         return hash;
     }
 
+    std::uint32_t EspNvsBinaryCapabilityStateProvider::computeLegacyChecksum(
+        const LegacyStoredSnapshot &snapshot)
+    {
+        std::uint32_t hash = 2166136261u;
+        auto mix = [&hash](const std::uint8_t *bytes, std::size_t n)
+        {
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                hash ^= bytes[i];
+                hash *= 16777619u;
+            }
+        };
+        mix(reinterpret_cast<const std::uint8_t *>(&snapshot.version), sizeof(snapshot.version));
+        mix(reinterpret_cast<const std::uint8_t *>(snapshot.records), sizeof(snapshot.records));
+        return hash;
+    }
+
     bool EspNvsBinaryCapabilityStateProvider::fieldIsTerminated(const char *field, std::size_t capacity)
     {
         for (std::size_t i = 0; i < capacity; ++i)
@@ -177,6 +194,28 @@ namespace iotsmartsys::platform::espressif
         // Integrity last: it covers the header and every record slot, so size
         // and version matching is never sufficient on its own.
         return computeChecksum(snapshot) == snapshot.checksum;
+    }
+
+    bool EspNvsBinaryCapabilityStateProvider::validateLegacySnapshot(
+        const LegacyStoredSnapshot &snapshot)
+    {
+        if (snapshot.version != LEGACY_STORAGE_VERSION)
+            return false;
+
+        for (std::size_t i = 0; i < LEGACY_MAX_RECORDS; ++i)
+        {
+            const auto &rec = snapshot.records[i];
+            if (rec.used > 1 || rec.isOn > 1)
+                return false;
+            if (!fieldIsTerminated(rec.capability_name, NAME_LEN) ||
+                !fieldIsTerminated(rec.type, TYPE_LEN))
+                return false;
+            if (rec.used != 0 &&
+                (rec.capability_name[0] == '\0' || rec.type[0] == '\0'))
+                return false;
+        }
+
+        return computeLegacyChecksum(snapshot) == snapshot.checksum;
     }
 
     int EspNvsBinaryCapabilityStateProvider::findRecordIndex(const StoredSnapshot &snapshot,
@@ -267,12 +306,44 @@ namespace iotsmartsys::platform::espressif
             return mapEspErr(err);
         }
 
-        if (required != sizeof(StoredSnapshot))
+        if (required != sizeof(StoredSnapshot) && required != sizeof(LegacyStoredSnapshot))
         {
             _nvs.close(h);
-            logger().warn("BinaryCapabilityState", "Snapshot size mismatch (got %u, expected %u); treating as invalid.",
-                          static_cast<unsigned>(required), static_cast<unsigned>(sizeof(StoredSnapshot)));
+            logger().warn("BinaryCapabilityState", "Snapshot size mismatch (got %u, expected %u or legacy %u); treating as invalid.",
+                          static_cast<unsigned>(required),
+                          static_cast<unsigned>(sizeof(StoredSnapshot)),
+                          static_cast<unsigned>(sizeof(LegacyStoredSnapshot)));
             return StateResult::StorageCorrupt;
+        }
+
+        if (required == sizeof(LegacyStoredSnapshot))
+        {
+            LegacyStoredSnapshot legacy{};
+            err = _nvs.getBlob(h, NVS_KEY, &legacy, &required);
+            _nvs.close(h);
+            if (err != ESP_OK)
+            {
+                logger().error("BinaryCapabilityState", "Legacy snapshot read failed (rc=%d).", static_cast<int>(err));
+                return mapEspErr(err);
+            }
+            if (legacy.version != LEGACY_STORAGE_VERSION)
+            {
+                logger().warn("BinaryCapabilityState", "Legacy snapshot version mismatch (got %u, expected %u); treating as invalid.",
+                              static_cast<unsigned>(legacy.version),
+                              static_cast<unsigned>(LEGACY_STORAGE_VERSION));
+                return StateResult::StorageVersionMismatch;
+            }
+            if (!validateLegacySnapshot(legacy))
+            {
+                logger().warn("BinaryCapabilityState", "Legacy snapshot rejected by structural/semantic/integrity validation; treating as invalid.");
+                return StateResult::StorageCorrupt;
+            }
+
+            std::memcpy(_committed.records, legacy.records, sizeof(legacy.records));
+            _committed.checksum = computeChecksum(_committed);
+            _desired = _committed;
+            logger().info("BinaryCapabilityState", "Legacy v2 snapshot migrated to v3 in memory; no write performed.");
+            return StateResult::Ok;
         }
 
         StoredSnapshot loaded{};

@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <iterator>
 #include <memory>
 
 #include "freertos/FreeRTOS.h"
@@ -99,10 +100,10 @@ namespace iotsmartsys
                    mqttSink_,
                    capSlots_,
                    capDtors_,
-                   8,
+                   std::size(capSlots_),
                    adapterSlots_,
                    adapterDtors_,
-                   8,
+                   std::size(adapterSlots_),
                    arena_,
                    sizeof(arena_),
                    deviceIdentityProvider_),
@@ -141,6 +142,18 @@ namespace iotsmartsys
     void SmartSysApp::configureLED(iotsmartsys::app::LightConfig cfg)
     {
         deviceStateManager_.configure(cfg);
+    }
+
+    bool SmartSysApp::canRegisterCapability(const char *identity)
+    {
+        if (!setupStarted_)
+        {
+            return true;
+        }
+        logger_.error("App",
+                      "Capability '%s' rejected: capabilities must be registered before setup().",
+                      identity ? identity : "<unnamed>");
+        return false;
     }
 
     void SmartSysApp::configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin)
@@ -218,6 +231,7 @@ namespace iotsmartsys
     void SmartSysApp::setup()
     {
         setupStarted_ = true;
+        builder_.closeRegistration();
         serviceManager_.setLogLevel(core::LogLevel::Info);
         core::Log::setLogger(&logger_);
         delay(3000);
@@ -606,157 +620,175 @@ namespace iotsmartsys
     /// @brief Adds a new alarm capability to the application.
     iotsmartsys::core::AlarmCapability *SmartSysApp::addAlarmCapability(iotsmartsys::app::AlarmConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addAlarm(cfg);
     }
 
     /// @brief Adds a new door sensor capability to the application.
     iotsmartsys::core::DoorSensorCapability *SmartSysApp::addDoorSensorCapability(iotsmartsys::app::DoorSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addDoorSensor(cfg);
     }
 
     /// @brief Adds a new clap sensor capability to the application.
     iotsmartsys::core::ClapSensorCapability *SmartSysApp::addClapSensorCapability(iotsmartsys::app::ClapSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addClapSensor(cfg);
     }
 
     /// @brief Adds a new light capability to the application.
     iotsmartsys::core::LightCapability *SmartSysApp::addLightCapability(iotsmartsys::app::LightConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addLight(cfg);
     }
 
     /// @brief Adds a new GLP sensor capability to the application.
     iotsmartsys::core::GlpSensorCapability *SmartSysApp::addGlpSensorCapability(iotsmartsys::app::GlpSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addGlpSensor(cfg);
     }
 
     /// @brief Adds a new GLP meter Percent capability to the application.
     iotsmartsys::core::GlpMeterPercentCapability *SmartSysApp::addGlpMeterPercentCapability(iotsmartsys::app::GlpMeterConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addGlpMeterPercent(cfg);
     }
 
     /// @brief Adds a new GLP meter Kg capability to the application.
     iotsmartsys::core::GlpMeterKgCapability *SmartSysApp::addGlpMeterKgCapability(iotsmartsys::app::GlpMeterConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addGlpMeterKg(cfg);
     }
 
     /// @brief Adds a new humidity sensor capability to the application.
     iotsmartsys::core::HumiditySensorCapability *SmartSysApp::addHumiditySensorCapability(iotsmartsys::app::HumiditySensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addHumiditySensor(cfg);
     }
 
     /// @brief Adds a new distance sensor capability to the application.
     iotsmartsys::core::DistanceCapability *SmartSysApp::addDistanceCapability(iotsmartsys::app::DistanceCapabilityConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addDistance(cfg);
     }
 
     /// @brief Adds a new LED capability to the application.
     iotsmartsys::core::LEDCapability *SmartSysApp::addLedCapability(iotsmartsys::app::LightConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addLED(cfg);
     }
 
     /// @brief Adds a new PIR sensor capability to the application.
     iotsmartsys::core::PirSensorCapability *SmartSysApp::addPirSensorCapability(iotsmartsys::app::PirSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addPirSensor(cfg);
     }
 
     /// @brief Adds a new push button capability to the application.
     iotsmartsys::core::PushButtonCapability *SmartSysApp::addPushButtonCapability(iotsmartsys::app::PushButtonConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addPushButton(cfg);
     }
 
     /// @brief Adds a new touch button capability to the application.
     iotsmartsys::core::TouchButtonCapability *SmartSysApp::addTouchButtonCapability(iotsmartsys::app::TouchButtonConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addTouchButton(cfg);
     }
 
     /// @brief Adds a new switch capability to the application.
     iotsmartsys::core::SwitchCapability *SmartSysApp::addSwitchCapability(iotsmartsys::app::SwitchConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addSwitch(cfg);
     }
 
     /// @brief Adds a new fan capability to the application.
     iotsmartsys::core::FanCapability *SmartSysApp::addFanCapability(iotsmartsys::app::FanConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addFan(cfg);
     }
 
     /// @brief Adds a new switch plug capability to the application.
     iotsmartsys::core::SwitchPlugCapability *SmartSysApp::addSwitchPlugCapability(iotsmartsys::app::SwitchConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addSwitchPlug(cfg);
     }
 
     /// @brief Adds a new valve capability to the application.
     iotsmartsys::core::ValveCapability *SmartSysApp::addValveCapability(iotsmartsys::app::ValveConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addValve(cfg);
     }
 
     /// @brief Adds a new operational color sensor capability to the application.
     iotsmartsys::core::OperationalColorSensorCapability *SmartSysApp::addOperationalColorSensorCapability(iotsmartsys::app::OperationalColorSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addOperationalColorSensor(cfg);
     }
 
     /// @brief Adds a new temperature sensor capability to the application.
     iotsmartsys::core::TemperatureSensorCapability *SmartSysApp::addTemperatureSensorCapability(iotsmartsys::app::TemperatureSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addTemperatureSensor(cfg);
     }
 
     /// @brief Adds a new water level liters capability to the application.
     iotsmartsys::core::WaterLevelLitersCapability *SmartSysApp::addWaterLevelLitersCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addWaterLevelLiters(cfg);
     }
 
     /// @brief Adds a new water level percent capability to the application.
     iotsmartsys::core::WaterLevelPercentCapability *SmartSysApp::addWaterLevelPercentCapability(iotsmartsys::app::WaterLevelSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addWaterLevelPercent(cfg);
     }
 
     /// @brief Adds a new water flow hall sensor capability to the application.
     iotsmartsys::core::WaterFlowHallSensorCapability *SmartSysApp::addWaterFlowHallSensorCapability(iotsmartsys::app::WaterFlowHallSensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addWaterFlowHallSensor(cfg);
     }
 
     /// @brief Adds a new luminosity sensor capability to the application.
     iotsmartsys::core::LuminosityCapability *SmartSysApp::addLuminosityCapability(iotsmartsys::app::LuminositySensorConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addLuminosityCapability(cfg);
     }
 
     /// @brief Adds a new garage control capability to the application.
     iotsmartsys::core::GarageControlCapability *SmartSysApp::addGarageControlCapability(iotsmartsys::app::GarageControlConfig cfg)
     {
+        if (!canRegisterCapability(cfg.capability_name)) return nullptr;
         return builder_.addGarageControlCapability(cfg);
     }
 
     iotsmartsys::core::CurrentSensorCapability *SmartSysApp::addCurrentSensor(
         iotsmartsys::core::CurrentSensorConfig config)
     {
-        if (setupStarted_)
-        {
-            logger_.error("App",
-                          "Current sensor '%s' rejected: capabilities must be registered before setup().",
-                          config.id.c_str());
-            return nullptr;
-        }
+        if (!canRegisterCapability(config.id.c_str())) return nullptr;
         return builder_.addCurrentSensor(config);
     }
 
@@ -765,26 +797,14 @@ namespace iotsmartsys
         iotsmartsys::core::ICurrentSensor &sensor,
         std::uint32_t evaluationIntervalMs)
     {
-        if (setupStarted_)
-        {
-            logger_.error("App",
-                          "External current sensor '%s' rejected: capabilities must be registered before setup().",
-                          id.c_str());
-            return nullptr;
-        }
+        if (!canRegisterCapability(id.c_str())) return nullptr;
         return builder_.addCurrentSensor(id, sensor, evaluationIntervalMs);
     }
 
     iotsmartsys::core::VoltageSensorCapability *SmartSysApp::addVoltageSensor(
         iotsmartsys::core::VoltageSensorConfig config)
     {
-        if (setupStarted_)
-        {
-            logger_.error("App",
-                          "Voltage sensor '%s' rejected: capabilities must be registered before setup().",
-                          config.id.c_str());
-            return nullptr;
-        }
+        if (!canRegisterCapability(config.id.c_str())) return nullptr;
         return builder_.addVoltageSensor(config);
     }
 
@@ -793,13 +813,7 @@ namespace iotsmartsys
         iotsmartsys::core::IVoltageSensor &sensor,
         std::uint32_t evaluationIntervalMs)
     {
-        if (setupStarted_)
-        {
-            logger_.error("App",
-                          "External voltage sensor '%s' rejected: capabilities must be registered before setup().",
-                          id.c_str());
-            return nullptr;
-        }
+        if (!canRegisterCapability(id.c_str())) return nullptr;
         return builder_.addVoltageSensor(id, sensor, evaluationIntervalMs);
     }
 
@@ -808,13 +822,7 @@ namespace iotsmartsys
         iotsmartsys::core::IVoltageSensor &voltageSensor,
         iotsmartsys::core::ICurrentSensor &currentSensor)
     {
-        if (setupStarted_)
-        {
-            logger_.error("App",
-                          "Power energy capability '%s' rejected: capabilities must be registered before setup().",
-                          config.id.c_str());
-            return nullptr;
-        }
+        if (!canRegisterCapability(config.id.c_str())) return nullptr;
         return builder_.addPowerEnergyCapability(config, voltageSensor, currentSensor);
     }
 

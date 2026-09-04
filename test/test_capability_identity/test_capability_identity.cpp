@@ -18,11 +18,11 @@ static test::mocks::FakeAdapterFactory hwFactory;
 static test::mocks::FakeDeviceIdentityProvider deviceIdentity;
 static test::mocks::NoopEventSink eventSink;
 
-static core::ICapability *capSlots[8];
-static void (*capDtors[8])(void *);
-static void *adapterSlots[8];
-static void (*adapterDtors[8])(void *);
-static uint8_t arena[4096];
+static core::ICapability *capSlots[config::kMaxCapabilities];
+static void (*capDtors[config::kMaxCapabilities])(void *);
+static void *adapterSlots[config::kMaxAdapters];
+static void (*adapterDtors[config::kMaxAdapters])(void *);
+static uint8_t arena[config::kCapabilityArenaBytes];
 
 static app::CapabilitiesBuilder *builder = nullptr;
 static uint8_t builderStorage[sizeof(app::CapabilitiesBuilder)];
@@ -34,7 +34,7 @@ static void rebuildBuilder()
         builder->reset();
         builder->~CapabilitiesBuilder();
     }
-    for (size_t i = 0; i < 8; ++i)
+    for (size_t i = 0; i < config::kMaxCapabilities; ++i)
     {
         capSlots[i] = nullptr;
         capDtors[i] = nullptr;
@@ -45,8 +45,8 @@ static void rebuildBuilder()
     hwFactory.inputsCreated = 0;
     builder = new (builderStorage) app::CapabilitiesBuilder(
         hwFactory, eventSink,
-        capSlots, capDtors, 8,
-        adapterSlots, adapterDtors, 8,
+        capSlots, capDtors, config::kMaxCapabilities,
+        adapterSlots, adapterDtors, config::kMaxAdapters,
         arena, sizeof(arena),
         deviceIdentity);
 }
@@ -210,27 +210,74 @@ void test_oversized_generated_name_is_rejected()
 }
 
 // ---------------------------------------------------------------------------
-// BCS-AC-021 — the eight-capability limit and the configuration order before
-// SmartSysApp::setup() are preserved.
+// CAP-AC-001/CAP-AC-002 — the selected capacity accepts exactly its configured
+// number of capability/adapter pairs and rejects the next one atomically.
 // ---------------------------------------------------------------------------
-void test_eight_capabilities_are_accepted_and_the_ninth_is_refused()
+void test_configured_capacity_is_accepted_and_the_next_is_refused()
 {
     char name[32];
-    for (int i = 0; i < 8; ++i)
+    for (size_t i = 0; i < config::kMaxCapabilities; ++i)
     {
-        snprintf(name, sizeof(name), "dev1_switch_%d", i);
+        snprintf(name, sizeof(name), "dev1_switch_%u", static_cast<unsigned>(i));
         app::SwitchConfig cfg;
         cfg.GPIO = static_cast<uint8_t>(5 + i);
         cfg.capability_name = name;
         TEST_ASSERT_NOT_NULL(builder->addSwitch(cfg));
     }
-    TEST_ASSERT_EQUAL(8, builder->count());
+    TEST_ASSERT_EQUAL(config::kMaxCapabilities, builder->count());
 
-    app::SwitchConfig ninth;
-    ninth.GPIO = 20;
-    ninth.capability_name = "dev1_switch_9th";
-    TEST_ASSERT_NULL(builder->addSwitch(ninth));
-    TEST_ASSERT_EQUAL(8, builder->count());
+    const size_t arenaBefore = builder->remainingArenaBytes();
+    const int adaptersBefore = hwFactory.outputsCreated;
+    app::SwitchConfig overflow;
+    overflow.GPIO = 31;
+    overflow.capability_name = "dev1_switch_overflow";
+    TEST_ASSERT_NULL(builder->addSwitch(overflow));
+    TEST_ASSERT_EQUAL(config::kMaxCapabilities, builder->count());
+    TEST_ASSERT_EQUAL(adaptersBefore, hwFactory.outputsCreated);
+    TEST_ASSERT_EQUAL(arenaBefore, builder->remainingArenaBytes());
+}
+
+// CAP-AC-003 — closing registration at setup is one-way and a late attempt
+// cannot consume a capability, adapter or arena byte.
+void test_closed_registration_rejects_late_capability_atomically()
+{
+    builder->closeRegistration();
+    const size_t arenaBefore = builder->remainingArenaBytes();
+    app::SwitchConfig late{5, true, "late_switch"};
+    TEST_ASSERT_NULL(builder->addSwitch(late));
+    TEST_ASSERT_EQUAL(0, builder->count());
+    TEST_ASSERT_EQUAL(0, hwFactory.outputsCreated);
+    TEST_ASSERT_EQUAL(arenaBefore, builder->remainingArenaBytes());
+}
+
+// CAP-AC-004 — adapter and arena exhaustion are distinct from slot exhaustion
+// and leave the builder at its previous checkpoint.
+void test_adapter_and_arena_exhaustion_are_atomic()
+{
+    core::ICapability *localCaps[1]{};
+    void (*localCapDtors[1])(void *){};
+    void *localAdapters[1]{};
+    void (*localAdapterDtors[1])(void *){};
+    uint8_t localArena[config::kCapabilityArenaBytes]{};
+
+    app::CapabilitiesBuilder noAdapters(
+        hwFactory, eventSink, localCaps, localCapDtors, 1,
+        localAdapters, localAdapterDtors, 0,
+        localArena, sizeof(localArena), deviceIdentity);
+    const size_t adapterArenaBefore = noAdapters.remainingArenaBytes();
+    TEST_ASSERT_NULL(noAdapters.addFan(app::FanConfig{5, true, "no_adapter"}));
+    TEST_ASSERT_EQUAL(0, noAdapters.count());
+    TEST_ASSERT_EQUAL(adapterArenaBefore, noAdapters.remainingArenaBytes());
+
+    uint8_t tinyArena[sizeof(test::mocks::NoopCommandAdapter)]{};
+    app::CapabilitiesBuilder noCapabilityArena(
+        hwFactory, eventSink, localCaps, localCapDtors, 1,
+        localAdapters, localAdapterDtors, 1,
+        tinyArena, sizeof(tinyArena), deviceIdentity);
+    const size_t capabilityArenaBefore = noCapabilityArena.remainingArenaBytes();
+    TEST_ASSERT_NULL(noCapabilityArena.addFan(app::FanConfig{6, true, "no_capability_arena"}));
+    TEST_ASSERT_EQUAL(0, noCapabilityArena.count());
+    TEST_ASSERT_EQUAL(capabilityArenaBefore, noCapabilityArena.remainingArenaBytes());
 }
 
 void setup()
@@ -243,7 +290,9 @@ void setup()
     RUN_TEST(test_identities_at_the_public_limits_are_accepted);
     RUN_TEST(test_oversized_name_is_rejected_before_registration);
     RUN_TEST(test_oversized_generated_name_is_rejected);
-    RUN_TEST(test_eight_capabilities_are_accepted_and_the_ninth_is_refused);
+    RUN_TEST(test_configured_capacity_is_accepted_and_the_next_is_refused);
+    RUN_TEST(test_closed_registration_rejects_late_capability_atomically);
+    RUN_TEST(test_adapter_and_arena_exhaustion_are_atomic);
     UNITY_END();
 }
 
