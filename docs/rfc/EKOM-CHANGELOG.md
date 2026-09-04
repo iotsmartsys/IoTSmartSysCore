@@ -90,6 +90,28 @@ A implementação passa mecanicamente a Implementada [`Implemented`]. A
 transação permanece aberta e a entrega `Not Ready` para revisão técnica,
 validação, aprovação, conclusão e integração pelo Arquiteto.
 
+### Revisão 0.4
+
+A revisão confrontou os 49 requisitos, 7 critérios, implementação e evidências
+do recorte e não encontrou defeito material. A classificação é Aderente com
+limitação de evidência [`Conformant with Evidence Limitation`], porque o
+Arquiteto informou que testes e validação foram executados, mas não anexou logs
+granulares à transação. O conflito de independência é explícito: o mesmo agente
+participou da autoria assistida, análise e implementação. O relatório é
+`docs/reports/2026-09-04T211027Z-0.4-6891187e-review-report.md`.
+
+### Validação final e decisão do Arquiteto
+
+O Arquiteto declarou testes e validação executados, considerou as evidências
+suficientes, determinou o encerramento da especificação e ordenou a promoção da
+branch para `main`. A versão passa a Vigente [`Active`], a implementação a
+Validada [`Validated`] e a entrega a Pronta para integração
+[`Ready for Integration`]. O registro consultivo é
+`docs/reports/2026-09-04T211027Z-0.4-fe0b265d-final-validation-report.md`.
+
+A transação permanece aberta até a integração e sincronização efetivas com
+`main`.
+
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 
 **Estado:** Fechada [`Closed`]

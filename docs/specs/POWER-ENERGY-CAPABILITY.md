@@ -6,11 +6,11 @@
 
 **Versão:** 0.4
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Pronta para integração [`Ready for Integration`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -477,12 +477,11 @@ decisões funcionais antecipadas.
 
 ## 10. Estado da especificação
 
-A versão 0.4 está em Rascunho [`Draft`], com implementação Implementada
-[`Implemented`], entrega Não pronta [`Not Ready`] e Análise de
-Implementabilidade Pronta [`Ready`]. A análise formal confrontou 49 requisitos,
-7 critérios e zero débitos relacionados, sem bloqueadores. A classificação
-foi seguida por ordem explícita do Arquiteto para implementar integralmente a
-versão. Os três builds contratados foram aprovados e os testes automatizados
-foram criados. Compilação e execução dos casos, upload, monitor e hardware não
-foram autorizados e constam como `Not Executed`. Revisão técnica, validação,
-aprovação, conclusão e integração permanecem pendentes.
+A versão 0.4 está Vigente [`Active`], com implementação Validada [`Validated`],
+entrega Pronta para integração [`Ready for Integration`] e Análise de
+Implementabilidade Pronta [`Ready`]. A revisão confrontou 49 requisitos, 7
+critérios e zero débitos relacionados e classificou o recorte como aderente com
+limitação de evidência documental. O Arquiteto declarou testes e validação
+executados, considerou o resultado suficiente, determinou o encerramento da
+especificação e ordenou sua promoção para `main`. A conclusão como `Done`
+depende da integração e sincronização efetivas.
