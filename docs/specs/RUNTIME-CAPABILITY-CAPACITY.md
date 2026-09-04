@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -14,7 +14,8 @@
 
 **Revisão de implementabilidade:** Pendente [`Pending`]
 
-**Relação normativa:** Nova [`New`]; altera [`Amends`] `IOTSSC-RUNTIME`,
+**Relação normativa:** Corrige [`Corrects`]
+`IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.1`; permanece Nova [`New`] e altera [`Amends`] `IOTSSC-RUNTIME`,
 `IOTSSC-PUBLIC-API`, `IOTSSC-BINARY-COMMAND-STATE@0.6` e
 `IOTSSC-HW-EXAMPLES@1.1`; preserva `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`,
 `IOTSSC-INA3221-SENSORS@0.2`, `IOTSSC-CURRENT-SENSOR@0.6` e
@@ -198,7 +199,17 @@ A direção arquitetural e seus trade-offs estão registrados em
   `battery-discharging-current` deve deixar `NOT_READY` após sua primeira
   leitura finita elegível.
 
-## 8. Condições de borda
+## 8. Guarda documental
+
+- **CAP-032:** a guarda estrutural EKOM deve ser executada sobre o repositório
+  inteiro. Todo achado introduzido ou materialmente alterado pelos arquivos do
+  recorte reprova a entrega. Achados preexistentes, reproduzíveis na baseline e
+  sem relação material com esta especificação não bloqueiam o recorte, mas o
+  comando, seu código de saída e esses achados devem ser registrados
+  separadamente como falha preexistente; não podem ser omitidos, corrigidos sem
+  autorização nem apresentados como validação global aprovada.
+
+## 9. Condições de borda
 
 - capacidade default sem macro: oito aceita, nove rejeita;
 - capacidade MCB01: doze aceita, treze rejeita;
@@ -214,7 +225,7 @@ A direção arquitetural e seus trade-offs estão registrados em
 - ausência ou falha de um sensor composto: somente os estados já contratados
   pelas capabilities afetadas se aplicam, sem bloquear o loop.
 
-## 9. Critérios de aceite
+## 10. Critérios de aceite
 
 | Critério | Requisitos | Cenário e ação | Resultado observável | Evidência |
 |---|---|---|---|---|
@@ -226,9 +237,9 @@ A direção arquitetural e seus trade-offs estão registrados em
 | CAP-AC-006 | CAP-015, CAP-016, CAP-023, CAP-024 | Persistir doze identidades no formato novo, tentar a 13ª, corromper bytes do cabeçalho e das posições. | Doze sobrevivem ao reboot; a 13ª não substitui dados; toda corrupção coberta é rejeitada integralmente. | Teste de round-trip, overflow e corrupção. |
 | CAP-AC-007 | CAP-025 a CAP-030 | Construir a aplicação versionada no environment `ESP32_MCB01` e inspecionar registros e referências. | As nove capabilities são aceitas; existe um único adapter de tensão PV compartilhado e um único dispositivo INA3221. | Build, inspeção do ELF/delta e instrumentação de registro. |
 | CAP-AC-008 | CAP-027, CAP-029, CAP-031 | Executar em hardware com entradas finitas e conectividade operacional. | Não há rejeição de capability; descarga e potência deixam `NOT_READY` e publicam valores coerentes; setup completo só é anunciado após todos os registros obrigatórios. | Log serial e observação MQTT produzidos pelo Arquiteto. |
-| CAP-AC-009 | CAP-001 a CAP-031 | Executar builds canônicos afetados e guarda documental. | `pio run -e ESP32_MCB01`, `pio run -e esp32_dev`, `git diff --check` e validação EKOM terminam com código zero. | Saídas terminais completas. |
+| CAP-AC-009 | CAP-001 a CAP-032 | Executar os builds canônicos, `git diff --check` e a guarda EKOM global; comparar os achados da guarda com a baseline anterior ao recorte. | Os builds e `git diff --check` terminam com código zero. A guarda não apresenta achado novo ou materialmente alterado atribuível ao recorte. Se continuar não zero apenas por achados preexistentes reproduzidos, a entrega registra separadamente comando, código e achados, sem declarar a guarda global aprovada. | Saídas terminais completas, delta inspecionado e reconciliação identificável da falha preexistente. |
 
-## 10. Testes e permissões
+## 11. Testes e permissões
 
 Esta versão exige criação ou alteração de testes automatizados somente para
 `CAP-AC-001` a `CAP-AC-006`. Esses testes integram a futura implementação
@@ -242,8 +253,21 @@ implementação e dependem de ordem operacional específica do Arquiteto.
 Criar ou alterar testes não autoriza sua execução. Build é intrínseco à futura
 implementação; execução de testes e hardware permanece separada.
 
-## 11. Estado e encaminhamento
+## 12. Correção da versão 0.2
 
-A versão 0.1 registra as decisões confirmadas pelo Arquiteto e permanece em
+A versão 0.1 exigia código zero da guarda EKOM global em `CAP-AC-009`, embora
+a baseline já contivesse achados documentais fora do recorte. Isso tornava o
+critério insatisfazível sem ampliar a implementação para reescrever fontes
+históricas e experimentais não relacionadas.
+
+Por decisão do Arquiteto, a versão 0.2 acrescenta `CAP-032` e corrige
+`CAP-AC-009`: a guarda continua obrigatória e sua falha continua preservada,
+mas a conformidade do recorte depende de não introduzir ou alterar achados nos
+arquivos sob sua autoridade. A correção não muda capacidade, lifecycle, arena,
+persistência, migração, aplicação MCB01 nem permissões operacionais.
+
+## 13. Estado e encaminhamento
+
+A versão 0.2 registra as decisões confirmadas pelo Arquiteto e permanece em
 Rascunho [`Draft`] até a Análise de Implementabilidade formal. Nenhuma
 implementação é autorizada por esta especificação.

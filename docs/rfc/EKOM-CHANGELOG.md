@@ -3,11 +3,11 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
-## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.1
+## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 
 **Estado:** Aberta [`Open`]
 
-**Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.1`
+**Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`
 
 **Objetivo:** substituir o limite universal de oito por capacidade estática
 configurável, permitir doze capabilities no perfil `ESP32_MCB01`, preservar o
@@ -39,6 +39,19 @@ imutável é
 
 A classificação conclui o estágio técnico da versão 0.1 e não inicia nem
 autoriza implementação, validação física, integração ou conclusão.
+
+### Correção normativa 0.2
+
+Após esclarecimento da falha da guarda EKOM, o Arquiteto confirmou que a
+validação deve exigir ausência de novos achados no recorte e registrar
+separadamente a falha preexistente. A versão 0.1 e seu relatório permanecem
+históricos; sua classificação `Ready` não se aplica à versão corrigida.
+
+A versão 0.2 acrescenta `CAP-032` e corrige `CAP-AC-009`, removendo a exigência
+insatisfazível de código zero global sem ocultar, reinterpretar ou autorizar a
+correção de documentos fora do recorte. Capacidade, persistência, aplicação e
+permissões permanecem inalteradas. A versão corrigida segue para nova Análise
+de Implementabilidade.
 
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
