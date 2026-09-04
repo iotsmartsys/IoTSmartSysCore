@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -478,10 +478,9 @@ decisões funcionais antecipadas.
 ## 10. Estado da especificação
 
 A versão 0.4 está Vigente [`Active`], com implementação Validada [`Validated`],
-entrega Pronta para integração [`Ready for Integration`] e Análise de
-Implementabilidade Pronta [`Ready`]. A revisão confrontou 49 requisitos, 7
-critérios e zero débitos relacionados e classificou o recorte como aderente com
-limitação de evidência documental. O Arquiteto declarou testes e validação
-executados, considerou o resultado suficiente, determinou o encerramento da
-especificação e ordenou sua promoção para `main`. A conclusão como `Done`
-depende da integração e sincronização efetivas.
+entrega Concluída [`Done`] e Análise de Implementabilidade Pronta [`Ready`]. A
+revisão confrontou 49 requisitos, 7 critérios e zero débitos relacionados e
+classificou o recorte como aderente com limitação de evidência documental. O
+Arquiteto declarou testes e validação executados, considerou o resultado
+suficiente e determinou o encerramento. A promoção foi concluída por
+fast-forward e sincronizada em `main`.

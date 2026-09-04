@@ -36,7 +36,7 @@
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
-| Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Ready for Integration` após revisão e decisão do Arquiteto (`EKOM-CHG-0023`) |
+| Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Done` após integração à `main` (`EKOM-CHG-0023`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |

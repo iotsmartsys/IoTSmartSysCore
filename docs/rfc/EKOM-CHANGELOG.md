@@ -5,11 +5,11 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.4`
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
 **Objetivo:** desacoplar `PowerEnergyCapability` da origem da potência por meio
 de `IPowerSensor`, preservar o consumo anterior por composite e acrescentar um
@@ -109,8 +109,18 @@ Validada [`Validated`] e a entrega a Pronta para integração
 [`Ready for Integration`]. O registro consultivo é
 `docs/reports/2026-09-04T211027Z-0.4-fe0b265d-final-validation-report.md`.
 
-A transação permanece aberta até a integração e sincronização efetivas com
+A transação foi concluída após a integração e sincronização efetivas com
 `main`.
+
+### Integração e encerramento
+
+O recorte validado foi integrado à `main` a partir da branch
+`spec/power-energy-capability` por fast-forward, sem conflito. A entrega passa
+de Pronta para integração [`Ready for Integration`] para Concluída [`Done`]. A
+especificação permanece Vigente [`Active`], sua implementação permanece
+Validada [`Validated`] e a transação é encerrada por objetivo cumprido. Após a
+integração, os builds `esp32_dev`, `example_power_energy_mcb_r1` e
+`ESP32_MCB01` terminaram novamente com `SUCCESS` e código 0.
 
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 
