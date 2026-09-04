@@ -14,14 +14,30 @@ namespace iotsmartsys::platform::arduino
         {
             switch (value)
             {
-            case INA3221Averaging::SAMPLES_1: mapped = INA3221_AVG_1_SAMPLE; return true;
-            case INA3221Averaging::SAMPLES_4: mapped = INA3221_AVG_4_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_16: mapped = INA3221_AVG_16_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_64: mapped = INA3221_AVG_64_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_128: mapped = INA3221_AVG_128_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_256: mapped = INA3221_AVG_256_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_512: mapped = INA3221_AVG_512_SAMPLES; return true;
-            case INA3221Averaging::SAMPLES_1024: mapped = INA3221_AVG_1024_SAMPLES; return true;
+            case INA3221Averaging::SAMPLES_1:
+                mapped = INA3221_AVG_1_SAMPLE;
+                return true;
+            case INA3221Averaging::SAMPLES_4:
+                mapped = INA3221_AVG_4_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_16:
+                mapped = INA3221_AVG_16_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_64:
+                mapped = INA3221_AVG_64_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_128:
+                mapped = INA3221_AVG_128_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_256:
+                mapped = INA3221_AVG_256_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_512:
+                mapped = INA3221_AVG_512_SAMPLES;
+                return true;
+            case INA3221Averaging::SAMPLES_1024:
+                mapped = INA3221_AVG_1024_SAMPLES;
+                return true;
             }
             return false;
         }
@@ -30,14 +46,30 @@ namespace iotsmartsys::platform::arduino
         {
             switch (value)
             {
-            case INA3221ConversionTime::US_140: mapped = INA3221_CONVTIME_140US; return true;
-            case INA3221ConversionTime::US_204: mapped = INA3221_CONVTIME_204US; return true;
-            case INA3221ConversionTime::US_332: mapped = INA3221_CONVTIME_332US; return true;
-            case INA3221ConversionTime::US_588: mapped = INA3221_CONVTIME_588US; return true;
-            case INA3221ConversionTime::MS_1: mapped = INA3221_CONVTIME_1MS; return true;
-            case INA3221ConversionTime::MS_2: mapped = INA3221_CONVTIME_2MS; return true;
-            case INA3221ConversionTime::MS_4: mapped = INA3221_CONVTIME_4MS; return true;
-            case INA3221ConversionTime::MS_8: mapped = INA3221_CONVTIME_8MS; return true;
+            case INA3221ConversionTime::US_140:
+                mapped = INA3221_CONVTIME_140US;
+                return true;
+            case INA3221ConversionTime::US_204:
+                mapped = INA3221_CONVTIME_204US;
+                return true;
+            case INA3221ConversionTime::US_332:
+                mapped = INA3221_CONVTIME_332US;
+                return true;
+            case INA3221ConversionTime::US_588:
+                mapped = INA3221_CONVTIME_588US;
+                return true;
+            case INA3221ConversionTime::MS_1:
+                mapped = INA3221_CONVTIME_1MS;
+                return true;
+            case INA3221ConversionTime::MS_2:
+                mapped = INA3221_CONVTIME_2MS;
+                return true;
+            case INA3221ConversionTime::MS_4:
+                mapped = INA3221_CONVTIME_4MS;
+                return true;
+            case INA3221ConversionTime::MS_8:
+                mapped = INA3221_CONVTIME_8MS;
+                return true;
             }
             return false;
         }

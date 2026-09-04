@@ -39,6 +39,20 @@ namespace iotsmartsys::core
         std::uint32_t sampleIntervalUs{200};
         std::uint32_t readingIntervalMs{500};
         std::uint32_t capabilityEvaluationIntervalMs{1000};
+
+    public:
+        static VoltageSensorConfig createResistiveDivider330KVoltageConfig(std::string id, int adcPin)
+        {
+            VoltageSensorConfig voltageConfig;
+            voltageConfig.id = id;
+            voltageConfig.adcPin = adcPin;
+            voltageConfig.adcMinimumMv = 144.0f;
+            voltageConfig.r1Ohms = 330000.0f;
+            voltageConfig.r2Ohms = 10000.0f;
+            voltageConfig.capabilityEvaluationIntervalMs = 15000;
+
+            return voltageConfig;
+        }
     };
 
     inline const char *toString(VoltageMeasurementStatus status)

@@ -41,7 +41,7 @@ namespace iotsmartsys::core
         }
         else
         {
-            logger.warn("TemperatureSensorCapability", "TemperatureSensorCapability: Invalid temperature reading: %s °C", tempStr);
+            logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Invalid temperature reading: %s °C", tempStr);
             forceNextReadAt(currentTime);
         }
     }

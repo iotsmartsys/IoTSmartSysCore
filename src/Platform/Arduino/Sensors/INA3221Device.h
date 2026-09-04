@@ -37,6 +37,17 @@ namespace iotsmartsys::platform::arduino
         INA3221Averaging averaging{INA3221Averaging::SAMPLES_16};
         INA3221ConversionTime busConversionTime{INA3221ConversionTime::MS_1};
         INA3221ConversionTime shuntConversionTime{INA3221ConversionTime::MS_1};
+
+    public:
+        static INA3221DeviceConfig createDeviceConfig()
+        {
+            INA3221DeviceConfig config;
+            config.i2cAddress = 0x40;
+            config.averaging = INA3221Averaging::SAMPLES_16;
+            config.busConversionTime = INA3221ConversionTime::MS_1;
+            config.shuntConversionTime = INA3221ConversionTime::MS_1;
+            return config;
+        }
     };
 
     class INA3221Device final

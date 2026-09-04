@@ -35,5 +35,16 @@ namespace iotsmartsys::platform::arduino
         unsigned long _lastStateReadMs{0};
         bool _setupComplete{false};
         bool _hasCompletedMeasurement{false};
+
+    public:
+        static INA3221VoltageSensorConfig createVoltageConfig(std::uint8_t channel)
+        {
+            INA3221VoltageSensorConfig config;
+            config.channel = channel;
+            config.minimumVoltageV = 0.0f;
+            config.maximumVoltageV = 26.0f;
+            config.readingIntervalMs = 500;
+            return config;
+        }
     };
 }

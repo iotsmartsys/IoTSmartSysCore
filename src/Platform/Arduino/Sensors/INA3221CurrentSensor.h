@@ -41,5 +41,19 @@ namespace iotsmartsys::platform::arduino
         unsigned long _lastStateReadMs{0};
         bool _setupComplete{false};
         bool _hasCompletedMeasurement{false};
+
+    public:
+        static INA3221CurrentSensorConfig createCurrentConfig(std::uint8_t channel)
+        {
+            INA3221CurrentSensorConfig config;
+            config.channel = channel;
+            config.shuntResistanceOhms = 0.0089f;
+            config.polarity = 1.0f;
+            config.deadbandA = 0.005f;
+            config.minimumReportableA = 0.010f;
+            config.maximumAbsoluteCurrentA = 18.0f;
+            config.readingIntervalMs = 1000;
+            return config;
+        }
     };
 }
