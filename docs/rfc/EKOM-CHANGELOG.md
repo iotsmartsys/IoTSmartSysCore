@@ -53,9 +53,21 @@ na Análise de Implementabilidade.
 ### Estado operacional
 
 O rascunho conversacional foi reconciliado e o Arquiteto ordenou explicitamente
-sua escrita. A especificação está em `Draft`/`Pending Review`; implementação,
-build, criação ou execução de testes e operações de hardware não foram
-realizados. A próxima etapa normativa é a Análise de Implementabilidade.
+sua escrita.
+
+### Análise de Implementabilidade 0.4
+
+A análise formal confrontou 49 requisitos, 7 critérios, zero débitos e as
+autoridades aplicáveis. O bloqueador histórico da versão 0.2 foi descartado e
+as análises 0.3 sem bloqueadores foram reconciliadas. A versão 0.4 foi
+classificada Pronta [`Ready`], sem bloqueador normativo, arquitetural, material
+ou de evidência prévia. O relatório imutável é
+`docs/reports/analysis/2026-09-04T183508Z-0.4-a4c71e92-implementability-analysis.md`.
+
+A especificação permanece `Draft`, sua implementação permanece `Not Started`
+e a entrega `Not Ready`. A classificação conclui o estágio técnico e torna a
+versão elegível à ordem explícita do Arquiteto; não inicia implementação,
+build, criação ou execução de testes nem operação de hardware.
 
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 

@@ -12,9 +12,9 @@
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`]
 
-**Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
+**Bloqueio arquitetural:** Nenhum
 
 **Relações normativas e de dependência:**
 
@@ -479,6 +479,8 @@ decisões funcionais antecipadas.
 
 A versão 0.4 está em Rascunho [`Draft`], com implementação Não iniciada
 [`Not Started`], entrega Não pronta [`Not Ready`] e Análise de
-Implementabilidade pendente. A escrita foi ordenada pelo Arquiteto após
-reconciliação do rascunho. Nenhuma implementação, build, teste ou operação de
-hardware é autorizada por este registro.
+Implementabilidade Pronta [`Ready`]. A análise formal confrontou 49 requisitos,
+7 critérios e zero débitos relacionados, sem bloqueadores. A classificação
+torna a versão elegível a uma ordem explícita de implementação, mas não a
+autoriza por si só. Nenhuma implementação, build, teste ou operação de hardware
+foi realizada.
