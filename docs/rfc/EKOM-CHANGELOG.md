@@ -3,6 +3,60 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-POWER-ENERGY-CAPABILITY@0.4`
+
+**Estado da implementação:** Não iniciada [`Not Started`]
+
+**Objetivo:** desacoplar `PowerEnergyCapability` da origem da potência por meio
+de `IPowerSensor`, preservar o consumo anterior por composite e acrescentar um
+adapter INA3221 de potência calculada em software.
+
+### Decisões do Arquiteto
+
+- `PowerEnergyCapability` passa a consumir e conduzir um `IPowerSensor`;
+- `CompositePowerSensor` recebe sensores de tensão e corrente sem conduzir seu
+  lifecycle e preserva cálculo e classificação da versão 0.3;
+- `INA3221PowerSensor` lê tensão e corrente do dispositivo compartilhado e
+  calcula `abs(V × I)`, pois chip e biblioteca não fornecem leitura direta de
+  potência;
+- o overload público anterior permanece compatível e cria o composite de forma
+  atômica;
+- testes automatizados dos novos contratos integram o recorte, sem autorização
+  implícita para executá-los.
+
+### Autoridade e escopo
+
+A versão 0.4 altera `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` e emenda de forma
+aditiva `IOTSSC-INA3221-SENSORS@0.2`. Preserva contratos de tensão e corrente,
+payload, energia, exemplos, aplicação MCB01, capacidade configurável e runtime
+cooperativo. Nenhuma migração de consumidor existente integra esta versão.
+
+### Lacunas e débitos
+
+Nenhuma lacuna normativa ou débito técnico foi aceito. Rollback conjunto na
+arena, seam de teste do dispositivo e custo de memória devem ser confrontados
+na Análise de Implementabilidade.
+
+### Evidências materiais da autoria
+
+- investigação dirigida da especificação 0.3, do contrato INA3221 0.2, mapa,
+  API pública, builders, adapters e biblioteca Adafruit instalada;
+- `git diff --check`: aprovado;
+- guarda estrutural EKOM: não aprovada somente pelos documentos legados e pelo
+  mapa experimental preexistentes já conhecidos; nenhum arquivo desta
+  transação apareceu nos achados.
+
+### Estado operacional
+
+O rascunho conversacional foi reconciliado e o Arquiteto ordenou explicitamente
+sua escrita. A especificação está em `Draft`/`Pending Review`; implementação,
+build, criação ou execução de testes e operações de hardware não foram
+realizados. A próxima etapa normativa é a Análise de Implementabilidade.
+
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 
 **Estado:** Fechada [`Closed`]

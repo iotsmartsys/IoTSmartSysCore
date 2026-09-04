@@ -4,147 +4,275 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.3
+**Versão:** 0.4
 
-**Estado normativo:** Vigente [`Active`]
+**Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Validada [`Validated`]
+**Estado da implementação:** Não iniciada [`Not Started`]
 
-**Estado da entrega:** Concluída [`Done`]
+**Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pronta [`Ready`]
+**Revisão de implementabilidade:** Pendente [`Pending Review`]
 
-**Bloqueio arquitetural:** Nenhum
+**Bloqueio arquitetural:** Nenhum conhecido antes da análise formal
 
 **Relações normativas e de dependência:**
 
-- Nova [`New`] — `PowerEnergyCapability`, `PowerEnergyConfig`, tipos de
-  medição, API pública e campo opcional de energia no evento;
-- Corrige [`Corrects`] a versão 0.2 ao delimitar a exclusão de configuração dos
-  sensores à implementação interna da capability;
+- Altera [`Amends`] `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` ao substituir a
+  dependência direta da capability em sensores de tensão e corrente pela
+  abstração `IPowerSensor`, preservando compatibilidade pública;
+- Altera de forma aditiva [`Amends`] `IOTSSC-INA3221-SENSORS@0.2` ao acrescentar
+  `INA3221PowerSensor`, sem alterar os adapters de tensão e corrente vigentes;
 - Depende de `IOTSSC-CURRENT-SENSOR@0.6` e
-  `IOTSSC-VOLTAGE-SENSOR@0.1` somente quanto aos contratos públicos de
-  `ICurrentSensor`, `IVoltageSensor` e suas últimas medições;
-- Preserva `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME` e
-  `IOTSSC-HW-EXAMPLES` por extensão aditiva e consumo do catálogo vigente.
+  `IOTSSC-VOLTAGE-SENSOR@0.1` somente para `CompositePowerSensor`;
+- Preserva `IOTSSC-PUBLIC-API` por overload aditivo e manutenção da assinatura
+  anterior;
+- Preserva `IOTSSC-RUNTIME`, `IOTSSC-HW-EXAMPLES@1.1` e
+  `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2` sem mudar lifecycle cooperativo,
+  catálogo de exemplos, limite configurável ou composição MCB01 vigente.
 
 ## 1. Objetivo e contexto
 
-Adicionar uma capability que componha as últimas medições disponibilizadas por
-um `IVoltageSensor` e um `ICurrentSensor`, calcule potência ativa por magnitude
-em watts e acumule energia em watt-hora.
+Desacoplar `PowerEnergyCapability` da origem da potência. A capability deve
+consumir um único `IPowerSensor`, integrar energia em watt-hora e publicar o
+contrato vigente sem conhecer tensão, corrente, canal, shunt ou método de
+cálculo da potência.
 
-A capability não é Hardware Adapter, não adquire amostras e não controla o
-lifecycle dos sensores recebidos. A aplicação consumidora continua responsável
-por chamar corretamente `setup()` e `handle()` em cada sensor, diretamente ou
-por meio de `VoltageSensorCapability` e `CurrentSensorCapability`.
+Devem existir duas implementações públicas:
+
+- `CompositePowerSensor`, que compõe os últimos snapshots de um
+  `IVoltageSensor` e um `ICurrentSensor`;
+- `INA3221PowerSensor`, que obtém tensão de barramento e corrente pelo
+  `INA3221Device` e calcula a potência do canal.
+
+O INA3221 não possui registrador nem leitura direta de potência. O dispositivo
+mede tensão de shunt e tensão de barramento; a biblioteca Adafruit vigente
+calcula corrente a partir do shunt. Portanto, `INA3221PowerSensor` também deve
+calcular potência por `abs(busVoltage × currentAmps)`. A abstração representa a
+origem lógica do snapshot de potência, não cálculo físico no chip.
 
 ## 2. Escopo
 
-- classe pública `PowerEnergyCapability` derivada de `ICapability`;
-- referências não proprietárias a `IVoltageSensor` e `ICurrentSensor`;
-- configuração pública `PowerEnergyConfig` com identidade e intervalo de
-  leitura;
-- cálculo de potência não negativa em watts;
-- integração temporal e acumulação volátil de energia em Wh;
-- estados próprios para prontidão, validade, estimativa e entrada inválida;
-- acesso à última `PowerEnergyMeasurement` e operação `resetEnergy()`;
-- publicação escalar da potência e campo opcional de energia no evento;
-- registro aditivo pelo builder e por `SmartSysApp`;
-- ownership da capability pela aplicação e ownership externo dos sensores;
-- diagnóstico por `ILogger` para falhas do registro público.
-- exemplo executável `power_energy` na MCB R1, com sensores externamente
-  possuídos e conduzidos pelo próprio exemplo.
+- contratos públicos `IPowerSensor`, `PowerMeasurement` e
+  `PowerMeasurementStatus`;
+- `CompositePowerSensor` no Core, recebendo sensores externos por referência;
+- `INA3221PowerSensor` e sua configuração pública no runtime Arduino/ESP32;
+- consumo de `IPowerSensor&` por `PowerEnergyCapability`;
+- lifecycle do `IPowerSensor` conduzido pela capability;
+- preservação do lifecycle externo dos sensores subordinados ao composite;
+- overload público novo para registrar um `IPowerSensor` externo;
+- preservação do overload de tensão e corrente por criação atômica de um
+  `CompositePowerSensor` pertencente à aplicação;
+- preservação de potência não negativa, integração, reset, estados e
+  publicação vigentes;
+- testes automatizados dos novos contratos, ownership, lifecycle,
+  compatibilidade e qualificações;
+- atualização do mapa de conhecimento e da transação EKOM.
 
 ## 3. Fora de escopo
 
-- aquisição, configuração, calibração ou validação física de tensão ou corrente
-  realizadas internamente pela `PowerEnergyCapability`; o exemplo pode
-  instanciar, configurar e conduzir os adapters preexistentes estritamente para
-  demonstrar a composição contratada;
-- chamada ou verificação de `setup()` e `handle()` dos sensores recebidos;
-- detecção de leitura desatualizada ou imposição de cadência aos sensores;
+- potência fornecida diretamente por registrador do INA3221;
 - potência assinada, direção do fluxo, potência aparente ou reativa, fator de
   potência, fase, frequência, forma de onda ou RMS;
-- persistência, restauração ou sincronização externa da energia acumulada;
-- tarifa, custo, demanda, janela histórica ou agregações por período;
+- alterar aquisição, calibração, publicação ou API própria dos sensores de
+  tensão e corrente existentes;
+- fazer `CompositePowerSensor` chamar `setup()` ou `handle()` nos sensores;
+- persistência ou sincronização externa da energia, tarifa, custo, demanda ou
+  histórico;
 - comando remoto para zerar energia;
-- novo Hardware Adapter, factory de sensor ou política geral de arbitragem de
-  pinos;
-- exemplo em placa diferente da MCB R1 ou demonstração dos sensores associados
-  simultaneamente às capabilities próprias;
-- alteração dos valores ou estados publicados pelas capabilities de corrente e
-  tensão existentes;
-- alteração de API pública para facilitar o exemplo;
-- alteração do limite de oito capabilities ou do lifecycle cooperativo;
-- criação, ampliação, reestruturação ou correção de artefatos de teste.
+- alterar payload ou serialização vigentes de `PowerEnergyCapability`;
+- alterar `INA3221VoltageSensor` ou `INA3221CurrentSensor`;
+- migrar os exemplos existentes ou `mcb01_solar_controller` para a nova API;
+- alterar catálogo de exemplos, configuração elétrica MCB R1, capacidade do
+  runtime, persistência NVS ou política geral de ownership;
+- upload, monitor, hardware, publicação, release ou deploy.
 
 ### 3.1 Arquitetura e organização
 
-**Precedente geral:** `CurrentSensorCapability`, quanto à derivação de
-`ICapability`, intervalo configurável, primeira avaliação imediata, formatação
-escalar, publicação por mudança, acesso à medição e registro público atômico.
+`IPowerSensor` pertence a `src/Contracts/Sensors/` e não pode depender de tipos
+Arduino ou Adafruit. `CompositePowerSensor` pertence ao Core por compor
+contratos abstratos. `INA3221PowerSensor` pertence a
+`src/Platform/Arduino/Sensors/` por depender do dispositivo Arduino.
 
-**Diferença intencional:** `PowerEnergyCapability` somente consome snapshots.
-Seu `setup()` e seu `handle()` não propagam chamadas aos sensores. Essa
-separação evita duplicar o lifecycle quando os mesmos sensores já são acionados
-por suas capabilities próprias.
+`PowerEnergyCapability` continua responsável por cadência de avaliação,
+integração de energia, reset e publicação. A aquisição ou composição da
+potência passa ao `IPowerSensor`.
 
-**Elementos preservados:** separação Contracts/Core/App, configuração antes de
-`SmartSysApp::setup()`, ownership em arena da capability, oito slots,
-processamento cooperativo e compatibilidade pública aditiva.
-
-### 3.2 Limite de escopo funcional
-
-Não há preparação arquitetural independente conhecida. A composição usa as
-interfaces públicas vigentes e atribui explicitamente à aplicação consumidora
-o lifecycle e a duração das referências. A análise formal deve confrontar se o
-registro de uma capability com adapters externamente possuídos é plausível no
-builder vigente sem criar nova política transversal de ownership.
+O contrato é uma extensão localizada do padrão de Hardware Adapters vigente.
+A análise formal deve confirmar que o builder consegue criar atomicamente o
+composite de compatibilidade na arena de adapters sem reduzir garantias de
+rollback.
 
 ## 4. Componentes e tipos públicos
 
 | Elemento | Responsabilidade |
 |---|---|
-| `PowerEnergyCapability` | Cadência, composição, integração temporal e publicação |
-| `PowerEnergyConfig` | Identidade e intervalo de leitura |
-| `PowerEnergyMeasurement` | Potência, energia acumulada e estado composto |
-| `PowerEnergyMeasurementStatus` | `NOT_READY`, `VALID`, `ESTIMATED` e `INPUT_INVALID` |
-| `POWER_ENERGY_TYPE` | Type público da capability |
-| `CapabilityStateChanged::energyWh` | Energia formatada opcional no evento |
-| `SmartSysApp::addPowerEnergyCapability()` | Registro, ownership da capability e falha atômica |
+| `IPowerSensor` | Lifecycle e acesso ao último snapshot estável de potência |
+| `PowerMeasurement` | Potência opcional e qualificação do snapshot |
+| `PowerMeasurementStatus` | `NOT_READY`, `VALID`, `ESTIMATED` e `INPUT_INVALID` |
+| `CompositePowerSensor` | Compor tensão e corrente sem conduzir seus sensores |
+| `INA3221PowerSensor` | Ler um canal INA3221 e calcular sua potência |
+| `INA3221PowerSensorConfig` | Canal, shunt, qualificação e cadência do adapter |
+| `PowerEnergyCapability` | Conduzir o sensor, integrar energia e publicar |
+| `SmartSysApp::addPowerEnergyCapability()` | Registro, ownership e rollback |
+
+Contrato mínimo:
+
+```cpp
+enum class PowerMeasurementStatus {
+    NOT_READY,
+    VALID,
+    ESTIMATED,
+    INPUT_INVALID
+};
+
+struct PowerMeasurement {
+    std::optional<double> powerW;
+    PowerMeasurementStatus measurementStatus{PowerMeasurementStatus::NOT_READY};
+};
+
+struct IPowerSensor : public IHardwareAdapter {
+    virtual const PowerMeasurement &powerMeasurement() const = 0;
+};
+
+class CompositePowerSensor : public IPowerSensor {
+public:
+    CompositePowerSensor(
+        IVoltageSensor &voltageSensor,
+        ICurrentSensor &currentSensor,
+        std::uint32_t readingIntervalMs = 1000);
+};
+```
 
 ## 5. Requisitos
 
-### 5.1 Contratos e lifecycle
+### 5.1 Contrato comum de potência
 
-- **PWR-001:** `PowerEnergyCapability` deve derivar de `ICapability` e receber
-  `IVoltageSensor&` e `ICurrentSensor&` como referências não proprietárias.
-- **PWR-002:** os dois sensores devem permanecer vivos durante toda a vida da
-  capability. `SmartSysApp` possui somente a capability e não assume ownership
-  dos sensores.
-- **PWR-003:** `PowerEnergyCapability::setup()` não pode chamar `setup()` nos
-  sensores, e `PowerEnergyCapability::handle()` não pode chamar `handle()` nos
-  sensores.
-- **PWR-004:** a capability não deve verificar se os sensores foram
-  configurados, inicializados ou acionados. Deve consumir exclusivamente os
-  resultados correntes de `voltageMeasurement()` e `currentMeasurement()`.
-- **PWR-005:** o type público deve ser exatamente `"Power Energy (W/Wh)"`,
-  exposto como `POWER_ENERGY_TYPE`.
+- **PWR-001:** `IPowerSensor` deve derivar de `IHardwareAdapter` e expor
+  `const PowerMeasurement& powerMeasurement() const`.
+- **PWR-002:** `PowerMeasurement` deve conter `std::optional<double> powerW` e
+  `PowerMeasurementStatus measurementStatus`.
+- **PWR-003:** `powerMeasurement()` devolve referência ao último snapshot
+  estável e não adquire hardware, conduz outro adapter nem altera o snapshot.
+- **PWR-004:** `powerW` presente deve ser finito e não negativo. Violação deve
+  produzir `INPUT_INVALID` na capability, sem publicação ou integração do
+  valor.
+- **PWR-005:** `NOT_READY` e `INPUT_INVALID` não possuem `powerW`; `VALID` e
+  `ESTIMATED` possuem `powerW`.
+- **PWR-006:** `lastStateReadMillis()` inicia em zero e representa a última
+  avaliação concluída pelo sensor. A capability não o usa para inferir
+  staleness nesta versão.
 
-### 5.2 Configuração e API
+### 5.2 PowerEnergyCapability e lifecycle
 
-- **PWR-006:** `PowerEnergyConfig` deve conter, no mínimo:
+- **PWR-007:** `PowerEnergyCapability` deve receber `IPowerSensor&` não
+  proprietário, vivo durante toda a vida da capability.
+- **PWR-008:** `setup()` deve chamar exatamente uma vez `setup()` no sensor de
+  potência e depois reinicializar o estado próprio.
+- **PWR-009:** cada `handle()` da capability deve chamar exatamente uma vez
+  `handle()` no sensor, inclusive quando a avaliação ainda não for elegível.
+- **PWR-010:** a primeira avaliação ocorre imediatamente no primeiro `handle()`
+  após `setup()`; as seguintes respeitam `readingIntervalMs` e rollover.
+- **PWR-011:** cada avaliação elegível obtém exatamente uma vez o snapshot de
+  `powerMeasurement()`, sem aquisição extra.
+- **PWR-012:** estados do sensor mapeiam para os estados homônimos da medição de
+  energia. Combinação incoerente de valor e estado, ausência de valor exigido,
+  não finitude ou potência negativa produz `INPUT_INVALID`.
+- **PWR-013:** o type permanece exatamente `"Power Energy (W/Wh)"`, exposto
+  como `POWER_ENERGY_TYPE`.
 
-```text
-id
-readingIntervalMs
+### 5.3 CompositePowerSensor
+
+- **PWR-014:** `CompositePowerSensor` recebe `IVoltageSensor&` e
+  `ICurrentSensor&` não proprietários, vivos durante toda sua vida.
+- **PWR-015:** `setup()` limpa somente snapshot, timestamp e controle interno;
+  não chama nem verifica o setup dos sensores subordinados.
+- **PWR-016:** `handle()` não chama `handle()` nos sensores, solicita aquisição
+  ou usa timestamps para inferir atualização.
+- **PWR-017:** cada oportunidade elegível consome uma vez o último snapshot de
+  tensão e uma vez o de corrente e produz um snapshot de potência.
+- **PWR-018:** tensão `NOT_READY`, corrente `NOT_READY`/`CALIBRATING` ou
+  alimentação `UNKNOWN` produz `NOT_READY`.
+- **PWR-019:** tensão `BELOW_MINIMUM`/`ADC_SATURATION`, corrente
+  `ZERO_CALIBRATION_FAILED`/`OUT_OF_CALIBRATED_RANGE`/
+  `OVERCURRENT_OR_SATURATION`, alimentação `SUPPLY_OUT_OF_RANGE`, ausência de
+  valor exigido ou número não finito produz `INPUT_INVALID`.
+- **PWR-020:** tensão `VALID`, corrente `VALID`, alimentação `IN_RANGE` e
+  valores finitos produzem `VALID`. Corrente `ESTIMATED` ou alimentação
+  `NOT_MONITORED` produz `ESTIMATED` quando os valores são numéricos.
+- **PWR-021:** `INPUT_INVALID` precede `NOT_READY`, que precede `ESTIMATED` e
+  `VALID`.
+- **PWR-022:** em `VALID` ou `ESTIMATED`, a potência é
+  `abs(voltageV × currentA)`; corrente negativa não gera potência negativa.
+- **PWR-023:** a primeira avaliação ocorre no primeiro `handle()` após
+  `setup()`; as demais respeitam intervalo com default `1000 ms`. Intervalo
+  zero é inválido.
+
+### 5.4 INA3221PowerSensor
+
+- **PWR-024:** `INA3221PowerSensor` implementa `IPowerSensor`, recebe
+  `INA3221Device&` não proprietário e copia sua configuração.
+- **PWR-025:** a configuração representa, no mínimo:
+
+```cpp
+struct INA3221PowerSensorConfig {
+    std::uint8_t channel{3};
+    float shuntResistanceOhms{0.0f};
+    float polarity{1.0f};
+    float deadbandA{0.0f};
+    float minimumReportableA{0.0f};
+    float maximumAbsoluteCurrentA{0.0f};
+    float minimumVoltageV{0.0f};
+    float maximumVoltageV{26.0f};
+    std::uint32_t readingIntervalMs{500};
+};
+
+class INA3221PowerSensor : public IPowerSensor {
+public:
+    INA3221PowerSensor(
+        INA3221Device &device,
+        const INA3221PowerSensorConfig &config);
+};
 ```
 
-- **PWR-007:** `readingIntervalMs` possui default de `1000 ms`; `id` não possui
-  default válido. Intervalo igual a zero, identidade vazia, inválida ou já
-  registrada impedem o registro sem efeito parcial.
-- **PWR-008:** a API pública deve ser:
+- **PWR-026:** canal deve estar entre 0 e 2; intervalo e shunt devem ser
+  positivos; polaridade aceita somente `+1.0f` ou `-1.0f`; limites devem ser
+  finitos, ordenados e preservar os limites de conversão de
+  `IOTSSC-INA3221-SENSORS@0.2`.
+- **PWR-027:** `setup()` limpa o snapshot e solicita setup idempotente do
+  dispositivo e configuração consistente do shunt. Configuração inválida,
+  dispositivo indisponível ou conflito de shunt mantém `NOT_READY` e produz
+  diagnóstico sem bloquear o runtime.
+- **PWR-028:** cada oportunidade elegível obtém uma tensão de barramento e uma
+  corrente do mesmo canal através de `INA3221Device`, sem expor o driver.
+- **PWR-029:** valor não finito ou dispositivo indisponível produz `NOT_READY`.
+  Tensão fora da faixa ou corrente acima do máximo produz `INPUT_INVALID`.
+- **PWR-030:** corrente abaixo de `deadbandA` é normalizada para zero; entre o
+  deadband e `minimumReportableA` preserva magnitude. Ambas produzem
+  `ESTIMATED`.
+- **PWR-031:** a potência numérica é
+  `abs(busVoltage × polarity × currentAmps)`. Como a alimentação do chip não é
+  monitorada, toda leitura de outro modo válida permanece `ESTIMATED`.
+- **PWR-032:** o adapter executa no máximo uma avaliação por oportunidade, sem
+  `delay()`, espera ativa ou loop de amostragem, e tolera rollover.
+
+### 5.5 Configuração, API e compatibilidade
+
+- **PWR-033:** `PowerEnergyConfig` preserva `id` sem default válido e
+  `readingIntervalMs` com default `1000 ms`.
+- **PWR-034:** deve existir o overload principal:
+
+```cpp
+PowerEnergyCapability *
+SmartSysApp::addPowerEnergyCapability(
+    PowerEnergyConfig config,
+    IPowerSensor &powerSensor);
+```
+
+- **PWR-035:** no overload principal, `SmartSysApp` possui somente a
+  capability; o sensor externo permanece sob ownership da aplicação, embora
+  seu lifecycle seja conduzido pela capability.
+- **PWR-036:** a assinatura vigente permanece pública e compatível:
 
 ```cpp
 PowerEnergyCapability *
@@ -154,58 +282,23 @@ SmartSysApp::addPowerEnergyCapability(
     ICurrentSensor &currentSensor);
 ```
 
-- **PWR-009:** o registro deve ocorrer antes de `SmartSysApp::setup()`. O
-  ponteiro retornado é não proprietário e estável durante a vida da aplicação;
-  `nullptr` indica falha registrada por `ILogger` sem consumir slot, arena ou
-  identidade.
+- **PWR-037:** o overload de compatibilidade cria um `CompositePowerSensor`
+  pertencente à aplicação e uma capability que o referencia. Rejeição restaura
+  slot, arena, adapter e identidade sem efeito parcial.
+- **PWR-038:** capability e composite não conduzem os sensores de tensão e
+  corrente recebidos pelo overload de compatibilidade.
+- **PWR-039:** identidade inválida ou duplicada, intervalo zero, registro
+  tardio, falta de slot ou arena retorna `nullptr`, registra a causa e não
+  produz efeito parcial.
+- **PWR-040:** ambos os overloads devolvem ponteiro não proprietário e estável
+  para a capability durante a vida da aplicação.
 
-### 5.3 Cadência e snapshots
+### 5.6 Potência, energia e publicação preservadas
 
-- **PWR-010:** a primeira avaliação deve ocorrer imediatamente no primeiro
-  `handle()` posterior ao `setup()` da capability. Avaliações seguintes só
-  podem ocorrer depois de transcorrido `readingIntervalMs`.
-- **PWR-011:** a cada avaliação elegível, a capability deve obter uma vez a
-  referência à última `VoltageMeasurement` e uma vez a referência à última
-  `CurrentMeasurement`, sem solicitar nova aquisição.
-- **PWR-012:** a medição composta não deve inferir falha de lifecycle nem usar
-  `lastStateReadMillis()` como verificação de atualização. O estado resulta
-  somente dos valores e estados publicamente expostos pelos sensores.
-- **PWR-013:** o controle de intervalo deve usar o provedor de tempo vigente e
-  tolerar rollover sem bloquear permanentemente avaliações futuras.
-
-### 5.4 Validade das entradas
-
-- **PWR-014:** tensão `NOT_READY` ou corrente `NOT_READY`/`CALIBRATING` produz
-  `NOT_READY`, sem potência, e interrompe a continuidade da integração.
-- **PWR-015:** tensão `BELOW_MINIMUM`/`ADC_SATURATION`, corrente
-  `ZERO_CALIBRATION_FAILED`/`OUT_OF_CALIBRATED_RANGE`/
-  `OVERCURRENT_OR_SATURATION`, alimentação `SUPPLY_OUT_OF_RANGE`, ausência de
-  valor exigido ou valor não finito produz `INPUT_INVALID`, sem potência, e
-  interrompe a continuidade da integração.
-- **PWR-016:** tensão `VALID`, corrente `VALID`, alimentação `IN_RANGE` e ambos
-  os valores finitos produzem `VALID`.
-- **PWR-017:** tensão `VALID` e corrente numérica `ESTIMATED` produzem
-  `ESTIMATED`. Corrente numérica `VALID` com alimentação `NOT_MONITORED` também
-  produz `ESTIMATED`. Alimentação `UNKNOWN` produz `NOT_READY`.
-- **PWR-018:** quando mais de uma condição se aplicar, `INPUT_INVALID` tem
-  precedência sobre `NOT_READY`, que tem precedência sobre `ESTIMATED` e
-  `VALID`.
-
-### 5.5 Potência e energia
-
-- **PWR-019:** em `VALID` ou `ESTIMATED`, a potência deve ser:
-
-```text
-powerW = abs(voltageV × currentA)
-```
-
-  O sinal da corrente não pode produzir potência negativa.
-- **PWR-020:** a energia acumulada deve iniciar em `0 Wh` na construção e ser
-  reinicializada para `0 Wh` por `setup()` ou `resetEnergy()`. Não deve ser
-  persistida.
-- **PWR-021:** a primeira avaliação utilizável estabelece potência e instante
-  de referência, sem acrescentar energia. Entre duas avaliações utilizáveis e
-  consecutivas, a energia deve usar integração trapezoidal pelo tempo real:
+- **PWR-041:** energia inicia em `0 Wh` e é reinicializada por `setup()` ou
+  `resetEnergy()`; não é persistida.
+- **PWR-042:** a primeira avaliação utilizável estabelece a baseline sem
+  acrescentar energia. Entre avaliações utilizáveis consecutivas:
 
 ```text
 deltaEnergyWh = ((previousPowerW + powerW) / 2)
@@ -213,334 +306,179 @@ deltaEnergyWh = ((previousPowerW + powerW) / 2)
 energyWh = energyWh + deltaEnergyWh
 ```
 
-- **PWR-022:** `NOT_READY` ou `INPUT_INVALID` não acrescenta energia e elimina
-  a referência anterior. A primeira avaliação utilizável posterior estabelece
-  nova referência sem recuperar o intervalo indisponível.
-- **PWR-023:** `ESTIMATED` pode acumular energia, mas o estado deve permanecer
-  `ESTIMATED`; a energia histórica não deve ser descartada quando o estado
-  voltar a `VALID`.
-- **PWR-024:** `resetEnergy()` deve zerar a energia e eliminar a referência
-  temporal. A chamada não deve alterar nem acionar os sensores.
-- **PWR-025:** resultado de potência ou integração não finito deve produzir
-  `INPUT_INVALID`, preservar a energia finita já acumulada e eliminar a
-  referência anterior.
+- **PWR-043:** `NOT_READY` ou `INPUT_INVALID` não acrescenta energia e elimina
+  a baseline; a próxima leitura não recupera o intervalo.
+- **PWR-044:** `ESTIMATED` pode acumular energia sem promoção a `VALID`.
+  `resetEnergy()` zera energia e baseline sem chamada adicional ao sensor.
+- **PWR-045:** potência ou integração não finita preserva energia finita já
+  acumulada, elimina a baseline e produz `INPUT_INVALID`.
+- **PWR-046:** permanecem públicos `powerEnergyMeasurement()` e
+  `resetEnergy()`, com `powerW`, `energyWh` e `measurementStatus`.
+- **PWR-047:** potência usa duas casas, energia três, ponto independente de
+  locale e zero negativo normalizado; estado inválido publica valor vazio.
+- **PWR-048:** `CapabilityStateChanged`, `energyWh`, `measurementStatus`,
+  ausência de `supplyStatus` e compatibilidade byte a byte de eventos sem
+  energia permanecem inalterados.
+- **PWR-049:** a primeira avaliação publica; depois, somente mudança na
+  representação de valor, estado ou energia produz evento.
 
-### 5.6 Métodos e publicação
-
-- **PWR-026:** a capability deve expor:
-
-```cpp
-const PowerEnergyMeasurement &powerEnergyMeasurement() const;
-void resetEnergy();
-```
-
-- **PWR-027:** `PowerEnergyMeasurement` deve conter
-  `std::optional<double> powerW`, `double energyWh` e
-  `PowerEnergyMeasurementStatus measurementStatus`.
-- **PWR-028:** em `VALID` ou `ESTIMATED`, `ICapability::value` deve conter a
-  potência em watts com exatamente duas casas decimais, ponto independente de
-  locale e zero negativo normalizado. Em `NOT_READY` ou `INPUT_INVALID`, deve
-  conter `""`.
-- **PWR-029:** `CapabilityStateChanged` deve receber o campo público opcional
-  `energyWh`. Eventos desta capability devem preencher `measurementStatus` com
-  o token exato do estado e `energyWh` com a energia não negativa usando
-  exatamente três casas decimais. `supplyStatus` permanece ausente.
-- **PWR-030:** a extensão de evento e sua serialização devem ser aditivas:
-  eventos sem `energyWh` permanecem byte a byte inalterados.
-- **PWR-031:** a primeira avaliação deve publicar. Depois dela, um evento deve
-  ser emitido somente quando mudar a representação publicada de `value`,
-  `measurementStatus` ou `energyWh`; o timestamp de avaliação deve avançar
-  mesmo sem evento.
-
-### 5.7 Exemplo executável
-
-O exemplo é consumidor da API pública e demonstra explicitamente o cenário em
-que os sensores não estão associados a `CurrentSensorCapability` ou
-`VoltageSensorCapability`. Ele herda integralmente
-`IOTSSC-HW-EXAMPLES` e não altera o comportamento da capability.
-
-- **PWR-032:** o catálogo executável deve conter o exemplo `power_energy`,
-  composto por `examples/executable/power_energy/example.hpp`, seu `README.md`,
-  um seletor mutuamente exclusivo em `src/ExecutableExampleRunner.cpp` e o
-  environment `example_power_energy_mcb_r1` em
-  `configs/executable_examples.ini`. O catálogo em `examples/README.md` deve
-  identificá-lo. O build padrão e os exemplos preexistentes permanecem
-  inalterados.
-- **PWR-033:** o exemplo deve usar `SmartSysApp::addPowerEnergyCapability()`,
-  `PowerEnergyConfig`, `PowerEnergyCapability::powerEnergyMeasurement()` e
-  `PowerEnergyCapability::resetEnergy()`. Os sensores devem ser instâncias
-  externas de `ACS712C30ACurrentSensor` e
-  `ResistiveDividerVoltageSensor`, recebidas pela capability como
-  `ICurrentSensor&` e `IVoltageSensor&`. Nenhuma API pública deve ser criada ou
-  alterada para facilitar o exemplo.
-- **PWR-034:** o exemplo deve possuir os dois sensores durante toda a vida da
-  capability, chamar uma vez `setup()` em cada sensor antes de
-  `SmartSysApp::setup()` e, em toda iteração de `loop()`, chamar uma vez
-  `handle()` em cada sensor antes de `SmartSysApp::handle()`. A
-  `PowerEnergyCapability` continua proibida de propagar ou verificar essas
-  chamadas.
-- **PWR-035:** somente a `PowerEnergyCapability` deve ser registrada na
-  `SmartSysApp` do exemplo. O exemplo não deve registrar
-  `CurrentSensorCapability` nem `VoltageSensorCapability`, reimplementar
-  aquisição, calibração, conversão, qualificação, cálculo de potência,
-  integração ou cadência interna.
-- **PWR-036:** o sinal do ACS712 deve usar
-  `ITS_MCB01_J4_EXT_ADC`, que resolve GPIO 34, e o nó ADC do divisor de tensão
-  deve usar `ITS_MCB01_J4_EXT_IO33`, autorizado pelo Arquiteto como segunda
-  entrada analógica e correspondente a GPIO 33/ADC1. Literais numéricos e
-  macros próprias de pino são proibidos no código e no environment; a ausência
-  de qualquer símbolo deve causar erro de build compreensível.
-- **PWR-037:** o sensor de corrente deve usar o perfil público
-  `CurrentSensorConfig::ACS712_30A_3V3()`, sem `supplyMonitorAdcPin`. O sensor
-  de tensão deve usar divisor de `330 kΩ/10 kΩ`, limiar ADC inferior de
-  `144 mV` e os demais defaults públicos de `VoltageSensorConfig`. A capability
-  deve usar `readingIntervalMs = 1000 ms`.
-- **PWR-038:** o boot deve registrar o identificador do exemplo, a placa, os
-  símbolos e GPIOs resolvidos, o perfil elétrico de corrente, os resistores e o
-  limiar do divisor, as identidades dos sensores e da capability e o intervalo
-  de leitura, sem expor segredos.
-- **PWR-039:** em cadência de apresentação não inferior a
-  `EXAMPLE_POWER_ENERGY_LOG_INTERVAL_MS`, definido pelo environment, o exemplo
-  deve apresentar a última
-  `PowerEnergyMeasurement`, mostrando potência com duas casas decimais quando
-  presente, energia com três casas decimais e o token de
-  `measurementStatus`. A apresentação não pode bloquear o ciclo cooperativo ou
-  alterar a cadência da capability.
-- **PWR-040:** `nullptr` retornado por `addPowerEnergyCapability()` deve ser
-  tratado como falha observável, registrado e nunca desreferenciado.
-- **PWR-041:** o comando local `r` ou `R` recebido pelo monitor serial deve
-  demonstrar `resetEnergy()`, registrar a operação e não adicionar comando
-  remoto de reset.
-- **PWR-042:** como a alimentação do ACS712 não é monitorada, uma medição
-  numérica de corrente com tensão válida deve resultar em potência e energia
-  com estado composto `ESTIMATED`. O exemplo e seu README não podem apresentar
-  `VALID` nem afirmar exatidão contratada nessa condição.
-- **PWR-043:** o `README.md` deve documentar objetivo, APIs e capability,
-  ownership e lifecycle externos dos sensores, MCB R1, periféricos, tabela de
-  pinos, esquema de ligação, configurações, comandos de build, upload e
-  monitor, sequência manual, resultado esperado, reset local, limitações e
-  riscos elétricos.
-
-## 6. Fluxo e condições de borda
+## 6. Fluxos e condições de borda
 
 ```text
 registro antes de SmartSysApp::setup()
-→ aplicação inicializa e aciona os sensores por responsabilidade própria
-→ setup da PowerEnergyCapability zera energia sem tocar nos sensores
-→ primeira avaliação lê os dois snapshots e publica imediatamente
-→ entradas utilizáveis: |V × I| e baseline temporal
-→ próxima entrada utilizável consecutiva: integração trapezoidal em Wh
-→ entrada indisponível ou inválida: sem potência, sem energia nova e sem ponte
-→ resetEnergy(): energia zero e nova baseline na próxima entrada utilizável
+→ setup da capability conduz setup do IPowerSensor e zera energia
+→ cada handle conduz uma vez o IPowerSensor
+→ avaliação elegível consome um PowerMeasurement
+→ potência utilizável estabelece ou avança integração trapezoidal
+→ potência indisponível/inválida rompe a baseline
+→ publicação ocorre somente quando a representação muda
 ```
 
-No exemplo `power_energy`, o lifecycle externo é concretizado assim:
-
-```text
-setup Arduino
-→ setup do sensor de corrente
-→ setup do sensor de tensão
-→ registro da PowerEnergyCapability
-→ SmartSysApp::setup()
-
-cada loop Arduino
-→ handle do sensor de corrente
-→ handle do sensor de tensão
-→ SmartSysApp::handle()
-→ apresentação eventual do último snapshot composto
-```
+No overload de compatibilidade, o builder cria composite e capability
+atomicamente; a aplicação externa continua conduzindo tensão e corrente; a
+capability conduz somente o composite, que calcula `abs(V × I)` dos snapshots.
 
 Condições de borda:
 
-- sensores nunca acionados podem permanecer indefinidamente em `NOT_READY`;
-- leituras antigas podem continuar sendo usadas e integradas, pois atualização
-  ou staleness não é verificada por esta versão;
-- corrente negativa produz a mesma magnitude de potência que corrente positiva;
-- corrente ou tensão zero válida produz `0.00 W` e não aumenta a energia;
-- período inválido não é interpolado nem recuperado;
-- reset entre avaliações descarta a baseline anterior;
-- arredondamento da publicação não altera o acumulador interno;
-- intervalo zero e registro tardio falham atomicamente.
+- sensor externo nunca acionado pode manter o composite em `NOT_READY`;
+- snapshots antigos podem continuar sendo compostos, pois não há staleness;
+- tensão ou corrente zero válida produz `0.00 W`;
+- reset entre avaliações elimina a baseline anterior;
+- conflito de shunt não pode ser resolvido silenciosamente;
+- falha de criação não pode deixar adapter órfão nem consumir capacidade;
+- cadências do sensor e da integração podem diferir; integra-se o snapshot
+  disponível em cada avaliação elegível.
 
 ## 7. Critérios de aceite e validações
 
-### PWR-AC-001 — Magnitude da potência
+### PWR-AC-001 — Contrato e lifecycle
 
-**Cobre:** PWR-014 a PWR-019 e PWR-028.
+**Cobre:** PWR-001 a PWR-013.
 
-- snapshots válidos de `24,00 V` e `2,00 A` produzem `48.00` W;
-- `24,00 V` e `−2,00 A` também produzem `48.00` W;
-- entrada inválida ou indisponível produz valor vazio e o estado contratado;
-- **meio:** inspeção e execução instrumentada com sensores controlados, sem
-  criar artefato de teste.
+- double controlado comprova uma chamada de `setup()`, uma chamada de
+  `handle()` por ciclo e nenhuma aquisição por `powerMeasurement()`;
+- primeira avaliação, cadência e combinações coerentes ou incoerentes de
+  valor/estado produzem os resultados contratados;
+- **meio:** teste PlatformIO/Unity e inspeção.
 
-### PWR-AC-002 — Acumulação temporal
+### PWR-AC-002 — Composição
 
-**Cobre:** PWR-020 a PWR-025.
+**Cobre:** PWR-014 a PWR-023 e PWR-038.
 
-- uma baseline de `100 W`, seguida após `3600 ms` por `200 W`, acrescenta
-  exatamente `0,150 Wh` pelo método trapezoidal;
-- a primeira leitura, um intervalo inválido e a primeira leitura após esse
-  intervalo não acrescentam energia;
-- resultado não finito preserva a energia anterior e rompe a baseline;
-- **meio:** execução instrumentada com provider de tempo e snapshots
-  controlados, sem criar artefato de teste.
+- doubles reproduzem a matriz de estados vigente;
+- `24 V` com `2 A` ou `-2 A` produz `48 W`;
+- contadores confirmam zero chamadas de lifecycle aos sensores subordinados;
+- **meio:** teste PlatformIO/Unity com provider de tempo.
 
-### PWR-AC-003 — Lifecycle externo
+### PWR-AC-003 — INA3221PowerSensor
 
-**Cobre:** PWR-001 a PWR-004 e PWR-010 a PWR-012.
+**Cobre:** PWR-024 a PWR-032.
 
-- contadores instrumentados confirmam que `setup()` e `handle()` da capability
-  não chamam os métodos equivalentes dos sensores;
-- sensores nunca acionados são apenas consumidos no estado que expuserem, sem
-  rejeição, WARN ou inferência de configuração incorreta;
-- **meio:** inspeção e execução instrumentada, sem criar artefato de teste.
+- configuração válida produz potência por magnitude e estado `ESTIMATED`;
+- indisponibilidade, não finitude, faixa, sobrecorrente, deadband, intervalo,
+  canal e conflito de shunt produzem os resultados contratados;
+- nenhuma API inexistente de potência do driver Adafruit é requerida;
+- **meio:** teste PlatformIO/Unity com seam ou double do dispositivo e build
+  Arduino/ESP32.
 
-### PWR-AC-004 — Cadência e reset
+### PWR-AC-004 — API, ownership e rollback
 
-**Cobre:** PWR-007, PWR-010, PWR-013, PWR-020 e PWR-024.
+**Cobre:** PWR-033 a PWR-040.
 
-- com `readingIntervalMs = 250`, a primeira avaliação é imediata e nenhuma
-  avaliação posterior ocorre antes de 250 ms;
-- `resetEnergy()` zera a energia, não toca nos sensores e obriga nova baseline;
-- intervalo zero é rejeitado sem efeito parcial;
-- **meio:** execução instrumentada e inspeção.
+- overload novo registra sensor externo sem assumir ownership;
+- overload anterior continua compilando e cria um composite da aplicação;
+- falhas não deixam efeito parcial;
+- destruir a aplicação destrói capability e composite interno, mas não
+  sensores externos;
+- **meio:** teste PlatformIO/Unity, inspeção e build.
 
-### PWR-AC-005 — Publicação aditiva
+### PWR-AC-005 — Integração e publicação
 
-**Cobre:** PWR-005 e PWR-026 a PWR-031.
+**Cobre:** PWR-041 a PWR-049.
 
-- o type é `Power Energy (W/Wh)`, a potência usa duas casas e a energia três;
-- repetição da mesma representação é suprimida e mudança em potência, energia
-  formatada ou estado produz exatamente um evento;
-- evento preexistente sem `energyWh` mantém serialização byte a byte idêntica;
-- **meio:** inspeção e captura instrumentada do sink.
+- baseline de `100 W`, após `3600 ms` seguida por `200 W`, acrescenta
+  `0,150 Wh`;
+- estado inválido rompe baseline, e reset zera energia sem chamada extra;
+- formatação, supressão e serialização preservam o contrato 0.3;
+- **meio:** teste PlatformIO/Unity com tempo e sink controlados.
 
-### PWR-AC-006 — API, ownership e compatibilidade
+### PWR-AC-006 — Builds e consumidores preservados
 
-**Cobre:** PWR-001, PWR-002 e PWR-006 a PWR-009.
+**Cobre:** PWR-013, PWR-034 a PWR-040 e o recorte compilável.
 
-- registro válido antes de `setup()` devolve ponteiro estável e não proprietário;
-- identidade inválida, duplicada, slot ou arena indisponível e registro tardio
-  retornam `nullptr` sem efeito parcial;
-- destruir a aplicação destrói a capability, mas não destrói os sensores;
-- `pio run -e esp32_dev` alcança estado terminal com sucesso;
-- **meio:** inspeção, execução instrumentada e build canônico.
+- `pio run -e esp32_dev` termina com sucesso;
+- `pio run -e example_power_energy_mcb_r1` termina com sucesso pelo overload
+  compatível;
+- `pio run -e ESP32_MCB01` termina com sucesso sem migração da aplicação;
+- **meio:** builds PlatformIO e inspeção de símbolos.
 
-### PWR-AC-007 — Build e consumo público do exemplo
+### PWR-AC-007 — Testes automatizados
 
-**Cobre:** PWR-032 a PWR-037 e PWR-040.
+**Cobre:** PWR-001 a PWR-049 por PWR-AC-001 a PWR-AC-005.
 
-- `pio run -e example_power_energy_mcb_r1` alcança estado terminal com sucesso
-  e vincula exatamente um `setup()` e um `loop()`;
-- a inspeção confirma exatamente uma capability registrada, sensores externos
-  vivos, ordem de lifecycle contratada e consumo da API pública sem nova API;
-- código e environment usam `ITS_MCB01_J4_EXT_ADC` e
-  `ITS_MCB01_J4_EXT_IO33`, sem literal ou macro própria de GPIO;
-- ausência de símbolo obrigatório ou falha de registro é observável conforme o
-  contrato;
-- **meio:** build canônico do exemplo e inspeção.
-
-### PWR-AC-008 — Documentação e apresentação
-
-**Cobre:** PWR-038 a PWR-043.
-
-- o `README.md` contém todos os elementos de PWR-043 e explicita que os
-  adapters são possuídos e acionados pelo exemplo;
-- boot e apresentação contêm os campos contratados, sem segredo e sem lógica
-  de aquisição ou cálculo duplicada;
-- o comando serial `r` registra o reset local e a leitura seguinte mostra
-  energia reiniciada a `0.000 Wh` até nova integração elegível;
-- **meio:** inspeção do firmware e da documentação e captura de monitor serial.
-
-### PWR-AC-009 — Validação física do exemplo
-
-**Cobre:** PWR-034, PWR-036, PWR-037, PWR-039, PWR-041 e PWR-042.
-
-- gravado na MCB R1 com a montagem documentada, o exemplo permanece
-  `NOT_READY` durante aquecimento e calibração do ACS712;
-- após tensão e corrente numéricas, apresenta potência não negativa, energia
-  não decrescente e estado `ESTIMATED`, pois a alimentação não é monitorada;
-- variar a carga altera a potência observada, e `r` reinicia a energia sem
-  interromper o lifecycle dos sensores;
-- ausência ou invalidade de uma entrada produz o estado e a ausência de
-  potência contratados, sem acumular o intervalo;
-- **meio:** validação em hardware com instrumento independente.
+- criar ou ampliar grupo PlatformIO/Unity dedicado à abstração de potência;
+- cobrir sucesso, falha, ausência de evidência, lifecycle, ownership, rollback
+  e bordas numéricas;
+- compilação e execução dos casos são evidências distintas;
+- **meio:** inspeção, compilação sem upload e, mediante ordem operacional,
+  execução em environment de teste compatível.
 
 ### 7.1 Testes e permissões
 
-Por decisão explícita do Arquiteto, nenhum artefato de teste automatizado deve
-ser criado, ampliado, reestruturado ou corrigido nesta versão. Os meios
-instrumentados descritos nos critérios são evidências de execução, não
-autorização para registrar harness ou suíte persistente. Execução instrumentada,
-captura de monitor, upload ou validação em hardware exige ordem operacional
-própria; enquanto ausente, permanece `Not Executed`.
+Por decisão explícita do Arquiteto, a criação ou ampliação dos testes descritos
+integra esta versão e deve manter rastreabilidade. A futura ordem de
+implementação autoriza criar esses artefatos, mas não executá-los. Compilação
+sem upload, execução, upload, monitor e hardware permanecem operações
+distintas; quando não autorizadas, devem constar como `Not Executed`.
 
 ## 8. Conhecimento afetado
 
-- atualizar esta especificação para 0.3 no índice e na cobertura de
-  capabilities em `docs/rfc/KNOWLEDGE-MAP.md`;
-- registrar no mapa o exemplo `power_energy`, sua pendência de implementação e
-  a demonstração do lifecycle externo dos sensores;
-- registrar a autoria da versão 0.3 em `docs/rfc/EKOM-CHANGELOG.md`;
-- encaminhar a versão 0.3 para nova análise formal de implementabilidade.
+- atualizar índice, fronteira, árvore e diagrama em
+  `docs/rfc/KNOWLEDGE-MAP.md`;
+- registrar a autoria 0.4 em `docs/rfc/EKOM-CHANGELOG.md`;
+- encaminhar esta versão para Análise de Implementabilidade formal;
+- preservar a versão 0.3 como baseline histórica validada.
 
 ## 9. Relações, decisões e pendências
 
-**Fatos observados:** `CurrentSensorCapability` estabelece o precedente de
-cadência, publicação e registro atômico, mas aciona seu sensor em `setup()` e
-`handle()`. As interfaces `ICurrentSensor` e `IVoltageSensor` expõem snapshots
-estáveis e derivam de `IHardwareAdapter`. O evento vigente comporta campos
-opcionais aditivos de medição.
+**Fatos observados:** a versão 0.3 recebe diretamente sensores de tensão e
+corrente, classifica estados e calcula `abs(V × I)`. A biblioteca Adafruit
+INA3221 1.0.1 expõe tensão de barramento, tensão de shunt e corrente calculada,
+mas não potência. `INA3221Device` já encapsula driver, setup idempotente, shunt,
+tensão e corrente. O builder possui arenas e rollback para capabilities e
+adapters.
 
-**Decisões confirmadas pelo Arquiteto:** cálculo de potência e energia
-acumulada; potência somente por magnitude positiva; sensores podem já estar ou
-não associados às capabilities próprias; lifecycle permanece externo e não é
-obrigado nem verificado; essa fronteira integra o mapa de conhecimento; nenhum
-artefato de teste deve ser implementado. Na versão 0.2, o exemplo usa
-`ITS_MCB01_J4_EXT_ADC` para corrente e o símbolo oficial
-`ITS_MCB01_J4_EXT_IO33`, expressamente autorizado como segunda entrada
-analógica, para tensão. Na versão 0.3, o Arquiteto determinou que a exclusão de
-configuração dos sensores se aplica somente à implementação interna da
-`PowerEnergyCapability`, não à configuração dos adapters pelo exemplo.
+**Decisões confirmadas pelo Arquiteto:** introduzir `IPowerSensor`; criar
+`CompositePowerSensor` e `INA3221PowerSensor`; conduzir o `IPowerSensor` pela
+capability; preservar o overload anterior; criar testes automatizados.
 
-**Decisões funcionais desta versão:** energia volátil; integração trapezoidal;
-intervalos inválidos não são recuperados; potência é o valor escalar; energia é
-campo opcional do evento; default de 1000 ms; type `Power Energy (W/Wh)`; o
-exemplo demonstra adapters externos e reset local, sem capabilities próprias.
+**Decisões preservadas:** potência por magnitude, energia volátil, integração
+trapezoidal, intervalos inválidos não recuperados, default `1000 ms`, type e
+publicação da versão 0.3.
 
-**Autoridades confrontadas:** `AGENTS.md`, `docs/rfc/EKOM-GUIDELINES.md`,
-`docs/rfc/KNOWLEDGE-MAP.md`, `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME`,
-`IOTSSC-CURRENT-SENSOR@0.6`, `IOTSSC-VOLTAGE-SENSOR@0.1` e
-`IOTSSC-HW-EXAMPLES@1.1`.
+**Autoridades confrontadas:** `AGENTS.md`, `docs/rfc/EKOM-GUIDELINES.md`, mapa
+de conhecimento, `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME`, contratos de corrente e
+tensão, `IOTSSC-INA3221-SENSORS@0.2`, versão 0.3 desta fonte,
+`IOTSSC-HW-EXAMPLES@1.1` e `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`.
 
-**Relação de autoridade:** a fonte permanece uma extensão aditiva [`New`] em
-relação às APIs preexistentes. A versão 0.3 **Corrige** [`Corrects`] a versão
-0.2 ao delimitar à implementação interna da capability a exclusão de
-configuração dos sensores. A versão 0.2 corrigiu a versão 0.1 ao contratar o
-exemplo executável omitido. Nenhuma dessas correções altera cálculo, estados,
-publicação ou lifecycle da capability. A fonte preserva
-`IOTSSC-HW-EXAMPLES`: o exemplo usa seu catálogo e sua exceção explícita para
-demonstrar os adapters de baixo nível, sem alterar API pública para facilitá-lo.
+**Relação de autoridade:** a versão altera cálculo e lifecycle internos da
+versão 0.3, preserva sua API e cria overload aditivo. Emenda a exclusão de
+potência do contrato INA3221 0.2 somente para acrescentar adapter calculado em
+software; não reinterpreta o chip como fonte direta. Exemplos e aplicação MCB01
+permanecem sob suas autoridades e fora da migração.
 
-**ADRs relacionadas:** nenhuma conhecida. A análise formal da versão 0.1
-classificou como plausível o ownership externo. O bloqueador de consistência
-interna identificado na análise 0.2 foi incorporado nesta versão; a análise
-formal da versão 0.3 classificou o recorte como Pronto [`Ready`].
+**ADRs relacionadas:** nenhuma conhecida. A abstração permanece local ao
+domínio de potência e segue Contracts/Core/Platform. A análise deve
+reclassificar se encontrar impacto transversal material.
 
-**Lacunas e débitos:** nenhuma lacuna normativa ou débito técnico foi aceito.
-A implementação da versão 0.1 permanece como baseline histórica. O exemplo
-contratado existe, seu build próprio foi aprovado e o Arquiteto declarou a
-implementação validada e suficiente para encerramento. O build canônico
-`esp32_dev` continua registrado como falho por incompatibilidade preexistente
-de `src/main.cpp` com o perfil genérico, sem ser reclassificado como sucesso.
+**Lacunas e débitos:** nenhum aceito na autoria. Rollback conjunto, seam de
+teste do dispositivo e custo de arena são questões de implementabilidade, não
+decisões funcionais antecipadas.
 
 ## 10. Estado da especificação
 
-A versão 0.3 está Vigente [`Active`], com implementação Validada
-[`Validated`], entrega Concluída [`Done`] e revisão de implementabilidade
-Pronta [`Ready`]. O Arquiteto declarou a implementação validada, considerou o
-conjunto de evidências suficiente para encerrar a especificação e determinou
-sua integração à `main`, concluída sem conflito. A falha histórica do build
-canônico `esp32_dev` permanece preservada sem reclassificação. Nenhum artefato
-de teste integra o recorte.
+A versão 0.4 está em Rascunho [`Draft`], com implementação Não iniciada
+[`Not Started`], entrega Não pronta [`Not Ready`] e Análise de
+Implementabilidade pendente. A escrita foi ordenada pelo Arquiteto após
+reconciliação do rascunho. Nenhuma implementação, build, teste ou operação de
+hardware é autorizada por este registro.

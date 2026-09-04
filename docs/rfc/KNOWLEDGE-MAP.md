@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 04/09/2026 (validação da capacidade configurável do runtime 0.2)
+**Última atualização:** 04/09/2026 (autoria da abstração de potência 0.4)
 
 ## 1. Governança
 
@@ -36,7 +36,7 @@
 | Leitura de corrente contínua fotovoltaica | `docs/specs/CURRENT-SENSING-CAPABILITY.md` | Active 0.6 — Ready | Validated; `Done` após integração à `main` (`EKM-CHG-0052`) |
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
-| Potência e energia por composição de sensores | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.3 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0016`) |
+| Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Draft 0.4 — Pending Review | Not Started; versão 0.3 permanece baseline validada em `main` (`EKOM-CHG-0023`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
@@ -49,7 +49,7 @@
 |---|---|---|---|
 | API pública | Specified | `src/SmartSysApp.*`, builders, interfaces, configs | Compatibilidade exige validação dedicada |
 | Runtime principal | Specified | `src/main.cpp`, `src/SmartSysApp.cpp` | Arduino sobre ESP32 |
-| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Active 0.2`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0021`); composição de potência e energia `IOTSSC-POWER-ENERGY-CAPABILITY@0.3` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0016`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
+| Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Active 0.2`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0021`); abstração de potência `IOTSSC-POWER-ENERGY-CAPABILITY@0.4` em `Draft`/`Pending Review`/`Not Started`, preservando 0.3 como baseline validada (`EKOM-CHG-0023`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
 | UART | Inventoried | serial transport | Transporte auxiliar |
@@ -62,18 +62,16 @@
 
 ### 2.2 Fronteira de composição de potência e energia
 
-`PowerEnergyCapability` recebe `IVoltageSensor` e `ICurrentSensor` por
-referências não proprietárias e somente consome seus últimos snapshots. Ela não
-chama nem verifica `setup()` ou `handle()` desses sensores. A aplicação
-consumidora responde pelo lifecycle, pela atualização e pela duração das duas
-referências, independentemente de os sensores também serem acionados por
-`VoltageSensorCapability` ou `CurrentSensorCapability`. A autoridade deste
-contrato é `IOTSSC-POWER-ENERGY-CAPABILITY@0.3`. O exemplo contratado
-`power_energy` demonstra o cenário sem capabilities próprias: possui e aciona
-diretamente os dois adapters, usa GPIO 34 para corrente e GPIO 33 para tensão e
-registra somente a `PowerEnergyCapability` na aplicação. A exclusão de
-configuração de sensores se aplica à lógica interna da capability, não à
-configuração desses adapters preexistentes pelo exemplo.
+`IOTSSC-POWER-ENERGY-CAPABILITY@0.4` propõe que
+`PowerEnergyCapability` receba `IPowerSensor` por referência não proprietária e
+conduza seu lifecycle. `CompositePowerSensor` preserva o contrato 0.3 ao
+consumir snapshots de `IVoltageSensor` e `ICurrentSensor` sem conduzir esses
+sensores; `INA3221PowerSensor` lê tensão e corrente do dispositivo compartilhado
+e calcula potência em software. O overload anterior permanece compatível e
+cria composite pertencente à aplicação. A versão 0.4 está em `Draft` e não
+substitui a baseline 0.3 validada enquanto não percorrer análise, implementação,
+revisão e decisão do Arquiteto. Exemplos e aplicação MCB01 não são migrados
+nesta versão.
 
 ### 2.3 Fronteira dos sensores INA3221
 
@@ -99,7 +97,7 @@ IoTSmartSysCore
 │   ├── capacidade estática configurável por environment
 │   ├── capabilities, builders e hardware adapters
 │   ├── dispositivo INA3221 compartilhado e adapters externos de tensão/corrente
-│   ├── composição de potência/energia com lifecycle externo dos sensores
+│   ├── proposta 0.4: potência abstrata por composite ou INA3221 e integração
 │   └── settings, conectividade, provisioning e OTA
 ├── Interfaces e integrações
 │   ├── API pública da biblioteca
@@ -122,7 +120,9 @@ flowchart LR
     APP -->|"possui dispositivo e adapters"| INA["INA3221Device compartilhado"]
     CORE -->|"setup/handle por referência"| INA
     INA -->|"I²C Wire"| HW
-    HW -->|"snapshots de tensão e corrente"| POWER["PowerEnergyCapability"]
+    HW -->|"snapshots de tensão e corrente"| PSENSOR["IPowerSensor"]
+    INA -->|"tensão e corrente do canal"| PSENSOR
+    PSENSOR -->|"snapshot de potência"| POWER["PowerEnergyCapability"]
     POWER -->|"potência e energia"| CORE
     CORE -->|"Transporte"| MQTT["Broker MQTT"]
     CORE -->|"Configuração e persistência"| SETTINGS["Settings API e NVS"]
@@ -331,6 +331,9 @@ conclusão ou reabertura e aceita ou quita débito técnico.
   revisão aderente com limitações de evidência e decisão do Arquiteto promovem
   a versão 0.2 para `Active`/`Validated`; integração sincronizada em `main`
   encerra a entrega como `Done`.
+- `EKOM-CHG-0023`: registra `IOTSSC-POWER-ENERGY-CAPABILITY@0.4` com
+  `IPowerSensor`, composite compatível, adapter INA3221 calculado em software e
+  testes contratados; permanece `Draft`/`Pending Review`/`Not Started`.
 
 - `EKM-CHG-0003`: introduziu Technical Readiness Review binária e atomicidade da especificação antes da implementação.
 - `EKM-CHG-0004`: introduziu imutabilidade normativa em produção, estado de entrega e previsão do futuro `EKM Gate`.
