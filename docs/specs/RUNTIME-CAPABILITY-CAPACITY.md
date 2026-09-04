@@ -10,7 +10,7 @@
 
 **Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Pronta para integração [`Ready for Integration`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`]
 
@@ -269,8 +269,8 @@ persistência, migração, aplicação MCB01 nem permissões operacionais.
 ## 13. Estado e encaminhamento
 
 A versão 0.2 está Vigente [`Active`], com implementação Validada [`Validated`],
-Análise de Implementabilidade Pronta [`Ready`] e entrega Pronta para integração
-[`Ready for Integration`]. A revisão classificou o recorte como aderente com
-limitações de evidência. O Arquiteto considerou as evidências suficientes,
-aceitou o risco residual dos testes e da validação física não executados,
-determinou o encerramento da especificação e ordenou sua promoção para `main`.
+Análise de Implementabilidade Pronta [`Ready`] e entrega Concluída [`Done`]. A
+revisão classificou o recorte como aderente com limitações de evidência. O
+Arquiteto considerou as evidências suficientes, aceitou o risco residual dos
+testes e da validação física não executados e determinou o encerramento. A
+promoção para `main` foi concluída por fast-forward e sincronizada no remoto.

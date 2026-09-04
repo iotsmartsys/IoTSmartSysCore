@@ -5,7 +5,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0022 — Especificação da capacidade configurável do runtime 0.2
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`
 
@@ -146,8 +146,17 @@ registro consultivo é
 
 ### Estado operacional
 
-A transação permanece aberta até a integração e sincronização efetivas com
+A transação foi concluída após a integração e sincronização efetivas com
 `main`.
+
+### Integração e encerramento
+
+O recorte validado foi integrado à `main` a partir da branch
+`spec/runtime-capability-capacity` por fast-forward, sem conflito. A entrega
+passa de Pronta para integração [`Ready for Integration`] para Concluída
+[`Done`]. A especificação permanece Vigente [`Active`], sua implementação
+permanece Validada [`Validated`] e a transação é encerrada por objetivo
+cumprido.
 
 ## EKOM-CHG-0021 — Revisão, validação e integração INA3221 0.2
 
