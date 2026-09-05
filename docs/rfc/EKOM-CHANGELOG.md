@@ -3,6 +3,41 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0024 — Autoria do SolarChargeController 0.1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-SOLAR-CHARGE-CONTROLLER@0.1`
+
+**Objetivo:** consolidar o contrato lógico de habilitação do buck, qualidade
+solar, histerese e recovery probe, conforme conversa e ordem explícita de escrita.
+
+### Decisões e alcance
+
+- sete estados públicos e duas fases internas de `TestingRecovery`;
+- geração útil combina potência do painel e corrente líquida de carga;
+- geração saudável acrescenta limite híbrido de tensão, Voc válido e margem;
+- geração degradada permanece aproveitável por prazo limitado;
+- falha crítica desabilita e exige remoção e reset; controller sem hardware;
+- defaults ajustáveis, sem CC/CV, implementação ou integração nesta autoria.
+
+### Evidências e pendências
+
+Estrutura, precedentes, mapa, dossiê e contratos adjacentes foram inspecionados.
+A especificação registra as consolidações propostas para bordas do rascunho.
+Análise formal, calibração, frescor de aquisição e limites físicos permanecem
+pendentes. Resultados comportamentais e de hardware: `Not Executed`.
+Nenhum artefato de teste foi criado ou alterado; nenhum débito foi aceito.
+Integridade textual aprovada. A guarda estrutural EKOM retornou código 1 por
+achados em documentos legados e no mapa experimental preexistentes; nenhum
+dos três arquivos deste recorte apareceu nos achados.
+
+### Resultado
+
+Fonte registrada em `Draft`, implementação `Not Started` e análise `Pending`.
+Mapa reconciliado quanto a índice, fronteira, árvore e diagrama. O recorte segue
+para Análise de Implementabilidade, sem promoção para `Ready` ou implementação.
+
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 
 **Estado:** Fechada [`Closed`]

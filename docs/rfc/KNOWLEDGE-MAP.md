@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 04/09/2026 (autoria da abstração de potência 0.4)
+**Última atualização:** 04/09/2026 (autoria do SolarChargeController 0.1)
 
 ## 1. Governança
 
@@ -37,6 +37,7 @@
 | Medição de tensão por Hardware Adapter | `docs/specs/VOLTAGE-SENSING-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; `-1000.00` significa leitura ADC abaixo de `VoltageSensorConfig::adcMinimumMv` (`EKOM-CHG-0004`) |
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
 | Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Done` após integração à `main` (`EKOM-CHG-0023`) |
+| Controle lógico de carga solar | `docs/specs/SOLAR-CHARGE-CONTROLLER.md` | Draft 0.1 — análise Pending | Not Started; decide EN sem hardware ou CC/CV (`EKOM-CHG-0024`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
@@ -84,6 +85,14 @@ somente as capabilities registradas pelos overloads que recebem
 mesmo endereço. A autoridade deste contrato é
 `IOTSSC-INA3221-SENSORS@0.2`.
 
+### 2.4 Fronteira proposta do controle solar
+
+`IOTSSC-SOLAR-CHARGE-CONTROLLER@0.1` especifica a decisão lógica de EN do
+buck a partir de medições normalizadas e tempo substituível. O consumidor
+adquire sensores e aplica a saída; o controller não conduz adapters, GPIO ou
+CC/CV. A proposta é `Draft`, sem implementação ou análise formal. Preserva
+as fontes de medição, potência, runtime e o exemplo MCB01 existentes.
+
 ## 3. Árvore de conhecimento
 
 ```text
@@ -98,6 +107,7 @@ IoTSmartSysCore
 │   ├── capabilities, builders e hardware adapters
 │   ├── dispositivo INA3221 compartilhado e adapters externos de tensão/corrente
 │   ├── proposta 0.4: potência abstrata por composite ou INA3221 e integração
+│   ├── proposta 0.1: decisão lógica SolarChargeController sem hardware
 │   └── settings, conectividade, provisioning e OTA
 ├── Interfaces e integrações
 │   ├── API pública da biblioteca
@@ -114,6 +124,8 @@ IoTSmartSysCore
 ```mermaid
 flowchart LR
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
+    APP -.->|"medições e tempo — proposta 0.1"| SOLAR["SolarChargeController — Draft"]
+    SOLAR -.->|"state e buckEnabled"| APP
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
     APP -->|"setup/handle dos sensores compostos"| HW
