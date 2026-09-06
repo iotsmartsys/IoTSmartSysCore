@@ -1,6 +1,7 @@
 #include "Platform/Arduino/Sensors/ResistiveDividerVoltageSensor.h"
 
 #include <Arduino.h>
+#include <cmath>
 
 #include "Contracts/Logging/Log.h"
 
@@ -30,6 +31,18 @@ namespace iotsmartsys::platform::arduino
 
     void ResistiveDividerVoltageSensor::setup()
     {
+        if (!std::isfinite(_config.voltageCalibrationFactor) ||
+            _config.voltageCalibrationFactor <= 0.0f)
+        {
+            _setupComplete = false;
+            _measurement.voltageV.reset();
+            _measurement.measurementStatus = VoltageMeasurementStatus::NOT_READY;
+            Log::get().error(kLogTag,
+                             "Voltage sensor '%s' rejected: calibration factor must be finite and positive.",
+                             _config.id.c_str());
+            return;
+        }
+
         analogReadResolution(_config.adcResolutionBits);
         analogSetPinAttenuation(static_cast<std::uint8_t>(_config.adcPin), ADC_11db);
         pinMode(_config.adcPin, INPUT);
@@ -115,7 +128,8 @@ namespace iotsmartsys::platform::arduino
         }
         else
         {
-            _measurement.voltageV = static_cast<float>((averageMv / 1000.0) * _dividerRatio);
+            _measurement.voltageV = static_cast<float>(
+                (averageMv / 1000.0) * _dividerRatio * _config.voltageCalibrationFactor);
             _measurement.measurementStatus = VoltageMeasurementStatus::VALID;
         }
 
