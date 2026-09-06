@@ -42,13 +42,6 @@
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
-Calibração multiplicativa de tensão: `VoltageSensorConfig::voltageCalibrationFactor`
-(default `1.0f`) é aplicada pelo `ResistiveDividerVoltageSensor` somente a leituras
-válidas. O exemplo MCB01 configura `0.9788f` antes da construção do sensor;
-fonte de uso: `examples/executable/mcb01_solar_controller/README.md`.
-Alteração pequena autorizada pelo Arquiteto sem especificação, com exceção
-expressa para o alcance limitado da API pública.
-
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
 ### 2.1 Cobertura de adoção

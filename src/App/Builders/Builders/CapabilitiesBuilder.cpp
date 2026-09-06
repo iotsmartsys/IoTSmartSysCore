@@ -468,8 +468,6 @@ namespace iotsmartsys::app
         if (!std::isfinite(cfg.r1Ohms) || !std::isfinite(cfg.r2Ohms) ||
             cfg.r1Ohms <= 0.0f || cfg.r2Ohms <= 0.0f)
             return reject("R1 and R2 must be finite and positive");
-        if (!std::isfinite(cfg.voltageCalibrationFactor) || cfg.voltageCalibrationFactor <= 0.0f)
-            return reject("voltage calibration factor must be finite and positive");
         const double dividerRatio =
             (static_cast<double>(cfg.r1Ohms) + cfg.r2Ohms) / cfg.r2Ohms;
         if (!std::isfinite(dividerRatio))

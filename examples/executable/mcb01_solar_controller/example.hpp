@@ -52,16 +52,9 @@ namespace executable_example
 
     static CurrentSensorConfig pvCurrentConfig =
         CurrentSensorConfig::ACS712_30A_5V("pv-current-1", ITS_MCB01_J4_EXT_ADC);
-    static VoltageSensorConfig buildPvVoltageConfig()
-    {
-        auto config = VoltageSensorConfig::createResistiveDivider330KVoltageConfig(
+    static VoltageSensorConfig pvVoltageConfig =
+        VoltageSensorConfig::createResistiveDivider330KVoltageConfig(
             "pv-voltage-1", ITS_MCB01_J4_EXT_IO33);
-        // Measured calibration: 45.26 V reported for 44.3 V at the panel.
-        config.voltageCalibrationFactor = 0.9788f;
-        return config;
-    }
-
-    static VoltageSensorConfig pvVoltageConfig = buildPvVoltageConfig();
     static ACS712C30ACurrentSensor pvCurrent(pvCurrentConfig);
     static ResistiveDividerVoltageSensor pvVoltage(pvVoltageConfig);
 
