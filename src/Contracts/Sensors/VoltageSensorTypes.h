@@ -39,6 +39,8 @@ namespace iotsmartsys::core
         std::uint32_t sampleIntervalUs{200};
         std::uint32_t readingIntervalMs{500};
         std::uint32_t capabilityEvaluationIntervalMs{1000};
+        // Multiplicative gain applied only to valid converted voltage readings.
+        float voltageCalibrationFactor{1.0f};
 
     public:
         static VoltageSensorConfig createResistiveDivider330KVoltageConfig(std::string id, int adcPin)
