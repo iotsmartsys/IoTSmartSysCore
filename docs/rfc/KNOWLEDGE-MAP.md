@@ -38,7 +38,7 @@
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
 | Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Done` após integração à `main` (`EKOM-CHG-0023`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
-| ADC1 por modelo de ESP32 | `docs/specs/ESP32-ADC1-SUPPORT.md` | Draft 0.2 — análise Ready em relatório separado | In Progress; NTC usa milivolts calibrados; código ADC1 e enum NTC entregues; builds clássicos/C3 e componentes de oito SoCs; builder H2 falha por Wi-Fi preexistente (`EKOM-CHG-0024`) |
+| ADC1 por modelo de ESP32 | `docs/specs/ESP32-ADC1-SUPPORT.md` | Active 0.2 — análise Ready | Implemented / Done; encerrada e integrada à main por ordem do Arquiteto; limitação H2 preservada (`EKOM-CHG-0025`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
@@ -105,7 +105,7 @@ do 5.0. A implementação usa `src/Platform/Arduino/Sensors/Esp32Adc1.h`;
 [guia e matriz ADC1](../ESP32-ADC1.md) documentam consumo e parâmetros.
 Relatório: `docs/reports/2026-09-10T011737Z-0.1-2a514e78-implementation-report.md`.
 O builder H2 continua limitado pela dependência preexistente de Wi-Fi;
-`In Progress` preserva a falha de build, sem novo débito aceito.
+O encerramento posterior preserva a falha de build, sem novo débito aceito.
 
 
 A correção `IOTSSC-ESP32-ADC1-SUPPORT@0.2` troca a aquisição NTC por
@@ -115,6 +115,11 @@ seleciona somente atenuação. Autoridade: seção 9 da especificação; anális
 transação `EKOM-CHG-0025`. Correção construída no clássico e C3 Arduino 2/3;
 relatório `docs/reports/2026-09-10T020848Z-0.2-adc1mv02-implementation-report.md`.
 A falha de build H2 permanece independente.
+
+A versão 0.2 foi encerrada e integrada à `main` por ordem explícita do
+Arquiteto: `Active` / `Implemented` / `Done`. O registro final é
+`docs/reports/2026-09-10T021325Z-0.2-adc1close-finalization-report.md`.
+A decisão não afirma validação física nem remediação da limitação H2.
 
 ## 3. Árvore de conhecimento
 
@@ -128,7 +133,7 @@ IoTSmartSysCore
 │   ├── SmartSysApp e lifecycle cooperativo
 │   ├── capacidade estática configurável por environment
 │   ├── capabilities, builders e hardware adapters
-│   ├── ADC1 0.1 em andamento: mapas por target e enum dos presets NTC
+│   ├── ADC1 0.2: mapas por target, enum NTC e leitura calibrada
 │   ├── dispositivo INA3221 compartilhado e adapters externos de tensão/corrente
 │   ├── proposta 0.4: potência abstrata por composite ou INA3221 e integração
 │   └── settings, conectividade, provisioning e OTA
@@ -149,7 +154,7 @@ flowchart LR
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
-    ADC1["ADC1 0.1: target e enum NTC"] -->|"seleção e validação de GPIO"| HW
+    ADC1["ADC1 0.2: target, enum NTC e milivolts"] -->|"seleção e validação de GPIO"| HW
     APP -->|"setup/handle dos sensores compostos"| HW
     APP -->|"possui dispositivo e adapters"| INA["INA3221Device compartilhado"]
     CORE -->|"setup/handle por referência"| INA

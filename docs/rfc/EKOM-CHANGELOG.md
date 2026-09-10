@@ -5,11 +5,11 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.2`
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 O Arquiteto ordenou usar `analogReadMilliVolts()` após comparar 1,62 V no
 GPIO1 e 26 °C no termômetro com os 17–19 °C publicados. A correção contrata
@@ -34,11 +34,11 @@ limitação independente H2. Relatório:
 
 ## EKOM-CHG-0024 — Autoria e análise de suporte ADC1 0.1
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.1`
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Objetivo:** reconhecer ADC1 por modelo de ESP32 em NTC, corrente e tensão,
 e restringir os dois presets de configuração NTC a um enum de GPIOs do target.
@@ -93,6 +93,15 @@ Guia de consumo e reprodução: `docs/ESP32-ADC1.md`.
 Integridade textual e guarda dos documentos da entrega passaram; a guarda
 global preserva os 76 apontamentos preexistentes. Revisão e disposição da
 limitação H2 permanecem pendentes do Arquiteto.
+
+### Encerramento e integração da versão 0.2
+
+Por ordem explícita do Arquiteto, a especificação foi encerrada e integrada
+sem conflitos à `main`. A versão 0.2 está `Active` / `Implemented` / `Done`.
+As transações 0024 e 0025 ficam fechadas; os relatos anteriores de execução
+permanecem históricos. A limitação do builder H2 e a ausência de ensaio físico
+pelo agente permanecem registradas, sem alegação de remediação ou novo débito.
+Relatório: `docs/reports/2026-09-10T021325Z-0.2-adc1close-finalization-report.md`.
 
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 

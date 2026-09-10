@@ -6,11 +6,11 @@
 
 **Versão:** 0.2
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Em andamento [`In Progress`]
+**Estado da implementação:** Implementada [`Implemented`]
 
-**Estado da entrega:** Pendente [`Pending`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Consultar o relatório separado
 `docs/reports/2026-09-10T020103Z-0.2-adc1mv02-implementability-analysis.md`
@@ -249,3 +249,18 @@ anterior indicava 17–19 °C. Esses dados justificam a mudança, sem constituir
 validação física da nova implementação. Nenhum teste automatizado integra
 esta correção. Permanecem as permissões de build e as restrições operacionais
 anteriores, assim como a limitação independente do builder H2.
+
+## 10. Encerramento por decisão do Arquiteto
+
+O Arquiteto ordenou explicitamente encerrar a versão 0.2 e promovê-la à
+`main`. A integração foi realizada sem conflitos. A entrega passa a `Done`,
+a fonte a `Active` e a implementação a `Implemented` por essa decisão.
+
+O encerramento preserva os fatos dos relatórios: builds completos do clássico
+e componentes C3 Arduino 2/3 passaram; o builder H2 possui falha preexistente
+de dependência de Wi-Fi; não há evidência de execução física da correção
+calibrada pelo agente. A ordem de encerramento não transforma essas limitações
+em builds ou ensaios aprovados, nem registra um débito técnico novo.
+
+Registro separado:
+`docs/reports/2026-09-10T021325Z-0.2-adc1close-finalization-report.md`.
