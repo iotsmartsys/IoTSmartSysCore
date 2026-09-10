@@ -3,6 +3,45 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0024 — Autoria e análise de suporte ADC1 0.1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.1`
+
+**Estado da implementação:** Não iniciada [`Not Started`]
+
+**Objetivo:** reconhecer ADC1 por modelo de ESP32 em NTC, corrente e tensão,
+e restringir os dois presets de configuração NTC a um enum de GPIOs do target.
+
+### Decisões do Arquiteto
+
+- proposta e adicional confirmados, com ordem de registro e análise;
+- enum somente nos presets `NTC_100K_B3950` e `MF52_103_B3950`;
+- campos inteiros e APIs de criação dos sensores preservados, com validação
+  em runtime; chamadas antigas dos presets exigem migração explícita;
+- suporte ADC1 por target, sem transferência automática de parâmetros ou
+  qualificação física do ESP32 clássico.
+
+### Resultado e evidências
+
+Especificação registrada em `Draft`; análise funcional **Pronta [`Ready`]**
+persistida em
+`docs/reports/2026-09-10T005744Z-0.1-1932659e-implementability-analysis.md`.
+Autoria e Análise pelo mesmo agente, sem alegação de revisão independente.
+Nenhum bloqueador funcional ou novo débito técnico foi registrado.
+
+O relatório distingue a prontidão da tarefa da qualificação de repositório
+descrita pelos perfis centrais 5.0, não localizada na baseline local 4.7.
+Esta transação não realiza migração de governança nem autoriza implementação.
+Código, testes, hardware e configuração funcional permanecem sem alteração.
+
+Validação documental: `git diff --check` e guarda estrutural restrita aos
+quatro arquivos da entrega terminaram com código 0. A guarda global terminou
+com código 1 e 76 apontamentos em arquivos preexistentes sem delta nesta
+atuação; o validador central executado anuncia EKOM 5.0. Esses arquivos não
+foram corrigidos nem seus relatórios históricos alterados.
+
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 
 **Estado:** Fechada [`Closed`]

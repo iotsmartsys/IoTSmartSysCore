@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 04/09/2026 (autoria da abstração de potência 0.4)
+**Última atualização:** 09/09/2026 (autoria e análise de suporte ADC1 0.1)
 
 ## 1. Governança
 
@@ -38,6 +38,7 @@
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
 | Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Done` após integração à `main` (`EKOM-CHG-0023`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
+| ADC1 por modelo de ESP32 | `docs/specs/ESP32-ADC1-SUPPORT.md` | Draft 0.1 — análise Ready em relatório separado | Not Started; enum nos dois presets NTC, configs/factories preservados e extensão ADC1 para corrente/tensão (`EKOM-CHG-0024`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
@@ -91,6 +92,17 @@ somente as capabilities registradas pelos overloads que recebem
 mesmo endereço. A autoridade deste contrato é
 `IOTSSC-INA3221-SENSORS@0.2`.
 
+### 2.4 Proposta de ADC1 por modelo
+
+`IOTSSC-ESP32-ADC1-SUPPORT@0.1` emenda as restrições de target de NTC,
+corrente e tensão e as duas assinaturas de presets NTC. O enum fica junto à
+configuração Arduino; os campos de GPIO permanecem inteiros e as APIs de
+criação de sensores mantêm validação em runtime. As baselines concluídas não
+são reabertas. Relatório funcional `Ready`:
+`docs/reports/2026-09-10T005744Z-0.1-1932659e-implementability-analysis.md`.
+A qualificação adicional descrita nos perfis centrais 5.0 não foi comprovada;
+esta transação segue o enquadramento local informado e não migra governança.
+
 ## 3. Árvore de conhecimento
 
 ```text
@@ -103,6 +115,7 @@ IoTSmartSysCore
 │   ├── SmartSysApp e lifecycle cooperativo
 │   ├── capacidade estática configurável por environment
 │   ├── capabilities, builders e hardware adapters
+│   ├── proposta ADC1 0.1: mapas por target e enum dos presets NTC
 │   ├── dispositivo INA3221 compartilhado e adapters externos de tensão/corrente
 │   ├── proposta 0.4: potência abstrata por composite ou INA3221 e integração
 │   └── settings, conectividade, provisioning e OTA
@@ -123,6 +136,7 @@ flowchart LR
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
+    ADC1["Proposta ADC1 0.1: target e enum NTC"] -.->|"seleção e validação de GPIO"| HW
     APP -->|"setup/handle dos sensores compostos"| HW
     APP -->|"possui dispositivo e adapters"| INA["INA3221Device compartilhado"]
     CORE -->|"setup/handle por referência"| INA
