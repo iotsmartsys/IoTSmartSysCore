@@ -3,6 +3,97 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.2`
+
+**Estado da implementação:** Em andamento [`In Progress`]
+
+O Arquiteto ordenou usar `analogReadMilliVolts()` após comparar 1,62 V no
+GPIO1 e 26 °C no termômetro com os 17–19 °C publicados. A correção contrata
+16 leituras calibradas, média fracionária e conversão para volts, preservando
+o divisor, Beta, APIs e presets. Referência passa a selecionar só atenuação.
+A borda em contagem máxima é explicitamente substituída pelas verificações
+em tensão; a API não fornece raw do mesmo lote para diagnosticar clipping.
+
+Análise da versão 0.2 `Ready`:
+`docs/reports/2026-09-10T020103Z-0.2-adc1mv02-implementability-analysis.md`.
+A mesma ordem autoriza a correção descrita; aplica-se o EKOM 4.7 local
+confirmado anteriormente. Nenhum teste ou hardware está incluído na execução.
+A limitação independente do builder H2 permanece registrada.
+
+### Entrega da correção
+
+Aquisição calibrada implementada; os quatro builds completos do clássico e
+os componentes C3 em Arduino 2/3 terminaram com código 0. Nenhum hardware ou
+teste foi executado. A especificação global permanece `In Progress` pela
+limitação independente H2. Relatório:
+`docs/reports/2026-09-10T020848Z-0.2-adc1mv02-implementation-report.md`.
+
+## EKOM-CHG-0024 — Autoria e análise de suporte ADC1 0.1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.1`
+
+**Estado da implementação:** Em andamento [`In Progress`]
+
+**Objetivo:** reconhecer ADC1 por modelo de ESP32 em NTC, corrente e tensão,
+e restringir os dois presets de configuração NTC a um enum de GPIOs do target.
+
+### Decisões do Arquiteto
+
+- proposta e adicional confirmados, com ordem de registro e análise;
+- enum somente nos presets `NTC_100K_B3950` e `MF52_103_B3950`;
+- campos inteiros e APIs de criação dos sensores preservados, com validação
+  em runtime; chamadas antigas dos presets exigem migração explícita;
+- suporte ADC1 por target, sem transferência automática de parâmetros ou
+  qualificação física do ESP32 clássico.
+
+### Resultado e evidências
+
+Especificação registrada em `Draft`; análise funcional **Pronta [`Ready`]**
+persistida em
+`docs/reports/2026-09-10T005744Z-0.1-1932659e-implementability-analysis.md`.
+Autoria e Análise pelo mesmo agente, sem alegação de revisão independente.
+Nenhum bloqueador funcional ou novo débito técnico foi registrado.
+
+O relatório distingue a prontidão da tarefa da qualificação de repositório
+descrita pelos perfis centrais 5.0, não localizada na baseline local 4.7.
+Esta transação não realiza migração de governança nem autoriza implementação.
+Código, testes, hardware e configuração funcional permanecem sem alteração.
+
+Validação documental: `git diff --check` e guarda estrutural restrita aos
+quatro arquivos da entrega terminaram com código 0. A guarda global terminou
+com código 1 e 76 apontamentos em arquivos preexistentes sem delta nesta
+atuação; o validador central executado anuncia EKOM 5.0. Esses arquivos não
+foram corrigidos nem seus relatórios históricos alterados.
+
+### Entrada da implementação
+
+O Arquiteto ordenou a implementação da versão 0.1 e confirmou expressamente
+o EKOM 4.7 local, dispensando a qualificação adicional do 5.0 nesta atuação.
+Análise `Ready` da mesma versão conferida; implementação em andamento.
+
+### Entrega da implementação
+
+Código e documentação de ADC1 e enum NTC entregues. Builds completos
+`esp32_dev`, NTC, corrente e tensão passaram; tensão exigiu repetição isolada
+após falha de empacotamento. A matriz final de componentes terminou com código
+1: oito ambientes passaram integralmente e o H2 construiu cinco componentes,
+mas seu builder falhou por tipos de Wi-Fi ausentes, também na baseline.
+
+A implementação permanece `In Progress`, sem remediação de conectividade fora
+do recorte, sem novo débito aceito e sem declaração de validação em hardware.
+Relatório separado:
+`docs/reports/2026-09-10T011737Z-0.1-2a514e78-implementation-report.md`.
+Guia de consumo e reprodução: `docs/ESP32-ADC1.md`.
+Integridade textual e guarda dos documentos da entrega passaram; a guarda
+global preserva os 76 apontamentos preexistentes. Revisão e disposição da
+limitação H2 permanecem pendentes do Arquiteto.
+
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 
 **Estado:** Fechada [`Closed`]

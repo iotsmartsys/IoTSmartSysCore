@@ -32,9 +32,11 @@ void setup()
 {
     Serial.begin(115200);
 
+    static_assert(iotsmartsys::platform::arduino::isEsp32Adc1Gpio(ITS_MCB01_J4_EXT_ADC),
+                  "MCB R1 NTC pin must belong to ADC1 on the selected target");
     const auto ntcConfig =
         executable_example::NtcTemperatureSensorConfig::MF52_103_B3950(
-            ITS_MCB01_J4_EXT_ADC);
+            static_cast<iotsmartsys::platform::arduino::Esp32Adc1Pin>(ITS_MCB01_J4_EXT_ADC));
     Serial.printf(
         "[example] id=environment_ntc board=%s adc_pin=%d profile=MF52_103_B3950 "
         "R0=%.0f beta=%.0f T0=%.1f series=%.0f supply=%.2fV adc_reference=%.2fV "

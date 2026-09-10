@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "Platform/Arduino/Sensors/Esp32Adc1.h"
+
 #include "Contracts/Sensors/ITemperatureSensor.h"
 
 namespace iotsmartsys::platform::arduino
@@ -15,11 +17,12 @@ namespace iotsmartsys::platform::arduino
         float referenceTemperatureC{25.0f};
         float seriesResistanceOhms{0.0f};
         float supplyVoltageV{3.3f};
+        // Selects attenuation only; calibrated millivolts are not scaled by this value.
         float adcReferenceVoltageV{3.3f};
         std::uint8_t adcResolutionBits{12};
 
-        static NtcTemperatureSensorConfig NTC_100K_B3950(int adcPin);
-        static NtcTemperatureSensorConfig MF52_103_B3950(int adcPin);
+        static NtcTemperatureSensorConfig NTC_100K_B3950(Esp32Adc1Pin adcPin);
+        static NtcTemperatureSensorConfig MF52_103_B3950(Esp32Adc1Pin adcPin);
 
         bool isValid() const;
     };

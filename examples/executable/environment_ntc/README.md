@@ -92,3 +92,13 @@ capability como temperatura física.
   temperatura do encapsulamento do NTC.
 - Não há Steinhart–Hart, calibração persistente ou correção geral da não
   linearidade do ADC nesta versão.
+
+## Migração dos presets para GPIO tipado
+
+`MF52_103_B3950` e `NTC_100K_B3950` recebem `Esp32Adc1Pin`, não `int`.
+O exemplo mantém `ITS_MCB01_J4_EXT_ADC`, verifica em compilação que esse GPIO
+pertence a ADC1 e o converte para o enum. O factory continua recebendo a
+configuração, cujo campo `adcPin` permanece inteiro.
+
+Consulte [ADC1 por modelo](../../../docs/ESP32-ADC1.md) para seleção no C3,
+parâmetros elétricos, migração de aplicações e limites das evidências.

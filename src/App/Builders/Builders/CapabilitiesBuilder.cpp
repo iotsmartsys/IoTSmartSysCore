@@ -243,7 +243,7 @@ namespace iotsmartsys::app
         };
 
         if (!_factory.currentSensorTargetSupported())
-            return reject("target is not ESP32 classic");
+            return reject("target has no supported ESP32 ADC1 mapping");
         if (cfg.id.empty())
             return reject("id is required");
         if (cfg.id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
@@ -453,7 +453,7 @@ namespace iotsmartsys::app
         };
 
         if (!_factory.voltageSensorTargetSupported())
-            return reject("target is not ESP32 classic");
+            return reject("target has no supported ESP32 ADC1 mapping");
         if (cfg.id.empty())
             return reject("id is required");
         if (cfg.id.size() > iotsmartsys::core::kMaxCapabilityNameBytes ||
