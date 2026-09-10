@@ -147,20 +147,17 @@ namespace iotsmartsys::platform::arduino
         if (!_setupComplete)
             return invalidReading("setup not completed");
 
-        std::uint32_t adcSum = 0;
+        std::uint64_t adcSumMv = 0;
         for (std::size_t sample = 0; sample < SAMPLES_PER_READING; ++sample)
-            adcSum += analogRead(static_cast<std::uint8_t>(_config.adcPin));
+            adcSumMv += analogReadMilliVolts(static_cast<std::uint8_t>(_config.adcPin));
 
         _lastStateReadMillis = static_cast<long>(millis());
-        const double adcAverage =
-            static_cast<double>(adcSum) / static_cast<double>(SAMPLES_PER_READING);
-        const double adcMaximum =
-            static_cast<double>((std::uint32_t{1} << _config.adcResolutionBits) - 1U);
-        if (adcAverage <= 0.0 || adcAverage >= adcMaximum)
-            return invalidReading("ADC at range boundary");
+        const double adcAverageMv =
+            static_cast<double>(adcSumMv) / static_cast<double>(SAMPLES_PER_READING);
+        if (adcAverageMv <= 0.0)
+            return invalidReading("ADC voltage is zero");
 
-        const double adcVoltage =
-            (adcAverage / adcMaximum) * static_cast<double>(_config.adcReferenceVoltageV);
+        const double adcVoltage = adcAverageMv / 1000.0;
         const double denominator = static_cast<double>(_config.supplyVoltageV) - adcVoltage;
         if (!std::isfinite(adcVoltage) || adcVoltage >= _config.supplyVoltageV ||
             !std::isfinite(denominator) || denominator <= 0.0)
@@ -196,8 +193,8 @@ namespace iotsmartsys::platform::arduino
 
         iotsmartsys::core::Log::get().debug(
             kLogTag,
-            "NTC reading: adc=%.2f voltage=%.4fV resistance=%.2fohm temperature=%.2fC.",
-            adcAverage,
+            "NTC reading: adc_mv=%.2f voltage=%.4fV resistance=%.2fohm temperature=%.2fC.",
+            adcAverageMv,
             adcVoltage,
             ntcResistance,
             temperatureC);

@@ -38,7 +38,7 @@
 | Sensores de tensão e corrente INA3221 | `docs/specs/INA3221-SENSORS.md` | Active 0.2 — Ready | Validated; `Done` após validação do Arquiteto e integração à `main` (`EKOM-CHG-0021`) |
 | Potência e energia por sensor abstrato | `docs/specs/POWER-ENERGY-CAPABILITY.md` | Active 0.4 — Ready | Validated; `Done` após integração à `main` (`EKOM-CHG-0023`) |
 | Temperatura por NTC resistivo | `docs/specs/NTC-TEMPERATURE-SENSOR.md` | Active 0.1 — Ready | Validated; `Done` após integração à `main`; leitura inválida retorna `-1000.0f` (`EKOM-CHG-0007`) |
-| ADC1 por modelo de ESP32 | `docs/specs/ESP32-ADC1-SUPPORT.md` | Draft 0.1 — análise Ready em relatório separado | In Progress; código ADC1 e enum NTC entregues; builds clássicos/C3 e componentes de oito SoCs; builder H2 falha por Wi-Fi preexistente (`EKOM-CHG-0024`) |
+| ADC1 por modelo de ESP32 | `docs/specs/ESP32-ADC1-SUPPORT.md` | Draft 0.2 — análise Ready em relatório separado | In Progress; NTC usa milivolts calibrados; código ADC1 e enum NTC entregues; builds clássicos/C3 e componentes de oito SoCs; builder H2 falha por Wi-Fi preexistente (`EKOM-CHG-0024`) |
 | Atuador binário de ventilador | `docs/specs/FAN-CAPABILITY.md` | Active 0.1 — Ready | Validated; `Done` após revisão, validação em hardware e integração à `main` (`EKOM-CHG-0010`) |
 | Persistência de comandos binários | `docs/specs/BINARY-COMMAND-STATE-PERSISTENCE.md` | Active | Validated (versão 0.6) — validação física e aprovação explícita do Arquiteto registradas em `EKM-CHG-0032`; entrega `Ready for Integration`. `BCS-DEC-001` e `BCS-REV-003` permanecem pendentes/`Deferred`; suítes seguem em quarentena; `Done` depende de confirmação futura de integração à `main` |
 
@@ -92,7 +92,7 @@ somente as capabilities registradas pelos overloads que recebem
 mesmo endereço. A autoridade deste contrato é
 `IOTSSC-INA3221-SENSORS@0.2`.
 
-### 2.4 Proposta de ADC1 por modelo
+### 2.4 ADC1 por modelo e aquisição NTC
 
 `IOTSSC-ESP32-ADC1-SUPPORT@0.1` emenda as restrições de target de NTC,
 corrente e tensão e as duas assinaturas de presets NTC. O enum fica junto à
@@ -106,6 +106,15 @@ do 5.0. A implementação usa `src/Platform/Arduino/Sensors/Esp32Adc1.h`;
 Relatório: `docs/reports/2026-09-10T011737Z-0.1-2a514e78-implementation-report.md`.
 O builder H2 continua limitado pela dependência preexistente de Wi-Fi;
 `In Progress` preserva a falha de build, sem novo débito aceito.
+
+
+A correção `IOTSSC-ESP32-ADC1-SUPPORT@0.2` troca a aquisição NTC por
+`analogReadMilliVolts()`, preservando 16 amostras, divisor e Beta. A referência
+seleciona somente atenuação. Autoridade: seção 9 da especificação; análise
+`docs/reports/2026-09-10T020103Z-0.2-adc1mv02-implementability-analysis.md`;
+transação `EKOM-CHG-0025`. Correção construída no clássico e C3 Arduino 2/3;
+relatório `docs/reports/2026-09-10T020848Z-0.2-adc1mv02-implementation-report.md`.
+A falha de build H2 permanece independente.
 
 ## 3. Árvore de conhecimento
 

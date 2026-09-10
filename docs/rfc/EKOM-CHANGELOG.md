@@ -3,6 +3,35 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.2`
+
+**Estado da implementação:** Em andamento [`In Progress`]
+
+O Arquiteto ordenou usar `analogReadMilliVolts()` após comparar 1,62 V no
+GPIO1 e 26 °C no termômetro com os 17–19 °C publicados. A correção contrata
+16 leituras calibradas, média fracionária e conversão para volts, preservando
+o divisor, Beta, APIs e presets. Referência passa a selecionar só atenuação.
+A borda em contagem máxima é explicitamente substituída pelas verificações
+em tensão; a API não fornece raw do mesmo lote para diagnosticar clipping.
+
+Análise da versão 0.2 `Ready`:
+`docs/reports/2026-09-10T020103Z-0.2-adc1mv02-implementability-analysis.md`.
+A mesma ordem autoriza a correção descrita; aplica-se o EKOM 4.7 local
+confirmado anteriormente. Nenhum teste ou hardware está incluído na execução.
+A limitação independente do builder H2 permanece registrada.
+
+### Entrega da correção
+
+Aquisição calibrada implementada; os quatro builds completos do clássico e
+os componentes C3 em Arduino 2/3 terminaram com código 0. Nenhum hardware ou
+teste foi executado. A especificação global permanece `In Progress` pela
+limitação independente H2. Relatório:
+`docs/reports/2026-09-10T020848Z-0.2-adc1mv02-implementation-report.md`.
+
 ## EKOM-CHG-0024 — Autoria e análise de suporte ADC1 0.1
 
 **Estado:** Aberta [`Open`]

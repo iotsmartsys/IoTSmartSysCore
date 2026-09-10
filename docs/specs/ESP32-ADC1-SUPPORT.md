@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -13,7 +13,7 @@
 **Estado da entrega:** Pendente [`Pending`]
 
 **Revisão de implementabilidade:** Consultar o relatório separado
-`docs/reports/2026-09-10T005744Z-0.1-1932659e-implementability-analysis.md`
+`docs/reports/2026-09-10T020103Z-0.2-adc1mv02-implementability-analysis.md`
 
 **Branch:** `spec/esp32-adc1-support`
 
@@ -122,7 +122,7 @@ garantia de precisão por modelo, arbitragem geral de GPIOs e mudanças em
   ajustes necessários para cada target, sem apresentar defaults do clássico
   como perfil fisicamente validado nos demais.
 - **ADC1-009:** distinguir o coeficiente configurável `adcReferenceVoltageV`
-  usado na conversão bruta do NTC da alimentação do divisor e da faixa
+  usado na seleção de atenuação do NTC da alimentação do divisor e da faixa
   calibrada do ADC. A seleção de atenuação deve seguir o target; ampliar a
   aceitação de pinos não certifica a conversão elétrica nem a temperatura.
   Nenhum novo algoritmo ou garantia metrológica integra esta versão.
@@ -216,3 +216,36 @@ observar a governança aplicável e a ordem explícita do Arquiteto.
 A Autoria e a Análise são realizadas pelo mesmo agente, por ordem combinada;
 não se afirma revisão independente. Nenhuma implementação ou conclusão da
 entrega é autorizada por este registro.
+
+## 9. Correção 0.2 — aquisição calibrada do NTC
+
+Por ordem explícita do Arquiteto, a versão 0.2 emenda NTC-012, NTC-013,
+NTC-017, a borda de contagem máxima de NTC-022 e ADC1-009 desta fonte.
+As regras desta seção prevalecem para a aquisição elétrica do NTC.
+A versão 0.1 e seus relatórios permanecem históricos no Git.
+
+- **ADC1-013:** cada leitura NTC deve adquirir exatamente 16 valores por
+  `analogReadMilliVolts()`, acumular sem overflow e calcular média fracionária
+  em milivolts; volts são essa média dividida por 1000. Não adquirir lote
+  adicional de contagens brutas nem multiplicar a média pela referência.
+- **ADC1-014:** preservar resistor/divisor, equação Beta, presets, assinaturas,
+  configuração de atenuação e resolução e sentinel `-1000.0f`. O campo público
+  `adcReferenceVoltageV` permanece por compatibilidade e seleciona somente
+  atenuação; `adcResolutionBits` não escala o valor calibrado. Média zero,
+  tensão maior ou igual à alimentação e demais resultados inválidos continuam
+  rejeitados. A API calibrada não expõe a contagem bruta do mesmo lote; esta
+  versão não promete detectar clipping abaixo da alimentação pela comparação
+  com `2^bits-1`. A faixa física utilizável continua responsabilidade da
+  configuração e do circuito.
+- **ADC1-015:** o diagnóstico informa média em milivolts, volts, resistência e
+  temperatura, com unidades explícitas. Atualizar o guia de consumo.
+
+| Critério | Requisitos | Cenário e meio |
+|---|---|---|
+| ADC1-AC-008 | 013–015 | Inspecionar aquisição de 16 valores calibrados, soma sem overflow, média fracionária e divisão por 1000, sem escala por referência; builds canônicos e componentes NTC em C3 Arduino 2/3. No modelo 100 kΩ/B3950, média de 1620 mV e alimentação 3,3 V correspondem a aproximadamente 25,8 °C; confronto algébrico, sem alegar ensaio de hardware. |
+
+O Arquiteto relatou GPIO1 em 1,62 V e termômetro em 26 °C; o software
+anterior indicava 17–19 °C. Esses dados justificam a mudança, sem constituir
+validação física da nova implementação. Nenhum teste automatizado integra
+esta correção. Permanecem as permissões de build e as restrições operacionais
+anteriores, assim como a limitação independente do builder H2.

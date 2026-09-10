@@ -17,6 +17,7 @@ namespace iotsmartsys::platform::arduino
         float referenceTemperatureC{25.0f};
         float seriesResistanceOhms{0.0f};
         float supplyVoltageV{3.3f};
+        // Selects attenuation only; calibrated millivolts are not scaled by this value.
         float adcReferenceVoltageV{3.3f};
         std::uint8_t adcResolutionBits{12};
 

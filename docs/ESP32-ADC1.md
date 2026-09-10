@@ -85,7 +85,7 @@ O NTC preserva resolução configurável de 9 a 12 bits e default de 12. Nos
 outros chips, o Arduino ajusta a resolução retornada; isso não afirma mudança
 na resolução física. Corrente/tensão continuam solicitando 12 bits.
 
-No clássico e S3, o NTC seleciona 0/2,5/6 dB até os coeficientes de referência
+No clássico e S3, o NTC seleciona 0/2,5/6 dB até os valores de seleção de atenuação
 0,95/1,25/1,75 V, respectivamente. No S2/C3, usa 0,75/1,05/1,30 V. Acima disso,
 usa a atenuação máxima. Nos demais targets, usa a máxima para todas as
 referências, sem herdar limites intermediários do clássico. Corrente/tensão
@@ -100,14 +100,23 @@ zero, sensibilidade e divisor do circuito. Nos C5/C6/H2/P4, determine os
 limites no datasheet do chip/revisão e no circuito; esta entrega não atribui
 3100 mV a esses targets como perfil validado.
 
-No NTC, `supplyVoltageV` é a alimentação real do divisor;
-`adcReferenceVoltageV` é o coeficiente usado para converter contagem bruta em
-volts. Seu default 3,3 V foi preservado por contrato e **não é calibração do
-ADC**. Ajuste esse coeficiente conforme caracterização do circuito/ADC. Copiar
-o máximo da faixa calibrada para ele não comprova uma relação linear correta.
-Não houve troca para leitura calibrada em milivolts, alteração da equação Beta,
-dos presets térmicos ou da média de 16 amostras. A aceitação do GPIO e a
-exatidão de temperatura são evidências distintas.
+No NTC, `supplyVoltageV` é a alimentação real do divisor. A partir da
+correção 0.2, cada leitura usa a média fracionária de 16 chamadas a
+`analogReadMilliVolts()`, dividida por 1000 para obter volts. A equação Beta
+recebe a resistência calculada com essa tensão calibrada.
+
+`adcReferenceVoltageV` permanece com default 3,3 V por compatibilidade, mas
+seleciona **somente a atenuação**: não multiplica mais a tensão lida. Não ajuste
+esse campo como correção de ganho. `adcResolutionBits` continua configurando o
+Arduino e não escala o resultado calibrado. Com 1620 mV, alimentação de 3,3 V,
+resistor de 100 kΩ e NTC 100 kΩ/B3950, o modelo produz aproximadamente 25,8 °C.
+
+Média zero, tensão igual/superior à alimentação e demais resultados inválidos
+retornam `-1000.0f`. A API calibrada não expõe a contagem bruta do mesmo lote;
+a implementação não compara milivolts com `2^bits-1` nem promete identificar
+clipping abaixo da alimentação por essa comparação. Configure circuito e
+atenuação para a faixa utilizável do ADC. Não foi acrescentada calibração
+própria, offset de temperatura ou garantia metrológica.
 
 Fontes: [Arduino ADC](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html),
 [atenuação ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/v5.4.4/esp32p4/api-reference/peripherals/adc_oneshot.html),
