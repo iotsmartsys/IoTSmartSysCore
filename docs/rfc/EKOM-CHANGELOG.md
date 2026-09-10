@@ -9,7 +9,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Especificação relacionada:** `IOTSSC-ESP32-ADC1-SUPPORT@0.1`
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Objetivo:** reconhecer ADC1 por modelo de ESP32 em NTC, corrente e tensão,
 e restringir os dois presets de configuração NTC a um enum de GPIOs do target.
@@ -41,6 +41,29 @@ quatro arquivos da entrega terminaram com código 0. A guarda global terminou
 com código 1 e 76 apontamentos em arquivos preexistentes sem delta nesta
 atuação; o validador central executado anuncia EKOM 5.0. Esses arquivos não
 foram corrigidos nem seus relatórios históricos alterados.
+
+### Entrada da implementação
+
+O Arquiteto ordenou a implementação da versão 0.1 e confirmou expressamente
+o EKOM 4.7 local, dispensando a qualificação adicional do 5.0 nesta atuação.
+Análise `Ready` da mesma versão conferida; implementação em andamento.
+
+### Entrega da implementação
+
+Código e documentação de ADC1 e enum NTC entregues. Builds completos
+`esp32_dev`, NTC, corrente e tensão passaram; tensão exigiu repetição isolada
+após falha de empacotamento. A matriz final de componentes terminou com código
+1: oito ambientes passaram integralmente e o H2 construiu cinco componentes,
+mas seu builder falhou por tipos de Wi-Fi ausentes, também na baseline.
+
+A implementação permanece `In Progress`, sem remediação de conectividade fora
+do recorte, sem novo débito aceito e sem declaração de validação em hardware.
+Relatório separado:
+`docs/reports/2026-09-10T011737Z-0.1-2a514e78-implementation-report.md`.
+Guia de consumo e reprodução: `docs/ESP32-ADC1.md`.
+Integridade textual e guarda dos documentos da entrega passaram; a guarda
+global preserva os 76 apontamentos preexistentes. Revisão e disposição da
+limitação H2 permanecem pendentes do Arquiteto.
 
 ## EKOM-CHG-0023 — Autoria da abstração de potência 0.4
 

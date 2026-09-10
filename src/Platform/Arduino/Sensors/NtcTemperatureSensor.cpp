@@ -19,20 +19,33 @@ namespace iotsmartsys::platform::arduino
 
         adc_attenuation_t attenuationFor(float referenceVoltageV)
         {
+#if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32C3)
+            if (referenceVoltageV <= 0.75f)
+                return ADC_0db;
+            if (referenceVoltageV <= 1.05f)
+                return ADC_2_5db;
+            if (referenceVoltageV <= 1.30f)
+                return ADC_6db;
+#elif defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
             if (referenceVoltageV <= 0.95f)
                 return ADC_0db;
             if (referenceVoltageV <= 1.25f)
                 return ADC_2_5db;
             if (referenceVoltageV <= 1.75f)
                 return ADC_6db;
+#else
+            // Other targets use their maximum attenuation, without inheriting
+            // the classic ESP32's intermediate voltage thresholds.
+            (void)referenceVoltageV;
+#endif
             return ADC_11db;
         }
     }
 
-    NtcTemperatureSensorConfig NtcTemperatureSensorConfig::NTC_100K_B3950(int pin)
+    NtcTemperatureSensorConfig NtcTemperatureSensorConfig::NTC_100K_B3950(Esp32Adc1Pin pin)
     {
         NtcTemperatureSensorConfig config;
-        config.adcPin = pin;
+        config.adcPin = static_cast<int>(pin);
         config.nominalResistanceOhms = 100000.0f;
         config.betaK = 3950.0f;
         config.referenceTemperatureC = 25.0f;
@@ -40,10 +53,10 @@ namespace iotsmartsys::platform::arduino
         return config;
     }
 
-    NtcTemperatureSensorConfig NtcTemperatureSensorConfig::MF52_103_B3950(int pin)
+    NtcTemperatureSensorConfig NtcTemperatureSensorConfig::MF52_103_B3950(Esp32Adc1Pin pin)
     {
         NtcTemperatureSensorConfig config;
-        config.adcPin = pin;
+        config.adcPin = static_cast<int>(pin);
         config.nominalResistanceOhms = 10000.0f;
         config.betaK = 3950.0f;
         config.referenceTemperatureC = 25.0f;
@@ -76,13 +89,7 @@ namespace iotsmartsys::platform::arduino
 
     bool NtcTemperatureSensor::isSupportedAdcPin(int pin)
     {
-#if defined(CONFIG_IDF_TARGET_ESP32)
-        return pin >= 32 && pin <= 39 && pin < NUM_DIGITAL_PINS &&
-               digitalPinToAnalogChannel(static_cast<std::uint8_t>(pin)) >= 0;
-#else
-        (void)pin;
-        return false;
-#endif
+        return isSupportedEsp32Adc1Pin(pin);
     }
 
     bool NtcTemperatureSensor::isSupportedConfig(const NtcTemperatureSensorConfig &config)

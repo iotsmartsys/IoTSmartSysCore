@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "Platform/Arduino/Sensors/Esp32Adc1.h"
 
 #include "Platform/Arduino/Factories/ArduinoHardwareAdapterFactory.h"
 #include "Platform/Arduino/Adapters/OutputHardwareAdapter.h"
@@ -154,17 +155,13 @@ namespace iotsmartsys::platform::arduino
 
     bool ArduinoHardwareAdapterFactory::currentSensorTargetSupported() const
     {
-#if defined(CONFIG_IDF_TARGET_ESP32)
-        return true;
-#else
-        return false;
-#endif
+        return esp32Adc1TargetSupported();
     }
 
     bool ArduinoHardwareAdapterFactory::currentSensorPinHasAdc(int pin) const
     {
-#if defined(CONFIG_IDF_TARGET_ESP32)
-        return pin >= 0 && pin < NUM_DIGITAL_PINS &&
+#if defined(ARDUINO_ARCH_ESP32)
+        return pin >= 0 && pin < NUM_DIGITAL_PINS && pin <= UINT8_MAX &&
                digitalPinToAnalogChannel(static_cast<std::uint8_t>(pin)) >= 0;
 #else
         (void)pin;
@@ -174,15 +171,9 @@ namespace iotsmartsys::platform::arduino
 
     bool ArduinoHardwareAdapterFactory::currentSensorPinReserved(int pin) const
     {
-#if defined(CONFIG_IDF_TARGET_ESP32)
-        // The supported runtime keeps Wi-Fi active. On classic ESP32 the ADC2
-        // controller is shared with Wi-Fi, so current sensing is constrained
-        // to the ADC1 GPIOs 32..39.
-        return currentSensorPinHasAdc(pin) && (pin < 32 || pin > 39);
-#else
-        (void)pin;
-        return true;
-#endif
+        // ADC2 remains unavailable to these sensors, including on targets
+        // where Wi-Fi contention differs from the classic ESP32.
+        return !isSupportedEsp32Adc1Pin(pin);
     }
 
     std::size_t ArduinoHardwareAdapterFactory::currentSensorAdapterSize() const
