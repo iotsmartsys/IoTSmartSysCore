@@ -121,6 +121,18 @@ Arquiteto: `Active` / `Implemented` / `Done`. O registro final é
 `docs/reports/2026-09-10T021325Z-0.2-adc1close-finalization-report.md`.
 A decisão não afirma validação física nem remediação da limitação H2.
 
+### 2.5 Cadência da capability de temperatura
+
+Correção pequena autorizada pelo Arquiteto, sem especificação, pela via do
+Consultor: `TemperatureSensorCapability` distingue a primeira tentativa por
+estado próprio, sem usar o sinal da temperatura. A primeira leitura permanece
+imediata; tentativas seguintes respeitam `readIntervalMs`, inclusive após
+temperaturas negativas, zero ou leituras inválidas. Fontes da implementação:
+`src/Core/Capabilities/TemperatureSensorCapability.cpp` e
+`src/Contracts/Capabilities/TemperatureSensorCapability.h`. O helper de polling,
+as APIs públicas, a conversão NTC e a publicação permanecem preservados.
+Registro: `docs/reports/2026-09-11T021138Z-temperature-interval-consultant-report.md`.
+
 ## 3. Árvore de conhecimento
 
 ```text

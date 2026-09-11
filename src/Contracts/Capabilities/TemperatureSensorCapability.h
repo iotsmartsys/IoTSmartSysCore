@@ -15,6 +15,7 @@ namespace iotsmartsys::core
 
     private:
         ITemperatureSensor &sensor;
+        bool hasRead_{false};
 
         bool isValidTemperature(float temp) const;
     };

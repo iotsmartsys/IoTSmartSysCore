@@ -22,17 +22,18 @@ namespace iotsmartsys::core
     void TemperatureSensorCapability::handle()
     {
         unsigned long currentTime = timeProvider.nowMs();
-        if (!shouldRead(currentTime) && lastValue() > 0.0f)
+        if (hasRead_ && !shouldRead(currentTime))
         {
             logger.debug("TemperatureSensorCapability", "TemperatureSensorCapability: Skipping read, interval not reached.");
             return;
         }
 
         float temp = sensor.readTemperatureCelsius();
-    float roundedTemp = std::round(temp * 100.0f) / 100.0f;
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%.2f", roundedTemp);
-    const char *tempStr = buf;
+        hasRead_ = true;
+        float roundedTemp = std::round(temp * 100.0f) / 100.0f;
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.2f", roundedTemp);
+        const char *tempStr = buf;
 
         if (isValidTemperature(temp))
         {
