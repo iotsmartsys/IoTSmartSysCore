@@ -4,7 +4,7 @@
 
 **Classe da fonte:** Normativa
 
-**Versão:** 0.1
+**Versão:** 0.2
 
 **Estado normativo:** Rascunho [`Draft`]
 
@@ -16,7 +16,9 @@
 
 **Bloqueio arquitetural:** Não avaliado formalmente; fronteiras na seção 11.
 
-**Relações normativas e de dependência:** Novo [`New`]. Preserva
+**Relações normativas e de dependência:** Altera [`Amends`]
+`IOTSSC-BLE-COMMAND-TRANSPORT@0.1` para incorporar vínculo local e autenticação
+por segredo compartilhado em cada sessão. Preserva
 `IOTSSC-PUBLIC-API`, `IOTSSC-RUNTIME`,
 `IOTSSC-RUNTIME-CAPABILITY-CAPACITY@0.2`, `ADR-0001` e os contratos das
 capabilities, incluindo persistência binária e controle de garagem.
@@ -56,6 +58,8 @@ Fatos observados, sem transformar limitações do código em novas garantias:
 - Responsabilidades de `BluetoothDispatcher` e do adapter BLE da plataforma.
 - Reuso do parser, processadores e capabilities existentes.
 - Framing limitado, resposta de encaminhamento, estados, erros e segurança.
+- Auth por HMAC-SHA-256, integração local de janela/revogação e persistência
+  privada de autorização exclusiva do transporte BLE Control.
 - Contrato de interoperabilidade com o app Swift, sem alterar seu repositório.
 - BLE opt-in em Arduino sobre ESP32 com hardware BLE; MQTT/Serial preservados.
 
@@ -109,8 +113,9 @@ a reservar como contrato comum firmware/app antes da implementação:
 | DeviceInfo | `9d8f1001-6f4b-4c65-9d63-4d8a7b210001` | READ; ID ASCII completo |
 | Command | `9d8f1002-6f4b-4c65-9d63-4d8a7b210001` | WRITE com resposta ATT |
 | Response | `9d8f1003-6f4b-4c65-9d63-4d8a7b210001` | NOTIFY e CCCD padrão `0x2902` |
+| Auth | `9d8f1004-6f4b-4c65-9d63-4d8a7b210001` | READ, WRITE com resposta, NOTIFY e CCCD próprio |
 
-- **BLE-005:** Command e Response são obrigatórias. DeviceInfo é opcional,
+- **BLE-005:** Command, Response e Auth são obrigatórias. DeviceInfo é opcional,
   recomendada e habilitada por padrão na proposta. Se presente, o app lê e
   compara com o ID anunciado e esperado; divergência ou falha de leitura
   encerra a sessão antes de escrever. Ausência é permitida e registrada como
@@ -118,7 +123,9 @@ a reservar como contrato comum firmware/app antes da implementação:
 - **BLE-006:** não existem characteristics por capability ou por dispositivo.
   O CCCD deve estar habilitado e confirmado antes do primeiro byte de Command.
   Write Without Response não integra a V1. ACK ATT confirma somente a escrita
-  do fragmento; a conclusão da transação exige Response.
+  do fragmento; a conclusão da transação exige Response. Command permanece
+  bloqueada por autorização de aplicação até Auth concluir nesta conexão.
+  Ambos os CCCDs devem estar habilitados antes de ler o desafio Auth.
 
 ## 5. Comando, framing e resposta
 
@@ -186,8 +193,9 @@ log, mas só transfere `args` ao comando resultante.
 ## 6. Responsabilidades e integração
 
 - **BLE-016:** adapter BLE da plataforma cuida de rádio, GAP/GATT, segurança,
-  fragmentos, CCCD e eventos de conexão. `BluetoothDispatcher` cuida da sessão,
-  limites e validação de entrada, invoca uma única vez o caminho comum e
+  fragmentos, CCCD, bonding e eventos de conexão. `BluetoothDispatcher` cuida
+  da sessão, autenticação Auth, limites e validação de entrada, invoca uma
+  única vez o caminho comum e
   converte seu retorno na resposta. Capabilities e hardware adapters não
   conhecem BLE. Não duplicar parser, factory ou lógica de `applyCommand()`.
 - **BLE-017:** manter separação equivalente a canal/dispatcher de MQTT e Serial.
@@ -213,7 +221,8 @@ log, mas só transfere `args` ao comando resultante.
   repetidos são seguros e não reinicializam stack pertencente a outro serviço.
   Falha de inicialização é local e observável; sem erase global de NVS.
 - **BLE-021:** BLE não é capability, não consome slot, não altera catálogo,
-  registro, estados ou persistência e preserva capacidade configurável vigente
+  registro, estados ou persistência das capabilities e preserva a capacidade
+  configurável vigente
   (default oito, perfil de doze conforme autoridade existente).
 
 ## 7. Fluxo e estados
@@ -223,8 +232,12 @@ log, mas só transfere `args` ao comando resultante.
 2. Verificar permissão e rádio no app. Scan em foreground filtrado pelo UUID
    Control; aguardar Service Data e comparar ID completo. Não conectar por nome.
 3. Ao encontrar, parar scan e conectar. Descobrir serviço e characteristics,
-   estabelecer segurança, confirmar DeviceInfo quando existir e habilitar
-   Response. Erro em qualquer etapa impede Command.
+   confirmar DeviceInfo quando existir e habilitar CCCDs Auth/Response. Ler Auth
+   estabelece criptografia/bonding quando necessário. Central nova exige janela
+   física aberta; central conhecida reutiliza o vínculo. Ler desafio, escrever
+   prova e aguardar Auth positivo antes de Command. Erro em qualquer etapa
+   impede o envio. O primeiro vínculo é uma etapa de configuração local, não
+   um pareamento automaticamente admitido pelo toque no toggle.
 4. Enviar fragmentos em ordem, aguardando conclusão ATT de cada write.
    Aceitar Response válida mesmo se chegar antes do callback do último write;
    mantê-la associada à geração atual da sessão.
@@ -234,8 +247,8 @@ log, mas só transfere `args` ao comando resultante.
 
 | Lado | Estados e transições principais |
 |---|---|
-| App | Idle → Scanning → Connecting → Discovering → Securing → Identifying → Subscribing → Writing → AwaitingResponse → Disconnecting → Idle |
-| Dispositivo | Disabled / Unavailable → Advertising → Connected → Authorized → Receiving → Dispatching → Responding → AwaitingDisconnect → Advertising |
+| App | Idle → Scanning → Connecting → Discovering → Identifying → Subscribing → Securing → Authenticating → Writing → AwaitingResponse → Disconnecting → Idle |
+| Dispositivo | Disabled / Unavailable → Advertising → Connected → Securing → Authenticating → Authorized → Receiving → Dispatching → Responding → AwaitingDisconnect → Advertising |
 
 Estados opcionais sem trabalho são atravessados sem espera. Qualquer falha ou
 cancelamento entra em limpeza e desconexão; preservar o resultado observado.
@@ -255,6 +268,8 @@ Defaults propostos, medidos com relógio monotônico e sem espera bloqueante:
 | Conexão | 8 s | Erro de conexão; cancelar tentativa |
 | Descoberta, leitura DeviceInfo, assinatura | 5 s por etapa | Erro GATT/identidade; desconectar |
 | Segurança de conexão | 15 s | Não autorizado; nenhum comando enviado |
+| Auth | 5 s desde leitura do desafio | Falha de autenticação, sem Command |
+| Janela de novo vínculo | 60 s desde ação física | Não aprovar candidata após expiração |
 | Write | 3 s por fragmento | Erro ATT; pós-envio pode ser indeterminado |
 | Remontagem no dispositivo | 5 s desde primeiro byte, sem renovar | RECEIVE_TIMEOUT; descartar e encerrar |
 | Espera de resposta | 5 s desde envio de LF | Indeterminado se não recebeu resposta completa |
@@ -276,32 +291,163 @@ Defaults propostos, medidos com relógio monotônico e sem espera bloqueante:
   Limpar buffer parcial, timer e assinatura em toda saída, sem vazar conteúdo
   entre centrais. Reboot perde contexto e não reproduz comando anterior.
 
-## 9. Segurança mínima proposta
+## 9. Segurança e autorização da sessão
 
-- **BLE-026:** canal desabilitado por padrão. Para controle, exigir conexão
-  criptografada e central previamente autorizada por bonding. ID, UUID e
-  proximidade são descoberta, nunca credenciais. Sem segurança, falhar fechado.
-- **BLE-027:** novos bonds só podem ser admitidos após ação física local
-  explícita, em janela proposta de 60 s; janela fechada por padrão e após um
-  vínculo. Não reutilizar senha MQTT, API token ou identidade como segredo BLE.
-  Adotar pareamento autenticado quando o produto dispõe de I/O/OOB; Just Works
-  não oferece proteção MITM e só pode ser escolhido mediante aceitação
-  explícita desse risco pelo responsável do produto.
-- **BLE-028:** firmware consumidor deve fornecer procedimento local de
-  revogação de autorização sem mudar implicitamente o factory reset existente.
-  Sem fluxo definido de vínculo/revogação, BLE Control permanece desabilitado.
-  Bonding desta proposta é restrito ao controle; não autoriza redesenhar
-  provisioning, persistência geral ou política de autenticação da biblioteca.
-- **BLE-029:** limitar recursos a uma sessão/um comando, validar comprimentos
-  antes de copiar e rejeitar JSON malformado ou campos duplicados/ambíguos antes
-  de invocar parser comum. Validação sintática pode ser guard local BLE, sem
-  reimplementar interpretação de capabilities. Registrar etapa, erro e ID;
-  não registrar chaves de vínculo nem credenciais.
+### 9.1 Política confirmada e integração local
 
-O identificador completo anunciado é público e permite correlação por
-observadores. Isso é consequência do requisito de descoberta desta V1;
-criptografia da conexão não esconde o advertising. Não se promete autenticação
-por DeviceInfo nem execução exatamente uma vez entre conexões.
+- **BLE-026:** exigir, cumulativamente, vínculo BLE autorizado para Control,
+  conexão criptografada e prova de conhecimento do segredo nesta conexão.
+  Bonding isolado, ID anunciado ou CCCD habilitado não liberam Command.
+  Usar LE Secure Connections com Just Works, sem PIN digitado ou programado no
+  iOS. O sistema pode apresentar confirmação de pareamento; não se promete
+  suprimir diálogos de consentimento ou permissão do sistema operacional.
+- **BLE-027:** novos vínculos só são admitidos em janela de 60 s aberta por
+  ação física local. Fechada por padrão, não persiste após reboot e fecha no
+  primeiro vínculo autorizado ou ao expirar. Uma tentativa nova deve concluir
+  bonding e autenticação dentro da janela; expiração impede sua aprovação.
+  Centrais já autorizadas podem reconectar fora da janela, sempre com Auth.
+- **BLE-028:** a biblioteca fornece operações locais `openPairingWindow()` e
+  `revokeBleBonds()`, acionáveis pelo firmware após setup, sem alterar o conjunto
+  de capabilities. A configuração pré-setup declara explicitamente integração
+  de admissão/revogação e fornece a chave; sem isso, BLE permanece desabilitado
+  com diagnóstico. O firmware é dono do botão e traduz gestos físicos distintos
+  em chamadas; a biblioteca não escolhe GPIO nem reutiliza o gesto de factory
+  reset. Essas operações não são comandos MQTT, Serial ou GATT. A janela
+  pode ser aberta novamente apenas por nova ação física deliberada.
+- **BLE-029:** validar comprimentos antes de copiar e rejeitar JSON malformado
+  ou campos duplicados/ambíguos antes do parser comum. Validação sintática pode
+  ser guard local BLE, sem duplicar interpretação das capabilities.
+  Não registrar chave, material de
+  bonding, prova HMAC ou buffers de Auth em logs, dumps de diagnóstico ou
+  mensagens de erro. Registrar somente etapa e código de resultado.
+
+A composição mínima de referência é um firmware que já gerencia um botão e
+chama as duas operações a partir de eventos locais distintos. Os gestos e
+pinagem pertencem ao firmware consumidor, como integração explícita, sem
+mudança em `FactoryResetButtonController`. A biblioteca fornece consulta do
+estado de janela/autorização e resultado das operações; a indicação visual é
+opcional. Na V1, há **um slot de central autorizada**, além de no máximo uma
+candidata em admissão; substituir a central exige revogação local anterior.
+Abrir janela com slot ocupado não substitui nem apaga o vínculo: retorna
+`ALREADY_BOUND`. Candidata não é uma segunda conexão simultânea.
+
+### 9.2 Segredo compartilhado
+
+- **BLE-030:** usar uma chave aleatória de 32 bytes (256 bits), igual no app e
+  em todos os dispositivos deste perfil, fornecida por configuração privada
+  antes de setup. Não usar PIN numérico, `deviceId`, senha MQTT ou API token.
+  Ausência ou comprimento inválido impede habilitar Control. O runtime deve
+  possuir uma cópia válida pelo seu lifetime, sem depender de buffer temporário.
+- **BLE-031:** não incluir valor real ou chave de demonstração funcional em
+  código versionado, especificação, exemplos, testes, logs ou advertising.
+  Injeção privada na distribuição de firmware/app pertence ao responsável do
+  produto; esta autoria não gera nem instala chave. O app não mostra a chave
+  na UI. Não transmitir a chave, mesmo em link criptografado.
+
+A chave comum comprova posse do segredo do produto, não identidade de usuário,
+conta, aplicativo oficial ou dispositivo individual. Ocultá-la na UI não
+impede extração por engenharia reversa de app/firmware. Extração em uma cópia
+compromete a autenticação de toda a linha. Ação física e vínculo permanecem
+barreiras adicionais. Revogar vínculos não troca a chave global; rotação exige
+atualização coordenada de firmware/app por seus mecanismos existentes, fora
+desta V1. Não há atualização da chave via BLE nem fallback para outra chave.
+
+### 9.3 Troca Auth e formato interoperável
+
+A characteristic Auth é obrigatória e possui READ, WRITE com resposta e NOTIFY
+com CCCD próprio. Seu UUID fixo é
+`9d8f1004-6f4b-4c65-9d63-4d8a7b210001`. O JSON de Command/Response não muda;
+Auth não passa pelo parser ou dispatcher de comandos da biblioteca.
+
+- **BLE-032:** antes de acessar o valor Auth, exigir link criptografado e
+  bonding válido: central já autorizada ou candidata admitida pela janela
+  física. As permissões GATT de Auth permitem iniciar a negociação de segurança
+  pelo iOS; descobrir serviços e habilitar CCCDs não autentica a aplicação.
+  Sem janela aberta, novo pareamento é recusado, mesmo conhecendo a chave.
+- **BLE-033:** depois de habilitar o CCCD Auth e Response, o app lê Auth. A
+  resposta é exatamente `0x01 || nonce`, sendo `nonce` 16 bytes de CSPRNG,
+  novo por conexão. Leituras repetidas devolvem o mesmo desafio enquanto
+  pendente; não renovam seu prazo. O valor de 17 bytes cabe com MTU 23.
+  Não gerar desafio a partir de millis, MAC ou PRNG previsível. Falha da fonte
+  aleatória impede autenticação; observar as precondições de entropia da stack.
+- **BLE-034:** o app calcula o tag completo de 32 bytes:
+
+```text
+HMAC-SHA-256(K,
+  ASCII("IoTSmartSys-Control-Auth-v1") || 0x00 ||
+  uint8(tamanho do deviceId ASCII) || ASCII(deviceId) || nonce)
+```
+
+`K` é a chave de 32 bytes; `||` concatena bytes, sem hexadecimal, Base64, JSON,
+NUL extra ou conversão de caixa. O app usa o ID esperado da tela, já conferido
+no scan; o servidor usa a identidade local. Isso impede reutilizar o mesmo tag
+em desafio diferente ou em outro ID, sem criar identidade criptográfica única.
+
+- **BLE-035:** enviar o tag bruto por writes sequenciais com resposta em Auth,
+  no máximo `ATT_MTU - 3` bytes cada; MTU 23 usa 20 + 12 bytes. Remontar
+  exatamente 32 bytes, sem LF. Rejeitar excesso antes de verificar e nunca
+  aceitar prefixo. Uma prova por conexão; comparação em tempo constante pela
+  biblioteca criptográfica. Chave incorreta, tag incompleto, repetido ou
+  inválido não autoriza nenhum comando. Não aceitar tag após expirar o desafio.
+- **BLE-036:** resultado Auth é uma notificação única de dois bytes:
+  `0x01 0x00` para sucesso e `0x01 0x01` para falha genérica. Não confundir esse
+  resultado com ACK de Command. O app espera sucesso antes de enviar Command;
+  versão ou tamanho inesperado encerra a sessão. O servidor só informa sucesso
+  depois de validar o HMAC e, para candidata, persistir sua autorização.
+  O app deve preservar o resultado se chegar antes do callback ATT do último
+  fragmento, vinculando-o à geração atual da sessão.
+- **BLE-037:** Auth tem prazo de 5 s desde a primeira leitura do desafio,
+  incluindo remontagem/verificação; não renovar por fragmento ou releitura.
+  Falha, cancelamento, perda de criptografia ou desconexão invalida nonce, tag
+  parcial e autorização volátil. Nova conexão exige novo desafio, inclusive
+  para a mesma central já vinculada. Falha notificada encerra em até 2 s;
+  sem CCCD ou possibilidade de notificar, encerra diretamente. Erros locais
+  distinguem `AUTH_FAILED`, `AUTH_TIMEOUT`, `AUTH_PROTOCOL_ERROR` e
+  `AUTH_STORAGE_ERROR`; falhas ATT anteriores não revelam material secreto.
+
+A identidade integral anunciada continua pública e correlacionável; Auth não
+a oculta. Não há garantia de execução exatamente uma vez entre conexões.
+
+O challenge-response não substitui a criptografia BLE nem acrescenta assinatura
+por comando. Just Works não oferece proteção MITM no primeiro pareamento;
+essa troca não promete impedir relay em tempo real, nem autentica o servidor
+perante o app. Essas limitações fazem parte do perfil escolhido; não apresentar
+HMAC de sessão como proteção integral contra interceptação ativa. O risco da
+chave comum e o uso de Just Works foram explicitados na decisão conversacional.
+
+### 9.4 Bond provisório, persistência e revogação
+
+- **BLE-038:** distinguir bond criado pela stack de autorização persistente
+  para Control. Candidata só ocupa o slot autorizado após Auth válido dentro
+  da janela. Manter registro local privado de identidade do peer, usando a
+  identidade resolvida pelo bonding, não seu endereço aleatório transitório.
+  Esse registro é exclusivo do transporte; não altera settings, capabilities
+  ou o snapshot binário. Chaves BLE permanecem no armazenamento da stack.
+- **BLE-039:** registrar/recuperar a admissão de modo que reboot entre bonding
+  e Auth não transforme candidata em autorizada. Bond sem registro autorizado
+  nunca dá acesso fora da janela; rejeitar conexão e limpar somente vínculo
+  provisório pertencente a Control. Falha de Auth remove a candidata e seus
+  recursos, sem remover vínculo já autorizado por mera prova incorreta.
+  Sem persistência confirmada, não enviar sucesso de admissão. Falhas de
+  armazenamento mantêm Control indisponível, sem erase global nem reparação
+  silenciosa de namespaces alheios.
+- **BLE-040:** `revokeBleBonds()` fecha janela, bloqueia novos comandos e
+  invalida autorização/nonce em memória imediatamente; cancela comando ainda
+  não despachado e desconecta. Handler já iniciado não é desfeito. Revogar
+  duravelmente o registro Control e remover seus bonds usando a API da stack;
+  só informar conclusão após ambos terminarem. Remoção incompleta mantém
+  controle bloqueado e exige recuperação antes de nova admissão. Reboot depois
+  da revogação persistida não restaura acesso por bond residual. Falha em gravar
+  revogação deve ser reportada como falha, sem prometer revogação durável.
+  Não apagar Wi-Fi, API, identidade, estados de capabilities ou bonds de
+  serviços alheios. Não remover vínculo no iOS por API privada; eventual bond
+  obsoleto no telefone pode exigir a recuperação oferecida pelo sistema.
+
+A persistência descrita limita-se à autorização BLE Control e seus candidatos;
+não cria serviço genérico de credenciais, arbitragem de stacks ou autenticação
+para MQTT/Serial. Não há migração de autorização de versão implementada anterior,
+pois 0.1 não foi implementada. Revogar, reabrir e parar o serviço são operações
+cooperativas com resultado observável, sem bloqueio por chamadas de rádio.
 
 ## 10. Critérios de aceite e validações
 
@@ -313,15 +459,19 @@ autoria. Ausência de evidência permanece `Not Executed`.
 | BLE-AC-001 | BLE desabilitado: baseline compila, não inicia rádio de controle e MQTT/Serial mantêm comportamento | Build e inspeção; 001, 020–021 |
 | BLE-AC-002 | ID exemplo: scan iOS encontra UUID e 13 bytes exatos sem conexão; captura confirma dois payloads ≤31 bytes | iPhone + ESP32 + captura; 002–004 |
 | BLE-AC-003 | ID longo/inválido não é truncado; BLE falha localmente e outros transportes continuam | Inspeção e execução instrumentada; 003 |
-| BLE-AC-004 | DeviceInfo ausente permite fluxo; divergente bloqueia; Command/Response ou CCCD ausente impede envio | Integração GATT; 005–006, 024 |
+| BLE-AC-004 | DeviceInfo ausente permite fluxo; divergente bloqueia; Command/Response/Auth ou CCCD ausente impede envio | Integração GATT; 005–006, 024 |
 | BLE-AC-005 | Mesmo JSON via BLE/MQTT/Serial alcança a mesma capability/args; BLE encaminha uma única vez e nenhum pacote é reenviado ao broker/UART | Instrumentação do dispatcher; 007–009, 016–019 |
 | BLE-AC-006 | MTU 23: writes e notificações fragmentados recompõem exatamente mensagem; limites 1024/1025, LF, timeout e duas linhas não executam prefixos inválidos | Exercício instrumentado; 010–013, 022, 029 |
 | BLE-AC-007 | Capability existente gera ACK de encaminhamento; ausente, ID divergente, tipo SYSTEM e valor promovível são rejeitados sem efeito | Execução instrumentada; 008, 014 |
 | BLE-AC-008 | ACK ATT isolado não significa sucesso; perda da resposta após execução gera indeterminado e nenhum retry | Integração com interrupção controlada; 006, 015, 023–025 |
 | BLE-AC-009 | Fluxo Swift termina em desconexão e UI disponível; cancelamentos e callbacks tardios não enviam novo comando | Integração foreground; seções 7–8 |
-| BLE-AC-010 | Sem bond/link seguro, escrita não executa; janela fechada recusa novo bond; revogação retira acesso | Hardware e procedimento de produto; 026–029 |
+| BLE-AC-010 | Sem bond, criptografia ou Auth positivo, escrita não executa; janela fechada recusa nova central; operações locais permitem vínculo e revogação sem alterar factory reset/Wi-Fi | Hardware e integração local; 026–032, 038–040 |
 | BLE-AC-011 | Sem Wi-Fi/broker, BLE comanda; provisioning não expõe Control; repetir start/stop e fallback sem task não duplica execução nem danifica stack/settings | Hardware e instrumentação; 019–020 |
 | BLE-AC-012 | ACK não confirma movimento físico e não altera semântica de estado/persistência; BLE não consome slot | Confronto das fontes e execução de capability representativa; 009, 014, 021 |
+| BLE-AC-013 | Com chave privada correta, desafio/prova interoperam entre Swift e firmware com MTU 23; tag errado, replay de outra conexão/ID, versão/tamanho inválidos e timeout não liberam Command | Integração Auth e confronto de bytes/HMAC; 030–037 |
+| BLE-AC-014 | Duas conexões da mesma central exigem desafios distintos e duas provas; perder link invalida autorização volátil; callbacks antigos não autorizam nova sessão | Instrumentação por sessão; 033–037 |
+| BLE-AC-015 | Reboot após bonding e antes de Auth não autoriza candidata; falha de persistência não produz sucesso; revogação concluída continua válida após reboot; falha de remoção não reabre acesso | Falhas controladas de armazenamento e hardware; 038–040 |
+| BLE-AC-016 | Chave não é mostrada, logada ou transmitida; falta/chave de tamanho inválido desabilita Control; slot ocupado não é substituído por abertura da janela | Inspeção de configuração, UI/logs e captura; 027–031 |
 
 Nenhum artefato de teste automatizado integra o recorte desta versão. Os meios
 acima são inspeções, builds e cenários instrumentados/manuais, cuja execução
@@ -338,12 +488,20 @@ integral em Service Data de UUID fixo; serviço Control e Command/Response fixos
 DeviceInfo opcional/recomendada; preservação do comando lógico e de capabilities;
 somente especificação nesta atuação.
 
+Na revisão 0.2, o Arquiteto escolheu janela física com bonding Just Works e
+segredo compartilhado entre app e dispositivos, sem PIN digitado; confirmou
+a proposta de desafio criptográfico por conexão, chave longa não transmitida
+e revogação local. A limitação de extração de uma chave comum foi apresentada.
+A autenticação acrescenta Auth ao GATT, preservando Command/Response.
+
 ### Propostas desta versão
 
 UUIDs, limite de ID de 13 bytes no perfil legado, JSON/LF fragmentado, limites
-de buffers/timeouts, ACK de encaminhamento, exclusão de SYSTEM, ativação opt-in
-e segurança das seções 4–9 são proposta técnica do Autor, não decisões humanas
-anteriores nem comportamento já implementado. Não atribuir aprovação de risco,
+de buffers/timeouts, ACK de encaminhamento, exclusão de SYSTEM e ativação opt-in
+permanecem o desenho desta especificação. Na 0.2, tamanho da chave, HMAC-SHA-256,
+formato binário Auth, um slot de central, integração por operações locais e
+regras de persistência concretizam a política escolhida. Não são mecanismos
+já implementados nem uma promessa de segredo inextragível. Não atribuir
 `Ready` ou autorização de implementação ao pedido de escrita documental.
 
 ### Autoridades preservadas e fronteiras a analisar
@@ -361,10 +519,11 @@ anteriores nem comportamento já implementado. Não atribuir aprovação de risc
   transição provisioning/operacional. Se exigir proprietário global novo da
   stack, alterações de callbacks ou arbitragem que afetem outros serviços,
   registrar pré-requisito arquitetural separado/ADR; não ampliar esta V1.
-- Vínculo seguro, ação física e revogação precisam de definição de produto e
-  análise na baseline. Não foi localizado contrato transversal vigente que os
-  forneça para Control. Se exigirem infraestrutura independente, mantê-la como
-  dependência preparatória, sem presumir que o provisioning já a oferece.
+- Vínculo e revogação passam a ser contratados por BLE-026 a BLE-040, com
+  responsabilidade do firmware pelos eventos físicos e operações locais da
+  biblioteca. Auth e registro de autorização são exclusivos do transporte.
+  Reavaliar implementabilidade dessa extensão na baseline, sem presumir que o
+  provisioning a oferece e sem criar infraestrutura transversal por inferência.
 - Confirmar target, stack e exposição de Service Data da scan response no iOS
   suportado. BLE de provisioning usa Bluedroid; sua presença não qualifica
   automaticamente todos os modelos ESP32 nem compatibilidade de stacks.
@@ -378,11 +537,16 @@ Registrar esta fonte no índice, árvore e diagrama de `KNOWLEDGE-MAP.md`, com
 estado `Draft`, e abrir transação em `EKOM-CHANGELOG.md`. Não alterar fontes
 vigentes de capabilities, API, runtime ou relatórios históricos.
 
-Versão 0.1 escrita por solicitação explícita do Arquiteto. Análise formal de
-implementabilidade pendente; implementação não iniciada. A proposta é
-reviewable e não constitui qualificação de hardware, validação de segurança ou
-ordem para implementar. Nenhum código, teste, build ou operação física integra
-a presente autoria.
+Versão 0.2 incorpora a decisão do Arquiteto e trata a pendência de vínculo e
+revogação apontada como BLE-AN-001 na análise 0.1. O relatório histórico
+`docs/reports/2026-09-12T021149Z-0.1-7b7674aa-implementability-analysis.md`
+permanece imutável e aplicável somente à revisão confrontada. A disposição
+formal do bloqueador cabe à reanálise da 0.2, ainda pendente.
+
+Estado permanece `Draft`/`Pending`/`Not Started`: nenhuma prontidão,
+qualificação de hardware, validação de segurança ou ordem de implementação é
+inferida da confirmação de desenho. Nenhum código, teste, build, geração de
+chave ou operação física integra esta revisão documental.
 
 ## 13. Fontes técnicas consultadas
 
@@ -400,3 +564,7 @@ Referências externas, consultadas em 12/09/2026:
 - [Silicon Labs — limite e composição do advertising legado](https://docs.silabs.com/bluetooth/5.0/bluetooth-fundamentals-advertising-scanning/).
 - [Apple — CBAdvertisementDataServiceDataKey](https://developer.apple.com/documentation/corebluetooth/cbadvertisementdataservicedatakey).
 - [Apple — maximumWriteValueLength(for:)](https://developer.apple.com/documentation/corebluetooth/cbperipheral/maximumwritevaluelength(for:)).
+
+- [RFC 2104 — HMAC](https://www.rfc-editor.org/info/rfc2104/).
+- [Espressif — GAP e gerenciamento de bonds](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/esp_gap_ble.html).
+- [Espressif — entropia e geração aleatória](https://docs.espressif.com/projects/esp-idf/en/v4.4/esp32/api-reference/system/random.html).

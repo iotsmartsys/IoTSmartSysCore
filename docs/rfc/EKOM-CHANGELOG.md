@@ -7,7 +7,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Estado:** Aberta [`Open`]
 
-**Especificação relacionada:** `IOTSSC-BLE-COMMAND-TRANSPORT@0.1`
+**Especificação relacionada:** `IOTSSC-BLE-COMMAND-TRANSPORT@0.2`
 
 **Estado da implementação:** Não iniciada [`Not Started`]
 
@@ -31,6 +31,20 @@ Foram confrontados 29 requisitos e 12 critérios; não foi demonstrado
 pré-requisito arquitetural transversal obrigatório. Autoria e análise pelo
 mesmo agente, sem independência. Especificação preservada em Draft, sem
 implementação, build, teste ou hardware. Transação permanece aberta.
+
+### Revisão normativa 0.2 — vínculo local e segredo compartilhado
+
+O Arquiteto confirmou janela física, bonding Just Works, segredo comum longo
+não transmitido, desafio por conexão e revogação local, sem PIN digitado.
+A revisão acrescenta Auth por HMAC-SHA-256, define operações locais e distingue
+bond provisório de autorização persistente do transporte. Preserva o JSON de
+comandos, MQTT/Serial, settings e persistência das capabilities. A chave real
+não é criada ou versionada. Riscos de extração da chave comum e ausência de
+garantia contra MITM/relay são explícitos.
+
+BLE-AN-001 recebe tratamento normativo; seu encerramento técnico depende de
+reanálise da versão 0.2. Relatório 0.1 preservado, revisão atual em
+Draft/Pending/Not Started; nenhum código, build, teste ou hardware executado.
 
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
