@@ -22,6 +22,16 @@ O mapa é reconciliado em índice, árvore e diagrama. MQTT/Serial, capabilities
 fontes vigentes e relatórios históricos são preservados. Não há implementação,
 build, testes, hardware, migração de governança ou declaração de `Ready`.
 
+### Análise de implementabilidade da versão 0.1
+
+Parecer persistido em `docs/reports/2026-09-12T021149Z-0.1-7b7674aa-implementability-analysis.md`:
+**Não pronta — defeito da especificação**. BLE-AN-001 identifica o fluxo de
+vínculo/revogação ainda não definido, exigido pela própria condição de ativação.
+Foram confrontados 29 requisitos e 12 critérios; não foi demonstrado
+pré-requisito arquitetural transversal obrigatório. Autoria e análise pelo
+mesmo agente, sem independência. Especificação preservada em Draft, sem
+implementação, build, teste ou hardware. Transação permanece aberta.
+
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
 **Estado:** Fechada [`Closed`]
