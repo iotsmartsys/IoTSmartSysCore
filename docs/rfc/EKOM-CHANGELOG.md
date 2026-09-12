@@ -46,6 +46,18 @@ BLE-AN-001 recebe tratamento normativo; seu encerramento técnico depende de
 reanálise da versão 0.2. Relatório 0.1 preservado, revisão atual em
 Draft/Pending/Not Started; nenhum código, build, teste ou hardware executado.
 
+### Análise de implementabilidade da versão 0.2
+
+Relatório: `docs/reports/2026-09-12T023101Z-0.2-a106d3be-implementability-analysis.md`.
+Classificação funcional **Pronta [`Ready`]**, sem bloqueadores após confronto
+de 40 requisitos e 16 critérios. BLE-AN-001 descartado nesta revisão pela
+definição do vínculo local, Auth e revogação. Análise pelo mesmo agente da
+autoria, sem independência. Especificação normativa e relatório 0.1 preservados.
+
+Qualificação do repositório permanece separada e não suprida pelo parecer;
+não há ordem de implementação, build, teste, geração de chave ou hardware.
+A transação permanece aberta e a implementação não iniciada.
+
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
 **Estado:** Fechada [`Closed`]

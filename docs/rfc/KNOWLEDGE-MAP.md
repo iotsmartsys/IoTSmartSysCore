@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 12/09/2026 (revisão BLE Control 0.2: Auth e vínculo local)
+**Última atualização:** 12/09/2026 (análise BLE Control 0.2: Ready funcional)
 
 ## 1. Governança
 
@@ -27,7 +27,7 @@
 |---|---|---|---|
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
-| Transporte BLE de comandos V1 | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Draft 0.2 — reanálise Pending | Not Started; Auth e vínculo/revogação contratados (`EKOM-CHG-0026`) |
+| Transporte BLE de comandos V1 | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Draft 0.2 — análise Ready | Not Started; BLE-AN-001 descartado na reanálise (`EKOM-CHG-0026`) |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -61,7 +61,7 @@ expressa para o alcance limitado da API pública.
 | Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Active 0.2`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0021`); abstração de potência `IOTSSC-POWER-ENERGY-CAPABILITY@0.4` em `Draft`/`Ready`/`Not Started`, preservando 0.3 como baseline validada (`EKOM-CHG-0023`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
-| BLE Control | Specified — Draft | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Proposta de comandos sob demanda, Service Data e GATT fixos; revisão 0.2 com Auth, janela e revogação; reanálise pendente |
+| BLE Control | Specified — Draft | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Proposta de comandos sob demanda, Service Data e GATT fixos; revisão 0.2 com Auth, janela e revogação; análise funcional Ready |
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
@@ -569,9 +569,11 @@ privado, combinado com bonding Just Works, janela física e revogação local.
 A autorização persistente pertence somente ao transporte; capabilities e
 settings não armazenam chave ou registro de vínculo Control.
 
-A revisão permanece Draft/Not Started, com reanálise Pending. BLE-AN-001 foi
-tratado na revisão normativa; sua disposição técnica depende de reanálise.
+A revisão permanece Draft/Not Started; a análise funcional 0.2 é Ready.
+BLE-AN-001 foi descartado por incorporação do contrato de vínculo/revogação.
+Fonte do parecer: `docs/reports/2026-09-12T023101Z-0.2-a106d3be-implementability-analysis.md`.
 O parecer histórico 0.1 permanece em
 `docs/reports/2026-09-12T021149Z-0.1-7b7674aa-implementability-analysis.md`.
-Não se declara Ready, quitação de débito ou aprovação de hardware.
+A prontidão funcional não supre a qualificação de repositório ausente, não
+autoriza implementação nem declara quitação de débito ou aprovação de hardware.
 Registro: `EKOM-CHG-0026`.
