@@ -14,6 +14,7 @@ namespace iotsmartsys::platform::espressif
     public:
         EspIdfCommandParser(iotsmartsys::core::ILogger &logger);
         iotsmartsys::core::DeviceCommand *parseCommand(const char *jsonPayload, size_t payloadLen) override;
+        iotsmartsys::core::DeviceCommand *parseCommand(const char *jsonPayload, size_t payloadLen, bool logDetails) override;
 
     private:
         iotsmartsys::core::ILogger &_logger;

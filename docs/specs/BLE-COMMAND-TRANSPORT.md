@@ -8,7 +8,7 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 **Estado da entrega:** Pendente [`Pending`]
 

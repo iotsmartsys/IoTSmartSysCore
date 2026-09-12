@@ -1,6 +1,7 @@
 #include "CapabilityCommandTransportDispatcher.h"
 #include "Contracts/Commands/CommandTypes.h"
 #include "Contracts/Commands/SystemCommands.h"
+#include <cstring>
 
 namespace iotsmartsys::core
 {
@@ -18,14 +19,16 @@ namespace iotsmartsys::core
 
     bool CapabilityCommandTransportDispatcher::dispatchMessage(const TransportMessageView &msg)
     {
+        const bool ble = msg.origin && std::strcmp(msg.origin, "ble") == 0;
         const std::size_t previewLen = (msg.payloadLen > 220) ? 220 : msg.payloadLen;
-        _logger.info("CMD", "Received topic='%s' payload_len=%u payload='%.*s'",
+        if (!ble) _logger.info("CMD", "Received topic='%s' payload_len=%u payload='%.*s'",
                      msg.topic ? msg.topic : "(null)",
                      (unsigned)msg.payloadLen,
                      (int)previewLen,
                      msg.payload ? msg.payload : "");
 
-        iotsmartsys::core::DeviceCommand *cmd = _commandParser.parseCommand(msg.payload, msg.payloadLen);
+        iotsmartsys::core::DeviceCommand *cmd = ble ? _commandParser.parseCommand(msg.payload, msg.payloadLen, false)
+                                               : _commandParser.parseCommand(msg.payload, msg.payloadLen);
         if (!cmd)
         {
             _logger.error("CMD", "Failed to parse MQTT payload.");
@@ -47,7 +50,7 @@ namespace iotsmartsys::core
             _logger.warn("CMD", "Promoted command to SYSTEM (value='%s').", command.value.c_str());
         }
 
-        _logger.info("CMD", "Dispatching command type='%s' value='%s' capability='%s'.",
+        if (!ble) _logger.info("CMD", "Dispatching command type='%s' value='%s' capability='%s'.",
                      CommandTypeUtils::toString(cmdType),
                      command.value.c_str(),
                      command.capability_name.c_str());

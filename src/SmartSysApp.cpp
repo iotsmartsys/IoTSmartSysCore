@@ -268,6 +268,21 @@ namespace iotsmartsys
             deviceIdentityProvider_.getDeviceID().c_str(),
             &SmartSysApp::onMqttConnectedThunk,
             this);
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetoothConfigured_)
+        {
+            bluetooth_.reset(new platform::arduino::BluetoothTransportChannel(logger_, commandParser_,
+                *capabilityController_.dispatcher(), *capabilityController_.manager(), bluetoothConfig_));
+            volatile uint8_t *secret = bluetoothSecret_;
+            for (size_t i = 0; i < sizeof(bluetoothSecret_); ++i) secret[i] = 0;
+            bluetoothConfig_.sharedSecret = nullptr;
+            core::TransportConfig bleConfig{};
+            const auto id = deviceIdentityProvider_.getDeviceID(); bleConfig.clientId = id.c_str();
+            if (bluetooth_->begin(bleConfig)) bluetooth_->start();
+            else logger_.warn("BLE", "Control disabled: invalid configuration");
+        }
+        else logger_.info("BLE", "Control disabled: private configuration absent");
+#endif
         startRuntimeTasks();
     }
 
@@ -359,8 +374,71 @@ namespace iotsmartsys
         }
     }
 
+    bool SmartSysApp::configureBluetoothControl(const core::BluetoothControlConfig &config)
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (setupStarted_ || !config.sharedSecret || config.sharedSecretSize != 32 || !config.localControlsConfigured) return false;
+        for (auto timeout : {config.pairingWindowMs, config.securityTimeoutMs, config.authTimeoutMs,
+             config.receiveTimeoutMs, config.sessionTimeoutMs, config.disconnectTimeoutMs})
+            if (!timeout || timeout >= 0x80000000UL) return false;
+        memcpy(bluetoothSecret_, config.sharedSecret, sizeof(bluetoothSecret_));
+        bluetoothConfig_ = config; bluetoothConfig_.sharedSecret = bluetoothSecret_; bluetoothConfigured_ = true;
+        return true;
+#else
+        (void)config; return false;
+#endif
+    }
+    core::BluetoothControlResult SmartSysApp::openPairingWindow()
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetooth_) return bluetooth_->openPairingWindow();
+#endif
+        return core::BluetoothControlResult::Disabled;
+    }
+    core::BluetoothControlResult SmartSysApp::revokeBleBonds()
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetooth_) return bluetooth_->revokeBleBonds();
+#endif
+        return core::BluetoothControlResult::Disabled;
+    }
+    core::BluetoothControlResult SmartSysApp::bluetoothControlResult() const
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetooth_) return bluetooth_->result();
+#endif
+        return core::BluetoothControlResult::Disabled;
+    }
+    core::BluetoothControlState SmartSysApp::bluetoothControlState() const
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetooth_) return bluetooth_->state();
+#endif
+        return core::BluetoothControlState::Disabled;
+    }
+
+    bool SmartSysApp::bluetoothPairingWindowOpen() const
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        return bluetooth_ && bluetooth_->pairingWindowOpen();
+#else
+        return false;
+#endif
+    }
+    bool SmartSysApp::bluetoothHasAuthorizedPeer() const
+    {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        return bluetooth_ && bluetooth_->hasAuthorizedPeer();
+#else
+        return false;
+#endif
+    }
+
     void SmartSysApp::handleTransportWork()
     {
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+        if (bluetooth_) bluetooth_->handle();
+#endif
         settingsManager_.handle();
 
         // Avoid overlapping TLS handshakes on constrained ESP32 heaps.

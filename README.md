@@ -102,3 +102,58 @@ Quando nao ha settings validas (ou `in_config_mode`), o app entra em modo de con
 ## Licenca
 
 MIT — ver `library.json`.
+
+## Transporte BLE de comandos (V1 / especificação 0.2)
+
+O controle BLE é opt-in, separado do BLE de provisioning. Ative
+`IOTSMARTSYS_BLE_COMMAND_ENABLED=1` em um firmware Arduino/ESP32 com Bluedroid
+BLE. O environment `esp32_dev_ble_control` compila essa integração sem incluir
+chave e sem habilitá-la em runtime por padrão. O build verificado é ESP32
+clássico; outros SoCs/stacks precisam de qualificação própria.
+
+Antes de `SmartSysApp::setup()`, forneça `BluetoothControlConfig` a
+`configureBluetoothControl(config)`:
+
+- `sharedSecret` e `sharedSecretSize`: buffer privado de exatamente 32 bytes,
+  com a chave aleatória distribuída ao app e aos dispositivos; a API copia o
+  buffer e não depende do lifetime do chamador;
+- `localControlsConfigured = true`: declaração de que o firmware integra os
+  eventos físicos distintos de admissão e revogação;
+- `deviceInfoEnabled`: `true` por padrão, opcional;
+- prazos em milissegundos: `pairingWindowMs`, `securityTimeoutMs`,
+  `authTimeoutMs`, `receiveTimeoutMs`, `sessionTimeoutMs` e
+  `disconnectTimeoutMs`. Todos devem ser positivos e menores que `2^31`.
+
+A configuração retorna `false` quando a feature está desabilitada, após setup
+ou quando os parâmetros são inválidos. Não use PIN numérico, senha de rede ou
+chave de demonstração. O repositório não fornece nem gera a chave privada.
+
+Após setup, traduza os eventos físicos do firmware em `openPairingWindow()` e
+`revokeBleBonds()`. Essas chamadas solicitam trabalho cooperativo e retornam
+`Pending` quando aceitas; acompanhe `bluetoothControlResult()`. O gesto de
+factory reset permanece independente. Consulte `bluetoothControlState()`,
+`bluetoothPairingWindowOpen()` e `bluetoothHasAuthorizedPeer()` para indicação
+local. A janela inicia fechada, dura 60 s e não substitui uma central já
+vinculada (`AlreadyBound`); revogue antes de admitir outra.
+
+O transporte anuncia o UUID Control no advertising e o `deviceId` ASCII
+integral de 1–13 bytes em Service Data (`0x21`) no scan response. O app deve
+aguardar Service Data durante o scan. Após conectar, habilita os CCCDs Auth e
+Response, conclui bonding criptografado, lê o desafio de 17 bytes e envia o
+HMAC de 32 bytes. Só após Auth positivo envia o JSON lógico existente seguido
+de LF. Cada conexão aceita um comando de capability, de até 1024 bytes sem LF;
+MTU 23 é suportado pelo framing. `{"ack":true}` confirma encaminhamento, sem
+confirmar efeito físico. Não repita automaticamente após perda da resposta.
+
+Control não funciona durante provisioning, não exige broker/Wi-Fi no ramo
+operacional e usa o mesmo dispatcher de capabilities, no ciclo de transporte.
+Uma stack BLE já inicializada por outro proprietário torna Control
+indisponível; não há reinicialização nem erase global. A autorização fica no
+namespace privado `ble_control`, separada das chaves de bonding da stack.
+Falhas de armazenamento bloqueiam Control até recuperação por reinicialização;
+uma revogação que falhou não pode ser anunciada como durável.
+
+O segredo comum não impede extração de app/firmware, e Just Works não promete
+proteção contra MITM/relay. Capturas, interoperabilidade Swift, funcionamento
+físico e falhas de energia ainda dependem das validações de aceite descritas em
+[BLE-COMMAND-TRANSPORT.md](docs/specs/BLE-COMMAND-TRANSPORT.md).

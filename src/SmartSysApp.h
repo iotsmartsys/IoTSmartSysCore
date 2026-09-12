@@ -7,6 +7,10 @@
 #include <memory>
 #include <string>
 #include "Config/BuildConfig.h"
+#include "Contracts/Transports/BluetoothControl.h"
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+#include "Platform/Arduino/Transports/ArduinoBluetoothTransportChannel.h"
+#endif
 #include "Platform/Espressif/Pinouts/ESP32_S3_Pinouts.h"
 
 // -----------------------------------------------------------------------------
@@ -85,6 +89,14 @@ namespace iotsmartsys
                 void handle();
 
                 /// @brief Configure SerialTransportChannel UART pins and baud rate.
+                bool configureBluetoothControl(const core::BluetoothControlConfig &config);
+                core::BluetoothControlResult openPairingWindow();
+                core::BluetoothControlResult revokeBleBonds();
+                core::BluetoothControlResult bluetoothControlResult() const;
+                core::BluetoothControlState bluetoothControlState() const;
+                bool bluetoothPairingWindowOpen() const;
+                bool bluetoothHasAuthorizedPeer() const;
+
                 void configureSerialTransport(HardwareSerial &serial, uint32_t baudRate, int rxPin, int txPin);
 
                 /// @brief Configura botão de reset de fábrica (provisionamento).
@@ -215,5 +227,11 @@ namespace iotsmartsys
                 TaskHandle_t transportTask_{nullptr};
                 core::SerialTransportChannel *uart_;
                 bool setupStarted_{false};
+#if IOTSMARTSYS_BLE_COMMAND_ENABLED
+                std::unique_ptr<platform::arduino::BluetoothTransportChannel> bluetooth_;
+                core::BluetoothControlConfig bluetoothConfig_{};
+                uint8_t bluetoothSecret_[32]{};
+                bool bluetoothConfigured_{false};
+#endif
         };
 } // namespace iotsmartsys

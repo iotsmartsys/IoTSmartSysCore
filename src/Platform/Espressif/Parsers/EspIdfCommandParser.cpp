@@ -256,6 +256,11 @@ namespace iotsmartsys::platform::espressif
 
     iotsmartsys::core::DeviceCommand *EspIdfCommandParser::parseCommand(const char *jsonPayload, size_t payloadLen)
     {
+        return parseCommand(jsonPayload, payloadLen, true);
+    }
+
+    iotsmartsys::core::DeviceCommand *EspIdfCommandParser::parseCommand(const char *jsonPayload, size_t payloadLen, bool logDetails)
+    {
         if (!jsonPayload || payloadLen == 0)
         {
            _logger.error("Failed to parse JSON payload: empty payload.");
@@ -278,7 +283,7 @@ namespace iotsmartsys::platform::espressif
         const bool okArgs1Value = tryExtractJsonStringField(jsonPayload, payloadLen, "args1value", args1value);
         const bool okArgs = tryExtractJsonArgs(jsonPayload, payloadLen, args);
 
-        _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s' args_count=%u args1='%s' args1value='%s'.",
+        if (logDetails) _logger.info("CMD", "Parsed command capability='%s' device_id='%s' value='%s' type='%s' args_count=%u args1='%s' args1value='%s'.",
                       okCap ? capabilityName.c_str() : "(missing)",
                       okDev ? deviceId.c_str() : "(missing)",
                       okVal ? value.c_str() : "(missing)",

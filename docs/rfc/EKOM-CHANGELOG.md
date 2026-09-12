@@ -9,7 +9,7 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 **Especificação relacionada:** `IOTSSC-BLE-COMMAND-TRANSPORT@0.2`
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Em andamento [`In Progress`]
 
 Por pedido explícito do Arquiteto, registra-se proposta de BLE exclusivamente
 para comandos de capabilities, com descoberta pelo ID integral em Service Data,
@@ -57,6 +57,31 @@ autoria, sem independência. Especificação normativa e relatório 0.1 preserva
 Qualificação do repositório permanece separada e não suprida pelo parecer;
 não há ordem de implementação, build, teste, geração de chave ou hardware.
 A transação permanece aberta e a implementação não iniciada.
+
+### Entrada da implementação 0.2
+
+Ordem explícita do Arquiteto recebida após análise 0.2 Ready. Implementação
+iniciada sob a governança local 4.7/4.6: a seção 7 da regra central
+`docs/REPOSITORY-READINESS.md` exige migração deliberada para adotar o gate 5.0;
+não há migração declarada neste repositório. Não se presume Repository
+Readiness 5.0 aprovada. Código e builds do recorte estão autorizados;
+testes, hardware, geração de segredo, merge e deploy não integram a ordem.
+
+### Código e builds da versão 0.2
+
+Implementados canal Arduino/Bluedroid, BluetoothDispatcher, Auth por sessão,
+janela/revogação local, registro privado e integração exclusiva ao ciclo de
+transporte, com feature desabilitada por padrão. README documenta consumo e
+`esp32_dev_ble_control` permite construir o perfil sem chave no repositório.
+Parser/dispatcher comum preservam o comando lógico e suprimem detalhes de
+payload no caminho BLE por opção de diagnóstico compatível com a API anterior.
+
+Builds finais `esp32_dev` e `esp32_dev_ble_control`: SUCCESS, código 0.
+Guarda documental do delta e integridade textual aprovadas. Hardware, Swift,
+falhas de energia, memória dinâmica e interoperabilidade: Not Executed.
+Código disponível para Revisão, mantendo `In Progress` / `Pending`, sem
+encerramento ou mudança normativa. Relatório:
+`docs/reports/2026-09-12T025803Z-0.2-blev02impl-implementation-report.md`.
 
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 

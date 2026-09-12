@@ -76,3 +76,7 @@ namespace iotsmartsys::config
     inline constexpr std::size_t kMaxAdapters = kMaxCapabilities;
     inline constexpr std::size_t kCapabilityArenaBytes = kMaxCapabilities * 512U;
 }
+
+#ifndef IOTSMARTSYS_BLE_COMMAND_ENABLED
+#define IOTSMARTSYS_BLE_COMMAND_ENABLED 0
+#endif
