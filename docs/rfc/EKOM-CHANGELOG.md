@@ -3,6 +3,25 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0026 — Autoria do transporte BLE de comandos V1
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-BLE-COMMAND-TRANSPORT@0.1`
+
+**Estado da implementação:** Não iniciada [`Not Started`]
+
+Por pedido explícito do Arquiteto, registra-se proposta de BLE exclusivamente
+para comandos de capabilities, com descoberta pelo ID integral em Service Data,
+GATT fixo, conexão sob demanda e reutilização do comando lógico atual.
+A especificação permanece `Draft`; análise formal de implementabilidade
+pendente. UUIDs, framing, ACK, limites e segurança são propostas identificadas,
+sem presumir aprovação de risco ou implementação existente.
+
+O mapa é reconciliado em índice, árvore e diagrama. MQTT/Serial, capabilities,
+fontes vigentes e relatórios históricos são preservados. Não há implementação,
+build, testes, hardware, migração de governança ou declaração de `Ready`.
+
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
 **Estado:** Fechada [`Closed`]

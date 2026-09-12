@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 09/09/2026 (implementação ADC1 0.1; limitação de build H2)
+**Última atualização:** 12/09/2026 (autoria BLE Control V1 em Draft)
 
 ## 1. Governança
 
@@ -27,6 +27,7 @@
 |---|---|---|---|
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
+| Transporte BLE de comandos V1 | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Draft 0.1 — análise Pending | Not Started; somente especificação (`EKOM-CHG-0026`) |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
@@ -60,6 +61,7 @@ expressa para o alcance limitado da API pública.
 | Capabilities | Specified | builders, adapters e contracts | Controle de garagem ativo; persistência binária 0.6 `Active`/`Validated`/`Ready for Integration` (`EKM-CHG-0032`), com BCS-REV-001/002 encerrados, BCS-REV-003 `Deferred` e suítes em quarentena; leitura fotovoltaica `IOTSSC-CURRENT-SENSOR@0.6` em `Active`/`Ready`/`Validated`/`Done` (`EKM-CHG-0052`); medição de tensão `IOTSSC-VOLTAGE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0004`); adapters INA3221 de tensão e corrente em `Active 0.2`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0021`); abstração de potência `IOTSSC-POWER-ENERGY-CAPABILITY@0.4` em `Draft`/`Ready`/`Not Started`, preservando 0.3 como baseline validada (`EKOM-CHG-0023`); temperatura por NTC `IOTSSC-NTC-TEMPERATURE-SENSOR@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0007`); atuador binário de ventilador `IOTSSC-FAN-CAPABILITY@0.1` em `Active`/`Ready`/`Validated`/`Done` (`EKOM-CHG-0010`) |
 | Settings e API HTTP/HTTPS | Mapped | settings, API e storage | Histórico de regressões; falta especificação profunda |
 | Wi-Fi e MQTT | Mapped | connectivity e transport | MQTT é transporte principal |
+| BLE Control | Specified — Draft | `docs/specs/BLE-COMMAND-TRANSPORT.md` | Proposta de comandos sob demanda, Service Data e GATT fixos; análise de segurança/stack pendente |
 | UART | Inventoried | serial transport | Transporte auxiliar |
 | Provisioning e factory reset | Mapped | bootstrap e platform services | Requer especificação própria quando tocado |
 | OTA | Inventoried | serviços OTA | Sem especificação própria |
@@ -152,6 +154,7 @@ IoTSmartSysCore
 ├── Interfaces e integrações
 │   ├── API pública da biblioteca
 │   ├── MQTT, HTTP/HTTPS e UART
+│   ├── proposta BLE Control V1: comandos, identidade e ACK local (Draft)
 │   └── persistência NVS
 └── Evidências e distribuição
     ├── exemplos executáveis e validação física
@@ -175,6 +178,8 @@ flowchart LR
     INA -->|"tensão e corrente do canal"| PSENSOR
     PSENSOR -->|"snapshot de potência"| POWER["PowerEnergyCapability"]
     POWER -->|"potência e energia"| CORE
+    SWIFT["App Swift: segundo toggle BLE"] -.->|"Control V1 proposto: comando e ACK"| BLE["BluetoothDispatcher — Draft"]
+    BLE -.->|"mesmo dispatcher de comandos/capabilities"| CORE
     CORE -->|"Transporte"| MQTT["Broker MQTT"]
     CORE -->|"Configuração e persistência"| SETTINGS["Settings API e NVS"]
     CORE -->|"estados binários até 12"| BCS["Snapshot NVS versionado"]
@@ -552,3 +557,15 @@ conclusão ou reabertura e aceita ou quita débito técnico.
   instrumentadas da versão 0.6, confrontação consultiva sem bloqueador e
   promoção para `Active`/`Validated`; integração sincronizada em `main` encerra
   a entrega como `Done`.
+
+### BLE Control V1 — fronteira proposta
+
+`IOTSSC-BLE-COMMAND-TRANSPORT@0.1` governa a proposta de transporte local
+opt-in para comandos, preservando MQTT, Serial e capabilities. A descoberta
+usa UUID fixo e ID completo em Service Data da scan response; o perfil legado
+limita o ID a 13 bytes. ACK confirma encaminhamento, não estado físico.
+A especificação permanece `Draft`, sem análise formal ou implementação.
+Segurança de vínculo/revogação, propriedade da stack na transição de
+provisioning e integração exclusiva do dispatcher precisam de análise;
+nenhum pré-requisito transversal é autorizado por esta fonte. Os débitos e
+lacunas existentes permanecem inalterados. Registro: `EKOM-CHG-0026`.
