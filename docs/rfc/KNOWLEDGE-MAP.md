@@ -583,3 +583,9 @@ Builds padrão/habilitado aprovados no ESP32 clássico; aceite operacional e
 integração Swift pendentes. Relatório:
 `docs/reports/2026-09-12T025803Z-0.2-blev02impl-implementation-report.md`.
 Registro: `EKOM-CHG-0026`. Nenhuma quitação de débito ou aprovação de hardware.
+
+### Composição BLE local de desenvolvimento
+
+`src/main.cpp` (ignorado pelo Git) configura Control com chave privada e gestos
+físicos BOOT, preservando reset de fábrica. Build local ESP32_MCB01 aprovado;
+rádio pendente. Evidência: `docs/reports/2026-09-13T030115Z-0.2-6c029e3e-ble-main-configuration.md`.
