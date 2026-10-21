@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 20/10/2026 (análise Ready do interpreter AVANT-LS963231305 0.1)
+**Última atualização:** 21/10/2026 (qualificação e habilitação do recorte AVANT)
 
 ## 1. Governança
 
@@ -13,6 +13,8 @@
 | Instruções e roteamento para agentes | `AGENTS.md` | Normativo | Active — EKOM 4.6 |
 | Adaptador para Claude Code | `CLAUDE.md` | Operacional | Active |
 | Diretrizes locais EKOM | `docs/rfc/EKOM-GUIDELINES.md` | Normativo | Active — EKOM 4.6 |
+| Contrato de engenharia do recorte AVANT | `docs/rfc/REPOSITORY-ENGINEERING-CONTRACT.md` | Normativo | Approved 0.1 por Marcelo Miranda; somente `AVIR-INTERPRETER` |
+| Qualificação do recorte AVANT | `docs/rfc/REPOSITORY-READINESS.md` | Operacional | Ready e habilitado por Marcelo Miranda; aplicação delimitada do pré-requisito EKOM 5.0 |
 | Diretrizes EKM legadas | `docs/rfc/EKM-GUIDELINES.md` | Histórico | Superseded |
 | Decisões arquiteturais locais | `docs/adr/` | Normativo | Active |
 | Mapa de conhecimento | `docs/rfc/KNOWLEDGE-MAP.md` | Normativo | Active |
@@ -26,9 +28,10 @@
 | Domínio | Fonte | Estado normativo | Implementação |
 |---|---|---|---|
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
+| Engenharia e qualificação AVANT | `docs/rfc/REPOSITORY-ENGINEERING-CONTRACT.md`; `docs/rfc/REPOSITORY-READINESS.md` | Contrato Approved 0.1; recorte Ready e habilitado | Não qualifica outros escopos; `EKOM-CHG-0027` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
-| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — análise funcional Ready em relatório separado | Not Started; qualificação do repositório pendente; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
+| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — análise funcional Ready em relatório separado | Not Started; recorte qualificado e habilitado em `EKOM-CHG-0027`; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
@@ -52,8 +55,11 @@ expressa para o alcance limitado da API pública.
 
 Análise do interpreter AVANT-LS963231305 0.1:
 [relatório Ready](../reports/2026-10-21T024132Z-0.1-b8cf1b81-897a-41ec-b295-249231fcb0b3-implementability-analysis.md).
-O parecer não habilita implementação nem modifica a especificação; distingue
-prontidão funcional da qualificação do repositório ainda não estabelecida.
+O parecer funcional não habilita implementação nem modifica a especificação.
+A qualificação posteriormente estabelecida está em
+[REPOSITORY-READINESS.md](REPOSITORY-READINESS.md), com contrato aprovado,
+avaliação própria e confirmação humana do alcance `AVIR-INTERPRETER`.
+O restante do repositório não recebe habilitação por inferência.
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -145,6 +151,7 @@ Registro: `docs/reports/2026-09-11T021138Z-temperature-interval-consultant-repor
 IoTSmartSysCore
 ├── Governança EKOM
 │   ├── roteamento e diretrizes locais
+│   ├── contrato aprovado e readiness habilitado somente para AVANT
 │   ├── especificações e decisões
 │   └── relatórios, transações, lacunas e débitos
 ├── Runtime Arduino/ESP32
@@ -170,8 +177,10 @@ IoTSmartSysCore
 
 ```mermaid
 flowchart LR
+    ENGINEERING["Contrato de engenharia AVANT 0.1 aprovado"] -->|"regras de construção"| AVANT["Interpreter AVANT-LS963231305"]
+    READINESS["Avaliação Ready e habilitação humana AVANT"] -->|"qualifica somente o recorte"| AVANT
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
-    APP -.->|"proposta: IRCommand"| AVANT["Interpreter AVANT-LS963231305"]
+    APP -.->|"proposta: IRCommand"| AVANT
     AVANT -.->|"proposta: comando textual ou unknown"| APP
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]

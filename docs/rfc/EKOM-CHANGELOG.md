@@ -3,6 +3,40 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0027 — Qualificação de engenharia do recorte AVANT
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-AVANT-LS963231305-IR-COMMAND@0.1`
+
+**Estado da implementação:** Não iniciada [`Not Started`]
+
+O Arquiteto ordenou preparar contrato e avaliar o recorte necessário à
+implementação AVANT. O
+[contrato de engenharia 0.1](REPOSITORY-ENGINEERING-CONTRACT.md) delimita
+interpreter, constantes, enum, interfaces preservadas, documentação e build
+`esp32_dev`; cobre as onze áreas mínimas sem qualificar todo o repositório.
+
+Marcelo Miranda, Arquiteto, aprovou integralmente a versão 0.1, seus precedentes
+e itens não aplicáveis em `AVIR-ENG-DEC-001`. A
+[avaliação separada](../reports/repository-readiness/2026-10-21T025824Z-0.1-1828a725-6b44-4573-8353-3df2fc27cf2f-repository-readiness.md)
+resultou em `Ready` para `AVIR-INTERPRETER`, sem bloqueador técnico.
+Em `AVIR-ENG-DEC-002`, o mesmo Arquiteto confirmou a habilitação somente desse
+alcance. O estado vigente está em
+[REPOSITORY-READINESS.md](REPOSITORY-READINESS.md).
+
+A condição de qualificação pendente em `EKOM-CHG-0026` foi suprida, não
+dispensada. Proposta e avaliação foram conduzidas pelo mesmo agente, sem
+independência; aprovação e habilitação foram decisões humanas distintas.
+Não houve implementação, build, testes ou hardware. A exposição preexistente
+em outro environment permanece fora do alcance, sem declaração de correção,
+conformidade ou aceitação de débito.
+
+Integridade textual e guarda estrutural dos cinco documentos da entrega
+aprovadas, com código de saída 0. O hash do contrato aprovado coincide com o
+registrado na avaliação. Código, configuração, testes e especificação
+funcional permanecem sem delta.
+
 ## EKOM-CHG-0026 — Autoria do interpreter AVANT-LS963231305
 
 **Estado:** Aberta [`Open`]
