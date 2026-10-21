@@ -8,7 +8,8 @@ namespace iotsmartsys::core
     {
         Philco,
         Springer,
-        IOTSM1541
+        IOTSM1541,
+        AVANT_LS963231305
     };
 
     class IRCommandInterpreter

@@ -43,7 +43,7 @@ funcional permanecem sem delta.
 
 **Especificação relacionada:** `IOTSSC-AVANT-LS963231305-IR-COMMAND@0.1`
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 O Arquiteto ordenou registrar o rascunho consolidado em
 [AVANT-LS963231305-IR-COMMAND.md](../specs/AVANT-LS963231305-IR-COMMAND.md).
@@ -78,6 +78,21 @@ anterior, e o resultado técnico desta execução está no relatório.
 
 Integridade textual e guarda estrutural dos três documentos desta análise
 aprovadas, com código de saída 0; relatório abaixo do limite de 800 palavras.
+
+### Implementação da versão 0.1
+
+Por ordem explícita de 21/10/2026, após conferir análise e qualificação,
+foi entregue `AvantLS963231305ControlInterpreter`, suas oito constantes,
+o membro aditivo `AVANT_LS963231305` e o
+[guia de consumo](../IR-COMMAND-INTERPRETERS.md). Aplicação, modelos anteriores,
+sensor, processor e configuração permanecem preservados.
+
+Build `pio run -e esp32_dev`: `SUCCESS`, saída 0, com compilação explícita do
+novo componente. Os cinco critérios foram confrontados pelos meios contratados;
+integridade textual e guarda documental aprovadas. Testes e hardware não
+executados. Implementação `Implemented`, encaminhada para Revisão, sem
+declaração de conclusão ou integração.
+[Relatório](../reports/2026-10-21T130151Z-0.1-avantimpl01-implementation-report.md).
 
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 

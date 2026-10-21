@@ -8,13 +8,16 @@
 
 **Estado normativo:** Rascunho [`Draft`]
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Implementada [`Implemented`]
 
 **Estado da entrega:** Não pronta [`Not Ready`]
 
-**Revisão de implementabilidade:** Pendente [`Pending Review`]
+**Revisão de implementabilidade:** Pronta [`Ready`] conforme
+[relatório da versão 0.1](../reports/2026-10-21T024132Z-0.1-b8cf1b81-897a-41ec-b295-249231fcb0b3-implementability-analysis.md)
 
-**Última atualização:** 20/10/2026
+**Registro da implementação:** [relatório da versão 0.1](../reports/2026-10-21T130151Z-0.1-avantimpl01-implementation-report.md)
+
+**Última atualização:** 21/10/2026
 
 **Branch:** `spec/avant-ls963231305-ir-command`
 
@@ -70,8 +73,8 @@ o resultado. O interpreter não possui o sensor nem conduz seu lifecycle.
 recepção IR já existentes. A interpretação de um comando fornecido pelo
 consumidor não depende de receptor físico.
 
-**Preparação arquitetural separada:** nenhuma proposta; a análise formal
-permanece pendente.
+**Preparação arquitetural separada:** nenhuma; consultar a análise formal
+referenciada nos metadados.
 
 ### 3.1 Fora de escopo
 
@@ -197,18 +200,18 @@ consolidado também delimita ausência de efeitos, constantes públicas e
 preservação dos componentes existentes. Em 20/10/2026, após manter o rascunho
 provisório, ordenou o registro desta especificação.
 
-Não há decisão funcional pendente identificada na autoria. Análise formal,
-implementação e revisão não são resultados desta entrega; cada etapa acionada
-produz registro separado. A especificação permanece `Draft`, sem `Ready` ou
-autorização de implementação.
+Não há decisão funcional pendente identificada na autoria. Análise,
+implementação e revisão produzem registros separados. O estado normativo
+permanece `Draft`; a revisão da implementação e a decisão final do Arquiteto
+não são substituídas pelo estado `Implemented`.
 
-**Contrato de engenharia e qualificação:** não foram localizados nas fontes
-consultadas contrato aprovado e Repository Readiness cobrindo o recorte.
-O roteamento local declara EKOM 4.7, enquanto os perfis centrais consultados
-declaram EKOM 5.0 e exigem essa qualificação antes de implementar. Esta autoria
-não migra a governança nem dispensa a condição; sua aplicação deve ser
-resolvida antes da implementação. Exceção anterior restrita a ADC1 não é
-transferida para AVANT.
+**Contrato de engenharia e qualificação:** o
+[contrato 0.1 aprovado](../rfc/REPOSITORY-ENGINEERING-CONTRACT.md) e o
+[recorte Ready e habilitado](../rfc/REPOSITORY-READINESS.md) suprem a condição
+ausente na autoria. Decisões `AVIR-ENG-DEC-001` e `AVIR-ENG-DEC-002`,
+transação `EKOM-CHG-0027`. Não há dispensa ou migração global de governança.
+Em 21/10/2026, o Arquiteto ordenou implementar esta versão já analisada e
+qualificada, sem alteração de seus requisitos ou critérios.
 
 **Regras e precedentes:** [AGENTS.md](../../AGENTS.md),
 [diretrizes locais](../rfc/EKOM-GUIDELINES.md), autoridades da seção 2 e

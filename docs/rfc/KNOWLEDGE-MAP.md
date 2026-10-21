@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 21/10/2026 (qualificação e habilitação do recorte AVANT)
+**Última atualização:** 21/10/2026 (implementação AVANT 0.1 e build aprovado)
 
 ## 1. Governança
 
@@ -31,7 +31,7 @@
 | Engenharia e qualificação AVANT | `docs/rfc/REPOSITORY-ENGINEERING-CONTRACT.md`; `docs/rfc/REPOSITORY-READINESS.md` | Contrato Approved 0.1; recorte Ready e habilitado | Não qualifica outros escopos; `EKOM-CHG-0027` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
-| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — análise funcional Ready em relatório separado | Not Started; recorte qualificado e habilitado em `EKOM-CHG-0027`; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
+| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — análise funcional Ready em relatório separado | Implemented; build esp32_dev aprovado, revisão pendente; recorte habilitado em `EKOM-CHG-0027` (`EKOM-CHG-0026`) |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
@@ -60,6 +60,13 @@ A qualificação posteriormente estabelecida está em
 [REPOSITORY-READINESS.md](REPOSITORY-READINESS.md), com contrato aprovado,
 avaliação própria e confirmação humana do alcance `AVIR-INTERPRETER`.
 O restante do repositório não recebe habilitação por inferência.
+
+Implementação AVANT: `src/Platform/Arduino/Interpreters/AvantLS963231305ControlInterpreter.h`
+e `.cpp`; identificação no enum em
+`src/Contracts/Interpreters/IRCommandInterpreter.h`.
+[Guia](../IR-COMMAND-INTERPRETERS.md) e
+[relatório de implementação](../reports/2026-10-21T130151Z-0.1-avantimpl01-implementation-report.md).
+O componente retorna texto sem atuação; consumidor e sensor permanecem externos.
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
@@ -164,7 +171,7 @@ IoTSmartSysCore
 │   └── settings, conectividade, provisioning e OTA
 ├── Interfaces e integrações
 │   ├── API pública da biblioteca
-│   ├── proposta AVANT-LS963231305: IRCommand → texto, sem atuação
+│   ├── AVANT-LS963231305: IRCommand → texto, sem atuação
 │   ├── MQTT, HTTP/HTTPS e UART
 │   └── persistência NVS
 └── Evidências e distribuição
@@ -180,8 +187,8 @@ flowchart LR
     ENGINEERING["Contrato de engenharia AVANT 0.1 aprovado"] -->|"regras de construção"| AVANT["Interpreter AVANT-LS963231305"]
     READINESS["Avaliação Ready e habilitação humana AVANT"] -->|"qualifica somente o recorte"| AVANT
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
-    APP -.->|"proposta: IRCommand"| AVANT
-    AVANT -.->|"proposta: comando textual ou unknown"| APP
+    APP -->|"consumo explícito: IRCommand"| AVANT
+    AVANT -->|"comando textual ou unknown"| APP
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
     ADC1["ADC1 0.2: target, enum NTC e milivolts"] -->|"seleção e validação de GPIO"| HW
