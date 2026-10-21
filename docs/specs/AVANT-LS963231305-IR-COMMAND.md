@@ -6,16 +6,20 @@
 
 **Versão:** 0.1
 
-**Estado normativo:** Rascunho [`Draft`]
+**Estado normativo:** Vigente [`Active`]
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
-**Estado da entrega:** Não pronta [`Not Ready`]
+**Estado da entrega:** Concluída [`Done`]
 
 **Revisão de implementabilidade:** Pronta [`Ready`] conforme
 [relatório da versão 0.1](../reports/2026-10-21T024132Z-0.1-b8cf1b81-897a-41ec-b295-249231fcb0b3-implementability-analysis.md)
 
 **Registro da implementação:** [relatório da versão 0.1](../reports/2026-10-21T130151Z-0.1-avantimpl01-implementation-report.md)
+
+**Decisão de encerramento:** Marcelo Miranda, Arquiteto, em 21/10/2026:
+validação em hardware declarada e ordem explícita de integração à `main` e
+encerramento. [Registro separado](../reports/2026-10-21T151555Z-0.1-avantclose01-finalization-report.md).
 
 **Última atualização:** 21/10/2026
 
@@ -201,9 +205,10 @@ preservação dos componentes existentes. Em 20/10/2026, após manter o rascunho
 provisório, ordenou o registro desta especificação.
 
 Não há decisão funcional pendente identificada na autoria. Análise,
-implementação e revisão produzem registros separados. O estado normativo
-permanece `Draft`; a revisão da implementação e a decisão final do Arquiteto
-não são substituídas pelo estado `Implemented`.
+implementação e revisão produzem registros separados. O Arquiteto declarou
+validação em hardware e determinou o encerramento em 21/10/2026; os estados
+`Active`, `Validated` e `Done` refletem essa decisão, não uma aprovação
+autônoma do agente ou alegação de revisão independente.
 
 **Contrato de engenharia e qualificação:** o
 [contrato 0.1 aprovado](../rfc/REPOSITORY-ENGINEERING-CONTRACT.md) e o

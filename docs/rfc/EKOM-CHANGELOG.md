@@ -5,11 +5,11 @@ permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
 ## EKOM-CHG-0027 — Qualificação de engenharia do recorte AVANT
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-AVANT-LS963231305-IR-COMMAND@0.1`
 
-**Estado da implementação:** Não iniciada [`Not Started`]
+**Estado da implementação:** Validada [`Validated`]
 
 O Arquiteto ordenou preparar contrato e avaliar o recorte necessário à
 implementação AVANT. O
@@ -39,11 +39,11 @@ funcional permanecem sem delta.
 
 ## EKOM-CHG-0026 — Autoria do interpreter AVANT-LS963231305
 
-**Estado:** Aberta [`Open`]
+**Estado:** Fechada [`Closed`]
 
 **Especificação relacionada:** `IOTSSC-AVANT-LS963231305-IR-COMMAND@0.1`
 
-**Estado da implementação:** Implementada [`Implemented`]
+**Estado da implementação:** Validada [`Validated`]
 
 O Arquiteto ordenou registrar o rascunho consolidado em
 [AVANT-LS963231305-IR-COMMAND.md](../specs/AVANT-LS963231305-IR-COMMAND.md).
@@ -93,6 +93,25 @@ integridade textual e guarda documental aprovadas. Testes e hardware não
 executados. Implementação `Implemented`, encaminhada para Revisão, sem
 declaração de conclusão ou integração.
 [Relatório](../reports/2026-10-21T130151Z-0.1-avantimpl01-implementation-report.md).
+
+### Validação e encerramento pelo Arquiteto
+
+Em 21/10/2026, Marcelo Miranda declarou a implementação validada em hardware
+e ordenou promover a branch corrente à `main` e encerrar a especificação.
+Essa decisão estabelece `Active` / `Validated` / `Done` para a versão 0.1
+e fecha as transações `EKOM-CHG-0026` e `EKOM-CHG-0027`.
+
+A integração autorizada inclui o ajuste IR já versionado pelo Arquiteto:
+dependência `IRremoteESP8266` no perfil base e habilitação do sensor no
+environment `glp_meter_esp32c3`. Esse ajuste é distinto da implementação
+original do interpreter e não amplia retrospectivamente a qualificação AVANT
+para todos os environments. Não houve mudança nos oito mapeamentos.
+
+Validação física é declaração humana; não foi executada pelo agente. Não há
+novo build, teste ou revisão independente nesta atuação documental. Os
+relatórios anteriores são preservados, sem converter evidências então
+pendentes em execuções passadas. Registro:
+[encerramento AVANT 0.1](../reports/2026-10-21T151555Z-0.1-avantclose01-finalization-report.md).
 
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
