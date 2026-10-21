@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 20/10/2026 (autoria do interpreter AVANT-LS963231305 0.1)
+**Última atualização:** 20/10/2026 (análise Ready do interpreter AVANT-LS963231305 0.1)
 
 ## 1. Governança
 
@@ -28,7 +28,7 @@
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
-| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — Pending Review | Not Started; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
+| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — análise funcional Ready em relatório separado | Not Started; qualificação do repositório pendente; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
@@ -49,6 +49,11 @@ válidas. O exemplo MCB01 configura `0.9788f` antes da construção do sensor;
 fonte de uso: `examples/executable/mcb01_solar_controller/README.md`.
 Alteração pequena autorizada pelo Arquiteto sem especificação, com exceção
 expressa para o alcance limitado da API pública.
+
+Análise do interpreter AVANT-LS963231305 0.1:
+[relatório Ready](../reports/2026-10-21T024132Z-0.1-b8cf1b81-897a-41ec-b295-249231fcb0b3-implementability-analysis.md).
+O parecer não habilita implementação nem modifica a especificação; distingue
+prontidão funcional da qualificação do repositório ainda não estabelecida.
 
 `docs/REPO_DOSSIER.md` é material informativo legado e não prevalece sobre as fontes acima.
 
