@@ -4,7 +4,7 @@
 
 **Estado da fonte:** Vigente
 
-**Última atualização:** 09/09/2026 (implementação ADC1 0.1; limitação de build H2)
+**Última atualização:** 20/10/2026 (autoria do interpreter AVANT-LS963231305 0.1)
 
 ## 1. Governança
 
@@ -28,6 +28,7 @@
 | Governança EKOM 4.6 | `docs/rfc/EKOM-GUIDELINES.md` | Active | Vigente desde `EKOM-CHG-0001` |
 | API pública e compatibilidade | `docs/specs/PUBLIC-API-COMPATIBILITY.md` | Active | Implemented |
 | Ciclo de vida do runtime | `docs/specs/CORE-RUNTIME-LIFECYCLE.md` | Active | Implemented |
+| Interpreter IR AVANT-LS963231305 | `docs/specs/AVANT-LS963231305-IR-COMMAND.md` | Draft 0.1 — Pending Review | Not Started; oito comandos por código, sem atuação ou mudança em consumidores (`EKOM-CHG-0026`) |
 | Capacidade configurável do runtime | `docs/specs/RUNTIME-CAPABILITY-CAPACITY.md` | Active 0.2 — Ready | Validated; default 8, perfil MCB01 12, snapshot NVS v3 com migração v2; `Done` após integração à `main` (`EKOM-CHG-0022`) |
 | Release e distribuição | `docs/specs/RELEASE-AND-DISTRIBUTION.md` | Active | In Progress |
 | Exemplos executáveis e hardware | `docs/specs/EXECUTABLE-HARDWARE-EXAMPLES.md` | Active | Implemented |
@@ -151,6 +152,7 @@ IoTSmartSysCore
 │   └── settings, conectividade, provisioning e OTA
 ├── Interfaces e integrações
 │   ├── API pública da biblioteca
+│   ├── proposta AVANT-LS963231305: IRCommand → texto, sem atuação
 │   ├── MQTT, HTTP/HTTPS e UART
 │   └── persistência NVS
 └── Evidências e distribuição
@@ -164,6 +166,8 @@ IoTSmartSysCore
 ```mermaid
 flowchart LR
     APP["Aplicação consumidora"] -->|"API pública"| CORE["SmartSysApp e capabilities"]
+    APP -.->|"proposta: IRCommand"| AVANT["Interpreter AVANT-LS963231305"]
+    AVANT -.->|"proposta: comando textual ou unknown"| APP
     PROFILE["Perfil de build"] -->|"capacidade 8 ou 12"| CORE
     CORE -->|"Hardware adapters"| HW["Sensores e atuadores ESP32"]
     ADC1["ADC1 0.2: target, enum NTC e milivolts"] -->|"seleção e validação de GPIO"| HW

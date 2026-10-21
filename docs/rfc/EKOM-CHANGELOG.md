@@ -3,6 +3,31 @@
 Este arquivo registra transações iniciadas sob EKOM 4.6. O histórico anterior
 permanece preservado em `docs/rfc/EKM-CHANGELOG.md`.
 
+## EKOM-CHG-0026 — Autoria do interpreter AVANT-LS963231305
+
+**Estado:** Aberta [`Open`]
+
+**Especificação relacionada:** `IOTSSC-AVANT-LS963231305-IR-COMMAND@0.1`
+
+**Estado da implementação:** Não iniciada [`Not Started`]
+
+O Arquiteto ordenou registrar o rascunho consolidado em
+[AVANT-LS963231305-IR-COMMAND.md](../specs/AVANT-LS963231305-IR-COMMAND.md).
+A versão contrata oito retornos textuais, reconhecimento somente por código,
+retorno `"unknown"`, constantes públicas e extensão aditiva do enum.
+Preserva aplicação, sensor, processor e modelos anteriores; não inclui
+temporizadores, atuação em dispositivos ou artefatos de teste.
+
+Especificação em `Draft`, análise de implementabilidade `Pending Review`.
+Esta entrega é somente de autoria; não produz relatório `Ready` nem autoriza
+implementação. A condição de qualificação dos perfis centrais permanece
+explicitada na especificação, sem migração de governança ou dispensa inferida.
+Nenhum débito técnico novo foi aceito.
+
+Validação documental: integridade textual e guarda estrutural dos três
+documentos da entrega aprovadas, com código de saída 0. Não foram executados
+build, testes ou operações em hardware.
+
 ## EKOM-CHG-0025 — Correção da aquisição NTC em milivolts
 
 **Estado:** Fechada [`Closed`]
